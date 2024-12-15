@@ -1,0 +1,18 @@
+services:
+  redis:
+    container_name: revisium-core_redis_container-dev
+    image: redis:7.2-alpine
+    ports:
+      - 6380:6379
+  db:
+    container_name: revisium-core_pg_container-dev
+    image: postgres:15.4-alpine
+    restart: always
+    volumes:
+      - ./initial-backup.dump:/docker-entrypoint-initdb.d/initial-backup.sql
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_DB: revisium-dev
+      POSTGRES_USER: revisium
+      POSTGRES_PASSWORD: password

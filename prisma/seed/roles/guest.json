@@ -1,0 +1,8 @@
+{
+  "name": "Guest",
+  "level": "Project",
+  "permissions": [
+    "read-organization",
+    "read-project-public"
+  ]
+}

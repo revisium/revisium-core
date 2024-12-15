@@ -1,0 +1,208 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["fullTextSearch"]
+  binaryTargets   = ["linux-arm64-openssl-1.1.x", "linux-arm64-openssl-3.0.x", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "native", "darwin", "darwin-arm64", "windows"]
+  engineType      = "binary"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id
+  createdAt DateTime @default(now())
+  email     String?  @unique
+  username  String?  @unique
+  password  String
+
+  isEmailConfirmed Boolean @default(false)
+  emailCode        String  @default("")
+
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId String
+
+  userOrganizations UserOrganization[]
+  userProjects      UserProject[]
+}
+
+enum RoleLevel {
+  System
+  Organization
+  Project
+}
+
+model Role {
+  id        String    @id
+  createdAt DateTime  @default(now())
+  name      String
+  level     RoleLevel
+  isCustom  Boolean   @default(false)
+
+  userOrganizations UserOrganization[]
+  userProjects      UserProject[]
+  permissions       Permission[]
+  users             User[]
+}
+
+model Permission {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  action    String
+  subject   String
+  condition Json?
+
+  roles Role[]
+}
+
+model Organization {
+  id       String    @id
+  projects Project[]
+
+  userOrganizations UserOrganization[]
+}
+
+model UserOrganization {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  organizationId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId String
+
+  @@unique([organizationId, userId])
+}
+
+model Project {
+  id        String   @id
+  createdAt DateTime @default(now())
+  name      String
+  isPublic  Boolean  @default(false)
+
+  branches       Branch[]
+  organization   Organization  @relation(fields: [organizationId], references: [id])
+  organizationId String
+  userProjects   UserProject[]
+
+  @@unique([organizationId, name])
+}
+
+model UserProject {
+  id        String   @id
+  createdAt DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id])
+  projectId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  role   Role   @relation(fields: [roleId], references: [id])
+  roleId String
+
+  @@unique([projectId, userId])
+}
+
+model Branch {
+  id        String     @id
+  createdAt DateTime   @default(now())
+  isRoot    Boolean    @default(false)
+  name      String
+  projectId String
+  project   Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  revisions Revision[]
+
+  @@unique([name, projectId])
+}
+
+model Revision {
+  id          String     @id
+  sequence    Int        @unique @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  comment     String     @default("")
+  isHead      Boolean    @default(false)
+  isDraft     Boolean    @default(false)
+  isStart     Boolean    @default(false)
+  branchId    String
+  branch      Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  parentId    String?
+  parent      Revision?  @relation("parentRevision", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Revision[] @relation("parentRevision")
+  tables      Table[]
+  endpoints   Endpoint[]
+  changelogId String     @unique
+  changelog   Changelog  @relation(fields: [changelogId], references: [id], onDelete: Cascade)
+
+  @@index([branchId])
+}
+
+model Changelog {
+  id                String    @id
+  tableInserts      Json      @default("{}")
+  rowInserts        Json      @default("{}")
+  tableUpdates      Json      @default("{}")
+  rowUpdates        Json      @default("{}")
+  tableDeletes      Json      @default("{}")
+  rowDeletes        Json      @default("{}")
+  tableInsertsCount Int       @default(0)
+  rowInsertsCount   Int       @default(0)
+  tableUpdatesCount Int       @default(0)
+  rowUpdatesCount   Int       @default(0)
+  tableDeletesCount Int       @default(0)
+  rowDeletesCount   Int       @default(0)
+  hasChanges        Boolean   @default(false)
+  revision          Revision?
+  revisionId        String?
+
+  @@index([tableInserts, rowInserts, tableUpdates, rowUpdates, tableDeletes, rowDeletes], type: Gin)
+}
+
+enum EndpointType {
+  GRAPHQL
+  REST_API
+}
+
+model Endpoint {
+  id         String       @id
+  createdAt  DateTime     @default(now())
+  type       EndpointType
+  revisionId String
+  revision   Revision     @relation(fields: [revisionId], references: [id], onDelete: Cascade)
+  isDeleted  Boolean      @default(false)
+
+  @@unique([revisionId, type])
+}
+
+model Table {
+  versionId String     @id
+  createdAt DateTime   @default(now())
+  readonly  Boolean    @default(false)
+  system    Boolean    @default(false)
+  id        String
+  revisions Revision[]
+  rows      Row[]
+
+  @@index([id])
+}
+
+model Row {
+  versionId String   @id
+  createdAt DateTime @default(now())
+  readonly  Boolean  @default(false)
+  id        String
+  tables    Table[]
+  data      Json
+
+  @@index([data], type: Gin)
+  @@index([id])
+}

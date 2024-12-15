@@ -1,0 +1,10 @@
+{
+  "name": "Reader",
+  "level": "Project",
+  "permissions": [
+    "read-organization",
+    "read-user",
+    "read-project-private",
+    "read-project-public"
+  ]
+}

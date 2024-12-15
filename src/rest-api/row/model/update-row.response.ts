@@ -1,0 +1,17 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { RowModel } from 'src/rest-api/row/model/row.model';
+import { TableModel } from 'src/rest-api/table/model/table.model';
+
+export class UpdateRowResponse {
+  @ApiProperty({ type: TableModel, required: false })
+  table?: TableModel;
+
+  @ApiProperty({ required: false })
+  previousVersionTableId?: string;
+
+  @ApiProperty({ type: RowModel, required: false })
+  row?: RowModel;
+
+  @ApiProperty({ required: false })
+  previousVersionRowId?: string;
+}

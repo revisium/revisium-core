@@ -1,0 +1,30 @@
+services:
+  redis:
+    container_name: revisium_redis_container-dev
+    image: redis:7.2-alpine
+    ports:
+      - 6380:6379
+  db:
+    container_name: revisium_pg_container-dev
+    image: postgres:15.4-alpine
+    restart: always
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_DB: revisium-dev
+      POSTGRES_USER: revisium
+      POSTGRES_PASSWORD: password
+  revisium-core:
+    depends_on:
+      - db
+      - redis
+    image: revisium-core
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+    environment:
+      DATABASE_URL: postgresql://revisium:password@db:5432/revisium-dev?schema=public
+      ENDPOINT_PORT: 6379
+      ENDPOINT_HOST: redis

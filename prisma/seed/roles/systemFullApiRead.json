@@ -1,0 +1,9 @@
+{
+  "name": "System full api read",
+  "level": "System",
+  "permissions": [
+    "read-organization",
+    "read-project-private",
+    "read-project-public"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "name": "Editor",
+  "level": "Project",
+  "permissions": [
+    "read-organization",
+    "create-revision",
+    "revert-revision",
+    "create-row",
+    "update-row",
+    "delete-row",
+    "read-user",
+    "read-project-private",
+    "read-project-public"
+  ]
+}
