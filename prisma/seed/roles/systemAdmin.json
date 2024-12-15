@@ -1,0 +1,8 @@
+{
+  "name": "System Admin",
+  "level": "System",
+  "permissions": [
+    "read-organization",
+    "create-user"
+  ]
+}

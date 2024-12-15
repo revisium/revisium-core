@@ -1,0 +1,26 @@
+{
+  "name": "Organization Admin",
+  "level": "Organization",
+  "permissions": [
+    "read-organization",
+    "create-project",
+    "update-project",
+    "delete-project",
+    "create-branch",
+    "create-revision",
+    "revert-revision",
+    "create-table",
+    "update-table",
+    "delete-table",
+    "create-row",
+    "update-row",
+    "delete-row",
+    "create-endpoint",
+    "delete-endpoint",
+    "add-user",
+    "delete-user",
+    "read-user",
+    "read-project-private",
+    "read-project-public"
+  ]
+}

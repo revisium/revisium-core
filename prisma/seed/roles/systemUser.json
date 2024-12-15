@@ -1,0 +1,8 @@
+{
+  "name": "System User",
+  "level": "System",
+  "permissions": [
+    "read-organization",
+    "read-project-public"
+  ]
+}

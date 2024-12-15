@@ -1,0 +1,33 @@
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
+import { FindRowInTableOrThrowQuery } from 'src/share/queries/impl/transactional/find-row-in-table-or-throw.query';
+import { FindRowInTableType } from 'src/share/queries/types';
+
+@QueryHandler(FindRowInTableOrThrowQuery)
+export class FindRowInTableOrThrowHandler
+  implements IQueryHandler<FindRowInTableOrThrowQuery>
+{
+  constructor(private transactionService: TransactionPrismaService) {}
+
+  private get transaction() {
+    return this.transactionService.getTransaction();
+  }
+
+  async execute({
+    data,
+  }: FindRowInTableOrThrowQuery): Promise<FindRowInTableType> {
+    const existingRow = await this.transaction.row.findFirst({
+      where: {
+        id: data.rowId,
+        tables: { some: { versionId: data.tableVersionId } },
+      },
+      select: { versionId: true, readonly: true },
+    });
+
+    if (!existingRow) {
+      throw new Error('A row with this name does not exist in the revision');
+    }
+
+    return existingRow;
+  }
+}

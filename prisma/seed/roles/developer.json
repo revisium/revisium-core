@@ -1,0 +1,21 @@
+{
+  "name": "Developer",
+  "level": "Project",
+  "permissions": [
+    "read-organization",
+    "create-branch",
+    "create-revision",
+    "revert-revision",
+    "create-table",
+    "update-table",
+    "delete-table",
+    "create-row",
+    "update-row",
+    "delete-row",
+    "create-endpoint",
+    "delete-endpoint",
+    "read-user",
+    "read-project-private",
+    "read-project-public"
+  ]
+}
