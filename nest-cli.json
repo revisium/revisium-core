@@ -9,6 +9,11 @@
         "include": "**/*.hbs",
         "outDir": "dist/src",
         "watchAssets": true
+      },
+      {
+        "include": "../prisma/**/*.{json,prisma,toml,sql}",
+        "outDir": "dist/prisma",
+        "watchAssets": true
       }
     ]
   }
