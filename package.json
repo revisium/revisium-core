@@ -1,6 +1,6 @@
 {
   "name": "@revisium/core",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "description": "Revisium is a tool (UI/API) inspired by JSON (JSON Schema) and Git, designed to provide a flexible and low-level headless CMS solution.",
   "private": false,
   "homepage": "https://revisium.io",
@@ -24,6 +24,7 @@
     "seed": "ts-node prisma/seed.ts",
     "seed:prod": "node dist/prisma/seed.js",
     "build": "nest build",
+    "prepublishOnly": "npm run build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
