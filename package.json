@@ -3,7 +3,7 @@
   "version": "0.9.0",
   "description": "Revisium is a tool (UI/API) inspired by JSON (JSON Schema) and Git, designed to provide a flexible and low-level headless CMS solution.",
   "private": false,
-  "homepage": "https:/revisium.io",
+  "homepage": "https://revisium.io",
   "license": "Apache-2.0",
   "author": "Anton Kashirov",
   "repository": {
