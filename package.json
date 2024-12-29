@@ -2,10 +2,15 @@
   "name": "@revisium/core",
   "version": "0.9.0",
   "description": "Revisium is a tool (UI/API) inspired by JSON (JSON Schema) and Git, designed to provide a flexible and low-level headless CMS solution.",
-  "private": true,
+  "private": false,
   "homepage": "https:/revisium.io",
   "license": "Apache-2.0",
   "author": "Anton Kashirov",
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "prisma:db:push": "npx prisma db push",
     "prisma:generate": "npx prisma generate",
