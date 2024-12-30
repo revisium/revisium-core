@@ -3,7 +3,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { Response } from 'express';
 import * as client from 'prom-client';
 import { PrismaService } from 'src/database/prisma.service';
-import { MetricsEnabledGuard } from 'src/metrics/metrics-enabled.guard';
+import { MetricsEnabledGuard } from 'src/metrics-api/metrics-enabled.guard';
 
 @ApiExcludeController()
 @Controller('metrics')
