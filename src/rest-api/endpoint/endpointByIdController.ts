@@ -1,4 +1,10 @@
-import { Controller, Delete, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Param,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
@@ -11,7 +17,9 @@ import { HttpJwtAuthGuard } from 'src/auth/guards/jwt/http-jwt-auth-guard.servic
 import { PermissionParams } from 'src/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/auth/guards/project.guard';
 import { DeleteEndpointCommand } from 'src/endpoint/commands/impl';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 
+@UseInterceptors(RestMetricsInterceptor)
 @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
 @PermissionParams({
   action: PermissionAction.read,

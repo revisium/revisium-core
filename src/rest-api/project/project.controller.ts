@@ -8,6 +8,7 @@ import {
   Put,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -21,6 +22,7 @@ import { HttpJwtAuthGuard } from 'src/auth/guards/jwt/http-jwt-auth-guard.servic
 import { OptionalHttpJwtAuthGuard } from 'src/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/auth/guards/project.guard';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import {
   AddUserToProjectCommand,
   DeleteProjectCommand,
@@ -45,6 +47,7 @@ import {
 } from 'src/rest-api/project/model';
 import { transformFromPaginatedPrismaToUserProjectModel } from 'src/rest-api/share/utils/transformFromPrismaToUserProjectModel';
 
+@UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,

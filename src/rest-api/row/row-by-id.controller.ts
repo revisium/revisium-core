@@ -7,6 +7,7 @@ import {
   Put,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -26,6 +27,7 @@ import { ApiRemoveRowCommand } from 'src/draft/commands/impl/api-remove-row.comm
 import { ApiUpdateRowCommand } from 'src/draft/commands/impl/api-update-row.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/draft/commands/types/api-remove-row.handler.types';
 import { ApiUpdateRowHandlerReturnType } from 'src/draft/commands/types/api-update-row.handler.types';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import { GetRowReferencesByDto, UpdateRowDto } from 'src/rest-api/row/dto';
 import { GetRowReferencesToDto } from 'src/rest-api/row/dto/get-row-references-to.dto';
 import {
@@ -48,6 +50,7 @@ import {
   ResolveRowReferencesToQuery,
 } from 'src/row/queries/impl';
 
+@UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,

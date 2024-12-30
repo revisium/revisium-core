@@ -20,19 +20,29 @@ import { RevisionResolver } from 'src/graphql-api/revision/revision.resolver';
 import { RowResolver } from 'src/graphql-api/row/row.resolver';
 import { TableResolver } from 'src/graphql-api/table/table.resolver';
 import { UserResolver } from 'src/graphql-api/user/user.resolver';
+import { GraphqlMetricsPlugin } from 'src/metrics/graphql/graphql-metrics.plugin';
+import { MetricsModule } from 'src/metrics/metrics.module';
 
 @Module({
   imports: [
-    GraphQLModule.forRoot<ApolloDriverConfig>({
-      context: ({ res }: { res: any }) => ({ res }),
-      path: '/-/graphql',
-      resolvers: { JSON: GraphQLJSON },
+    MetricsModule,
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+      imports: [MetricsModule],
       driver: ApolloDriver,
-      playground: false,
-      autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
-      sortSchema: true,
-      introspection: true,
-      plugins: [ApolloServerPluginLandingPageLocalDefault()],
+      inject: [GraphqlMetricsPlugin],
+      useFactory: (graphqlMetricsPlugin: GraphqlMetricsPlugin) => ({
+        context: ({ res }: { res: any }) => ({ res }),
+        path: '/-/graphql',
+        resolvers: { JSON: GraphQLJSON },
+        playground: false,
+        autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+        sortSchema: true,
+        introspection: true,
+        plugins: [
+          ApolloServerPluginLandingPageLocalDefault(),
+          graphqlMetricsPlugin,
+        ],
+      }),
     }),
     CqrsModule,
     AuthModule,

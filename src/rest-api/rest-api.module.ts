@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from 'src/auth/auth.module';
+import { MetricsModule } from 'src/metrics/metrics.module';
 import { AuthController } from 'src/rest-api/auth/auth.controller';
 import { BranchByNameController } from 'src/rest-api/branch/branch-by-name.controller';
 import { ConfigurationController } from 'src/rest-api/configuration/configuration.controller';
@@ -13,7 +14,7 @@ import { TableByIdController } from 'src/rest-api/table/table-by-id.controller';
 import { UserController } from 'src/rest-api/user/user.controller';
 
 @Module({
-  imports: [CqrsModule, AuthModule],
+  imports: [CqrsModule, AuthModule, MetricsModule],
   controllers: [
     AuthController,
     UserController,

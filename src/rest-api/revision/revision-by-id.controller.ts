@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -25,6 +26,7 @@ import { ApiCreateBranchByRevisionIdCommand } from 'src/branch/commands/impl';
 import { ApiCreateTableCommand } from 'src/draft/commands/impl/api-create-table.command';
 import { ApiCreateTableHandlerReturnType } from 'src/draft/commands/types/api-create-table.handler.types';
 import { ApiCreateEndpointCommand } from 'src/endpoint/commands/impl';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import { CreateBranchByRevisionDto } from 'src/rest-api/branch/dto';
 import { BranchModel } from 'src/rest-api/branch/model';
 import { EndpointModel } from 'src/rest-api/endpoint/model';
@@ -58,6 +60,7 @@ import {
 } from 'src/revision/queries/impl';
 import { ResolveChildByRevisionQuery } from 'src/revision/queries/impl/resolve-child-by-revision.query';
 
+@UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,
