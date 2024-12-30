@@ -5,6 +5,7 @@ import {
   Put,
   Request,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -23,11 +24,13 @@ import { HttpJwtAuthGuard } from 'src/auth/guards/jwt/http-jwt-auth-guard.servic
 import { PermissionParams } from 'src/auth/guards/permission-params';
 import { HTTPSystemGuard } from 'src/auth/guards/system.guard';
 import { IAuthUser } from 'src/auth/types';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import { CreateUserDto, LoginDto } from 'src/rest-api/auth/dto';
 import { UpdatePasswordDto } from 'src/rest-api/auth/dto/update-password.dto';
 import { LoginResponse } from 'src/rest-api/auth/model';
 import { UpdatePasswordCommand } from 'src/user/commands/impl';
 
+@UseInterceptors(RestMetricsInterceptor)
 @ApiTags('Auth')
 @ApiBearerAuth('access-token')
 @Controller('auth')

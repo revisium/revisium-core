@@ -13,6 +13,7 @@ import { EmailModule } from 'src/email/email.module';
 import { EndpointModule } from 'src/endpoint/endpoint.module';
 import { GraphqlApiModule } from 'src/graphql-api/graphql-api.module';
 import { HealthModule } from 'src/health/health.module';
+import { MetricsModule } from 'src/metrics/metrics.module';
 import { NotificationModule } from 'src/notification/notification.module';
 import { OrganizationModule } from 'src/organization/organization.module';
 import { ProjectModule } from 'src/project/project.module';
@@ -50,6 +51,7 @@ import { UserModule } from 'src/user/user.module';
     RowModule,
     DraftModule,
     EndpointModule,
+    MetricsModule,
   ],
 })
 export class CoreModule {}

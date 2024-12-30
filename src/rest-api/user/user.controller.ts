@@ -1,4 +1,10 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Request,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
@@ -8,9 +14,11 @@ import {
 } from '@nestjs/swagger';
 import { HttpJwtAuthGuard } from 'src/auth/guards/jwt/http-jwt-auth-guard.service';
 import { IAuthUser } from 'src/auth/types';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import { UserModel } from 'src/rest-api/user/model';
 import { GetUserQuery, GetUserQueryReturnType } from 'src/user/queries/impl';
 
+@UseInterceptors(RestMetricsInterceptor)
 @ApiTags('User')
 @ApiBearerAuth('access-token')
 @Controller('user')

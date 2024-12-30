@@ -6,6 +6,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -31,6 +32,7 @@ import {
 } from 'src/branch/quieries/impl';
 import { ApiCreateRevisionCommand } from 'src/draft/commands/impl/api-create-revision.command';
 import { ApiRevertChangesCommand } from 'src/draft/commands/impl/api-revert-changes.command';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import {
   CreateRevisionDto,
   GetBranchRevisionsDto,
@@ -46,6 +48,7 @@ import {
   transformFromPrismaToRevisionModel,
 } from 'src/rest-api/share/utils/transformFromPrismaToRevisionModel';
 
+@UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,

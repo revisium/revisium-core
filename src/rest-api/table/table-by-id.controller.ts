@@ -8,6 +8,7 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -29,6 +30,7 @@ import { ApiUpdateTableCommand } from 'src/draft/commands/impl/api-update-table.
 import { ApiCreateRowHandlerReturnType } from 'src/draft/commands/types/api-create-row.handler.types';
 import { ApiRemoveTableHandlerReturnType } from 'src/draft/commands/types/api-remove-table.handler.types';
 import { ApiUpdateTableHandlerReturnType } from 'src/draft/commands/types/api-update-table.handler.types';
+import { RestMetricsInterceptor } from 'src/metrics/rest/rest-metrics.interceptor';
 import { BranchModel } from 'src/rest-api/branch/model';
 import { RowsConnection } from 'src/rest-api/row/model';
 import { transformFromPrismaToBranchModel } from 'src/rest-api/share/utils/transformFromPrismaToBranchModel';
@@ -64,6 +66,7 @@ import {
 import { GetRowsByTableQuery } from 'src/table/queries/impl/get-rows-by-table.query';
 import { GetTableQuery } from 'src/table/queries/impl/get-table.query';
 
+@UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,
