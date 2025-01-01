@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { GetRevisionsByBranchIdQuery } from 'src/branch/quieries/impl/get-revisions-by-branch-id.query';
@@ -12,7 +13,7 @@ export class GetRevisionsByBranchIdHandler
 
   async execute({ data }: GetRevisionsByBranchIdQuery) {
     if (data.after && data.before) {
-      throw new Error('Passed after and before at the same time');
+      throw new BadRequestException('Passed after and before at the same time');
     }
 
     return getRevisionCursorPagination({

@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { RevertChangesCommand } from 'src/draft/commands/impl/revert-changes.command';
@@ -49,7 +50,7 @@ export class RevertChangesHandler extends DraftHandler<
     );
 
     if (!hasChanges) {
-      throw new Error('There are no changes');
+      throw new BadRequestException('There are no changes');
     }
 
     const headRevisionTables = await this.getHeadRevisionTables(

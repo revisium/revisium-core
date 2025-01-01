@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
 
 export enum DraftContextKeys {
@@ -35,7 +39,7 @@ export class DraftContextService {
     const store = this.asyncLocalStorage.getStore();
 
     if (!store) {
-      throw new Error(
+      throw new InternalServerErrorException(
         'Context not found. It appears that an attempt was made to access the context outside of DraftContextService.run.',
       );
     }
@@ -63,7 +67,7 @@ export class DraftContextService {
 
   public resolveKey<T>(key: DraftContextKeys): T {
     if (!this.context[key]) {
-      throw new Error(`${key} not found.`);
+      throw new InternalServerErrorException(`${key} not found.`);
     }
 
     return this.context[key] as T;

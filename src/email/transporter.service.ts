@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
@@ -30,7 +30,7 @@ export class TransporterService {
 
   private get transporter(): Transporter {
     if (!this._transporter) {
-      throw new Error('Invalid transporter');
+      throw new InternalServerErrorException('Invalid transporter');
     }
 
     return this._transporter;

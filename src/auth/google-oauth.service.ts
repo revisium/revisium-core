@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 
@@ -24,11 +24,11 @@ export class GoogleOauthService {
     authCode: string,
   ): Promise<{ email: string }> {
     if (!this.clientId) {
-      throw new Error('Client ID is missing');
+      throw new InternalServerErrorException('Client ID is missing');
     }
 
     if (!this.secretId) {
-      throw new Error('Secret ID is missing');
+      throw new InternalServerErrorException('Secret ID is missing');
     }
 
     const params = new URLSearchParams({

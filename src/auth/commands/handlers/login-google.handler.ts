@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { AuthService } from 'src/auth/auth.service';
@@ -64,7 +65,7 @@ export class LoginGoogleHandler
     const user = await this.getUser(email);
 
     if (!user) {
-      throw new Error('Invalid user');
+      throw new InternalServerErrorException('Invalid user');
     }
 
     return user;

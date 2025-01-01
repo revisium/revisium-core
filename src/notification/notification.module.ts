@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { InternalServerErrorException, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { EndpointNotificationService } from 'src/notification/endpoint-notification.service';
@@ -23,14 +23,18 @@ import { notificationEventEmitter } from 'src/notification/notification-event-em
         const envPort = configService.get<string>(portPath);
 
         if (!envPort) {
-          throw new Error(`Environment variable not found: ${portPath}`);
+          throw new InternalServerErrorException(
+            `Environment variable not found: ${portPath}`,
+          );
         }
         const port = parseInt(envPort);
 
         const host = configService.get<string>(hostPath);
 
         if (!host) {
-          throw new Error(`Environment variable not found: ${hostPath}`);
+          throw new InternalServerErrorException(
+            `Environment variable not found: ${hostPath}`,
+          );
         }
 
         return ClientProxyFactory.create({

@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { CreateBranchByRevisionIdCommand } from 'src/branch/commands/impl';
@@ -32,7 +33,7 @@ export class CreateBranchByRevisionIdHandler
       await this.getRevisionWithBranchAndTables(revisionId);
 
     if (revision.isDraft) {
-      throw new Error('This revision is a draft revision');
+      throw new BadRequestException('This revision is a draft revision');
     }
 
     const tableIds = tables.map(({ versionId }) => versionId);

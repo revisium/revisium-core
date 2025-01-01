@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { FindRowInTableOrThrowQuery } from 'src/share/queries/impl/transactional/find-row-in-table-or-throw.query';
@@ -25,7 +26,9 @@ export class FindRowInTableOrThrowHandler
     });
 
     if (!existingRow) {
-      throw new Error('A row with this name does not exist in the revision');
+      throw new BadRequestException(
+        'A row with this name does not exist in the revision',
+      );
     }
 
     return existingRow;

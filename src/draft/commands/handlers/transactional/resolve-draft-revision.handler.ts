@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { ResolveDraftRevisionCommand } from 'src/draft/commands/impl/transactional/resolve-draft-revision.command';
@@ -42,11 +43,11 @@ export class ResolveDraftRevisionHandler
     });
 
     if (!revision) {
-      throw new Error('Revision not found');
+      throw new BadRequestException('Revision not found');
     }
 
     if (!revision.isDraft) {
-      throw new Error('The revision is not a draft');
+      throw new BadRequestException('The revision is not a draft');
     }
 
     this.revisionRequestDto.branchId = revision.branchId;

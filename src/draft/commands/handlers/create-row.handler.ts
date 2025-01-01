@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { IdService } from 'src/database/id.service';
@@ -65,7 +66,7 @@ export class CreateRowHandler extends DraftHandler<
 
   private validateRowId(rowId: string) {
     if (rowId.length < 1) {
-      throw new Error(
+      throw new BadRequestException(
         'The length of the row name must be greater than or equal to 1',
       );
     }
@@ -85,7 +86,9 @@ export class CreateRowHandler extends DraftHandler<
     });
 
     if (existingRow) {
-      throw new Error('A row with this name already exists in the table');
+      throw new BadRequestException(
+        'A row with this name already exists in the table',
+      );
     }
   }
 

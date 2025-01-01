@@ -1,4 +1,5 @@
 import { ForbiddenError, subject } from '@casl/ability';
+import { InternalServerErrorException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CaslAbilityFactory } from 'src/auth/casl-ability.factory';
 import { CheckProjectPermissionCommand } from 'src/auth/commands/impl';
@@ -116,7 +117,7 @@ export class CheckProjectPermissionHandler
       return this.getProjectByEndpointId(data.endpointId);
     }
 
-    throw new Error(`Invalid data=${data}`);
+    throw new InternalServerErrorException(`Invalid data=${data}`);
   }
 
   private async getProjectByProjectName(

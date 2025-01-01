@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { TemplateService } from 'src/email/templates.service';
 import { TransporterService } from 'src/email/transporter.service';
@@ -21,7 +21,7 @@ export class EmailService {
 
   private get emailPublicUrl(): string {
     if (!this._emailPublicUrl) {
-      throw new Error('Invalid EMAIL_PUBLIC_URL');
+      throw new InternalServerErrorException('Invalid EMAIL_PUBLIC_URL');
     }
 
     return this._emailPublicUrl;

@@ -1,3 +1,8 @@
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { AuthService } from 'src/auth/auth.service';
@@ -60,7 +65,7 @@ export class LoginGithubHandler
     const user = await this.getUser(email);
 
     if (!user) {
-      throw new Error('Invalid user');
+      throw new InternalServerErrorException('Invalid user');
     }
 
     return user;

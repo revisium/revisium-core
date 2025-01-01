@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { FindRowsInTableOrThrowQuery } from 'src/share/queries/impl/transactional/find-rows-in-table-or-throw.query';
@@ -25,7 +26,7 @@ export class FindRowsInTableOrThrowHandler
     });
 
     if (rows.length !== data.rowIds.length) {
-      throw new Error('some rows do not exist in the revision');
+      throw new BadRequestException('some rows do not exist in the revision');
     }
 
     return rows;

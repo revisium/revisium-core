@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { IdService } from 'src/database/id.service';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
@@ -54,7 +55,7 @@ export class CreateTableHandler extends DraftHandler<
 
   private validateTableId(tableId: string) {
     if (tableId.length < 1) {
-      throw new Error(
+      throw new BadRequestException(
         'The length of the table name must be greater than or equal to 1',
       );
     }
@@ -67,7 +68,9 @@ export class CreateTableHandler extends DraftHandler<
     });
 
     if (existingTable) {
-      throw new Error('A table with this name already exists in the revision');
+      throw new BadRequestException(
+        'A table with this name already exists in the revision',
+      );
     }
   }
 

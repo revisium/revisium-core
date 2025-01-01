@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { IdService } from 'src/database/id.service';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
@@ -48,7 +49,7 @@ export class CreateRevisionHandler extends DraftHandler<
     const { hasChanges } = await this.getChangelog(previousDraftRevision.id);
 
     if (!hasChanges) {
-      throw new Error('There are no changes');
+      throw new BadRequestException('There are no changes');
     }
 
     const tableIds = await this.getTableIdsByRevisionId(

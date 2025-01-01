@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -39,7 +40,7 @@ export class CreateProjectHandler
     const context = this.asyncLocalStorage.getStore();
 
     if (!context) {
-      throw new Error(
+      throw new InternalServerErrorException(
         'CreateProjectHandlerContext not found. It appears that an attempt was made to access a context outside of AsyncLocalStorage.run.',
       );
     }

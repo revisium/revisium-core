@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { FindTableInRevisionOrThrowQuery } from 'src/share/queries/impl/transactional/find-table-in-revision-or-throw.query';
@@ -25,7 +26,9 @@ export class FindTableInRevisionOrThrowHandler
     });
 
     if (!existingTable) {
-      throw new Error('A table with this name does not exist in the revision');
+      throw new BadRequestException(
+        'A table with this name does not exist in the revision',
+      );
     }
 
     return existingTable;

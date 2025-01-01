@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/database/prisma.service';
@@ -19,19 +19,19 @@ export class UpdatePasswordHandler
 
   async execute({ data }: UpdatePasswordCommand) {
     if (data.newPassword.length < 8) {
-      throw new Error('Password must be at least 8 characters');
+      throw new BadRequestException('Password must be at least 8 characters');
     }
 
     const user = await this.getUser(data);
 
     if (!user) {
-      throw new NotFoundException('Not found user');
+      throw new BadRequestException('Not found user');
     }
 
     if (
       !(await this.authService.comparePassword(data.oldPassword, user.password))
     ) {
-      throw new Error('Invalid password');
+      throw new BadRequestException('Invalid password');
     }
 
     await this.savePassword(data);

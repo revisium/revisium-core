@@ -1,3 +1,4 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/database/prisma.service';
 import { AuthService } from '../../auth.service';
@@ -20,11 +21,11 @@ export class ConfirmEmailCodeHandler
     const user = await this.getUser(data.code);
 
     if (!user) {
-      throw new Error('Not found user');
+      throw new UnauthorizedException('Not found user');
     }
 
     if (user.isEmailConfirmed) {
-      throw new Error('Email is already confirmed');
+      throw new UnauthorizedException('Email is already confirmed');
     }
 
     await this.confirmEmail(user.id);

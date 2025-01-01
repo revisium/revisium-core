@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserRole } from 'src/auth/consts';
 import { IdService } from 'src/database/id.service';
@@ -18,21 +19,21 @@ export class SetUsernameHandler
 
   async execute({ data }: SetUsernameCommand) {
     if (data.username.length < 3) {
-      throw new Error('Password must be at least 3 characters');
+      throw new BadRequestException('Password must be at least 3 characters');
     }
 
     const user = await this.getUser(data);
 
     if (user.username) {
-      throw new Error('Username already exists');
+      throw new BadRequestException('Username already exists');
     }
 
     if (await this.existTheSameUsername(data)) {
-      throw new Error('The same username already exists');
+      throw new BadRequestException('The same username already exists');
     }
 
     if (await this.existTheSameOrganization(data)) {
-      throw new Error('The same organization already exists');
+      throw new BadRequestException('The same organization already exists');
     }
 
     await this.updateUser(data);

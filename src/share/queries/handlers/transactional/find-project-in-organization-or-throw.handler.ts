@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { FindProjectInOrganizationOrThrowQuery } from 'src/share/queries/impl';
@@ -27,7 +28,7 @@ export class FindProjectInOrganizationOrThrowHandler
     });
 
     if (!existingProject) {
-      throw new Error(
+      throw new BadRequestException(
         'A project with this name does not exist in the organization',
       );
     }

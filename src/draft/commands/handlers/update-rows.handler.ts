@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
@@ -45,7 +46,7 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
       rows.map((row) => {
         const versionId = rowIdToVersionIdMap.get(row.rowId);
         if (!versionId) {
-          throw new Error('Invalid versionId');
+          throw new BadRequestException('Invalid versionId');
         }
 
         return this.updateDraftRow(versionId, row.data);

@@ -1,5 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GraphQLError } from 'graphql/error';
 import { ValidateDataCommand } from 'src/draft/commands/impl/transactional/validate-data.command';
 import { DraftRevisionRequestDto } from 'src/draft/draft-request-dto/draft-revision-request.dto';
 import { JsonSchemaValidatorService } from 'src/draft/json-schema-validator.service';
@@ -36,8 +36,8 @@ export class ValidateDataHandler
       );
 
       if (!result) {
-        throw new GraphQLError('data is not valid', {
-          extensions: { errors, code: 'data is not valid' },
+        throw new BadRequestException('data is not valid', {
+          cause: errors,
         });
       }
     }
