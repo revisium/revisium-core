@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { MoveEndpointsCommand } from 'src/share/commands/impl';
@@ -19,7 +19,7 @@ export class MoveEndpointsHandler
     const toRevisionEndpoints = await this.getEndpoints(toRevisionId);
 
     if (toRevisionEndpoints.length) {
-      throw new BadRequestException(
+      throw new InternalServerErrorException(
         `toRevisionId=${toRevisionId} should have endpoints`,
       );
     }
