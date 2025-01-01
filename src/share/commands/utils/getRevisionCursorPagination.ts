@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IPaginatedType } from 'src/share/pagination.interface';
 
 type NodeType = { id: string; sequence: number };
@@ -40,11 +41,11 @@ export async function getRevisionCursorPagination<T extends NodeType>({
   const totalCount = await count();
 
   if (pageData.after && !(await resolveSequenceById(pageData.after))) {
-    throw new Error('Not found after');
+    throw new BadRequestException('Not found after');
   }
 
   if (pageData.before && !(await resolveSequenceById(pageData.before))) {
-    throw new Error('Not found before');
+    throw new BadRequestException('Not found before');
   }
 
   const items = await findMany(

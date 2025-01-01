@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { IdService } from 'src/database/id.service';
@@ -62,7 +63,7 @@ export class GetOrCreateDraftRowsHandler
     });
 
     if (rows.length !== readonlyRows.length) {
-      throw new Error('Invalid cloning rows');
+      throw new BadRequestException('Invalid cloning rows');
     }
 
     const generatedRows = rows.map((row) => ({

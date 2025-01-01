@@ -1,3 +1,5 @@
+import { InternalServerErrorException } from '@nestjs/common';
+
 type RevisionType = { id: string; parentId?: string | null };
 
 export const sortRevisions = (revisions: RevisionType[]) => {
@@ -13,11 +15,11 @@ export const sortRevisions = (revisions: RevisionType[]) => {
   const countHeads = revisions.filter(headPredicate).length;
 
   if (countHeads > 1) {
-    throw new Error('there are a few heads');
+    throw new InternalServerErrorException('there are a few heads');
   }
 
   if (countHeads === 0) {
-    throw new Error('there is no head');
+    throw new InternalServerErrorException('there is no head');
   }
 
   const parentIds = revisions
@@ -25,7 +27,7 @@ export const sortRevisions = (revisions: RevisionType[]) => {
     .map((revision) => revision.parentId);
 
   if (parentIds.length !== new Set(parentIds).size) {
-    throw new Error('parent must have only one child');
+    throw new InternalServerErrorException('parent must have only one child');
   }
 
   const parentMap = new Map(

@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
@@ -21,7 +25,7 @@ export class GitHubAuthService {
       (await this.getUserData(token)) || (await this.getUserEmails(token));
 
     if (!userEmail) {
-      throw new Error('Invalid user email');
+      throw new UnauthorizedException('Invalid user email');
     }
 
     return userEmail;
@@ -31,11 +35,11 @@ export class GitHubAuthService {
     const url = 'https://github.com/login/oauth/access_token';
 
     if (!this.clientId) {
-      throw new Error('Client ID is missing');
+      throw new InternalServerErrorException('Client ID is missing');
     }
 
     if (!this.secretId) {
-      throw new Error('Secret ID is missing');
+      throw new InternalServerErrorException('Secret ID is missing');
     }
 
     const params = new URLSearchParams({

@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import {
   CommandBus,
   CommandHandler,
@@ -54,7 +55,7 @@ export class ApiCreateRowHandler
     ]);
 
     if (!table || !row) {
-      throw new Error('Invalid ApiCreateRowHandler');
+      throw new InternalServerErrorException('Invalid ApiCreateRowHandler');
     }
 
     const result: ApiCreateRowHandlerReturnType = {

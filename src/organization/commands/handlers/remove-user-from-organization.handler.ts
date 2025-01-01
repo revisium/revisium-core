@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserOrganizationRoles } from 'src/auth/consts';
 import { PrismaService } from 'src/database/prisma.service';
@@ -20,7 +21,7 @@ export class RemoveUserFromOrganizationHandler
     const userOrganization = await this.getUserOrganization(data);
 
     if (!userOrganization) {
-      throw new Error('Not found user in organization');
+      throw new BadRequestException('Not found user in organization');
     }
 
     const isOwner =
@@ -30,7 +31,9 @@ export class RemoveUserFromOrganizationHandler
       isOwner &&
       (await this.countOwnerInOrganization(data.organizationId)) === 1
     ) {
-      throw new Error('You cannot remove the last owner of organization');
+      throw new BadRequestException(
+        'You cannot remove the last owner of organization',
+      );
     }
 
     await this.removeUserOrganization(userOrganization.id);

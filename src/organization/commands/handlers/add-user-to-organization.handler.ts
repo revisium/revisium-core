@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isValidOrganizationRole } from 'src/auth/consts';
 import { IdService } from 'src/database/id.service';
@@ -22,7 +23,7 @@ export class AddUserToOrganizationHandler
 
   public async execute({ data }: AddUserToOrganizationCommand) {
     if (!isValidOrganizationRole(data.roleId)) {
-      throw new Error('Invalid OrganizationRole');
+      throw new BadRequestException('Invalid OrganizationRole');
     }
 
     const userOrganizationId = await this.getUserOrganizationId(data);

@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/draft/commands/impl/remove-row.command';
@@ -308,7 +309,7 @@ export class RemoveRowHandler extends DraftHandler<
       );
 
       if (count) {
-        throw new Error(`The row is related to other rows`);
+        throw new BadRequestException(`The row is related to other rows`);
       }
     }
   }

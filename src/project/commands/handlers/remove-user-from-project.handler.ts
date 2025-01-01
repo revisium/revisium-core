@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/database/prisma.service';
 import {
@@ -19,13 +20,13 @@ export class RemoveUserFromProjectHandler
     const project = await this.getProject(data);
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new BadRequestException('Project not found');
     }
 
     const userProject = await this.getUserProject(data.userId, project.id);
 
     if (!userProject) {
-      throw new Error('Not found user in project');
+      throw new BadRequestException('Not found user in project');
     }
 
     await this.removeUserProject(userProject.id);

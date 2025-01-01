@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/draft/commands/impl/remove-row.command';
@@ -46,7 +47,7 @@ export class RemoveTableHandler extends DraftHandler<
       );
 
     if (table.system) {
-      throw new Error('Table is a system table');
+      throw new BadRequestException('Table is a system table');
     }
 
     await this.validateReferences(data);
@@ -211,7 +212,7 @@ export class RemoveTableHandler extends DraftHandler<
     );
 
     if (rows.length) {
-      throw new Error(
+      throw new BadRequestException(
         `There are references between ${data.tableId} and [${rows.map((row) => row.id).join(', ')}]`,
       );
     }

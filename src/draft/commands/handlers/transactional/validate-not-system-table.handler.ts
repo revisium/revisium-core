@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ValidateNotSystemTableCommand } from 'src/draft/commands/impl/transactional/validate-not-system-table.command';
 import { DraftRevisionRequestDto } from 'src/draft/draft-request-dto/draft-revision-request.dto';
@@ -20,7 +21,7 @@ export class ValidateNotSystemTableHandler
       );
 
     if (table.system) {
-      throw new Error('Table is a system table');
+      throw new BadRequestException('Table is a system table');
     }
   }
 }

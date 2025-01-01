@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotFoundException,
   Param,
   Put,
   Query,
@@ -13,11 +14,11 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Row } from '@prisma/client';
 import { PermissionAction, PermissionSubject } from 'src/auth/consts';
 import { HttpJwtAuthGuard } from 'src/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -49,6 +50,7 @@ import {
   ResolveRowReferencesByQuery,
   ResolveRowReferencesToQuery,
 } from 'src/row/queries/impl';
+import { GetRowReturnType } from 'src/row/queries/types';
 
 @UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
@@ -68,14 +70,19 @@ export class RowByIdController {
   @Get()
   @ApiOperation({ operationId: 'row' })
   @ApiOkResponse({ type: RowModel })
+  @ApiNotFoundResponse({ description: 'Row not found' })
   async table(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ) {
-    return transformFromPrismaToRowModel(
-      await this.resolveRow(revisionId, tableId, rowId),
-    );
+    const row = await this.resolveRow(revisionId, tableId, rowId);
+
+    if (!row) {
+      throw new NotFoundException('Row not found');
+    }
+
+    return transformFromPrismaToRowModel(row);
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -222,12 +229,8 @@ export class RowByIdController {
     };
   }
 
-  private resolveRow(
-    revisionId: string,
-    tableId: string,
-    rowId: string,
-  ): Promise<Row> {
-    return this.queryBus.execute(
+  private resolveRow(revisionId: string, tableId: string, rowId: string) {
+    return this.queryBus.execute<GetRowQuery, GetRowReturnType>(
       new GetRowQuery({ revisionId, tableId, rowId }),
     );
   }

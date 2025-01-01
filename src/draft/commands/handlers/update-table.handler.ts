@@ -1,6 +1,6 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
-import { GraphQLError } from 'graphql/error';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { CreateTableCommand } from 'src/draft/commands/impl/create-table.command';
 import { UpdateRowCommand } from 'src/draft/commands/impl/update-row.command';
@@ -42,7 +42,7 @@ export class UpdateTableHandler extends DraftHandler<
 
   protected async validations({ data }: UpdateTableCommand) {
     if (data.patches.length < 1) {
-      throw new Error('Invalid length of patches');
+      throw new BadRequestException('Invalid length of patches');
     }
 
     await this.validatePatchSchema(data.patches);
@@ -63,11 +63,11 @@ export class UpdateTableHandler extends DraftHandler<
       );
 
     if (this.checkItselfReference(data.tableId, data.patches)) {
-      throw new Error('Itself references is not supported yet');
+      throw new BadRequestException('Itself references is not supported yet');
     }
 
     if (table.system) {
-      throw new Error('Table is a system table');
+      throw new BadRequestException('Table is a system table');
     }
 
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
@@ -140,8 +140,8 @@ export class UpdateTableHandler extends DraftHandler<
       this.jsonSchemaValidator.validateJsonPatchSchema(patches);
 
     if (!result) {
-      throw new GraphQLError('patches is not valid', {
-        extensions: { errors, code: 'patches is not valid' },
+      throw new BadRequestException('patches is not valid', {
+        cause: errors,
       });
     }
 
@@ -187,18 +187,21 @@ export class UpdateTableHandler extends DraftHandler<
   private checkItselfReference(tableId: string, patches: JsonPatch[]) {
     for (const patch of patches) {
       if (patch.op === 'replace' || patch.op === 'add') {
-        const schemaStore = createJsonSchemaStore(patch.value as JsonSchema);
-
         let isThereItselfReference = false;
 
-        traverseStore(schemaStore, (item) => {
-          if (
-            item.type === JsonSchemaTypeName.String &&
-            item.reference === tableId
-          ) {
-            isThereItselfReference = true;
-          }
-        });
+        try {
+          const schemaStore = createJsonSchemaStore(patch.value as JsonSchema);
+          traverseStore(schemaStore, (item) => {
+            if (
+              item.type === JsonSchemaTypeName.String &&
+              item.reference === tableId
+            ) {
+              isThereItselfReference = true;
+            }
+          });
+        } catch (e) {
+          throw new BadRequestException('Invalid schema', { cause: e });
+        }
 
         if (isThereItselfReference) {
           return true;

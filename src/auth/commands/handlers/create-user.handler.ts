@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from 'src/auth/auth.service';
 import {
@@ -22,21 +22,23 @@ export class CreateUserHandler
 
   async execute({ data }: CreateUserCommand) {
     if (!isValidSystemRole(data.roleId)) {
-      throw new Error('Invalid SystemRole');
+      throw new BadRequestException('Invalid SystemRole');
     }
 
     if (data.password.length < 8) {
-      throw new Error('Password must be at least 8 characters');
+      throw new BadRequestException('Password must be at least 8 characters');
     }
 
     const user = await this.getUser(data);
 
     if (user) {
-      throw new NotFoundException('User already exists');
+      throw new BadRequestException('User already exists');
     }
 
     if (data.username && (await this.existOrganization(data.username))) {
-      throw new Error(`Organization with name=${data.username} already exists`);
+      throw new BadRequestException(
+        `Organization with name=${data.username} already exists`,
+      );
     }
 
     return this.createUserWithOwnOrganization(data);

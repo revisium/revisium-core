@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { AsyncLocalStorage } from 'async_hooks';
 import { PrismaService } from 'src/database/prisma.service';
@@ -16,7 +16,7 @@ export class TransactionPrismaService {
     const transactionInCurrentContext = this.asyncLocalStorage.getStore();
 
     if (!transactionInCurrentContext?.$prisma) {
-      throw new Error(
+      throw new InternalServerErrorException(
         'TransactionPrismaClient not found. It appears that an attempt was made to access a transaction outside the context of TransactionalPrismaService.runTransaction.',
       );
     }

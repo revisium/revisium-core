@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import { FindHeadRevisionInBranchOrThrowQuery } from 'src/share/queries/impl';
@@ -23,7 +24,9 @@ export class FindHeadRevisionInBranchOrThrowHandler
       });
 
     if (!existingHeadRevision) {
-      throw new Error('A branch with this name does not exist in the project');
+      throw new BadRequestException(
+        'A branch with this name does not exist in the project',
+      );
     }
 
     return existingHeadRevision;

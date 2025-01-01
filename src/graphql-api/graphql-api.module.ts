@@ -38,6 +38,12 @@ import { MetricsModule } from 'src/metrics/metrics.module';
         autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
         sortSchema: true,
         introspection: true,
+        formatError: (error) => {
+          if (error.extensions?.stacktrace) {
+            error.extensions.stacktrace = [];
+          }
+          return error;
+        },
         plugins: [
           ApolloServerPluginLandingPageLocalDefault(),
           graphqlMetricsPlugin,

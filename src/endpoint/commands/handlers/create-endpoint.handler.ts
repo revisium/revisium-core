@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { PrismaService } from 'src/database/prisma.service';
@@ -17,7 +18,7 @@ export class CreateEndpointHandler
     const existEndpoint = await this.getEndpoint(data);
 
     if (existEndpoint && !existEndpoint.isDeleted) {
-      throw new Error('Endpoint already has been created');
+      throw new BadRequestException('Endpoint already has been created');
     }
 
     const endpoint = existEndpoint

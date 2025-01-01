@@ -1,5 +1,5 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { GraphQLError } from 'graphql/error';
 import { ValidateSchemaCommand } from 'src/draft/commands/impl/transactional/validate-schema.command';
 import { DraftRevisionRequestDto } from 'src/draft/draft-request-dto/draft-revision-request.dto';
 import { JsonSchemaValidatorService } from 'src/draft/json-schema-validator.service';
@@ -26,8 +26,8 @@ export class ValidateSchemaHandler
     await this.validateReferences(getReferencesFromSchema(store));
 
     if (!result) {
-      throw new GraphQLError('schema is not valid', {
-        extensions: { errors, code: 'schema is not valid' },
+      throw new BadRequestException('schema is not valid', {
+        cause: errors,
       });
     }
   }

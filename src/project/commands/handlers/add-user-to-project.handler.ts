@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isValidProjectRole, UserProjectRoles } from 'src/auth/consts';
 import { IdService } from 'src/database/id.service';
@@ -19,13 +20,13 @@ export class AddUserToProjectHandler
 
   public async execute({ data }: AddUserToProjectCommand) {
     if (!isValidProjectRole(data.roleId)) {
-      throw new Error('Invalid ProjectRole');
+      throw new BadRequestException('Invalid ProjectRole');
     }
 
     const project = await this.getProject(data);
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new BadRequestException('Project not found');
     }
 
     const userProjectId = await this.getOrCreateUserProjectId(

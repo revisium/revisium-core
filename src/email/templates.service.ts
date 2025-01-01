@@ -1,7 +1,12 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as handlebars from 'handlebars';
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  OnModuleInit,
+} from '@nestjs/common';
 
 @Injectable()
 export class TemplateService implements OnModuleInit {
@@ -34,7 +39,7 @@ export class TemplateService implements OnModuleInit {
   public getTemplate(name: string): HandlebarsTemplateDelegate {
     const template = this.templates[name];
     if (!template) {
-      throw new Error(`Template "${name}" not found.`);
+      throw new InternalServerErrorException(`Template "${name}" not found.`);
     }
     return template;
   }
