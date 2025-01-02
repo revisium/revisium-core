@@ -20,6 +20,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const port = config.get('PORT') || 8080;
 
+  app.enableShutdownHooks();
   await app.listen(port);
 }
 
