@@ -37,6 +37,7 @@ import {
   RowsConnection,
   UpdateRowResponse,
 } from 'src/rest-api/row/model';
+import { ErrorModel } from 'src/rest-api/share/model/error.model';
 import { transformFromPrismaToBranchModel } from 'src/rest-api/share/utils/transformFromPrismaToBranchModel';
 import {
   transformFromPaginatedPrismaToRowModel,
@@ -70,8 +71,8 @@ export class RowByIdController {
   @Get()
   @ApiOperation({ operationId: 'row' })
   @ApiOkResponse({ type: RowModel })
-  @ApiNotFoundResponse({ description: 'Row not found' })
-  async table(
+  @ApiNotFoundResponse({ description: 'Row not found', type: ErrorModel })
+  async row(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,

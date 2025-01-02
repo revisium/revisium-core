@@ -4,7 +4,7 @@ import { Transport, RedisOptions } from '@nestjs/microservices';
 import { MicroserviceHealthIndicator } from '@nestjs/terminus';
 
 @Injectable()
-export class NotificationCheckService {
+export class NotificationCheck {
   constructor(
     private readonly configService: ConfigService,
     private readonly microservice: MicroserviceHealthIndicator,
@@ -31,7 +31,7 @@ export class NotificationCheckService {
       throw new Error(`Environment variable not found: ${hostPath}`);
     }
 
-    return this.microservice.pingCheck<RedisOptions>('redis', {
+    return this.microservice.pingCheck<RedisOptions>('notifications', {
       transport: Transport.REDIS,
       options: {
         host,

@@ -3,12 +3,12 @@ import { ConfigModule } from '@nestjs/config';
 import { TerminusModule } from '@nestjs/terminus';
 import { DatabaseModule } from 'src/database/database.module';
 import { HealthController } from 'src/health/health.controller';
-import { NotificationCheckService } from 'src/health/notification-check.service';
-import { PrismaCheckService } from 'src/health/prisma-check.service';
+import { NotificationCheck } from 'src/health/notification.check';
+import { DatabaseCheck } from 'src/health/database.check';
 
 @Module({
   imports: [DatabaseModule, ConfigModule, TerminusModule],
   controllers: [HealthController],
-  providers: [PrismaCheckService, NotificationCheckService],
+  providers: [DatabaseCheck, NotificationCheck],
 })
 export class HealthModule {}
