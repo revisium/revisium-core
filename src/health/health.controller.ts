@@ -1,21 +1,21 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiExcludeController, ApiTags } from '@nestjs/swagger';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService } from '@nestjs/terminus';
 import type { HealthIndicatorFunction } from '@nestjs/terminus/dist/health-indicator';
-import { NotificationCheckService } from 'src/health/notification-check.service';
-import { PrismaCheckService } from 'src/health/prisma-check.service';
+import { NotificationCheck } from 'src/health/notification.check';
+import { DatabaseCheck } from 'src/health/database.check';
 
-@ApiExcludeController()
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
-    private readonly prisma: PrismaCheckService,
-    private readonly notifications: NotificationCheckService,
+    private readonly prisma: DatabaseCheck,
+    private readonly notifications: NotificationCheck,
   ) {}
 
   @Get('liveness')
+  @ApiOperation({ operationId: 'liveness' })
   @HealthCheck()
   liveness() {
     const indicators: HealthIndicatorFunction[] = [
@@ -30,6 +30,7 @@ export class HealthController {
   }
 
   @Get('readiness')
+  @ApiOperation({ operationId: 'readiness' })
   @HealthCheck()
   readiness() {
     return this.health.check([]);

@@ -3,7 +3,7 @@ import { HealthCheckService, PrismaHealthIndicator } from '@nestjs/terminus';
 import { PrismaService } from 'src/database/prisma.service';
 
 @Injectable()
-export class PrismaCheckService {
+export class DatabaseCheck {
   constructor(
     private readonly health: HealthCheckService,
     private readonly prismaHealth: PrismaHealthIndicator,
@@ -11,6 +11,6 @@ export class PrismaCheckService {
   ) {}
 
   public check() {
-    return this.prismaHealth.pingCheck('prisma', this.prismaService);
+    return this.prismaHealth.pingCheck('database', this.prismaService);
   }
 }
