@@ -30,7 +30,7 @@ export class GetProjectsByUserIdHandler
     return getOffsetPagination({
       pageData: data,
       findMany: (args) => this.getProjects(this.getWhereInput(whereData), args),
-      count: () => this.getProjectsCount(this.getWhereInput(data)),
+      count: () => this.getProjectsCount(this.getWhereInput(whereData)),
     });
   }
 

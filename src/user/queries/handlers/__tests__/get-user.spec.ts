@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/__tests__/create-models';
@@ -12,7 +13,7 @@ describe('GetUserHandler', () => {
     await testCreateUser(prismaService, { id: userId });
 
     const query = createQuery({ userId });
-    const result = await handler.execute(query);
+    const result = await queryBus.execute(query);
 
     const user = await prismaService.user.findUnique({
       where: { id: userId },
@@ -28,20 +29,23 @@ describe('GetUserHandler', () => {
   it('should throw an error if the user is not found', async () => {
     const query = createQuery({ userId: nanoid() });
 
-    await expect(handler.execute(query)).rejects.toThrow(NotFoundException);
-    await expect(handler.execute(query)).rejects.toThrow('Not found user');
+    await expect(queryBus.execute(query)).rejects.toThrow(NotFoundException);
+    await expect(queryBus.execute(query)).rejects.toThrow('Not found user');
   });
 
-  let handler: GetUserHandler;
+  let queryBus: QueryBus;
   let prismaService: PrismaService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [GetUserHandler, PrismaService],
+      imports: [CqrsModule],
+      providers: [PrismaService, GetUserHandler],
     }).compile();
 
-    handler = module.get<GetUserHandler>(GetUserHandler);
-    prismaService = module.get<PrismaService>(PrismaService);
+    prismaService = module.get(PrismaService);
+    queryBus = module.get(QueryBus);
+
+    queryBus.register([GetUserHandler]);
   });
 
   const createQuery = (data: Partial<GetUserQuery['data']> = {}) => {
