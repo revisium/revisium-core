@@ -1,49 +1,43 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { nanoid } from 'nanoid';
+import { testCreateUser } from 'src/__tests__/create-models';
 import { PrismaService } from 'src/database/prisma.service';
-import { GetUserHandler } from '../get-user.handler';
 import { GetUserQuery } from 'src/user/queries/impl';
+import { GetUserHandler } from '../get-user.handler';
 
 describe('GetUserHandler', () => {
   it('should return user data', async () => {
-    const user = {
-      id: 'userId',
-      username: 'username',
-      email: 'email@example.com',
-    };
-    prismaService.user.findUniqueOrThrow = createMock(user);
-    const query = createQuery();
+    const userId = nanoid();
+    await testCreateUser(prismaService, { id: userId });
 
+    const query = createQuery({ userId });
     const result = await handler.execute(query);
 
-    expect(result).toEqual(user);
-    expect(prismaService.user.findUniqueOrThrow).toHaveBeenCalledWith({
-      where: { id: 'userId' },
+    const user = await prismaService.user.findUnique({
+      where: { id: userId },
       select: {
         id: true,
         username: true,
         email: true,
       },
     });
+    expect(result).toEqual(user);
+  });
+
+  it('should throw an error if the user is not found', async () => {
+    const query = createQuery({ userId: nanoid() });
+
+    await expect(handler.execute(query)).rejects.toThrow(NotFoundException);
+    await expect(handler.execute(query)).rejects.toThrow('Not found user');
   });
 
   let handler: GetUserHandler;
   let prismaService: PrismaService;
 
-  const createMock = <T>(mockResolvedValue: T) =>
-    jest.fn().mockResolvedValue(mockResolvedValue);
-
   beforeEach(async () => {
-    const prismaServiceMock = {
-      user: {
-        findUniqueOrThrow: createMock(null),
-      },
-    };
-
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GetUserHandler,
-        { provide: PrismaService, useValue: prismaServiceMock },
-      ],
+      providers: [GetUserHandler, PrismaService],
     }).compile();
 
     handler = module.get<GetUserHandler>(GetUserHandler);

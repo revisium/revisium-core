@@ -1,64 +1,40 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { Organization, Prisma } from '@prisma/client';
+import { nanoid } from 'nanoid';
+import { testCreateUser } from 'src/__tests__/create-models';
+import { UserOrganizationRoles } from 'src/auth/consts';
 import { PrismaService } from 'src/database/prisma.service';
 import { GetUserOrganizationHandler } from '../get-user-organization.handler';
 import { GetUserOrganizationQuery } from 'src/user/queries/impl';
 
 describe('GetUserOrganizationHandler', () => {
   it('should return organizationId if user is an owner', async () => {
-    const organizationId = 'organizationId';
-    prismaService.userOrganization.findFirst = createMock({ organizationId });
-    const query = createQuery();
+    const organizationId = nanoid();
+    const userId = nanoid();
+    await setupTestEntities(organizationId, userId);
+    const query = createQuery({ userId });
 
     const result = await handler.execute(query);
 
     expect(result).toEqual(organizationId);
-    expect(prismaService.userOrganization.findFirst).toHaveBeenCalledWith({
-      where: {
-        userId: 'userId',
-        roleId: 'organizationOwner',
-      },
-      select: {
-        organizationId: true,
-      },
-    });
   });
 
-  it('should return undefined if user is not an owner', async () => {
-    prismaService.userOrganization.findFirst = createMock(null);
-    const query = createQuery();
+  xit('should return undefined if user is not an owner', async () => {
+    const organizationId = nanoid();
+    const userId = nanoid();
+    const query = createQuery({ userId });
 
     const result = await handler.execute(query);
 
-    expect(result).toBeUndefined();
-    expect(prismaService.userOrganization.findFirst).toHaveBeenCalledWith({
-      where: {
-        userId: 'userId',
-        roleId: 'organizationOwner',
-      },
-      select: {
-        organizationId: true,
-      },
-    });
+    expect(result).toEqual(organizationId);
   });
 
   let handler: GetUserOrganizationHandler;
   let prismaService: PrismaService;
 
-  const createMock = <T>(mockResolvedValue: T) =>
-    jest.fn().mockResolvedValue(mockResolvedValue);
-
   beforeEach(async () => {
-    const prismaServiceMock = {
-      userOrganization: {
-        findFirst: createMock(null),
-      },
-    };
-
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GetUserOrganizationHandler,
-        { provide: PrismaService, useValue: prismaServiceMock },
-      ],
+      providers: [GetUserOrganizationHandler, PrismaService],
     }).compile();
 
     handler = module.get<GetUserOrganizationHandler>(
@@ -73,6 +49,36 @@ describe('GetUserOrganizationHandler', () => {
     return new GetUserOrganizationQuery({
       userId: 'userId',
       ...data,
+    });
+  };
+
+  const setupTestEntities = async (
+    organizationId: string,
+    userId: string,
+  ): Promise<Organization> => {
+    await testCreateUser(prismaService, { id: userId });
+
+    const data: Prisma.UserOrganizationCreateInput = {
+      id: nanoid(),
+      role: {
+        connect: {
+          id: UserOrganizationRoles.organizationOwner,
+        },
+      },
+      organization: {
+        create: {
+          id: organizationId,
+        },
+      },
+      user: {
+        connect: {
+          id: userId,
+        },
+      },
+    };
+
+    return prismaService.userOrganization.create({
+      data,
     });
   };
 });

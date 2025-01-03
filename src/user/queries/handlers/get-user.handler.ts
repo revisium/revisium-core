@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/database/prisma.service';
 import { GetUserQuery, GetUserQueryReturnType } from 'src/user/queries/impl';
@@ -8,8 +9,8 @@ export class GetUserHandler
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  public execute({ data }: GetUserQuery) {
-    return this.prisma.user.findUniqueOrThrow({
+  public async execute({ data }: GetUserQuery) {
+    const user = await this.prisma.user.findUnique({
       where: { id: data.userId },
       select: {
         id: true,
@@ -17,5 +18,11 @@ export class GetUserHandler
         email: true,
       },
     });
+
+    if (!user) {
+      throw new NotFoundException('Not found user');
+    }
+
+    return user;
   }
 }
