@@ -19,7 +19,7 @@ export class SetUsernameHandler
 
   async execute({ data }: SetUsernameCommand) {
     if (data.username.length < 3) {
-      throw new BadRequestException('Password must be at least 3 characters');
+      throw new BadRequestException('Username must be at least 3 characters');
     }
 
     const user = await this.getUser(data);
