@@ -1,4 +1,5 @@
-import { Prisma, User } from '@prisma/client';
+import { Prisma, Revision, User } from '@prisma/client';
+import { nanoid } from 'nanoid';
 import { UserSystemRoles } from 'src/auth/consts';
 import { PrismaService } from 'src/database/prisma.service';
 
