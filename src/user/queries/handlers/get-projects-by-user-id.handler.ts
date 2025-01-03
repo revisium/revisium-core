@@ -1,12 +1,10 @@
-import { IQueryHandler, QueryBus, QueryHandler } from '@nestjs/cqrs';
+import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma.service';
 import { getOffsetPagination } from 'src/share/commands/utils/getOffsetPagination';
-import { Prisma } from '@prisma/client';
 import {
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryReturnType,
-  GetUserOrganizationQuery,
-  GetUserOrganizationQueryReturnType,
 } from 'src/user/queries/impl';
 
 type WhereData = { userId: string; organizationId?: string };
@@ -16,15 +14,11 @@ export class GetProjectsByUserIdHandler
   implements
     IQueryHandler<GetProjectsByUserIdQuery, GetProjectsByUserIdQueryReturnType>
 {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly queryBus: QueryBus,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetProjectsByUserIdQuery) {
     const whereData: WhereData = {
       userId: data.userId,
-      organizationId: await this.getUserOrganizationId(data.userId),
     };
 
     return getOffsetPagination({
@@ -77,12 +71,5 @@ export class GetProjectsByUserIdHandler
     return {
       OR,
     };
-  }
-
-  private getUserOrganizationId(userId: string) {
-    return this.queryBus.execute<
-      GetUserOrganizationQuery,
-      GetUserOrganizationQueryReturnType
-    >(new GetUserOrganizationQuery({ userId }));
   }
 }

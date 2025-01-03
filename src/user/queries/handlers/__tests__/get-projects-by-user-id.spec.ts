@@ -32,7 +32,7 @@ describe('GetProjectsByUserIdHandler', () => {
     await addUserToOrganization(
       organizationId,
       userId,
-      UserOrganizationRoles.reader,
+      UserOrganizationRoles.organizationOwner,
     );
     await createProject(organizationId, projectId);
 
