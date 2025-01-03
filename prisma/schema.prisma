@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch", "metrics"]
+  previewFeatures = ["fullTextSearchPostgres", "metrics"]
   binaryTargets   = ["linux-arm64-openssl-1.1.x", "linux-arm64-openssl-3.0.x", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "native", "darwin", "darwin-arm64", "windows"]
   engineType      = "binary"
 }
