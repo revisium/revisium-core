@@ -39,5 +39,5 @@ jobs:
 
       - run: npm run tsc
 
-      - run: docker:test-container-up
+      - run: npm run docker:test-container-up
       - run: npm test
