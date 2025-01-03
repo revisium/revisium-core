@@ -7,7 +7,7 @@ import {
   GetProjectsByUserIdQueryReturnType,
 } from 'src/user/queries/impl';
 
-type WhereData = { userId: string; organizationId?: string };
+type WhereData = { userId: string };
 
 @QueryHandler(GetProjectsByUserIdQuery)
 export class GetProjectsByUserIdHandler
@@ -49,12 +49,6 @@ export class GetProjectsByUserIdHandler
 
   private getWhereInput(data: WhereData): Prisma.ProjectWhereInput {
     const OR: Prisma.ProjectWhereInput[] = [];
-
-    if (data.organizationId) {
-      OR.push({
-        organizationId: data.organizationId,
-      });
-    }
 
     OR.push({
       organization: {
