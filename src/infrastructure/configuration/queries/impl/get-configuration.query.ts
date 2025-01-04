@@ -1,6 +1,4 @@
-export class GetConfigurationQuery {
-  constructor() {}
-}
+export class GetConfigurationQuery {}
 
 export type GetConfigurationQueryReturnType = {
   availableEmailSignUp: boolean;
