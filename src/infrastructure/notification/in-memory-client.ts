@@ -6,7 +6,12 @@ export class InMemoryClient extends ClientProxy {
     super();
   }
 
-  close() {}
+  close() {
+    /*
+     * This method is intentionally left empty because the InMemoryClient
+     * does not maintain any persistent connections that need to be closed.
+     */
+  }
 
   connect() {
     return Promise.resolve(true);

@@ -1,3 +1,1 @@
-export class CleanRowsCommand {
-  constructor() {}
-}
+export class CleanRowsCommand {}
