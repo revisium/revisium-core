@@ -5,6 +5,7 @@ import { TransactionPrismaService } from 'src/database/transaction-prisma.servic
 import {
   createTestingModule,
   prepareBranch,
+  PrepareBranchReturnType,
 } from 'src/draft/commands/handlers/__tests__/utils';
 import { CreateRevisionCommand } from 'src/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/draft/commands/types/create-revision.handler.types';
@@ -29,6 +30,7 @@ describe('CreateRevisionHandler', () => {
   });
 
   it('should create a new draft revision if there are changes', async () => {
+    const ids = await prepareBranch(prismaService);
     const {
       organizationId,
       projectName,
@@ -36,7 +38,7 @@ describe('CreateRevisionHandler', () => {
       headRevisionId,
       draftChangelogId,
       draftRevisionId,
-    } = await prepareBranch(prismaService);
+    } = ids;
     await prismaService.changelog.update({
       where: {
         id: draftChangelogId,
@@ -45,6 +47,8 @@ describe('CreateRevisionHandler', () => {
         hasChanges: true,
       },
     });
+    await beforeTableRowChecks(ids);
+    await beforeEndpointsChecks(ids);
 
     const command = new CreateRevisionCommand({
       organizationId,
@@ -54,6 +58,186 @@ describe('CreateRevisionHandler', () => {
     });
     const result = await runTransaction(command);
 
+    await checkRevisions({
+      headRevisionId,
+      draftRevisionId,
+      nextDraftRevisionId: result.nextDraftRevisionId,
+    });
+    await afterTableRowChecks(ids, result.nextDraftRevisionId);
+    await afterEndpointsChecks(ids, result.nextDraftRevisionId);
+  });
+
+  async function beforeEndpointsChecks(ids: PrepareBranchReturnType) {
+    const { headRevisionId, draftRevisionId, headEndpointId, draftEndpointId } =
+      ids;
+
+    expect(
+      (
+        await prismaService.endpoint.findUniqueOrThrow({
+          where: { id: headEndpointId },
+        })
+      ).revisionId,
+    ).toEqual(headRevisionId);
+
+    expect(
+      (
+        await prismaService.endpoint.findUniqueOrThrow({
+          where: { id: draftEndpointId },
+        })
+      ).revisionId,
+    ).toEqual(draftRevisionId);
+  }
+
+  async function afterEndpointsChecks(
+    ids: PrepareBranchReturnType,
+    nextDraftRevisionId: string,
+  ) {
+    const { draftRevisionId, headEndpointId, draftEndpointId } = ids;
+
+    expect(
+      (
+        await prismaService.endpoint.findUniqueOrThrow({
+          where: { id: headEndpointId },
+        })
+      ).revisionId,
+    ).toEqual(draftRevisionId);
+
+    expect(
+      (
+        await prismaService.endpoint.findUniqueOrThrow({
+          where: { id: draftEndpointId },
+        })
+      ).revisionId,
+    ).toEqual(nextDraftRevisionId);
+  }
+
+  async function beforeTableRowChecks(ids: PrepareBranchReturnType) {
+    const {
+      headTableVersionId,
+      draftTableVersionId,
+      headRowVersionId,
+      draftRowVersionId,
+    } = ids;
+
+    // table
+    expect(
+      (
+        await prismaService.table.findUniqueOrThrow({
+          where: { versionId: headTableVersionId },
+        })
+      ).readonly,
+    ).toEqual(true);
+
+    expect(
+      (
+        await prismaService.table.findUniqueOrThrow({
+          where: { versionId: draftTableVersionId },
+        })
+      ).readonly,
+    ).toEqual(false);
+
+    // row
+    expect(
+      (
+        await prismaService.row.findUniqueOrThrow({
+          where: { versionId: headRowVersionId },
+        })
+      ).readonly,
+    ).toEqual(true);
+
+    expect(
+      (
+        await prismaService.row.findUniqueOrThrow({
+          where: { versionId: draftRowVersionId },
+        })
+      ).readonly,
+    ).toEqual(false);
+  }
+
+  async function afterTableRowChecks(
+    ids: PrepareBranchReturnType,
+    nextDraftRevisionId: string,
+  ) {
+    const {
+      tableId,
+      headTableVersionId,
+      draftTableVersionId,
+      rowId,
+      headRowVersionId,
+      draftRowVersionId,
+    } = ids;
+
+    // table
+    expect(
+      (
+        await prismaService.table.findUniqueOrThrow({
+          where: { versionId: headTableVersionId },
+        })
+      ).readonly,
+    ).toEqual(true);
+
+    expect(
+      (
+        await prismaService.table.findUniqueOrThrow({
+          where: { versionId: draftTableVersionId },
+        })
+      ).readonly,
+    ).toEqual(true);
+
+    const tableInNextDraftRevision =
+      await prismaService.table.findUniqueOrThrow({
+        where: {
+          versionId: draftTableVersionId,
+          revisions: {
+            some: {
+              id: nextDraftRevisionId,
+            },
+          },
+        },
+      });
+    expect(tableInNextDraftRevision.readonly).toEqual(true);
+    expect(tableInNextDraftRevision.id).toEqual(tableId);
+
+    // row
+    expect(
+      (
+        await prismaService.row.findUniqueOrThrow({
+          where: { versionId: headRowVersionId },
+        })
+      ).readonly,
+    ).toEqual(true);
+
+    expect(
+      (
+        await prismaService.row.findUniqueOrThrow({
+          where: { versionId: draftRowVersionId },
+        })
+      ).readonly,
+    ).toEqual(true);
+
+    const rowInNextDraftRevision = await prismaService.row.findUniqueOrThrow({
+      where: {
+        versionId: draftRowVersionId,
+        tables: {
+          some: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+    expect(rowInNextDraftRevision.readonly).toEqual(true);
+    expect(rowInNextDraftRevision.id).toEqual(rowId);
+  }
+
+  async function checkRevisions({
+    headRevisionId,
+    draftRevisionId,
+    nextDraftRevisionId,
+  }: {
+    headRevisionId: string;
+    draftRevisionId: string;
+    nextDraftRevisionId: string;
+  }) {
     // previous head
     const headRevision = await prismaService.revision.findUniqueOrThrow({
       where: { id: headRevisionId },
@@ -72,11 +256,11 @@ describe('CreateRevisionHandler', () => {
     const nextDraftRevision = await prismaService.revision.findFirstOrThrow({
       where: { parentId: draftRevisionId },
     });
-    expect(result.nextDraftRevisionId).toEqual(nextDraftRevision.id);
+    expect(nextDraftRevisionId).toEqual(nextDraftRevision.id);
     expect(nextDraftRevision.isHead).toBeFalsy();
     expect(nextDraftRevision.isDraft).toBeTruthy();
     expect(nextDraftRevision.parentId).toEqual(draftRevisionId);
-  });
+  }
 
   let prismaService: PrismaService;
   let commandBus: CommandBus;

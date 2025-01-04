@@ -50,7 +50,29 @@ export const createTestingModule = async (
   };
 };
 
-export const prepareBranch = async (prismaService: PrismaService) => {
+export type PrepareBranchReturnType = {
+  organizationId: string;
+  projectId: string;
+  projectName: string;
+  branchId: string;
+  branchName: string;
+  headRevisionId: string;
+  draftRevisionId: string;
+  headChangelogId: string;
+  draftChangelogId: string;
+  tableId: string;
+  headTableVersionId: string;
+  draftTableVersionId: string;
+  rowId: string;
+  headRowVersionId: string;
+  draftRowVersionId: string;
+  headEndpointId: string;
+  draftEndpointId: string;
+};
+
+export const prepareBranch = async (
+  prismaService: PrismaService,
+): Promise<PrepareBranchReturnType> => {
   const organizationId = nanoid();
   const projectId = nanoid();
   const projectName = `name-${projectId}`;
@@ -60,6 +82,14 @@ export const prepareBranch = async (prismaService: PrismaService) => {
   const draftRevisionId = nanoid();
   const headChangelogId = nanoid();
   const draftChangelogId = nanoid();
+  const tableId = nanoid();
+  const headTableVersionId = nanoid();
+  const draftTableVersionId = nanoid();
+  const rowId = nanoid();
+  const headRowVersionId = nanoid();
+  const draftRowVersionId = nanoid();
+  const headEndpointId = nanoid();
+  const draftEndpointId = nanoid();
 
   await prismaService.changelog.create({
     data: {
@@ -108,6 +138,69 @@ export const prepareBranch = async (prismaService: PrismaService) => {
     },
   });
 
+  await prismaService.table.create({
+    data: {
+      id: tableId,
+      versionId: headTableVersionId,
+      readonly: true,
+      revisions: {
+        connect: { id: headRevisionId },
+      },
+    },
+  });
+  await prismaService.table.create({
+    data: {
+      id: tableId,
+      versionId: draftTableVersionId,
+      readonly: false,
+      revisions: {
+        connect: { id: draftRevisionId },
+      },
+    },
+  });
+
+  await prismaService.row.create({
+    data: {
+      id: rowId,
+      versionId: headRowVersionId,
+      readonly: true,
+      tables: {
+        connect: {
+          versionId: headTableVersionId,
+        },
+      },
+      data: { ver: 1 },
+    },
+  });
+  await prismaService.row.create({
+    data: {
+      id: rowId,
+      versionId: draftRowVersionId,
+      readonly: false,
+      tables: {
+        connect: {
+          versionId: draftTableVersionId,
+        },
+      },
+      data: { ver: 2 },
+    },
+  });
+
+  await prismaService.endpoint.create({
+    data: {
+      id: headEndpointId,
+      revisionId: headRevisionId,
+      type: 'REST_API',
+    },
+  });
+  await prismaService.endpoint.create({
+    data: {
+      id: draftEndpointId,
+      revisionId: draftRevisionId,
+      type: 'GRAPHQL',
+    },
+  });
+
   return {
     organizationId,
     projectId,
@@ -118,5 +211,13 @@ export const prepareBranch = async (prismaService: PrismaService) => {
     draftRevisionId,
     headChangelogId,
     draftChangelogId,
+    tableId,
+    headTableVersionId,
+    draftTableVersionId,
+    rowId,
+    headRowVersionId,
+    draftRowVersionId,
+    headEndpointId,
+    draftEndpointId,
   };
 };
