@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/database/prisma.service';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import {
@@ -307,7 +306,6 @@ describe('CreateRevisionHandler', () => {
     expect(nextDraftRevision.changelog.hasChanges).toEqual(false);
   }
 
-  let module: TestingModule;
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
@@ -321,7 +319,6 @@ describe('CreateRevisionHandler', () => {
 
   beforeEach(async () => {
     const result = await createTestingModule(CreateRevisionHandler);
-    module = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
