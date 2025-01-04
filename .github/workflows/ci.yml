@@ -40,4 +40,9 @@ jobs:
       - run: npm run tsc
 
       - run: npm run docker:test-container-up
-      - run: npm test
+      - run: npm run test:cov
+
+      - name: Upload results to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
