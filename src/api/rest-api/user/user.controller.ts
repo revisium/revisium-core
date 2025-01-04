@@ -16,7 +16,10 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { IAuthUser } from 'src/features/auth/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { UserModel } from 'src/api/rest-api/user/model';
-import { GetUserQuery, GetUserQueryReturnType } from 'src/features/user/queries/impl';
+import {
+  GetUserQuery,
+  GetUserQueryReturnType,
+} from 'src/features/user/queries/impl';
 
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('User')

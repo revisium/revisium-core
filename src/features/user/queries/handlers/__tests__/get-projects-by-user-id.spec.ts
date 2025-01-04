@@ -4,7 +4,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { Organization, Prisma } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/__tests__/create-models';
-import { UserOrganizationRoles, UserProjectRoles } from 'src/features/auth/consts';
+import {
+  UserOrganizationRoles,
+  UserProjectRoles,
+} from 'src/features/auth/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { GetUserOrganizationHandler } from 'src/features/user/queries/handlers/get-user-organization.handler';
 import {

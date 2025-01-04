@@ -8,7 +8,10 @@ import {
 } from 'src/features/share/utils/schema/model/schema/json-object.store';
 import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { getTransformation } from 'src/features/share/utils/schema/model/value/value-transformation';
-import { JsonObject, JsonValue } from 'src/features/share/utils/schema/types/json.types';
+import {
+  JsonObject,
+  JsonValue,
+} from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 export class JsonObjectValueStore {

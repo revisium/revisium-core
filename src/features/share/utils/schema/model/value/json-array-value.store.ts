@@ -6,7 +6,10 @@ import {
 } from 'src/features/share/utils/schema/model/schema/json-array.store';
 import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { getTransformation } from 'src/features/share/utils/schema/model/value/value-transformation';
-import { JsonArray, JsonValue } from 'src/features/share/utils/schema/types/json.types';
+import {
+  JsonArray,
+  JsonValue,
+} from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 export class JsonArrayValueStore {

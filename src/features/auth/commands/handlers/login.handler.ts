@@ -1,7 +1,10 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { AuthService } from 'src/features/auth/auth.service';
-import { LoginCommand, LoginCommandReturnType } from 'src/features/auth/commands/impl';
+import {
+  LoginCommand,
+  LoginCommandReturnType,
+} from 'src/features/auth/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(LoginCommand)

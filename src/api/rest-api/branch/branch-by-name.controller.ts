@@ -37,7 +37,10 @@ import {
   CreateRevisionDto,
   GetBranchRevisionsDto,
 } from 'src/api/rest-api/branch/dto';
-import { BranchModel, ParentBranchResponse } from 'src/api/rest-api/branch/model';
+import {
+  BranchModel,
+  ParentBranchResponse,
+} from 'src/api/rest-api/branch/model';
 import {
   RevisionModel,
   RevisionsConnection,
