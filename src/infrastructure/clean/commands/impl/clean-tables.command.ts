@@ -1,1 +1,3 @@
-export class CleanTablesCommand {}
+export class CleanTablesCommand {
+  constructor() {}
+}

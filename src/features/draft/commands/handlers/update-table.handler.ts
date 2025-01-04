@@ -100,7 +100,7 @@ export class UpdateTableHandler extends DraftHandler<
   private async createNextTable(data: UpdateTableCommand['data']) {
     const currentTableSchema = await this.getTableSchema(data);
 
-    const schemaTable = new SchemaTable(currentTableSchema as JsonSchema);
+    const schemaTable = new SchemaTable(currentTableSchema);
 
     const rows = await this.getRows(this.tableRequestDto.versionId);
     for (const row of rows) {
@@ -190,7 +190,7 @@ export class UpdateTableHandler extends DraftHandler<
         let isThereItselfReference = false;
 
         try {
-          const schemaStore = createJsonSchemaStore(patch.value as JsonSchema);
+          const schemaStore = createJsonSchemaStore(patch.value);
           traverseStore(schemaStore, (item) => {
             if (
               item.type === JsonSchemaTypeName.String &&

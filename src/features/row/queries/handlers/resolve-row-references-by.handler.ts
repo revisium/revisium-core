@@ -81,7 +81,7 @@ export class ResolveRowReferencesByHandler
       referenceTableId,
     );
 
-    const schemaStore = createJsonSchemaStore(schema as JsonSchema);
+    const schemaStore = createJsonSchemaStore(schema);
 
     const jsonPaths: string[] = [];
 

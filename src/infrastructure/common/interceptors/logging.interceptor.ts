@@ -3,8 +3,8 @@ import {
   Injectable,
   ExecutionContext,
   CallHandler,
+  Logger,
 } from '@nestjs/common';
-import { Logger } from '@nestjs/common';
 import { catchError, Observable, throwError } from 'rxjs';
 
 @Injectable()
