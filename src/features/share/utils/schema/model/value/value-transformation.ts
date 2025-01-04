@@ -43,7 +43,7 @@ export const fromStringToNumber = (
 };
 
 export const fromBooleanToNumber = (value: boolean): number => {
-  return value ? 1 : 0;
+  return Number(value);
 };
 
 export const fromNumberToBoolean = (value: number): boolean => {

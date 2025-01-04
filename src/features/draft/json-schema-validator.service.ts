@@ -70,9 +70,8 @@ export class JsonSchemaValidatorService {
     schemaHash: string,
   ): Promise<ValidateFunction> {
     // TODO getting hash from DB
-    const cachedValidateFunction = (await this.cacheManager.get(schemaHash)) as
-      | ValidateFunction
-      | undefined;
+    const cachedValidateFunction =
+      await this.cacheManager.get<ValidateFunction>(schemaHash);
 
     if (!cachedValidateFunction) {
       const validateFunction = this.ajv.compile(schema as Schema);

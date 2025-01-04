@@ -22,7 +22,7 @@ export class GitHubAuthService {
   public async getEmail(code: string): Promise<string> {
     const token = await this.exchangeCodeForToken(code);
     const userEmail =
-      (await this.getUserData(token)) || (await this.getUserEmails(token));
+      (await this.getUserData(token)) ?? (await this.getUserEmails(token));
 
     if (!userEmail) {
       throw new UnauthorizedException('Invalid user email');

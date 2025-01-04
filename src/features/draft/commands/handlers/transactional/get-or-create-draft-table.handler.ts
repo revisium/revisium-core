@@ -36,7 +36,8 @@ export class GetOrCreateDraftTableHandler
     this.tableRequestDto.previousVersionId = previousTable.versionId;
 
     if (!previousTable.readonly) {
-      return (this.tableRequestDto.versionId = previousTable.versionId);
+      this.tableRequestDto.versionId = previousTable.versionId;
+      return this.tableRequestDto.versionId;
     }
 
     await this.createNextVersionTable(
