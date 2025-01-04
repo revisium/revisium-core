@@ -34,7 +34,7 @@ import {
 })
 @Resolver(() => TableModel)
 export class TableResolver {
-  constructor(private queryBus: QueryBus) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TableModel, { nullable: true })

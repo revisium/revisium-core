@@ -6,7 +6,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class GetProjectByBranchHandler
   implements IQueryHandler<GetProjectByBranchQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ branchId }: GetProjectByBranchQuery) {
     return this.prisma.branch

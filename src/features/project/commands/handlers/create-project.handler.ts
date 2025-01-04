@@ -27,9 +27,9 @@ export class CreateProjectHandler
   implements ICommandHandler<CreateProjectCommand>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private idService: IdService,
-    private asyncLocalStorage: AsyncLocalStorage<CreateProjectHandlerContext>,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly idService: IdService,
+    private readonly asyncLocalStorage: AsyncLocalStorage<CreateProjectHandlerContext>,
   ) {}
 
   private get transaction() {

@@ -10,10 +10,10 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 @Injectable()
 export class SessionChangelogService {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private revisionRequestDto: DraftRevisionRequestDto,
-    private tableRequestDto: DraftTableRequestDto,
-    private rowRequestDto: DraftRowRequestDto,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly revisionRequestDto: DraftRevisionRequestDto,
+    private readonly tableRequestDto: DraftTableRequestDto,
+    private readonly rowRequestDto: DraftRowRequestDto,
   ) {}
 
   private get transaction() {

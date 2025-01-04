@@ -36,8 +36,8 @@ import { GetTablesByRevisionIdQuery } from 'src/features/revision/queries/impl/g
 @Resolver(() => RevisionModel)
 export class RevisionResolver {
   constructor(
-    private commandBus: CommandBus,
-    private queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)

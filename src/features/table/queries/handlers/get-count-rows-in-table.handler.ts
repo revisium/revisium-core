@@ -6,7 +6,7 @@ import { GetCountRowsInTableQuery } from 'src/features/table/queries/impl';
 export class GetCountRowsInTableHandler
   implements IQueryHandler<GetCountRowsInTableQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute({ data }: GetCountRowsInTableQuery): Promise<number> {
     const result = await this.prisma.table.findUniqueOrThrow({

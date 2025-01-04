@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
@@ -31,10 +31,7 @@ import { UpdateRowResultModel } from 'src/api/graphql-api/draft/model/update-row
 })
 @Resolver()
 export class DraftResolver {
-  constructor(
-    private queryBus: QueryBus,
-    private commandBus: CommandBus,
-  ) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
   @PermissionParams({

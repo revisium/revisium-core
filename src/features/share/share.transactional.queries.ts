@@ -23,7 +23,7 @@ import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @Injectable()
 export class ShareTransactionalQueries {
-  constructor(private queryBus: QueryBus) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   public async findProjectInOrganizationOrThrow(
     organizationId: string,

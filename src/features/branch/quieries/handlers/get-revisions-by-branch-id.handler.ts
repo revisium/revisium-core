@@ -9,7 +9,7 @@ import { getRevisionCursorPagination } from 'src/features/share/commands/utils/g
 export class GetRevisionsByBranchIdHandler
   implements IQueryHandler<GetRevisionsByBranchIdQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute({ data }: GetRevisionsByBranchIdQuery) {
     if (data.after && data.before) {

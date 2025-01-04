@@ -8,8 +8,8 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 @QueryHandler(GetBranchesQuery)
 export class GetBranchesHandler implements IQueryHandler<GetBranchesQuery> {
   constructor(
-    private transactionPrisma: TransactionPrismaService,
-    private shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly transactionPrisma: TransactionPrismaService,
+    private readonly shareTransactionalQueries: ShareTransactionalQueries,
   ) {}
 
   private get transaction() {

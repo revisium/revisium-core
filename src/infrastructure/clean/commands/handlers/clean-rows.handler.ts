@@ -4,7 +4,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(CleanRowsCommand)
 export class CleanRowsHandler implements ICommandHandler<CleanRowsCommand> {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute() {
     return this.prisma.row.deleteMany({

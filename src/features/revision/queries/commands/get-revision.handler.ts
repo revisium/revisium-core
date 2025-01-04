@@ -4,7 +4,7 @@ import { GetRevisionQuery } from 'src/features/revision/queries/impl/get-revisio
 
 @QueryHandler(GetRevisionQuery)
 export class GetRevisionHandler implements IQueryHandler<GetRevisionQuery> {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ data }: GetRevisionQuery) {
     return this.prisma.revision.findUniqueOrThrow({

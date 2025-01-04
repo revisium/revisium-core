@@ -10,8 +10,8 @@ import {
 
 @Injectable()
 export class TemplateService implements OnModuleInit {
-  private logger = new Logger(TemplateService.name);
-  private templates: Record<string, HandlebarsTemplateDelegate> = {};
+  private readonly logger = new Logger(TemplateService.name);
+  private readonly templates: Record<string, HandlebarsTemplateDelegate> = {};
 
   async onModuleInit() {
     try {

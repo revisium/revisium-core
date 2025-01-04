@@ -32,7 +32,7 @@ export class JsonObjectStore implements JsonObjectSchema {
   public readonly required: string[] = [];
   public readonly properties: Record<string, JsonSchemaStore> = {};
 
-  private valuesMap: Map<string, JsonObjectValueStore[]> = new Map<
+  private readonly valuesMap: Map<string, JsonObjectValueStore[]> = new Map<
     string,
     JsonObjectValueStore[]
   >();

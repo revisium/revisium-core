@@ -6,7 +6,7 @@ import { ResolveParentByRevisionQuery } from 'src/features/revision/queries/impl
 export class ResolveParentByRevisionHandler
   implements IQueryHandler<ResolveParentByRevisionQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ revisionId }: ResolveParentByRevisionQuery) {
     return this.prisma.revision

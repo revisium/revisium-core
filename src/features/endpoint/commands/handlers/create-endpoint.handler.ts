@@ -10,8 +10,8 @@ export class CreateEndpointHandler
   implements ICommandHandler<CreateEndpointCommand>
 {
   constructor(
-    private prisma: PrismaService,
-    private endpointNotification: EndpointNotificationService,
+    private readonly prisma: PrismaService,
+    private readonly endpointNotification: EndpointNotificationService,
   ) {}
 
   async execute({ data }: CreateEndpointCommand): Promise<string> {

@@ -9,8 +9,8 @@ export class ResolveDraftRevisionHandler
   implements ICommandHandler<ResolveDraftRevisionCommand>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private revisionRequestDto: DraftRevisionRequestDto,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly revisionRequestDto: DraftRevisionRequestDto,
   ) {}
 
   public get isAlreadyResolved() {

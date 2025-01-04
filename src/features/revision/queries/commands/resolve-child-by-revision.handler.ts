@@ -6,7 +6,7 @@ import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/
 export class ResolveChildByRevisionHandler
   implements IQueryHandler<ResolveChildByRevisionQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ revisionId }: ResolveChildByRevisionQuery) {
     const revision = await this.getRevision(revisionId);

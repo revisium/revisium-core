@@ -9,8 +9,8 @@ export class ValidateNotSystemTableHandler
   implements ICommandHandler<ValidateNotSystemTableCommand>
 {
   constructor(
-    private shareTransactionalQueries: ShareTransactionalQueries,
-    private revisionRequestDto: DraftRevisionRequestDto,
+    private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly revisionRequestDto: DraftRevisionRequestDto,
   ) {}
 
   async execute({ tableId }: ValidateNotSystemTableCommand) {

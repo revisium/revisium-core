@@ -14,7 +14,7 @@ import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 export class SchemaTable {
-  private rows = new Map<string, JsonValueStore>();
+  private readonly rows = new Map<string, JsonValueStore>();
   private store: JsonSchemaStore;
 
   constructor(schema: JsonSchema) {

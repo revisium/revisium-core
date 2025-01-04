@@ -9,7 +9,7 @@ import { GetTableRowsReturnType } from 'src/features/table/queries/types';
 export class GetRowsByTableHandler
   implements IQueryHandler<GetRowsByTableQuery, GetTableRowsReturnType>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ data }: GetRowsByTableQuery) {
     return getOffsetPagination({

@@ -7,7 +7,7 @@ import { GetEndpointsByRevisionId } from 'src/features/revision/queries/types';
 export class GetEndpointsByRevisionIdHandler
   implements IQueryHandler<GetEndpointsByRevisionIdQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({
     revisionId,

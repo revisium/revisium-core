@@ -9,7 +9,7 @@ import { GetTablesReturnType } from 'src/features/table/queries/types';
 export class GetTablesHandler
   implements IQueryHandler<GetTablesQuery, GetTablesReturnType>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute({ data }: GetTablesQuery): Promise<GetTablesReturnType> {
     return getOffsetPagination({

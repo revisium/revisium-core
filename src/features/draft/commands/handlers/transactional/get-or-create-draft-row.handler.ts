@@ -14,13 +14,13 @@ export class GetOrCreateDraftRowHandler
   implements ICommandHandler<GetOrCreateDraftRowCommand>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private idService: IdService,
-    private shareTransactionalQueries: ShareTransactionalQueries,
-    private revisionRequestDto: DraftRevisionRequestDto,
-    private tableRequestDto: DraftTableRequestDto,
-    private rowRequestDto: DraftRowRequestDto,
-    private sessionChangelog: SessionChangelogService,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly idService: IdService,
+    private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly revisionRequestDto: DraftRevisionRequestDto,
+    private readonly tableRequestDto: DraftTableRequestDto,
+    private readonly rowRequestDto: DraftRowRequestDto,
+    private readonly sessionChangelog: SessionChangelogService,
   ) {}
 
   private get transaction() {

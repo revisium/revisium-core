@@ -8,7 +8,7 @@ import { FindRowInTableType } from 'src/features/share/queries/types';
 export class FindRowInTableOrThrowHandler
   implements IQueryHandler<FindRowInTableOrThrowQuery>
 {
-  constructor(private transactionService: TransactionPrismaService) {}
+  constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
     return this.transactionService.getTransaction();

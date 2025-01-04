@@ -6,7 +6,7 @@ import {
 
 @Injectable()
 export class DraftTableRequestDto {
-  constructor(private draftContext: DraftContextService) {}
+  constructor(private readonly draftContext: DraftContextService) {}
 
   public get previousVersionId(): string {
     return this.draftContext.resolveKey(

@@ -6,7 +6,7 @@ import { GetChildrenByRevisionQuery } from 'src/features/revision/queries/impl/g
 export class GetChildrenByRevisionHandler
   implements IQueryHandler<GetChildrenByRevisionQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ revisionId }: GetChildrenByRevisionQuery) {
     return this.prisma.revision

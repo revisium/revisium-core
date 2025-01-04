@@ -18,7 +18,7 @@ export class JsonSchemaValidatorService {
   private readonly metaSchemaValidate: ValidateFunction;
   private readonly jsonPatchSchemaValidate: ValidateFunction;
 
-  constructor(@Inject(CACHE_MANAGER) private cacheManager: Cache) {
+  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.ajv.addKeyword({
       keyword: CustomSchemeKeywords.Reference,
       type: 'string',

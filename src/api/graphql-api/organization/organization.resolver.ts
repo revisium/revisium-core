@@ -35,8 +35,8 @@ import {
 @Resolver()
 export class OrganizationResolver {
   constructor(
-    private queryBus: QueryBus,
-    private commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLOrganizationGuard)

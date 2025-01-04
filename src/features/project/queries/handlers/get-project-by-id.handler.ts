@@ -6,7 +6,7 @@ import { GetProjectByIdQuery } from 'src/features/project/queries/impl';
 export class GetProjectByIdHandler
   implements IQueryHandler<GetProjectByIdQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ data }: GetProjectByIdQuery) {
     return this.prisma.project.findUniqueOrThrow({

@@ -8,7 +8,7 @@ import { FindTableInRevisionType } from 'src/features/share/queries/types';
 export class FindTableInRevisionOrThrowHandler
   implements IQueryHandler<FindTableInRevisionOrThrowQuery>
 {
-  constructor(private transactionService: TransactionPrismaService) {}
+  constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
     return this.transactionService.getTransaction();

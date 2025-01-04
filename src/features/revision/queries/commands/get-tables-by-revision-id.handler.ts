@@ -10,7 +10,7 @@ export class GetTablesByRevisionIdHandler
   implements
     IQueryHandler<GetTablesByRevisionIdQuery, GetRevisionTablesReturnType>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ data }: GetTablesByRevisionIdQuery) {
     return getOffsetPagination({

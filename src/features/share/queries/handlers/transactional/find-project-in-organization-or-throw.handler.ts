@@ -8,7 +8,7 @@ import { FindProjectInOrganizationType } from 'src/features/share/queries/types'
 export class FindProjectInOrganizationOrThrowHandler
   implements IQueryHandler<FindProjectInOrganizationOrThrowQuery>
 {
-  constructor(private transactionService: TransactionPrismaService) {}
+  constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
     return this.transactionService.getTransaction();

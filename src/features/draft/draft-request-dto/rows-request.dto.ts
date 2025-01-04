@@ -12,7 +12,7 @@ interface RowDto {
 
 @Injectable()
 export class DraftRowsRequestDto {
-  constructor(private draftContext: DraftContextService) {}
+  constructor(private readonly draftContext: DraftContextService) {}
 
   public get rows(): RowDto[] {
     return this.draftContext.resolveKey(DraftContextKeys.DraftRows);

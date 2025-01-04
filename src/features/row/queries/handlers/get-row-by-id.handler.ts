@@ -7,7 +7,7 @@ import { GetRowByIdReturnType } from 'src/features/row/queries/types';
 export class GetRowByIdHandler
   implements IQueryHandler<GetRowByIdQuery, GetRowByIdReturnType>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetRowByIdQuery) {
     const row = await this.prisma.row.findUnique({

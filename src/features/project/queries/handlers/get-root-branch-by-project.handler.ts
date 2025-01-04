@@ -6,7 +6,7 @@ import { GetRootBranchByProjectQuery } from 'src/features/project/queries/impl';
 export class GetRootBranchByProjectHandler
   implements IQueryHandler<GetRootBranchByProjectQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ projectId }: GetRootBranchByProjectQuery) {
     return this.prisma.branch.findFirstOrThrow({

@@ -5,7 +5,7 @@ const DEFAULT_TIMEOUT = 10000;
 
 @Injectable()
 export class GracefulShutdownService implements BeforeApplicationShutdown {
-  private logger = new Logger(GracefulShutdownService.name);
+  private readonly logger = new Logger(GracefulShutdownService.name);
 
   constructor(private readonly configService: ConfigService) {}
 
