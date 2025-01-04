@@ -1,164 +1,195 @@
+import { BadRequestException } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
-import { createMocks } from 'src/__tests__/utils/createMocks';
-import { implementIdService } from 'src/__tests__/utils/implementIdService';
-import { CreateTableHandler } from 'src/draft/commands/handlers/create-table.handler';
-import { CreateTableInput } from 'src/graphql-api/draft/input/create-table.input';
+import { PrismaService } from 'src/database/prisma.service';
+import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
+import {
+  createMock,
+  createTestingModule,
+  prepareBranch,
+  PrepareBranchReturnType,
+} from 'src/draft/commands/handlers/__tests__/utils';
+import { CreateTableCommand } from 'src/draft/commands/impl/create-table.command';
+import { CreateTableHandlerReturnType } from 'src/draft/commands/types/create-table.handler.types';
+import { DraftTransactionalCommands } from 'src/draft/draft.transactional.commands';
+import { SystemTables } from 'src/share/system-tables.consts';
 
-xdescribe('CreateTableHandler', () => {
-  let mocks: ReturnType<typeof createMocks>;
-  let data: CreateTableInput;
+describe('CreateTableHandler', () => {
+  it('should throw an error if the tableId is shorter than 1 character', async () => {
+    const { draftRevisionId } = await prepareBranch(prismaService);
 
-  const TABLE_ID = 'tableId';
-  const BRANCH_ID = 'branchId';
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: '',
+      schema: {},
+    });
 
-  beforeEach(() => {
-    mocks = createMocks();
-
-    data = { revisionId: 'revisionId', tableId: 'table', schema: {} };
-
-    implementIdService(mocks.idService, [TABLE_ID]);
+    await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
+    await expect(runTransaction(command)).rejects.toThrow(
+      'The length of the table name must be greater than or equal to 1',
+    );
   });
 
-  describe('Input validations', () => {
-    it('should reject when tableId is shorter than 1 characters', async () => {
-      data.tableId = 't';
+  it('should throw an error if the revision does not exist', async () => {
+    await prepareBranch(prismaService);
 
-      await expect(callHandler()).rejects.toThrow(
-        'The length of the table name must be greater than or equal to 1',
-      );
+    draftTransactionalCommands.resolveDraftRevision = createMock(
+      new Error('Revision not found'),
+    );
+
+    const command = new CreateTableCommand({
+      revisionId: 'unreal',
+      tableId: 'tableId',
+      schema: {},
     });
 
-    it('should reject if the specified revision does not exist', async () => {
-      data.revisionId = 'unreal';
-
-      await expect(callHandler()).rejects.toThrow('Revision not found');
-    });
+    await expect(runTransaction(command)).rejects.toThrow('Revision not found');
   });
 
-  describe('Database interactions', () => {
-    it('should reject if the revision is not a draft revision', async () => {
-      mockGetRevision({ isDraft: false });
+  it('should throw an error if a similar table already exists', async () => {
+    const { tableId, draftRevisionId } = await prepareBranch(prismaService);
 
-      await expect(callHandler()).rejects.toThrow(
-        'The revision is not a draft',
-      );
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      schema: {},
     });
 
-    it('should reject if a similar table already exists', async () => {
-      mockGetRevision({ isDraft: true });
-      mockGetSimilarTable({});
-
-      await expect(callHandler()).rejects.toThrow(
-        'A table with this name already exists in the revision',
-      );
-    });
-
-    it('should return table ID and mark branch as touched when conditions are met', async () => {
-      mockGetRevision({ isDraft: true });
-      mockCreateTable({ id: TABLE_ID });
-      mockGetBranch({ id: BRANCH_ID });
-
-      await expect(callHandler()).resolves.toBe(TABLE_ID);
-
-      checkTouchBranch();
-      checkCreateTable();
-    });
-
-    it('should return table ID without touching the branch if it has already touched', async () => {
-      mockGetRevision({ isDraft: true });
-      mockCreateTable({ id: TABLE_ID });
-
-      await expect(callHandler()).resolves.toBe(TABLE_ID);
-
-      checkNotTouchBranch();
-      checkCreateTable();
-    });
+    await expect(runTransaction(command)).rejects.toThrow(
+      'A table with this name already exists in the revision',
+    );
   });
 
-  // Mock Functions for simulating database and service interactions
-  function mockGetRevision(
-    value: Partial<Prisma.RevisionGetPayload<Prisma.RevisionDefaultArgs>>,
-  ) {
-    const { prisma } = mocks;
+  it('should throw an error if the schema is invalid', async () => {
+    const { draftRevisionId } = await prepareBranch(prismaService);
 
-    prisma.revision.findUnique.mockResolvedValue(
-      value as Prisma.RevisionGetPayload<Prisma.RevisionDefaultArgs>,
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: 'tableId',
+      schema: { type: 'invalidType' },
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      'this type is not allowed',
     );
-  }
+  });
 
-  function mockGetSimilarTable(
-    value: Partial<Prisma.TableGetPayload<Prisma.TableDefaultArgs>>,
+  it('should create a new table if conditions are met', async () => {
+    const ids = await prepareBranch(prismaService);
+    const { draftRevisionId, branchId } = ids;
+
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: 'config',
+      schema: { type: 'string', default: '' },
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.branchId).toBe(branchId);
+    expect(result.revisionId).toBe(draftRevisionId);
+    expect(result.tableVersionId).toBeTruthy();
+
+    await tableCheck(ids, command.data.tableId, result.tableVersionId);
+    await schemaCheck(ids, command.data.tableId, command.data.schema);
+    await changelogCheck(ids, command.data.tableId);
+  });
+
+  async function tableCheck(
+    ids: PrepareBranchReturnType,
+    tableId: string,
+    tableVersionId: string,
   ) {
-    const { prisma } = mocks;
+    const { draftRevisionId } = ids;
 
-    prisma.table.findFirst.mockResolvedValue(
-      value as Prisma.TableGetPayload<Prisma.TableDefaultArgs>,
-    );
-  }
-
-  function mockCreateTable(
-    value: Partial<Prisma.TableGetPayload<Prisma.TableCreateArgs>>,
-  ) {
-    const { prisma } = mocks;
-
-    prisma.table.create.mockResolvedValue(
-      value as Prisma.TableGetPayload<Prisma.TableCreateArgs>,
-    );
-  }
-
-  function mockGetBranch(
-    value: Partial<Prisma.BranchGetPayload<Prisma.BranchFindFirstArgs>>,
-  ) {
-    const { prisma } = mocks;
-
-    prisma.branch.findFirst.mockResolvedValue(
-      value as Prisma.BranchGetPayload<Prisma.BranchFindFirstArgs>,
-    );
-  }
-
-  // Utility Functions for test verification and setup
-  function checkCreateTable() {
-    const { prisma } = mocks;
-    expect(prisma.table.create).nthCalledWith(1, {
-      data: {
-        id: TABLE_ID,
-        name: data.tableId,
-        readonly: false,
+    const table = await prismaService.table.findFirstOrThrow({
+      where: {
+        id: tableId,
         revisions: {
-          connect: {
-            id: data.revisionId,
+          some: {
+            id: draftRevisionId,
           },
         },
       },
-      select: {
-        id: true,
+    });
+    expect(table.id).toBe(tableId);
+    expect(table.versionId).toBe(tableVersionId);
+    expect(table.readonly).toBe(false);
+  }
+
+  async function schemaCheck(
+    ids: PrepareBranchReturnType,
+    tableId: string,
+    schema: Prisma.InputJsonValue,
+  ) {
+    const { draftRevisionId } = ids;
+
+    const schemaRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: tableId,
+        tables: {
+          some: {
+            id: SystemTables.Schema,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+    expect(schemaRow.id).toBe(tableId);
+    expect(schemaRow.data).toStrictEqual(schema);
+  }
+
+  async function changelogCheck(ids: PrepareBranchReturnType, tableId: string) {
+    const { draftChangelogId } = ids;
+
+    const changelog = await prismaService.changelog.findFirstOrThrow({
+      where: {
+        id: draftChangelogId,
+      },
+    });
+    expect(changelog.hasChanges).toBe(true);
+    expect(changelog.tableInsertsCount).toBe(1);
+    expect(changelog.tableUpdatesCount).toBe(1);
+    expect(changelog.tableInserts).toStrictEqual({
+      [tableId]: '',
+    });
+    expect(changelog.tableUpdates).toStrictEqual({
+      [SystemTables.Schema]: '',
+    });
+    expect(changelog.rowInsertsCount).toStrictEqual(1);
+    expect(changelog.rowInserts).toStrictEqual({
+      [SystemTables.Schema]: {
+        rows: {
+          [tableId]: '',
+        },
       },
     });
   }
 
-  function checkTouchBranch() {
-    const { prisma } = mocks;
-    expect(prisma.branch.update).nthCalledWith(1, {
-      where: { id: BRANCH_ID },
-      data: { touched: true },
-    });
+  function runTransaction(
+    command: CreateTableCommand,
+  ): Promise<CreateTableHandlerReturnType> {
+    return transactionService.run(async () => commandBus.execute(command));
   }
 
-  function checkNotTouchBranch() {
-    const { prisma } = mocks;
-    expect(prisma.branch.update).toHaveBeenCalledTimes(0);
-  }
+  let prismaService: PrismaService;
+  let commandBus: CommandBus;
+  let transactionService: TransactionPrismaService;
+  let draftTransactionalCommands: DraftTransactionalCommands;
 
-  async function callHandler() {
-    const { transactionPrisma, idService, shareTransactionalCommands } = mocks;
+  beforeEach(async () => {
+    const result = await createTestingModule();
+    prismaService = result.prismaService;
+    commandBus = result.commandBus;
+    transactionService = result.transactionService;
+    draftTransactionalCommands = result.draftTransactionalCommands;
+  });
 
-    // @ts-expect-error
-    const handler = new CreateTableHandler(
-      transactionPrisma,
-      shareTransactionalCommands,
-      idService,
-    );
-
-    return handler.execute({ data });
-  }
+  afterEach(async () => {
+    await prismaService.$disconnect();
+  });
 });

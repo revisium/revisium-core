@@ -11,7 +11,6 @@ import {
 import { CreateRevisionCommand } from 'src/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/draft/commands/types/create-revision.handler.types';
 import { ShareTransactionalQueries } from 'src/share/share.transactional.queries';
-import { CreateRevisionHandler } from '../create-revision.handler';
 
 describe('CreateRevisionHandler', () => {
   it('should throw an error if there are no changes', async () => {
@@ -318,7 +317,7 @@ describe('CreateRevisionHandler', () => {
   }
 
   beforeEach(async () => {
-    const result = await createTestingModule(CreateRevisionHandler);
+    const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;

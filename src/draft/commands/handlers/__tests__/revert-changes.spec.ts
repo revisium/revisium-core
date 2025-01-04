@@ -11,7 +11,6 @@ import {
 import { RevertChangesCommand } from 'src/draft/commands/impl/revert-changes.command';
 import { RevertChangesHandlerReturnType } from 'src/draft/commands/types/revert-changes.handler.types';
 import { ShareTransactionalQueries } from 'src/share/share.transactional.queries';
-import { RevertChangesHandler } from '../revert-changes.handler';
 
 describe('RevertChangesHandler', () => {
   it('should throw an error if there are no changes', async () => {
@@ -159,7 +158,7 @@ describe('RevertChangesHandler', () => {
   }
 
   beforeEach(async () => {
-    const result = await createTestingModule(RevertChangesHandler);
+    const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
