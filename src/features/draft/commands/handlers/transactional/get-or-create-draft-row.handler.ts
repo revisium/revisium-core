@@ -39,7 +39,8 @@ export class GetOrCreateDraftRowHandler
     this.rowRequestDto.previousVersionId = previousRow.versionId;
 
     if (!previousRow.readonly) {
-      return (this.rowRequestDto.versionId = previousRow.versionId);
+      this.rowRequestDto.versionId = previousRow.versionId;
+      return this.rowRequestDto.versionId;
     }
 
     await this.createDraftRow(previousRow.versionId);

@@ -121,7 +121,7 @@ export class CreateProjectHandler
         branches: {
           create: {
             id: this.context.branchId,
-            name: this.context.branchName || DEFAULT_BRANCH_NAME,
+            name: this.context.branchName ?? DEFAULT_BRANCH_NAME,
             isRoot: true,
           },
         },

@@ -105,7 +105,7 @@ export class ResolveRowReferencesToHandler
   private async getCount(
     foundReference: GetReferencesFromValueType | undefined,
   ) {
-    return foundReference?.rowIds.length || 0;
+    return foundReference?.rowIds.length ?? 0;
   }
 
   private getReferences(

@@ -12,23 +12,23 @@ export enum UserRole {
 }
 
 export enum UserSystemRoles {
-  systemAdmin = UserRole.systemAdmin,
-  systemFullApiRead = UserRole.systemFullApiRead,
-  systemUser = UserRole.systemUser,
+  systemAdmin = 'systemAdmin',
+  systemFullApiRead = 'systemFullApiRead',
+  systemUser = 'systemUser',
 }
 
 export enum UserOrganizationRoles {
-  organizationOwner = UserRole.organizationOwner,
-  organizationAdmin = UserRole.organizationAdmin,
-  developer = UserRole.developer,
-  editor = UserRole.editor,
-  reader = UserRole.reader,
+  organizationOwner = 'organizationOwner',
+  organizationAdmin = 'organizationAdmin',
+  developer = 'developer',
+  editor = 'editor',
+  reader = 'reader',
 }
 
 export enum UserProjectRoles {
-  developer = UserRole.developer,
-  editor = UserRole.editor,
-  reader = UserRole.reader,
+  developer = 'developer',
+  editor = 'editor',
+  reader = 'reader',
 }
 
 const systemRoles = Object.values(UserSystemRoles).map((role) =>

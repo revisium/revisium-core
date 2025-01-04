@@ -24,21 +24,25 @@ export class SchemaTable {
   public applyPatches(patches: JsonPatch[]): void {
     patches.forEach((patch) => {
       switch (patch.op) {
-        case 'replace':
+        case 'replace': {
           const nextStore = applyReplacePatch(this.store, patch);
           if (nextStore !== this.store) {
             this.migrateRows(nextStore);
           }
           break;
-        case 'remove':
+        }
+        case 'remove': {
           applyRemovePatch(this.store, patch);
           break;
-        case 'add':
+        }
+        case 'add': {
           applyAddPatch(this.store, patch);
           break;
-        case 'move':
+        }
+        case 'move': {
           applyMovePatch(this.store, patch);
           break;
+        }
         default:
           throw new Error(`Unsupported patch operation`);
       }
