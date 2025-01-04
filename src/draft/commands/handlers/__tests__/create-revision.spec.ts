@@ -1,14 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/database/prisma.service';
 import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
 import {
+  createMock,
   createTestingModule,
   prepareBranch,
   PrepareBranchReturnType,
 } from 'src/draft/commands/handlers/__tests__/utils';
 import { CreateRevisionCommand } from 'src/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/draft/commands/types/create-revision.handler.types';
+import { ShareTransactionalQueries } from 'src/share/share.transactional.queries';
 import { CreateRevisionHandler } from '../create-revision.handler';
 
 describe('CreateRevisionHandler', () => {
@@ -29,6 +32,40 @@ describe('CreateRevisionHandler', () => {
     );
   });
 
+  it('should throw an error if the project does not exist in the organization', async () => {
+    const { organizationId, projectName, branchName } =
+      await prepareBranch(prismaService);
+
+    shareTransactionalQueries.findProjectInOrganizationOrThrow = createMock(
+      new Error('Project not found'),
+    );
+
+    const command = new CreateRevisionCommand({
+      organizationId,
+      projectName,
+      branchName,
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow('Project not found');
+  });
+
+  it('should throw an error if the branch does not exist in the project', async () => {
+    const { organizationId, projectName, branchName } =
+      await prepareBranch(prismaService);
+
+    shareTransactionalQueries.findBranchInProjectOrThrow = createMock(
+      new Error('Branch not found'),
+    );
+
+    const command = new CreateRevisionCommand({
+      organizationId,
+      projectName,
+      branchName,
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow('Branch not found');
+  });
+
   it('should create a new draft revision if there are changes', async () => {
     const ids = await prepareBranch(prismaService);
     const {
@@ -38,6 +75,8 @@ describe('CreateRevisionHandler', () => {
       headRevisionId,
       draftChangelogId,
       draftRevisionId,
+      headEndpointId,
+      draftEndpointId,
     } = ids;
     await prismaService.changelog.update({
       where: {
@@ -58,6 +97,8 @@ describe('CreateRevisionHandler', () => {
     });
     const result = await runTransaction(command);
 
+    expect(result.headEndpoints).toEqual([headEndpointId]);
+    expect(result.draftEndpoints).toEqual([draftEndpointId]);
     await checkRevisions({
       headRevisionId,
       draftRevisionId,
@@ -255,16 +296,22 @@ describe('CreateRevisionHandler', () => {
     // next draft
     const nextDraftRevision = await prismaService.revision.findFirstOrThrow({
       where: { parentId: draftRevisionId },
+      include: {
+        changelog: true,
+      },
     });
     expect(nextDraftRevisionId).toEqual(nextDraftRevision.id);
     expect(nextDraftRevision.isHead).toBeFalsy();
     expect(nextDraftRevision.isDraft).toBeTruthy();
     expect(nextDraftRevision.parentId).toEqual(draftRevisionId);
+    expect(nextDraftRevision.changelog.hasChanges).toEqual(false);
   }
 
+  let module: TestingModule;
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let shareTransactionalQueries: ShareTransactionalQueries;
 
   function runTransaction(
     command: CreateRevisionCommand,
@@ -274,8 +321,14 @@ describe('CreateRevisionHandler', () => {
 
   beforeEach(async () => {
     const result = await createTestingModule(CreateRevisionHandler);
+    module = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    shareTransactionalQueries = result.shareTransactionalQueries;
+  });
+
+  afterEach(async () => {
+    prismaService.$disconnect();
   });
 });

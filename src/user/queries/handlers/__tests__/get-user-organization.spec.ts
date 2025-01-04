@@ -31,21 +31,6 @@ describe('GetUserOrganizationHandler', () => {
     expect(result).toEqual(organizationId);
   });
 
-  let queryBus: QueryBus;
-  let prismaService: PrismaService;
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule],
-      providers: [GetUserOrganizationHandler, PrismaService],
-    }).compile();
-
-    prismaService = module.get(PrismaService);
-    queryBus = module.get(QueryBus);
-
-    queryBus.register([GetUserOrganizationHandler as QueryHandlerType]);
-  });
-
   const createQuery = (
     data: Partial<GetUserOrganizationQuery['data']> = {},
   ) => {
@@ -84,4 +69,23 @@ describe('GetUserOrganizationHandler', () => {
       data,
     });
   };
+
+  let queryBus: QueryBus;
+  let prismaService: PrismaService;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      imports: [CqrsModule],
+      providers: [GetUserOrganizationHandler, PrismaService],
+    }).compile();
+
+    prismaService = module.get(PrismaService);
+    queryBus = module.get(QueryBus);
+
+    queryBus.register([GetUserOrganizationHandler as QueryHandlerType]);
+  });
+
+  afterEach(async () => {
+    prismaService.$disconnect();
+  });
 });

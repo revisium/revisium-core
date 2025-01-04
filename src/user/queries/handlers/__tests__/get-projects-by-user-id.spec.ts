@@ -67,6 +67,16 @@ describe('GetProjectsByUserIdHandler', () => {
     expect(result.pageInfo.startCursor).toEqual('1');
   });
 
+  const createProject = async (organizationId: string, projectId: string) => {
+    return prismaService.project.create({
+      data: {
+        id: projectId,
+        organizationId,
+        name: `name=${projectId}`,
+      },
+    });
+  };
+
   let prismaService: PrismaService;
   let queryBus: QueryBus;
 
@@ -165,13 +175,7 @@ describe('GetProjectsByUserIdHandler', () => {
     });
   };
 
-  const createProject = async (organizationId: string, projectId: string) => {
-    return prismaService.project.create({
-      data: {
-        id: projectId,
-        organizationId,
-        name: `name=${projectId}`,
-      },
-    });
-  };
+  afterEach(async () => {
+    prismaService.$disconnect();
+  });
 });

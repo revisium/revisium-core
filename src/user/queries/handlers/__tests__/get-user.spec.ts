@@ -33,6 +33,13 @@ describe('GetUserHandler', () => {
     await expect(queryBus.execute(query)).rejects.toThrow('Not found user');
   });
 
+  const createQuery = (data: Partial<GetUserQuery['data']> = {}) => {
+    return new GetUserQuery({
+      userId: 'userId',
+      ...data,
+    });
+  };
+
   let queryBus: QueryBus;
   let prismaService: PrismaService;
 
@@ -48,10 +55,7 @@ describe('GetUserHandler', () => {
     queryBus.register([GetUserHandler]);
   });
 
-  const createQuery = (data: Partial<GetUserQuery['data']> = {}) => {
-    return new GetUserQuery({
-      userId: 'userId',
-      ...data,
-    });
-  };
+  afterEach(async () => {
+    prismaService.$disconnect();
+  });
 });

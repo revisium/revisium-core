@@ -86,6 +86,14 @@ describe('SetUsernameHandler', () => {
     });
   });
 
+  const createCommand = (data: Partial<SetUsernameCommand['data']> = {}) => {
+    return new SetUsernameCommand({
+      userId: 'userId',
+      username: 'newUsername',
+      ...data,
+    });
+  };
+
   let handler: SetUsernameHandler;
   let prismaService: PrismaService;
 
@@ -119,12 +127,4 @@ describe('SetUsernameHandler', () => {
     handler = module.get<SetUsernameHandler>(SetUsernameHandler);
     prismaService = module.get<PrismaService>(PrismaService);
   });
-
-  const createCommand = (data: Partial<SetUsernameCommand['data']> = {}) => {
-    return new SetUsernameCommand({
-      userId: 'userId',
-      username: 'newUsername',
-      ...data,
-    });
-  };
 });

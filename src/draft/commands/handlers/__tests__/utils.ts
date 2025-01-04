@@ -20,12 +20,7 @@ export const createTestingModule = async (
 ) => {
   const module: TestingModule = await Test.createTestingModule({
     imports: [CqrsModule, ShareModule, DatabaseModule],
-    providers: [
-      ShareTransactionalCommands,
-      ShareTransactionalQueries,
-      DraftContextService,
-      ...commands,
-    ],
+    providers: [DraftContextService, ...commands],
   }).compile();
 
   const prismaService = module.get(PrismaService);
@@ -42,11 +37,16 @@ export const createTestingModule = async (
   ]);
 
   const transactionService = module.get(TransactionPrismaService);
+  const shareTransactionalQueries = module.get(ShareTransactionalQueries);
+  const shareTransactionalCommands = module.get(ShareTransactionalCommands);
 
   return {
+    module,
     prismaService,
     commandBus,
     transactionService,
+    shareTransactionalQueries,
+    shareTransactionalCommands,
   };
 };
 
@@ -221,3 +221,8 @@ export const prepareBranch = async (
     draftEndpointId,
   };
 };
+
+export const createMock = <T>(mockResolvedValue: T) =>
+  mockResolvedValue instanceof Error
+    ? jest.fn().mockRejectedValue(mockResolvedValue)
+    : jest.fn().mockResolvedValue(mockResolvedValue);
