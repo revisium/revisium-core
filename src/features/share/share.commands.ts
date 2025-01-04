@@ -4,7 +4,7 @@ import { NotifyEndpointsCommand } from 'src/features/share/commands/impl';
 
 @Injectable()
 export class ShareCommands {
-  constructor(private commandBus: CommandBus) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   public notifyEndpoints(data: { revisionId: string }) {
     return this.commandBus.execute<NotifyEndpointsCommand, void>(

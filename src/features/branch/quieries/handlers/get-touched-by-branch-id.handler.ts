@@ -9,8 +9,8 @@ export class GetTouchedByBranchIdHandler
   implements IQueryHandler<GetTouchedByBranchIdQuery>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private shareTransactionQueries: ShareTransactionalQueries,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly shareTransactionQueries: ShareTransactionalQueries,
   ) {}
 
   private get transaction() {

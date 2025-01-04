@@ -10,8 +10,8 @@ export class GetRowHandler
   implements IQueryHandler<GetRowQuery, GetRowReturnType>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly shareTransactionalQueries: ShareTransactionalQueries,
   ) {}
 
   private get transaction() {

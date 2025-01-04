@@ -29,8 +29,8 @@ import { EndpointModel } from 'src/api/graphql-api/endpoint/model';
 @Resolver(() => EndpointModel)
 export class EndpointResolver {
   constructor(
-    private queryBus: QueryBus,
-    private commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @ResolveField()

@@ -6,7 +6,7 @@ import {
 
 @Injectable()
 export class DraftRevisionRequestDto {
-  constructor(private draftContext: DraftContextService) {}
+  constructor(private readonly draftContext: DraftContextService) {}
 
   public get branchId(): string {
     return this.draftContext.resolveKey(DraftContextKeys.BranchId);

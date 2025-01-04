@@ -10,8 +10,8 @@ export class CreateBranchByRevisionIdHandler
   implements ICommandHandler<CreateBranchByRevisionIdCommand>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private idService: IdService,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly idService: IdService,
   ) {}
 
   private get transaction() {

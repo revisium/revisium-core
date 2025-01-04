@@ -12,7 +12,7 @@ import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @Injectable()
 export class DraftTransactionalCommands {
-  constructor(private commandBus: CommandBus) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   public async getOrCreateDraftTable(tableId: string) {
     return this.commandBus.execute<GetOrCreateDraftTableCommand, string>(

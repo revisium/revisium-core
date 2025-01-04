@@ -6,7 +6,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class ResolveParentBranchByBranchHandler
   implements IQueryHandler<ResolveParentBranchByBranchQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: ResolveParentBranchByBranchQuery): Promise<
     | {

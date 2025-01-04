@@ -24,7 +24,7 @@ export class JsonArrayStore implements JsonArraySchema {
   public parent: JsonSchemaStore | null = null;
   public default: JsonArray[] = [];
 
-  private valuesMap: Map<string, JsonArrayValueStore[]> = new Map<
+  private readonly valuesMap: Map<string, JsonArrayValueStore[]> = new Map<
     string,
     JsonArrayValueStore[]
   >();

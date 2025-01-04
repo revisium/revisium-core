@@ -15,7 +15,7 @@ export class JsonNumberStore extends EventEmitter implements JsonNumberSchema {
 
   public default: number = 0;
 
-  private valuesMap: Map<string, JsonNumberValueStore[]> = new Map<
+  private readonly valuesMap: Map<string, JsonNumberValueStore[]> = new Map<
     string,
     JsonNumberValueStore[]
   >();

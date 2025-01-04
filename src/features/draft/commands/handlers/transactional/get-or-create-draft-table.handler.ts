@@ -12,12 +12,12 @@ export class GetOrCreateDraftTableHandler
   implements ICommandHandler<GetOrCreateDraftTableCommand>
 {
   constructor(
-    private transactionService: TransactionPrismaService,
-    private revisionRequestDto: DraftRevisionRequestDto,
-    private tableRequestDto: DraftTableRequestDto,
-    private shareTransactionalQueries: ShareTransactionalQueries,
-    private idService: IdService,
-    private sessionChangelog: SessionChangelogService,
+    private readonly transactionService: TransactionPrismaService,
+    private readonly revisionRequestDto: DraftRevisionRequestDto,
+    private readonly tableRequestDto: DraftTableRequestDto,
+    private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly idService: IdService,
+    private readonly sessionChangelog: SessionChangelogService,
   ) {}
 
   private get transaction() {

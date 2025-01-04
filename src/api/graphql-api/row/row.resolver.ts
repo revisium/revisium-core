@@ -37,7 +37,7 @@ import { GetRowsReturnType } from 'src/features/row/queries/types/get-rows.types
 })
 @Resolver(() => RowModel)
 export class RowResolver {
-  constructor(private queryBus: QueryBus) {}
+  constructor(private readonly queryBus: QueryBus) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RowModel, { nullable: true })

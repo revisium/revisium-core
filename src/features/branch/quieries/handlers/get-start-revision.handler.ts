@@ -7,7 +7,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class GetStartRevisionHandler
   implements IQueryHandler<GetStartRevisionQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async execute({
     branchId,

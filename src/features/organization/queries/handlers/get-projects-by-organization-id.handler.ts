@@ -15,7 +15,7 @@ export class GetProjectsByOrganizationIdHandler
       GetProjectsByOrganizationIdQueryReturnType
     >
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetProjectsByOrganizationIdQuery) {
     return getOffsetPagination({

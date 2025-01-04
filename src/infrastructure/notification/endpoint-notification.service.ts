@@ -6,7 +6,9 @@ import { EndpointType } from '@prisma/client';
 export class EndpointNotificationService {
   private readonly logger = new Logger(EndpointNotificationService.name);
 
-  constructor(@Inject('ENDPOINT_MICROSERVICE') private client: ClientProxy) {}
+  constructor(
+    @Inject('ENDPOINT_MICROSERVICE') private readonly client: ClientProxy,
+  ) {}
 
   public create(endpointId: string) {
     this.logger.log(`endpoint_created id=${endpointId}`);

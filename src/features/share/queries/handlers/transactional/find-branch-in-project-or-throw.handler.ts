@@ -8,7 +8,7 @@ import { FindBranchInProjectType } from 'src/features/share/queries/types';
 export class FindBranchInProjectOrThrowHandler
   implements IQueryHandler<FindBranchInProjectOrThrowQuery>
 {
-  constructor(private transactionService: TransactionPrismaService) {}
+  constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
     return this.transactionService.getTransaction();

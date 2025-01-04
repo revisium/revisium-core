@@ -4,7 +4,7 @@ import { MoveEndpointsCommand } from 'src/features/share/commands/impl';
 
 @Injectable()
 export class ShareTransactionalCommands {
-  constructor(private commandBus: CommandBus) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   public moveEndpoints(data: { fromRevisionId: string; toRevisionId: string }) {
     return this.commandBus.execute<MoveEndpointsCommand, string[]>(

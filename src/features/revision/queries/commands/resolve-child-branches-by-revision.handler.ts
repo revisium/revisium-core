@@ -6,7 +6,7 @@ import { ResolveChildBranchesByRevisionQuery } from 'src/features/revision/queri
 export class ResolveChildBranchesByRevisionHandler
   implements IQueryHandler<ResolveChildBranchesByRevisionQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({
     revisionId,

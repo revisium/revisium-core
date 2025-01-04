@@ -7,7 +7,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 @Injectable()
 export class ReferencesService {
-  constructor(private transactionService: TransactionPrismaService) {}
+  constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
     return this.transactionService.getTransaction();

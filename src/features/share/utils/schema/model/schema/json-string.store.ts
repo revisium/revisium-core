@@ -15,7 +15,7 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
 
   public default: string = '';
   public reference?: string;
-  private valuesMap: Map<string, JsonStringValueStore[]> = new Map<
+  private readonly valuesMap: Map<string, JsonStringValueStore[]> = new Map<
     string,
     JsonStringValueStore[]
   >();

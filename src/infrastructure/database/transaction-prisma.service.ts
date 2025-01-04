@@ -6,11 +6,11 @@ import { TransactionPrismaClient } from 'src/features/share/types';
 
 @Injectable()
 export class TransactionPrismaService {
-  private asyncLocalStorage = new AsyncLocalStorage<{
+  private readonly asyncLocalStorage = new AsyncLocalStorage<{
     $prisma: TransactionPrismaClient;
   }>();
 
-  constructor(private prismaService: PrismaService) {}
+  constructor(private readonly prismaService: PrismaService) {}
 
   public getTransaction() {
     const transactionInCurrentContext = this.asyncLocalStorage.getStore();

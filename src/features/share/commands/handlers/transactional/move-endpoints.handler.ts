@@ -7,7 +7,7 @@ import { MoveEndpointsCommand } from 'src/features/share/commands/impl';
 export class MoveEndpointsHandler
   implements ICommandHandler<MoveEndpointsCommand>
 {
-  constructor(private transactionService: TransactionPrismaService) {}
+  constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
     return this.transactionService.getTransaction();

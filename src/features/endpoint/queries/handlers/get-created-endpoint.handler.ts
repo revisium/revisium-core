@@ -6,7 +6,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class GetCreatedEndpointHandler
   implements IQueryHandler<GetCreatedEndpointQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ data }: GetCreatedEndpointQuery) {
     return this.prisma.endpoint.findUniqueOrThrow({ where: { id: data.id } });

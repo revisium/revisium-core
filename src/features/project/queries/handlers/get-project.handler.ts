@@ -7,8 +7,8 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 @QueryHandler(GetProjectQuery)
 export class GetProjectHandler implements IQueryHandler<GetProjectQuery> {
   constructor(
-    private transactionPrisma: TransactionPrismaService,
-    private shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly transactionPrisma: TransactionPrismaService,
+    private readonly shareTransactionalQueries: ShareTransactionalQueries,
   ) {}
 
   private get transaction() {

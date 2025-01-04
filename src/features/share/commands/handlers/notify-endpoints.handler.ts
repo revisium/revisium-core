@@ -8,8 +8,8 @@ export class NotifyEndpointsHandler
   implements ICommandHandler<NotifyEndpointsCommand>
 {
   constructor(
-    private prisma: PrismaService,
-    private endpointNotification: EndpointNotificationService,
+    private readonly prisma: PrismaService,
+    private readonly endpointNotification: EndpointNotificationService,
   ) {}
 
   async execute({ data }: NotifyEndpointsCommand): Promise<void> {

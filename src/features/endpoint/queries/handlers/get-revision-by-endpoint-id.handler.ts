@@ -6,7 +6,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class GetRevisionByEndpointIdHandler
   implements IQueryHandler<GetRevisionByEndpointIdQuery>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ endpointId }: GetRevisionByEndpointIdQuery) {
     return this.prisma.endpoint

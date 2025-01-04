@@ -12,7 +12,7 @@ export class GetUsersProjectHandler
   implements
     IQueryHandler<GetUsersProjectQuery, GetUsersProjectQueryReturnType>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetUsersProjectQuery) {
     return getOffsetPagination({

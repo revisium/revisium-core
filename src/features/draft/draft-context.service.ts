@@ -27,7 +27,8 @@ type DraftContextType = Partial<Record<DraftContextKeys, unknown>>;
 
 @Injectable()
 export class DraftContextService {
-  private asyncLocalStorage = new AsyncLocalStorage<DraftContextType>();
+  private readonly asyncLocalStorage =
+    new AsyncLocalStorage<DraftContextType>();
 
   constructor() {}
 

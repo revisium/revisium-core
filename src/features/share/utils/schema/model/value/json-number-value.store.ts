@@ -7,7 +7,7 @@ export class JsonNumberValueStore {
   public readonly index: number;
 
   constructor(
-    private schema: JsonNumberStore,
+    private readonly schema: JsonNumberStore,
     public readonly rowId: string,
     public value: number | null = null,
   ) {

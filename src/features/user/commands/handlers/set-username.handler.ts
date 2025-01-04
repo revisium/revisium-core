@@ -14,7 +14,7 @@ export class SetUsernameHandler
 {
   constructor(
     private readonly prisma: PrismaService,
-    private idService: IdService,
+    private readonly idService: IdService,
   ) {}
 
   async execute({ data }: SetUsernameCommand) {

@@ -43,8 +43,8 @@ import {
 @Resolver(() => BranchModel)
 export class BranchResolver {
   constructor(
-    private queryBus: QueryBus,
-    private commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+    private readonly commandBus: CommandBus,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)

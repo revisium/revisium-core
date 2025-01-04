@@ -7,7 +7,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class GetBranchByIdHandler
   implements IQueryHandler<GetBranchByIdQuery, GetBranchByIdReturnType>
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   execute({ branchId }: GetBranchByIdQuery) {
     return this.prisma.branch.findUniqueOrThrow({ where: { id: branchId } });

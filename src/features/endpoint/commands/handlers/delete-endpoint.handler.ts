@@ -8,8 +8,8 @@ export class DeleteEndpointHandler
   implements ICommandHandler<DeleteEndpointCommand>
 {
   constructor(
-    private prisma: PrismaService,
-    private endpointNotification: EndpointNotificationService,
+    private readonly prisma: PrismaService,
+    private readonly endpointNotification: EndpointNotificationService,
   ) {}
 
   async execute({ data }: DeleteEndpointCommand): Promise<boolean> {

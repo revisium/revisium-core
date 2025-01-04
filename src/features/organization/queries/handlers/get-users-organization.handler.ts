@@ -15,7 +15,7 @@ export class GetUsersOrganizationHandler
       GetUsersOrganizationQueryReturnType
     >
 {
-  constructor(private prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetUsersOrganizationQuery) {
     return getOffsetPagination({

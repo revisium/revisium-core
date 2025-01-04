@@ -8,7 +8,7 @@ import { CleanTablesCommand } from 'src/infrastructure/clean/commands/impl/clean
 export class CleanService {
   private readonly logger = new Logger(CleanService.name);
 
-  constructor(private commandBus: CommandBus) {}
+  constructor(private readonly commandBus: CommandBus) {}
 
   @Cron(CronExpression.EVERY_MINUTE)
   async cleanTablesAndRows() {
