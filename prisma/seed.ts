@@ -5,9 +5,9 @@ import { nanoid } from 'nanoid';
 import * as process from 'node:process';
 import { join } from 'path';
 import { PrismaClient, RoleLevel } from '@prisma/client';
-import { UserRole } from '../src/auth/consts';
+import { UserRole } from '../src/features/auth/consts';
 import { Permission, Role } from './seed/__generated__/seed';
-import { SystemOrganizations } from '../src/share/system-organizations.consts';
+import { SystemOrganizations } from '../src/features/share/system-organizations.consts';
 
 const prisma = new PrismaClient();
 

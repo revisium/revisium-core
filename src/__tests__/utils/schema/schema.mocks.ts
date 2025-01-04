@@ -3,7 +3,7 @@ import {
   JsonPatchMove,
   JsonPatchRemove,
   JsonPatchReplace,
-} from 'src/share/utils/schema/types/json-patch.types';
+} from 'src/features/share/utils/schema/types/json-patch.types';
 import {
   JsonArraySchema,
   JsonBooleanSchema,
@@ -12,7 +12,7 @@ import {
   JsonSchema,
   JsonSchemaTypeName,
   JsonStringSchema,
-} from 'src/share/utils/schema/types/schema.types';
+} from 'src/features/share/utils/schema/types/schema.types';
 
 export const getReplacePatch = ({
   path,
