@@ -125,9 +125,10 @@
       "^.+\\.(t|j)s$": "ts-jest"
     },
     "collectCoverageFrom": [
-      "**/*.(t|j)s"
+      "<rootDir>/src/**/*.(t|j)s",
+      "!<rootDir>/src/**/__tests__/**",
+      "!<rootDir>/src/**/index.ts"
     ],
-    "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
