@@ -12,12 +12,8 @@ import { DraftTransactionalCommands } from 'src/draft/draft.transactional.comman
 import { JsonSchemaValidatorService } from 'src/draft/json-schema-validator.service';
 import { SessionChangelogService } from 'src/draft/session-changelog.service';
 import { NotificationModule } from 'src/notification/notification.module';
-import { MoveEndpointsHandler } from 'src/share/commands/handlers/transactional/move-endpoints.handler';
-import { FindBranchInProjectOrThrowHandler } from 'src/share/queries/handlers/transactional/find-branch-in-project-or-throw.handler';
-import { FindDraftRevisionInBranchOrThrowHandler } from 'src/share/queries/handlers/transactional/find-draft-revision-in-branch-or-throw.handler';
-import { FindHeadRevisionInBranchOrThrowHandler } from 'src/share/queries/handlers/transactional/find-head-revision-in-branch-or-throw.handler';
-import { FindProjectInOrganizationOrThrowHandler } from 'src/share/queries/handlers/transactional/find-project-in-organization-or-throw.handler';
-import { FindTableInRevisionOrThrowHandler } from 'src/share/queries/handlers/transactional/find-table-in-revision-or-throw.handler';
+import { SHARE_COMMANDS_HANDLERS } from 'src/share/commands/handlers';
+import { SHARE_QUERIES_HANDLERS } from 'src/share/queries/handlers';
 import { ShareModule } from 'src/share/share.module';
 import { ShareTransactionalCommands } from 'src/share/share.transactional.commands';
 import { ShareTransactionalQueries } from 'src/share/share.transactional.queries';
@@ -57,16 +53,10 @@ export const createTestingModule = async () => {
   const prismaService = module.get(PrismaService);
 
   const commandBus = module.get(CommandBus);
-  commandBus.register([...TABLE_COMMANDS_HANDLERS, MoveEndpointsHandler]);
+  commandBus.register([...TABLE_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
-  queryBus.register([
-    FindProjectInOrganizationOrThrowHandler,
-    FindBranchInProjectOrThrowHandler,
-    FindHeadRevisionInBranchOrThrowHandler,
-    FindDraftRevisionInBranchOrThrowHandler,
-    FindTableInRevisionOrThrowHandler,
-  ]);
+  queryBus.register([...SHARE_QUERIES_HANDLERS]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);
