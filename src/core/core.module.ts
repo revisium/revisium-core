@@ -2,26 +2,26 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { AuthModule } from 'src/auth/auth.module';
+import { AuthModule } from 'src/features/auth/auth.module';
 
-import { BranchModule } from 'src/branch/branch.module';
-import { CleanModule } from 'src/clean/clean.module';
-import { ConfigurationModule } from 'src/configuration/configuration.module';
-import { DatabaseModule } from 'src/database/database.module';
-import { DraftModule } from 'src/draft/draft.module';
-import { EmailModule } from 'src/email/email.module';
-import { EndpointModule } from 'src/endpoint/endpoint.module';
-import { GraphqlApiModule } from 'src/graphql-api/graphql-api.module';
-import { HealthModule } from 'src/health/health.module';
-import { MetricsModule } from 'src/metrics/metrics.module';
-import { NotificationModule } from 'src/notification/notification.module';
-import { OrganizationModule } from 'src/organization/organization.module';
-import { ProjectModule } from 'src/project/project.module';
-import { RestApiModule } from 'src/rest-api/rest-api.module';
-import { RevisionModule } from 'src/revision/revision.module';
-import { RowModule } from 'src/row/row.module';
-import { TableModule } from 'src/table/table.module';
-import { UserModule } from 'src/user/user.module';
+import { BranchModule } from 'src/features/branch/branch.module';
+import { CleanModule } from 'src/infrastructure/clean/clean.module';
+import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
+import { DatabaseModule } from 'src/infrastructure/database/database.module';
+import { DraftModule } from 'src/features/draft/draft.module';
+import { EmailModule } from 'src/infrastructure/email/email.module';
+import { EndpointModule } from 'src/features/endpoint/endpoint.module';
+import { GraphqlApiModule } from 'src/api/graphql-api/graphql-api.module';
+import { HealthModule } from 'src/infrastructure/health/health.module';
+import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
+import { NotificationModule } from 'src/infrastructure/notification/notification.module';
+import { OrganizationModule } from 'src/features/organization/organization.module';
+import { ProjectModule } from 'src/features/project/project.module';
+import { RestApiModule } from 'src/api/rest-api/rest-api.module';
+import { RevisionModule } from 'src/features/revision/revision.module';
+import { RowModule } from 'src/features/row/row.module';
+import { TableModule } from 'src/features/table/table.module';
+import { UserModule } from 'src/features/user/user.module';
 
 @Module({
   imports: [

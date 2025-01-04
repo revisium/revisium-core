@@ -4,11 +4,11 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { AsyncLocalStorage } from 'async_hooks';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
-import { IdService } from 'src/database/id.service';
-import { PrismaService } from 'src/database/prisma.service';
-import { TransactionPrismaService } from 'src/database/transaction-prisma.service';
-import { ShareTransactionalCommands } from 'src/share/share.transactional.commands';
-import { ShareTransactionalQueries } from 'src/share/share.transactional.queries';
+import { IdService } from 'src/infrastructure/database/id.service';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
+import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 export const createMocks = ({
   asyncLocalStorageStore,

@@ -1,6 +1,6 @@
 import { Prisma, User } from '@prisma/client';
-import { UserSystemRoles } from 'src/auth/consts';
-import { PrismaService } from 'src/database/prisma.service';
+import { UserSystemRoles } from 'src/features/auth/consts';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 export const testCreateUser = (
   prisma: PrismaService,
