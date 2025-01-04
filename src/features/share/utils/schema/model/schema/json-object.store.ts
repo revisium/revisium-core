@@ -64,7 +64,7 @@ export class JsonObjectStore implements JsonObjectSchema {
     store.name = name;
 
     this.required.push(name);
-    this.required.sort();
+    this.required.sort((a, b) => a.localeCompare(b));
 
     this.properties[name] = store;
     this.default[name] = store.default;
@@ -128,7 +128,7 @@ export class JsonObjectStore implements JsonObjectSchema {
     // add
     if (!this.required.includes(toName)) {
       this.required.push(toName);
-      this.required.sort();
+      this.required.sort((a, b) => a.localeCompare(b));
     }
 
     this.properties[toName] = item;

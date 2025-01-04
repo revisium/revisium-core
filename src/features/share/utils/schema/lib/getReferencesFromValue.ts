@@ -27,6 +27,6 @@ export const getReferencesFromValue = (
 
   return [...references].map(([tableId, rowIds]) => ({
     tableId,
-    rowIds: [...rowIds].sort(),
+    rowIds: [...rowIds].sort((a, b) => a.localeCompare(b)),
   }));
 };

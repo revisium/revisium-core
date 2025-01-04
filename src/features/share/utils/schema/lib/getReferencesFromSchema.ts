@@ -11,5 +11,5 @@ export const getReferencesFromSchema = (store: JsonSchemaStore): string[] => {
     }
   });
 
-  return [...references].sort();
+  return [...references].sort((a, b) => a.localeCompare(b));
 };
