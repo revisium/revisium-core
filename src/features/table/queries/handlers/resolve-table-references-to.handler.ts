@@ -52,7 +52,7 @@ export class ResolveTableReferencesToHandler
 
     const store = createJsonSchemaStore(schema);
     const tableReferences = getReferencesFromSchema(store);
-    tableReferences.sort();
+    tableReferences.sort((a, b) => a.localeCompare(b));
 
     return getOffsetPagination({
       pageData: { first: data.first, after: data.after },
