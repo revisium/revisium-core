@@ -7,6 +7,8 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 // TODO avoid $queryRawUnsafe
 // https://www.prisma.io/docs/orm/prisma-client/queries/raw-database-access/raw-queries#dynamic-table-names-in-postgresql
 
+type RowType = 'rowInserts' | 'rowUpdates' | 'rowDeletes';
+
 @Injectable()
 export class SessionChangelogService {
   constructor(
@@ -29,7 +31,7 @@ export class SessionChangelogService {
     });
   }
 
-  public async getCountRows(type: 'rowInserts' | 'rowUpdates' | 'rowDeletes') {
+  public async getCountRows(type: RowType) {
     const [{ count }] = await this.transaction.$queryRawUnsafe<
       [{ count: bigint }]
     >(
@@ -41,7 +43,7 @@ export class SessionChangelogService {
     return Number(count);
   }
 
-  public async addRow(type: 'rowInserts' | 'rowUpdates' | 'rowDeletes') {
+  public async addRow(type: RowType) {
     return this.transaction.$executeRawUnsafe(
       `UPDATE "Changelog" SET "${type}" = jsonb_set(
             "${type}",
@@ -51,10 +53,7 @@ export class SessionChangelogService {
     );
   }
 
-  public async addRows(
-    type: 'rowInserts' | 'rowUpdates' | 'rowDeletes',
-    ids: string[],
-  ) {
+  public async addRows(type: RowType, ids: string[]) {
     const tableId = this.tableRequestDto.id;
     const changelogId = this.revisionRequestDto.changelogId;
 
@@ -84,7 +83,7 @@ export class SessionChangelogService {
     return this.transaction.$executeRawUnsafe(query);
   }
 
-  public async removeRow(type: 'rowInserts' | 'rowUpdates' | 'rowDeletes') {
+  public async removeRow(type: RowType) {
     return this.transaction.$executeRawUnsafe(
       `UPDATE "Changelog" SET "${type}" = jsonb_set(
             "${type}",
@@ -94,9 +93,7 @@ export class SessionChangelogService {
     );
   }
 
-  public async addTableForRow(
-    type: 'rowInserts' | 'rowUpdates' | 'rowDeletes',
-  ) {
+  public async addTableForRow(type: RowType) {
     return this.transaction.$executeRawUnsafe(
       `UPDATE "Changelog" SET "${type}" = jsonb_set(
             "${type}",
@@ -159,7 +156,7 @@ export class SessionChangelogService {
     rowId,
   }: {
     changelogId: string;
-    type: 'rowInserts' | 'rowUpdates' | 'rowDeletes';
+    type: RowType;
     tableId: string;
     rowId: string;
   }) {

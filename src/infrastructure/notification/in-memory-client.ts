@@ -2,11 +2,11 @@ import { ClientProxy, ReadPacket } from '@nestjs/microservices';
 import { EventEmitter } from 'node:events';
 
 export class InMemoryClient extends ClientProxy {
-  constructor(private client: EventEmitter) {
+  constructor(private readonly client: EventEmitter) {
     super();
   }
 
-  close(): any {}
+  close() {}
 
   connect() {
     return Promise.resolve(true);

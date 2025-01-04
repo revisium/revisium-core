@@ -9,10 +9,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
-import {
-  JsonSchema,
-  JsonSchemaTypeName,
-} from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 @QueryHandler(ResolveRowReferencesByQuery)
 export class ResolveRowReferencesByHandler
@@ -81,7 +78,7 @@ export class ResolveRowReferencesByHandler
       referenceTableId,
     );
 
-    const schemaStore = createJsonSchemaStore(schema as JsonSchema);
+    const schemaStore = createJsonSchemaStore(schema);
 
     const jsonPaths: string[] = [];
 

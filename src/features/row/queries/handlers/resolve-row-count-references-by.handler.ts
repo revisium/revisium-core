@@ -10,10 +10,7 @@ import { SystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
-import {
-  JsonSchema,
-  JsonSchemaTypeName,
-} from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 @QueryHandler(ResolveRowCountReferencesByQuery)
 export class ResolveRowCountReferencesByHandler
@@ -85,7 +82,7 @@ export class ResolveRowCountReferencesByHandler
       referenceTableId,
     );
 
-    const schemaStore = createJsonSchemaStore(schema as JsonSchema);
+    const schemaStore = createJsonSchemaStore(schema);
 
     const paths: string[] = [];
 

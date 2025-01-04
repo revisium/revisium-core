@@ -50,7 +50,7 @@ export async function getOffsetPagination<T>({
   return {
     edges: items.map((item, index) => ({
       cursor: ((startCursor || 0) + index).toString(),
-      node: item as T,
+      node: item,
     })),
     pageInfo: {
       startCursor: startCursor?.toString(),

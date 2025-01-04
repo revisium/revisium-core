@@ -18,7 +18,7 @@ export class JsonBooleanStore
 
   public default: boolean = false;
 
-  private valuesMap: Map<string, JsonBooleanValueStore[]> = new Map<
+  private readonly valuesMap: Map<string, JsonBooleanValueStore[]> = new Map<
     string,
     JsonBooleanValueStore[]
   >();
