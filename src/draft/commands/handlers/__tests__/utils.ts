@@ -19,6 +19,11 @@ import { ShareTransactionalCommands } from 'src/share/share.transactional.comman
 import { ShareTransactionalQueries } from 'src/share/share.transactional.queries';
 import { SystemTables } from 'src/share/system-tables.consts';
 
+export const createMock = <T>(mockResolvedValue: T) =>
+  mockResolvedValue instanceof Error
+    ? jest.fn().mockRejectedValue(mockResolvedValue)
+    : jest.fn().mockResolvedValue(mockResolvedValue);
+
 export const testSchema = {
   type: 'object',
   required: ['test'],
@@ -279,8 +284,3 @@ export const prepareBranch = async (
     draftEndpointId,
   };
 };
-
-export const createMock = <T>(mockResolvedValue: T) =>
-  mockResolvedValue instanceof Error
-    ? jest.fn().mockRejectedValue(mockResolvedValue)
-    : jest.fn().mockResolvedValue(mockResolvedValue);
