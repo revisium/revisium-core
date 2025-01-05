@@ -189,19 +189,15 @@ export class UpdateTableHandler extends DraftHandler<
       if (patch.op === 'replace' || patch.op === 'add') {
         let isThereItselfReference = false;
 
-        try {
-          const schemaStore = createJsonSchemaStore(patch.value);
-          traverseStore(schemaStore, (item) => {
-            if (
-              item.type === JsonSchemaTypeName.String &&
-              item.reference === tableId
-            ) {
-              isThereItselfReference = true;
-            }
-          });
-        } catch (e) {
-          throw new BadRequestException('Invalid schema', { cause: e });
-        }
+        const schemaStore = createJsonSchemaStore(patch.value);
+        traverseStore(schemaStore, (item) => {
+          if (
+            item.type === JsonSchemaTypeName.String &&
+            item.reference === tableId
+          ) {
+            isThereItselfReference = true;
+          }
+        });
 
         if (isThereItselfReference) {
           return true;
