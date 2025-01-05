@@ -7,7 +7,6 @@ import {
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
