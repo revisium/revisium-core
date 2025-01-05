@@ -12,7 +12,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 
 describe('ApiCreateTableHandler', () => {
   it('should create a new table', async () => {
-    const { branchId, draftRevisionId, headEndpointId, draftEndpointId } =
+    const { branchId, draftRevisionId, draftEndpointId } =
       await prepareBranch(prismaService);
 
     endpointNotificationService.update = createMock(void 0);

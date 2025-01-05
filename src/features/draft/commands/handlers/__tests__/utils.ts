@@ -5,6 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
+import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
@@ -45,6 +46,7 @@ export const createTestingModule = async () => {
     GetRevisionHandler,
     GetBranchByIdHandler,
     GetTableByIdHandler as QueryHandlerType,
+    GetRowByIdHandler as QueryHandlerType,
   ];
 
   const module: TestingModule = await Test.createTestingModule({
