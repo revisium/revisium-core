@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { UpdateRowsCommand } from 'src/features/draft/commands/impl/update-rows.command';
+import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRowsRequestDto } from 'src/features/draft/draft-request-dto/rows-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
