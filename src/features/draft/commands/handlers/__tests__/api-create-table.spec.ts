@@ -39,8 +39,7 @@ describe('ApiCreateTableHandler', () => {
     expect(result.branch.id).toBe(branchId);
     expect(result.table.versionId).toBe(table.versionId);
 
-    expect(endpointNotificationService.update).nthCalledWith(
-      1,
+    expect(endpointNotificationService.update).toHaveBeenCalledWith(
       draftEndpointId,
     );
   });

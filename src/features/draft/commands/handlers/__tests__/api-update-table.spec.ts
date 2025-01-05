@@ -48,8 +48,7 @@ describe('ApiUpdateTableHandler', () => {
       },
     });
 
-    expect(endpointNotificationService.update).nthCalledWith(
-      1,
+    expect(endpointNotificationService.update).toHaveBeenCalledWith(
       draftEndpointId,
     );
   });

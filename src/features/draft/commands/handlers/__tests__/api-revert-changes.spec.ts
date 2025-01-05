@@ -1,6 +1,8 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
-import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
+import {
+  ApiRevertChangesCommand,
+  ApiRevertChangesCommandReturnType,
+} from 'src/features/draft/commands/impl/api-revert-changes.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   createMock,
@@ -9,21 +11,38 @@ import {
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
-describe('ApiRemoveTableHandler', () => {
-  it('should remove the table', async () => {
-    const { draftRevisionId, draftEndpointId, tableId, branchId } =
-      await prepareBranch(prismaService);
+describe('ApiRevertChangesHandler', () => {
+  it('should revert changes', async () => {
+    const {
+      branchId,
+      organizationId,
+      projectName,
+      branchName,
+      headEndpointId,
+      draftEndpointId,
+      draftChangelogId,
+    } = await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        hasChanges: true,
+      },
+    });
 
     endpointNotificationService.update = createMock(void 0);
 
-    const command = new ApiRemoveTableCommand({
-      revisionId: draftRevisionId,
-      tableId,
+    const command = new ApiRevertChangesCommand({
+      organizationId,
+      projectName,
+      branchName,
     });
 
     const result = await execute(command);
 
-    expect(result.branch.id).toBe(branchId);
+    expect(result.id).toStrictEqual(branchId);
+
     expect(endpointNotificationService.update).toHaveBeenCalledWith(
       draftEndpointId,
     );
@@ -34,8 +53,8 @@ describe('ApiRemoveTableHandler', () => {
   let endpointNotificationService: EndpointNotificationService;
 
   function execute(
-    command: ApiRemoveTableCommand,
-  ): Promise<ApiRemoveTableHandlerReturnType> {
+    command: ApiRevertChangesCommand,
+  ): Promise<ApiRevertChangesCommandReturnType> {
     return commandBus.execute(command);
   }
 

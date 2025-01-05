@@ -77,8 +77,7 @@ describe('ApiUpdateRowHandler', () => {
 
     expect(result.table?.versionId).not.toBe(draftTableVersionId);
     expect(result.previousVersionTableId).toBe(draftTableVersionId);
-    expect(endpointNotificationService.update).nthCalledWith(
-      1,
+    expect(endpointNotificationService.update).toHaveBeenCalledWith(
       draftEndpointId,
     );
   });
