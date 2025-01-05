@@ -1,15 +1,27 @@
 import { Schema } from 'ajv/dist/2020';
+import {
+  arrayMetaSchema,
+  booleanMetaSchema,
+  numberMetaSchema,
+  objectMetaSchema,
+  stringMetaSchema,
+} from 'src/features/share/schema/meta-schema';
 
 // copied and modified from https://json.schemastore.org/json-patch
 
 export const jsonPatchSchema: Schema = {
+  $id: 'json-patch-schema.json',
   definitions: {
     path: {
       description: 'A JSON Pointer path.',
       type: 'string',
     },
+    objectSchema: objectMetaSchema,
+    stringSchema: stringMetaSchema,
+    numberSchema: numberMetaSchema,
+    booleanSchema: booleanMetaSchema,
+    arraySchema: arrayMetaSchema,
   },
-  $id: 'https://json.schemastore.org/json-patch.json',
   items: {
     oneOf: [
       {
@@ -26,6 +38,7 @@ export const jsonPatchSchema: Schema = {
             enum: ['add', 'replace'],
           },
           value: {
+            $ref: 'meta-schema.json',
             description: 'The value to add, replace or test.',
           },
         },

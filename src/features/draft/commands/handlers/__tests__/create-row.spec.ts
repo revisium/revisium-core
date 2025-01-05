@@ -22,7 +22,7 @@ describe('CreateRowHandler', () => {
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: '',
-      data: { test: 'value' },
+      data: { ver: 3 },
     });
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
@@ -42,7 +42,7 @@ describe('CreateRowHandler', () => {
       revisionId: 'unreal',
       tableId: 'tableId',
       rowId: 'rowId',
-      data: { test: 'value' },
+      data: { ver: 3 },
     });
 
     await expect(runTransaction(command)).rejects.toThrow('Revision not found');
@@ -56,7 +56,7 @@ describe('CreateRowHandler', () => {
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: rowId,
-      data: { test: 'value' },
+      data: { ver: 3 },
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
@@ -72,7 +72,7 @@ describe('CreateRowHandler', () => {
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: rowId,
-      data: { test: 1 },
+      data: { ver: '3' },
     });
 
     await expect(runTransaction(command)).rejects.toThrow('data is not valid');
@@ -85,7 +85,7 @@ describe('CreateRowHandler', () => {
       revisionId: draftRevisionId,
       tableId: SystemTables.Schema,
       rowId: rowId,
-      data: { test: 'value' },
+      data: { ver: 3 },
     });
 
     await expect(runTransaction(command)).rejects.toThrow('data is not valid');
@@ -99,7 +99,7 @@ describe('CreateRowHandler', () => {
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: 'newRowId',
-      data: { test: 'value' },
+      data: { ver: 3 },
     });
 
     const result = await runTransaction(command);
@@ -160,7 +160,7 @@ describe('CreateRowHandler', () => {
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: 'newRowId',
-      data: { test: 'value' },
+      data: { ver: 3 },
     });
 
     const result = await runTransaction(command);
