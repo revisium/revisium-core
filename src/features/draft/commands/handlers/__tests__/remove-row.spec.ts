@@ -254,6 +254,7 @@ describe('RemoveRowHandler', () => {
           },
         },
         rowInsertsCount: 1,
+        hasChanges: true,
       },
     });
 
@@ -271,6 +272,7 @@ describe('RemoveRowHandler', () => {
 
     expect(changelog.rowInsertsCount).toBe(0);
     expect(changelog.rowInserts).toStrictEqual({});
+    expect(changelog.hasChanges).toStrictEqual(false);
   });
 
   it('should update changelog if the row is not in rowInserts', async () => {
