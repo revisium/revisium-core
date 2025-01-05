@@ -1,12 +1,15 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
+import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
+import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
+import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -38,6 +41,12 @@ export const testSchema: JsonObjectSchema = {
 };
 
 export const createTestingModule = async () => {
+  const ANOTHER_QUERIES: QueryHandlerType[] = [
+    GetRevisionHandler,
+    GetBranchByIdHandler,
+    GetTableByIdHandler as QueryHandlerType,
+  ];
+
   const module: TestingModule = await Test.createTestingModule({
     imports: [
       DatabaseModule,
@@ -51,9 +60,9 @@ export const createTestingModule = async () => {
       SessionChangelogService,
       DraftContextService,
       JsonSchemaValidatorService,
-      GetRevisionHandler,
       ...DRAFT_REQUEST_DTO,
       ...TABLE_COMMANDS_HANDLERS,
+      ...ANOTHER_QUERIES,
     ],
   }).compile();
 
@@ -63,7 +72,7 @@ export const createTestingModule = async () => {
   commandBus.register([...TABLE_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
-  queryBus.register([...SHARE_QUERIES_HANDLERS, GetRevisionHandler]);
+  queryBus.register([...SHARE_QUERIES_HANDLERS, ...ANOTHER_QUERIES]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);
