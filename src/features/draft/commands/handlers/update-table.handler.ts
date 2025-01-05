@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
-import { UpdateRowsCommand } from 'src/features/draft/commands/impl/update-rows.command';
+import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
