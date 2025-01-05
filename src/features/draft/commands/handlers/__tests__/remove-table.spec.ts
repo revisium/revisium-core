@@ -49,7 +49,7 @@ describe('RemoveTableHandler', () => {
     );
   });
 
-  it('should throw an error if the reference', async () => {
+  it('should throw an error if the reference exists', async () => {
     const { draftRevisionId, schemaTableVersionId, tableId } =
       await prepareBranch(prismaService);
     const anotherTableId = nanoid();
@@ -134,7 +134,7 @@ describe('RemoveTableHandler', () => {
     expect(schemaForTable).toBeNull();
   });
 
-  it('should revert rows in changelog if conditions are met', async () => {
+  it('should revert rows in the changelog if conditions are met', async () => {
     const { draftRevisionId, tableId, draftChangelogId } =
       await prepareBranch(prismaService);
     await prismaService.changelog.update({
@@ -182,6 +182,143 @@ describe('RemoveTableHandler', () => {
     expect(changelog.rowDeletes).toStrictEqual({
       another: { rows: { someRow: '' } },
       [SystemTables.Schema]: { rows: { [tableId]: '' } },
+    });
+  });
+
+  it('should calculate hasChanges for the changelog if conditions are met', async () => {
+    const { draftRevisionId, tableId, draftChangelogId } =
+      await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        hasChanges: false,
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+    expect(changelog.hasChanges).toBe(true);
+  });
+
+  it('should disconnect the table if the table is readonly', async () => {
+    const { draftRevisionId, tableId, draftTableVersionId } =
+      await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: true,
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const table = await prismaService.table.findUnique({
+      where: { versionId: draftTableVersionId },
+    });
+    expect(table).toBeTruthy();
+  });
+
+  it('should remove the table if the table is not readonly', async () => {
+    const { draftRevisionId, tableId, draftTableVersionId } =
+      await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: false,
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const table = await prismaService.table.findUnique({
+      where: { versionId: draftTableVersionId },
+    });
+    expect(table).toBeNull();
+  });
+
+  it('should update changelog if the table is in tableInserts', async () => {
+    const { draftRevisionId, tableId, draftChangelogId } =
+      await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        tableInsertsCount: 1,
+        tableInserts: {
+          anotherTable: '',
+          [tableId]: '',
+        },
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+    expect(changelog.tableInsertsCount).toBe(0);
+    expect(changelog.tableInserts).toStrictEqual({ anotherTable: '' });
+  });
+
+  it('should update changelog if the table is not in tableInserts', async () => {
+    const { draftRevisionId, tableId, draftChangelogId } =
+      await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        tableDeletesCount: 1,
+        tableDeletes: {
+          anotherTable: '',
+        },
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+    expect(changelog.tableDeletesCount).toBe(2);
+    expect(changelog.tableDeletes).toStrictEqual({
+      anotherTable: '',
+      [tableId]: '',
     });
   });
 
