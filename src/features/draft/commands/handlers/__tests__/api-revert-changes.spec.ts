@@ -18,7 +18,6 @@ describe('ApiRevertChangesHandler', () => {
       organizationId,
       projectName,
       branchName,
-      headEndpointId,
       draftEndpointId,
       draftChangelogId,
     } = await prepareBranch(prismaService);
