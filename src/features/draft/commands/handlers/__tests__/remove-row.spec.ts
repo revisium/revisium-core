@@ -7,6 +7,7 @@ import {
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -313,6 +314,306 @@ describe('RemoveRowHandler', () => {
       },
     });
     expect(changelog.hasChanges).toBe(true);
+  });
+
+  it('should revert the table if there was last change in the table', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftChangelogId,
+      draftTableVersionId,
+      headTableVersionId,
+    } = await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: false,
+      },
+    });
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        tableUpdates: {
+          anotherTable: '',
+          [tableId]: '',
+        },
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              [rowId]: '',
+            },
+          },
+        },
+        tableUpdatesCount: 1,
+        rowInsertsCount: 1,
+        hasChanges: true,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBeUndefined();
+    expect(result.tableVersionId).toBeUndefined();
+
+    // table
+    const table = await prismaService.table.findFirstOrThrow({
+      where: {
+        id: tableId,
+        revisions: {
+          some: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+    expect(table.readonly).toBe(true);
+    expect(table.versionId).toBe(headTableVersionId);
+
+    // changelog
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+    expect(changelog.tableUpdatesCount).toBe(0);
+    expect(changelog.tableUpdates).toStrictEqual({
+      anotherTable: '',
+    });
+  });
+
+  it('should not revert the table if the schema is changed', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftChangelogId,
+      draftTableVersionId,
+    } = await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: false,
+      },
+    });
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        tableUpdates: {
+          [tableId]: '',
+        },
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              [rowId]: '',
+            },
+          },
+        },
+        // changed schema
+        rowUpdates: {
+          [SystemTables.Schema]: {
+            rows: {
+              [tableId]: '',
+            },
+          },
+        },
+        tableUpdatesCount: 1,
+        rowInsertsCount: 1,
+        hasChanges: true,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+
+    const table = await prismaService.table.findFirstOrThrow({
+      where: {
+        id: tableId,
+        revisions: {
+          some: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+    expect(table.readonly).toBe(false);
+    expect(table.versionId).toBe(draftTableVersionId);
+  });
+
+  it('should not revert the table if there is rowUpdates change', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftChangelogId,
+      draftTableVersionId,
+    } = await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: false,
+      },
+    });
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        rowUpdates: {
+          [tableId]: {
+            rows: {
+              someRow: '',
+            },
+          },
+        },
+        tableUpdates: {
+          anotherTable: '',
+          [tableId]: '',
+        },
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              [rowId]: '',
+            },
+          },
+        },
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+  });
+
+  it('should not revert the table if there is rowDeletes change', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftChangelogId,
+      draftTableVersionId,
+    } = await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: false,
+      },
+    });
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        rowDeletes: {
+          [tableId]: {
+            rows: {
+              someRow: '',
+            },
+          },
+        },
+        tableUpdates: {
+          anotherTable: '',
+          [tableId]: '',
+        },
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              [rowId]: '',
+            },
+          },
+        },
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+  });
+
+  it('should not revert the table if there is rowInserts change', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftChangelogId,
+      draftTableVersionId,
+    } = await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: false,
+      },
+    });
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        tableUpdates: {
+          anotherTable: '',
+          [tableId]: '',
+        },
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              [rowId]: '',
+              anotherRow: '',
+            },
+          },
+        },
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).toBe(draftTableVersionId);
   });
 
   function runTransaction(
