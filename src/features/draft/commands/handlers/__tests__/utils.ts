@@ -96,6 +96,7 @@ export type PrepareBranchReturnType = {
   draftRowVersionId: string;
   headEndpointId: string;
   draftEndpointId: string;
+  schemaTableVersionId: string;
 };
 
 export const prepareBranch = async (
@@ -111,7 +112,7 @@ export const prepareBranch = async (
   const headChangelogId = nanoid();
   const draftChangelogId = nanoid();
 
-  const shemaTableVersionId = nanoid();
+  const schemaTableVersionId = nanoid();
   const tableId = nanoid();
   const headTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
@@ -174,7 +175,7 @@ export const prepareBranch = async (
   await prismaService.table.create({
     data: {
       id: SystemTables.Schema,
-      versionId: shemaTableVersionId,
+      versionId: schemaTableVersionId,
       readonly: true,
       system: true,
       revisions: {
@@ -213,7 +214,7 @@ export const prepareBranch = async (
       readonly: true,
       tables: {
         connect: {
-          versionId: shemaTableVersionId,
+          versionId: schemaTableVersionId,
         },
       },
       data: testSchema,
@@ -282,6 +283,7 @@ export const prepareBranch = async (
     draftRowVersionId,
     headEndpointId,
     draftEndpointId,
+    schemaTableVersionId,
   };
 };
 
