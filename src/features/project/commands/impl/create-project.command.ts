@@ -8,3 +8,5 @@ export class CreateProjectCommand {
     },
   ) {}
 }
+
+export type CreateProjectCommandReturnType = string;
