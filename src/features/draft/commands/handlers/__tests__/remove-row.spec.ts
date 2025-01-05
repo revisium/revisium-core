@@ -174,6 +174,145 @@ describe('RemoveRowHandler', () => {
     expect(result).toBeTruthy();
   });
 
+  it('should remove the row in a new created table if conditions are met', async () => {
+    const { draftRevisionId, tableId, rowId, draftTableVersionId } =
+      await prepareBranch(prismaService);
+    await prismaService.table.update({
+      where: {
+        versionId: draftTableVersionId,
+      },
+      data: {
+        readonly: true,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).not.toBe(draftTableVersionId);
+  });
+
+  it('should update changelog if the row is in rowInserts #1', async () => {
+    const { draftRevisionId, tableId, rowId, draftChangelogId } =
+      await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              anotherRow: '',
+              [rowId]: '',
+            },
+          },
+        },
+        rowInsertsCount: 2,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    await runTransaction(command);
+
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+
+    expect(changelog.rowInsertsCount).toBe(1);
+    expect(changelog.rowInserts).toStrictEqual({
+      [tableId]: {
+        rows: { anotherRow: '' },
+      },
+    });
+  });
+
+  it('should update changelog if the row is in rowInserts #2', async () => {
+    const { draftRevisionId, tableId, rowId, draftChangelogId } =
+      await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        rowInserts: {
+          [tableId]: {
+            rows: {
+              [rowId]: '',
+            },
+          },
+        },
+        rowInsertsCount: 1,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    await runTransaction(command);
+
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+
+    expect(changelog.rowInsertsCount).toBe(0);
+    expect(changelog.rowInserts).toStrictEqual({});
+  });
+
+  it('should update changelog if the row is not in rowInserts', async () => {
+    const { draftRevisionId, tableId, rowId, draftChangelogId } =
+      await prepareBranch(prismaService);
+    await prismaService.changelog.update({
+      where: {
+        id: draftChangelogId,
+      },
+      data: {
+        rowDeletes: {
+          anotherTable: {},
+        },
+        rowDeletesCount: 0,
+        hasChanges: false,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    await runTransaction(command);
+
+    const changelog = await prismaService.changelog.findUniqueOrThrow({
+      where: { id: draftChangelogId },
+    });
+
+    expect(changelog.rowDeletesCount).toBe(1);
+    expect(changelog.rowDeletes).toStrictEqual({
+      anotherTable: {},
+      [tableId]: {
+        rows: {
+          [rowId]: '',
+        },
+      },
+    });
+    expect(changelog.hasChanges).toBe(true);
+  });
+
   function runTransaction(
     command: RemoveRowCommand,
   ): Promise<RemoveRowHandlerReturnType> {
