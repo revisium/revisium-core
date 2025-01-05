@@ -1,6 +1,6 @@
 # @revisium/core
 
-![GitHub License](https://img.shields.io/github/license/revisium/revisium?color=blue) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=revisium_revisium-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=revisium_revisium-core)
+![GitHub License](https://img.shields.io/github/license/revisium/revisium-core?color=blue) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=revisium_revisium-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=revisium_revisium-core)
 
 **Status: Experimental and Not Production-Ready**
 
