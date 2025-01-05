@@ -2,6 +2,10 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
+import {
+  JsonObjectSchema,
+  JsonSchemaTypeName,
+} from 'src/features/share/utils/schema/types/schema.types';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -19,13 +23,13 @@ import { ShareTransactionalCommands } from 'src/features/share/share.transaction
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 
-export const testSchema = {
-  type: 'object',
-  required: ['test'],
+export const testSchema: JsonObjectSchema = {
+  type: JsonSchemaTypeName.Object,
+  required: ['ver'],
   properties: {
-    test: {
-      type: 'string',
-      default: '',
+    ver: {
+      type: JsonSchemaTypeName.Number,
+      default: 0,
     },
   },
   additionalProperties: false,
@@ -172,6 +176,7 @@ export const prepareBranch = async (
       id: SystemTables.Schema,
       versionId: shemaTableVersionId,
       readonly: true,
+      system: true,
       revisions: {
         connect: [{ id: headRevisionId }, { id: draftRevisionId }],
       },

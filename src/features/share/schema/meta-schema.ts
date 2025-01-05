@@ -100,6 +100,7 @@ export const arrayMetaSchema: Schema = {
 };
 
 export const metaSchema: Schema = {
+  $id: 'meta-schema.json',
   type: 'object',
   $dynamicAnchor: 'meta',
   oneOf: [

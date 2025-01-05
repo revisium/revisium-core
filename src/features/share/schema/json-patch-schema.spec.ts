@@ -1,8 +1,13 @@
 import Ajv from 'ajv/dist/2020';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
 
 describe('json-patch-schema', () => {
   const ajv = new Ajv();
+
+  beforeAll(() => {
+    ajv.addSchema(metaSchema);
+  });
 
   it('empty', () => {
     expect(ajv.validate(jsonPatchSchema, [])).toBe(true);
@@ -14,7 +19,9 @@ describe('json-patch-schema', () => {
       false,
     );
     expect(
-      ajv.validate(jsonPatchSchema, [{ op: 'add', path: '/path', value: '' }]),
+      ajv.validate(jsonPatchSchema, [
+        { op: 'add', path: '/path', value: { type: 'string', default: '' } },
+      ]),
     ).toBe(true);
   });
 
@@ -37,7 +44,7 @@ describe('json-patch-schema', () => {
     ).toBe(false);
     expect(
       ajv.validate(jsonPatchSchema, [
-        { op: 'replace', path: '/path', value: '' },
+        { op: 'replace', path: '/path', value: { type: 'number', default: 0 } },
       ]),
     ).toBe(true);
   });
