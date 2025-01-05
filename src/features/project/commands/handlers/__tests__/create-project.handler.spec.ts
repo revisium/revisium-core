@@ -19,6 +19,7 @@ describe('CreateProjectHandler', () => {
     const command = new CreateProjectCommand({
       organizationId,
       projectName: newProjectName,
+      branchName: '',
     });
 
     const result = await execute(command);

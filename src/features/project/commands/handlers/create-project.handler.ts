@@ -15,7 +15,7 @@ export type CreateProjectHandlerContext = {
   projectId: string;
   projectName: string;
   branchId: string;
-  branchName?: string;
+  branchName: string;
   fromRevisionId?: string;
   tableIds?: { versionId: string }[];
   headRevisionId: string;
@@ -65,6 +65,9 @@ export class CreateProjectHandler
   ): Promise<string> {
     const context: CreateProjectHandlerContext = {
       ...command.data,
+      branchName: command.data.branchName
+        ? command.data.branchName
+        : DEFAULT_BRANCH_NAME,
       projectId: this.idService.generate(8),
       branchId: this.idService.generate(),
       headRevisionId: this.idService.generate(),
@@ -127,7 +130,7 @@ export class CreateProjectHandler
         branches: {
           create: {
             id: this.context.branchId,
-            name: this.context.branchName ?? DEFAULT_BRANCH_NAME,
+            name: this.context.branchName,
             isRoot: true,
           },
         },
