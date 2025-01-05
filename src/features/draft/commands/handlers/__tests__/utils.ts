@@ -2,6 +2,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
+import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
@@ -15,6 +16,7 @@ import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
+import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
 import { SHARE_QUERIES_HANDLERS } from 'src/features/share/queries/handlers';
@@ -49,6 +51,7 @@ export const createTestingModule = async () => {
       SessionChangelogService,
       DraftContextService,
       JsonSchemaValidatorService,
+      GetRevisionHandler,
       ...DRAFT_REQUEST_DTO,
       ...TABLE_COMMANDS_HANDLERS,
     ],
@@ -60,12 +63,13 @@ export const createTestingModule = async () => {
   commandBus.register([...TABLE_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
-  queryBus.register([...SHARE_QUERIES_HANDLERS]);
+  queryBus.register([...SHARE_QUERIES_HANDLERS, GetRevisionHandler]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);
   const shareTransactionalCommands = module.get(ShareTransactionalCommands);
   const draftTransactionalCommands = module.get(DraftTransactionalCommands);
+  const endpointNotificationService = module.get(EndpointNotificationService);
 
   return {
     module,
@@ -75,6 +79,7 @@ export const createTestingModule = async () => {
     shareTransactionalQueries,
     shareTransactionalCommands,
     draftTransactionalCommands,
+    endpointNotificationService,
   };
 };
 

@@ -5,7 +5,10 @@ import {
   QueryBus,
 } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ApiCreateRevisionCommand } from 'src/features/draft/commands/impl/api-create-revision.command';
+import {
+  ApiCreateRevisionCommand,
+  ApiCreateRevisionCommandReturnType,
+} from 'src/features/draft/commands/impl/api-create-revision.command';
 import { CreateRevisionCommand } from 'src/features/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
@@ -13,7 +16,11 @@ import { GetRevisionQuery } from 'src/features/revision/queries/impl';
 
 @CommandHandler(ApiCreateRevisionCommand)
 export class ApiCreateRevisionHandler
-  implements ICommandHandler<ApiCreateRevisionCommand>
+  implements
+    ICommandHandler<
+      ApiCreateRevisionCommand,
+      ApiCreateRevisionCommandReturnType
+    >
 {
   constructor(
     private readonly commandBus: CommandBus,
