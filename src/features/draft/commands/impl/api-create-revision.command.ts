@@ -1,3 +1,5 @@
+import { GetRevisionQueryReturnType } from 'src/features/revision/queries/impl';
+
 export class ApiCreateRevisionCommand {
   constructor(
     public data: {
@@ -8,3 +10,5 @@ export class ApiCreateRevisionCommand {
     },
   ) {}
 }
+
+export type ApiCreateRevisionCommandReturnType = GetRevisionQueryReturnType;
