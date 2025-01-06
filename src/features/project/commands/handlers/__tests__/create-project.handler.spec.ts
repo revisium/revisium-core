@@ -1,132 +1,144 @@
-import { createMocks } from 'src/__tests__/utils/createMocks';
-import { implementIdService } from 'src/__tests__/utils/implementIdService';
+import { CommandBus } from '@nestjs/cqrs';
 import {
-  CreateProjectHandler,
-  CreateProjectHandlerContext,
-} from 'src/features/project/commands/handlers/create-project.handler';
+  prepareProject,
+  createTestingModule,
+} from 'src/features/project/commands/handlers/__tests__/utils';
+import { DEFAULT_BRANCH_NAME } from 'src/features/project/commands/handlers/create-project.handler';
+import {
+  CreateProjectCommand,
+  CreateProjectCommandReturnType,
+} from 'src/features/project/commands/impl';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
-xdescribe('CreateProjectHandler', () => {
-  let mocks: ReturnType<typeof createMocks>;
+describe('CreateProjectHandler', () => {
+  it('should create a new project', async () => {
+    const { organizationId } = await prepareProject(prismaService);
 
-  let context: CreateProjectHandlerContext;
+    const newProjectName = 'newProject';
 
-  beforeEach(() => {
-    context = {
-      organizationId: 'organizationId',
-      projectId: 'projectId',
-      projectName: 'projectName',
-      branchId: 'branchId',
-      headRevisionId: 'headRevisionId',
-      headChangelogId: 'headChangelogId',
-      draftRevisionId: 'draftRevisionId',
-      draftChangelogId: 'draftChangelogId',
-      schemaTableId: 'schemaTableId',
-    };
+    const command = new CreateProjectCommand({
+      organizationId,
+      projectName: newProjectName,
+      branchName: '',
+    });
 
-    mocks = createMocks({ asyncLocalStorageStore: context });
+    const result = await execute(command);
 
-    implementIdService(mocks.idService, [
-      context.projectId,
-      context.branchId,
-      context.headRevisionId,
-      context.draftRevisionId,
-    ]);
-  });
+    const project = await prismaService.project.findFirstOrThrow({
+      where: {
+        organizationId,
+        name: newProjectName,
+      },
+      include: {
+        branches: true,
+      },
+    });
 
-  it('should be default branchName', async () => {
-    const result = await executeHandler();
-
-    checkProject('master');
-    checkHeadRevision();
-    checkDraftRevision();
-
-    expect(result).toBe(context.projectId);
-  });
-
-  it('should be implicitly defined branchName', async () => {
-    context.branchName = 'custom_branch_name';
-
-    await executeHandler();
-
-    checkProject(context.branchName);
-  });
-
-  function checkProject(branchName: string) {
-    const { prisma } = mocks;
-    expect(prisma.project.create).toBeCalledWith({
-      data: {
-        id: context.projectId,
-        name: context.projectName,
-        branches: {
-          create: {
-            id: context.branchId,
-            name: branchName,
-            isRoot: true,
+    const branch = await prismaService.branch.findFirstOrThrow({
+      where: {
+        projectId: project.id,
+      },
+    });
+    const tables = await prismaService.table.findMany({
+      where: {
+        revisions: {
+          some: {
+            branchId: branch.id,
           },
         },
       },
     });
-  }
+    expect(result).toBe(project.id);
+    expect(branch.name).toBe(DEFAULT_BRANCH_NAME);
+    expect(tables.length).toBe(1); // schema table
+  });
 
-  function checkHeadRevision() {
-    const { prisma } = mocks;
-    expect(prisma.revision.create).nthCalledWith(1, {
-      data: {
-        id: context.headRevisionId,
-        isHead: true,
-        branch: {
-          connect: {
-            id: context.branchId,
-          },
-        },
-        changelog: {
-          create: {
-            id: context.headChangelogId,
+  it('should create a new project with specified branch name', async () => {
+    const { organizationId } = await prepareProject(prismaService);
+
+    const newProjectName = 'newProject';
+    const branchName = 'develop';
+
+    const command = new CreateProjectCommand({
+      organizationId,
+      projectName: newProjectName,
+      branchName,
+    });
+
+    const result = await execute(command);
+
+    const branch = await prismaService.branch.findFirstOrThrow({
+      where: {
+        projectId: result,
+      },
+    });
+    expect(branch.name).toBe(branchName);
+  });
+
+  it('should create a new project from revision', async () => {
+    const {
+      organizationId,
+      headRevisionId,
+      schemaTableVersionId,
+      headTableVersionId,
+    } = await prepareProject(prismaService);
+
+    const newProjectName = 'newProject';
+
+    const command = new CreateProjectCommand({
+      organizationId,
+      projectName: newProjectName,
+      fromRevisionId: headRevisionId,
+    });
+
+    await execute(command);
+
+    const project = await prismaService.project.findFirstOrThrow({
+      where: {
+        organizationId,
+        name: newProjectName,
+      },
+    });
+
+    const branch = await prismaService.branch.findFirstOrThrow({
+      where: {
+        projectId: project.id,
+      },
+    });
+    const tables = await prismaService.table.findMany({
+      where: {
+        revisions: {
+          some: {
+            branchId: branch.id,
           },
         },
       },
     });
-  }
-
-  function checkDraftRevision() {
-    const { prisma } = mocks;
-    expect(prisma.revision.create).nthCalledWith(2, {
-      data: {
-        id: context.draftRevisionId,
-        isDraft: true,
-        parent: {
-          connect: {
-            id: context.headRevisionId,
-          },
-        },
-        branch: {
-          connect: {
-            id: context.branchId,
-          },
-        },
-        changelog: {
-          create: {
-            id: context.draftChangelogId,
-          },
-        },
-      },
-    });
-  }
-
-  async function executeHandler() {
-    const { idService, transactionPrisma, asyncLocalStorage } = mocks;
-
-    const handler = new CreateProjectHandler(
-      transactionPrisma,
-      idService,
-      asyncLocalStorage,
+    expect(tables.length).toBe(2);
+    expect(tables.some((table) => table.versionId === headTableVersionId)).toBe(
+      true,
     );
-    return handler.execute({
-      data: {
-        organizationId: context.organizationId,
-        projectName: context.projectName,
-        branchName: context.branchName,
-      },
-    });
+    expect(
+      tables.some((table) => table.versionId === schemaTableVersionId),
+    ).toBe(true);
+  });
+
+  let prismaService: PrismaService;
+  let commandBus: CommandBus;
+
+  function execute(
+    command: CreateProjectCommand,
+  ): Promise<CreateProjectCommandReturnType> {
+    return commandBus.execute(command);
   }
+
+  beforeEach(async () => {
+    const result = await createTestingModule();
+    prismaService = result.prismaService;
+    commandBus = result.commandBus;
+  });
+
+  afterEach(async () => {
+    prismaService.$disconnect();
+  });
 });

@@ -4,7 +4,10 @@ import { Prisma } from '@prisma/client';
 import { AsyncLocalStorage } from 'async_hooks';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { CreateProjectCommand } from 'src/features/project/commands/impl';
+import {
+  CreateProjectCommand,
+  CreateProjectCommandReturnType,
+} from 'src/features/project/commands/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 
 export type CreateProjectHandlerContext = {
@@ -12,7 +15,7 @@ export type CreateProjectHandlerContext = {
   projectId: string;
   projectName: string;
   branchId: string;
-  branchName?: string;
+  branchName: string;
   fromRevisionId?: string;
   tableIds?: { versionId: string }[];
   headRevisionId: string;
@@ -24,7 +27,8 @@ export type CreateProjectHandlerContext = {
 
 @CommandHandler(CreateProjectCommand)
 export class CreateProjectHandler
-  implements ICommandHandler<CreateProjectCommand>
+  implements
+    ICommandHandler<CreateProjectCommand, CreateProjectCommandReturnType>
 {
   constructor(
     private readonly transactionService: TransactionPrismaService,
@@ -48,7 +52,9 @@ export class CreateProjectHandler
     return context;
   }
 
-  execute(command: CreateProjectCommand): Promise<string> {
+  execute(
+    command: CreateProjectCommand,
+  ): Promise<CreateProjectCommandReturnType> {
     return this.transactionService.run(() => this.transactionHandler(command), {
       isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
     });
@@ -59,6 +65,9 @@ export class CreateProjectHandler
   ): Promise<string> {
     const context: CreateProjectHandlerContext = {
       ...command.data,
+      branchName: command.data.branchName
+        ? command.data.branchName
+        : DEFAULT_BRANCH_NAME,
       projectId: this.idService.generate(8),
       branchId: this.idService.generate(),
       headRevisionId: this.idService.generate(),
@@ -121,7 +130,7 @@ export class CreateProjectHandler
         branches: {
           create: {
             id: this.context.branchId,
-            name: this.context.branchName ?? DEFAULT_BRANCH_NAME,
+            name: this.context.branchName,
             isRoot: true,
           },
         },
@@ -195,4 +204,4 @@ export class CreateProjectHandler
   }
 }
 
-const DEFAULT_BRANCH_NAME = 'master';
+export const DEFAULT_BRANCH_NAME = 'master';
