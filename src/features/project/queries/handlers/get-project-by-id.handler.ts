@@ -1,10 +1,13 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { GetProjectByIdQuery } from 'src/features/project/queries/impl';
+import {
+  GetProjectByIdQuery,
+  GetProjectByIdQueryReturnType,
+} from 'src/features/project/queries/impl';
 
 @QueryHandler(GetProjectByIdQuery)
 export class GetProjectByIdHandler
-  implements IQueryHandler<GetProjectByIdQuery>
+  implements IQueryHandler<GetProjectByIdQuery, GetProjectByIdQueryReturnType>
 {
   constructor(private readonly prisma: PrismaService) {}
 

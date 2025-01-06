@@ -6,13 +6,15 @@ import {
 } from '@nestjs/cqrs';
 import {
   ApiCreateProjectCommand,
+  ApiCreateProjectCommandReturnType,
   CreateProjectCommand,
 } from 'src/features/project/commands/impl';
 import { GetProjectByIdQuery } from 'src/features/project/queries/impl';
 
 @CommandHandler(ApiCreateProjectCommand)
 export class ApiCreateProjectHandler
-  implements ICommandHandler<ApiCreateProjectCommand>
+  implements
+    ICommandHandler<ApiCreateProjectCommand, ApiCreateProjectCommandReturnType>
 {
   constructor(
     private readonly commandBus: CommandBus,

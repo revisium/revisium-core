@@ -1,3 +1,5 @@
+import { GetProjectByIdQueryReturnType } from 'src/features/project/queries/impl';
+
 export class ApiCreateProjectCommand {
   constructor(
     public data: {
@@ -8,3 +10,5 @@ export class ApiCreateProjectCommand {
     },
   ) {}
 }
+
+export type ApiCreateProjectCommandReturnType = GetProjectByIdQueryReturnType;
