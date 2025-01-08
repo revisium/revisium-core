@@ -89,16 +89,7 @@ describe('RemoveTableHandler', () => {
             versionId: schemaTableVersionId,
           },
         },
-        data: {
-          type: JsonSchemaTypeName.Object,
-          properties: {
-            ref: {
-              type: JsonSchemaTypeName.String,
-              reference: tableId,
-              default: '',
-            },
-          },
-        },
+        data,
         hash: '',
       },
     });
