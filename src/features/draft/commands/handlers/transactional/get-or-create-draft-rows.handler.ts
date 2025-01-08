@@ -80,7 +80,7 @@ export class GetOrCreateDraftRowsHandler
         id: row.id,
         data: row.data as Prisma.InputJsonValue,
         readonly: false,
-        hash: row.hash, // TODO tests
+        hash: row.hash,
       }));
 
     await this.transaction.row.createMany({ data: inputs });

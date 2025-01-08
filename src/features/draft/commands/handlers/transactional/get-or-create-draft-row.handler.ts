@@ -64,7 +64,7 @@ export class GetOrCreateDraftRowHandler
         versionId: this.rowRequestDto.versionId,
         id: this.rowRequestDto.id,
         data,
-        hash, // TODO tests
+        hash,
         readonly: false,
         tables: {
           connect: {
