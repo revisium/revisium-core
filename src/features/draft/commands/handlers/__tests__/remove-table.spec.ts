@@ -69,6 +69,16 @@ describe('RemoveTableHandler', () => {
       },
     });
     // schema for table
+    const data = {
+      type: JsonSchemaTypeName.Object,
+      properties: {
+        ref: {
+          type: JsonSchemaTypeName.String,
+          reference: tableId,
+          default: '',
+        },
+      },
+    };
     await prismaService.row.create({
       data: {
         id: anotherTableId,
@@ -89,6 +99,7 @@ describe('RemoveTableHandler', () => {
             },
           },
         },
+        hash: '',
       },
     });
 

@@ -202,7 +202,9 @@ model Row {
   id        String
   tables    Table[]
   data      Json
+  hash      String
 
   @@index([data], type: Gin)
   @@index([id])
+  @@index([hash])
 }

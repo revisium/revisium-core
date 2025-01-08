@@ -16,6 +16,7 @@ import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-tabl
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import * as objectHash from 'object-hash';
 
 describe('UpdateTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
@@ -226,6 +227,7 @@ describe('UpdateTableHandler', () => {
     });
 
     expect(row.data).toStrictEqual({ ver: '2' });
+    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
     expect(row.versionId).toBe(draftRowVersionId);
   });
 
@@ -270,12 +272,13 @@ describe('UpdateTableHandler', () => {
     });
 
     expect(row.data).toStrictEqual({ ver: '2' });
+    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
     expect(row.versionId).not.toBe(draftRowVersionId);
   });
 
   it('should apply patches to the row in a new created table', async () => {
     const ids = await prepareBranch(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+    const { draftRevisionId, tableId, draftTableVersionId, rowId } = ids;
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,
@@ -304,6 +307,19 @@ describe('UpdateTableHandler', () => {
 
     expect(result.tableVersionId).not.toBe(draftTableVersionId);
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
+
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+    expect(row.data).toStrictEqual({ ver: '2' });
+    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
   });
 
   it('should save the schema correctly', async () => {
@@ -348,8 +364,8 @@ describe('UpdateTableHandler', () => {
         },
       },
     });
-    expect(schemaRow.id).toBe(tableId);
-    expect(schemaRow.data).toStrictEqual({
+
+    const schema = {
       type: JsonSchemaTypeName.Object,
       required: ['ver'],
       properties: {
@@ -359,7 +375,10 @@ describe('UpdateTableHandler', () => {
         },
       },
       additionalProperties: false,
-    });
+    };
+    expect(schemaRow.id).toBe(tableId);
+    expect(schemaRow.data).toStrictEqual(schema);
+    expect(schemaRow.hash).toStrictEqual(objectHash(schema));
   }
 
   function runTransaction(

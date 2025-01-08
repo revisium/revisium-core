@@ -1,5 +1,6 @@
 import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
@@ -20,6 +21,7 @@ export class UpdateRowHandler extends DraftHandler<
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly rowRequestDto: DraftRowRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
+    protected readonly hashService: HashService,
   ) {
     super(transactionService, draftContext);
   }
@@ -63,6 +65,7 @@ export class UpdateRowHandler extends DraftHandler<
       },
       data: {
         data: data,
+        hash: await this.hashService.hashObject(data),
       },
       select: {
         versionId: true,

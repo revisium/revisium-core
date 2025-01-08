@@ -2,6 +2,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
+import * as hash from 'object-hash';
 import { nanoid } from 'nanoid';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
@@ -234,6 +235,7 @@ export const prepareBranch = async (
         },
       },
       data: testSchema,
+      hash: hash(testSchema),
     },
   });
 
@@ -249,6 +251,7 @@ export const prepareBranch = async (
         },
       },
       data: { ver: 1 },
+      hash: hash({ ver: 1 }),
     },
   });
   await prismaService.row.create({
@@ -262,6 +265,7 @@ export const prepareBranch = async (
         },
       },
       data: { ver: 2 },
+      hash: hash({ ver: 2 }),
     },
   });
 

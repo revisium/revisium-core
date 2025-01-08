@@ -13,6 +13,7 @@ import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.co
 import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/create-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import * as objectHash from 'object-hash';
 
 describe('CreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
@@ -197,6 +198,7 @@ describe('CreateRowHandler', () => {
     expect(row.versionId).toBe(createdRowVersionId);
     expect(row.data).toStrictEqual(data);
     expect(row.readonly).toBe(false);
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
   }
 
   async function changelogCheck(ids: PrepareBranchReturnType, rowId: string) {
