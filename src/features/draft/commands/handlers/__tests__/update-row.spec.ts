@@ -10,6 +10,7 @@ import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.co
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import * as objectHash from 'object-hash';
 
 describe('UpdateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
@@ -108,6 +109,7 @@ describe('UpdateRowHandler', () => {
       },
     });
     expect(row.data).toStrictEqual({ ver: 3 });
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
   });
 
   it('should update the row if conditions are met if the table is a system table and skipCheckingNotSystemTable = true', async () => {

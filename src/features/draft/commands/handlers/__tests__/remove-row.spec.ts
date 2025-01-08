@@ -95,6 +95,7 @@ describe('RemoveRowHandler', () => {
           },
           required: ['ref'],
         },
+        hash: '',
       },
     });
     // row for another table
@@ -111,6 +112,7 @@ describe('RemoveRowHandler', () => {
         data: {
           ref: rowId,
         },
+        hash: '',
       },
     });
 

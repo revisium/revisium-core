@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { HashService } from 'src/infrastructure/database/hash.service';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
@@ -29,6 +30,7 @@ export class CreateRowHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly sessionChangelog: SessionChangelogService,
     protected readonly idService: IdService,
+    protected readonly hashService: HashService,
   ) {
     super(transactionService, draftContext);
   }
@@ -107,6 +109,7 @@ export class CreateRowHandler extends DraftHandler<
           },
         },
         data: data,
+        hash: await this.hashService.hashObject(data),
       },
       select: {
         versionId: true,

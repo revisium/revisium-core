@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -12,11 +13,12 @@ import { DraftTransactionalCommands } from 'src/features/draft/draft.transaction
 @CommandHandler(UpdateRowsCommand)
 export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
   constructor(
-    protected transactionService: TransactionPrismaService,
-    protected draftContext: DraftContextService,
-    protected tableRequestDto: DraftTableRequestDto,
-    protected rowsRequestDto: DraftRowsRequestDto,
-    protected draftTransactionalCommands: DraftTransactionalCommands,
+    protected readonly transactionService: TransactionPrismaService,
+    protected readonly draftContext: DraftContextService,
+    protected readonly tableRequestDto: DraftTableRequestDto,
+    protected readonly rowsRequestDto: DraftRowsRequestDto,
+    protected readonly draftTransactionalCommands: DraftTransactionalCommands,
+    protected readonly hashService: HashService,
   ) {
     super(transactionService, draftContext);
   }
@@ -61,6 +63,7 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
       },
       data: {
         data,
+        hash: await this.hashService.hashObject(data),
       },
       select: {
         versionId: true,
