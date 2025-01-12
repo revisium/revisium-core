@@ -74,11 +74,7 @@ export class UpdateTableHandler extends DraftHandler<
 
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
 
-    const currentTableSchema = await this.getTableSchema(data);
-    const nextTable = await this.createNextTable(
-      data,
-      currentTableSchema.schema,
-    );
+    const nextTable = await this.createNextTable(data);
 
     const tableSchema = nextTable.getSchema();
     await this.updateSchema({
@@ -87,11 +83,12 @@ export class UpdateTableHandler extends DraftHandler<
       schema: nextTable.getSchema(),
     });
 
+    const { hash: nextSchemaHash } = await this.getTableSchema(data);
     await this.updateRows({
       revisionId: data.revisionId,
       tableId: data.tableId,
       tableSchema,
-      schemaHash: currentTableSchema.hash,
+      schemaHash: nextSchemaHash,
       rows: nextTable.getRows().map((row) => ({
         rowId: row.id,
         data: row.data as Prisma.InputJsonValue,
@@ -104,11 +101,10 @@ export class UpdateTableHandler extends DraftHandler<
     };
   }
 
-  private async createNextTable(
-    data: UpdateTableCommand['data'],
-    currentTableSchema: JsonSchema,
-  ) {
-    const schemaTable = new SchemaTable(currentTableSchema);
+  private async createNextTable(data: UpdateTableCommand['data']) {
+    const { schema } = await this.getTableSchema(data);
+
+    const schemaTable = new SchemaTable(schema);
 
     const rows = await this.getRows(this.tableRequestDto.versionId);
     for (const row of rows) {

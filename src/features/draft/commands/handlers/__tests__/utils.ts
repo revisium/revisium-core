@@ -43,6 +43,18 @@ export const testSchema: JsonObjectSchema = {
   additionalProperties: false,
 };
 
+export const testSchemaString: JsonObjectSchema = {
+  type: JsonSchemaTypeName.Object,
+  required: ['ver'],
+  properties: {
+    ver: {
+      type: JsonSchemaTypeName.String,
+      default: '',
+    },
+  },
+  additionalProperties: false,
+};
+
 export const createTestingModule = async () => {
   const ANOTHER_QUERIES: QueryHandlerType[] = [
     GetRevisionHandler,
