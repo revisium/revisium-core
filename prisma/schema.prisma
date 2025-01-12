@@ -196,15 +196,17 @@ model Table {
 }
 
 model Row {
-  versionId String   @id
-  createdAt DateTime @default(now())
-  readonly  Boolean  @default(false)
-  id        String
-  tables    Table[]
-  data      Json
-  hash      String
+  versionId  String   @id
+  createdAt  DateTime @default(now())
+  readonly   Boolean  @default(false)
+  id         String
+  tables     Table[]
+  data       Json
+  hash       String
+  schemaHash String
 
   @@index([data], type: Gin)
   @@index([id])
   @@index([hash])
+  @@index([schemaHash])
 }

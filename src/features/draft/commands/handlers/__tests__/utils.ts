@@ -236,6 +236,7 @@ export const prepareBranch = async (
       },
       data: testSchema,
       hash: hash(testSchema),
+      schemaHash: '', // TODO
     },
   });
 
@@ -252,6 +253,7 @@ export const prepareBranch = async (
       },
       data: { ver: 1 },
       hash: hash({ ver: 1 }),
+      schemaHash: '', // TODO
     },
   });
   await prismaService.row.create({
@@ -266,6 +268,7 @@ export const prepareBranch = async (
       },
       data: { ver: 2 },
       hash: hash({ ver: 2 }),
+      schemaHash: '', // TODO
     },
   });
 

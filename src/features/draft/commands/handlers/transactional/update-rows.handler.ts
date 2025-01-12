@@ -64,6 +64,7 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
       data: {
         data,
         hash: await this.hashService.hashObject(data),
+        schemaHash: '', // TODO
       },
       select: {
         versionId: true,

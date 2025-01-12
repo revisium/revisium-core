@@ -8,6 +8,7 @@ import {
   createTestingModule,
   prepareBranch,
   PrepareBranchReturnType,
+  testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
 import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/create-row.handler.types';
@@ -174,6 +175,7 @@ describe('CreateRowHandler', () => {
     expect(row.data).toStrictEqual(data);
     expect(row.readonly).toBe(false);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
   }
 
   async function changelogCheck(ids: PrepareBranchReturnType, rowId: string) {

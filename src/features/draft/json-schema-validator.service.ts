@@ -69,11 +69,13 @@ export class JsonSchemaValidatorService {
     schema: Schema | Prisma.InputJsonValue,
     schemaHash: string,
   ): Promise<ValidateFunction> {
+    //
     // TODO getting hash from DB
     const cachedValidateFunction =
       await this.cacheManager.get<ValidateFunction>(schemaHash);
 
     if (!cachedValidateFunction) {
+      console.log('schema', schema)
       const validateFunction = this.ajv.compile(schema as Schema);
       await this.cacheManager.set(
         schemaHash,
