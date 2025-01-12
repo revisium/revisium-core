@@ -4,7 +4,6 @@ import { ValidateDataCommand } from 'src/features/draft/commands/impl/transactio
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { findSchemaForSystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
@@ -42,29 +41,21 @@ export class ValidateDataHandler
       }
     }
 
-    if (!data.skipReferenceValidation) {
-      for (const itemData of data.rows) {
-        // TODO merge getReferencesFromValue
-        await this.validateReferences(
-          getReferencesFromValue(
-            createJsonValueStore(
-              createJsonSchemaStore(schema as JsonSchema),
-              itemData.rowId,
-              itemData.data as JsonValue,
-            ),
+    for (const itemData of data.rows) {
+      // TODO merge getReferencesFromValue
+      await this.validateReferences(
+        getReferencesFromValue(
+          createJsonValueStore(
+            createJsonSchemaStore(schema as JsonSchema),
+            itemData.rowId,
+            itemData.data as JsonValue,
           ),
-        );
-      }
+        ),
+      );
     }
   }
 
   private async getSchema(data: ValidateDataCommand['data']) {
-    const foundSystemMetaSchema = findSchemaForSystemTables(data.tableId);
-
-    if (foundSystemMetaSchema) {
-      return foundSystemMetaSchema;
-    }
-
     return this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,

@@ -89,7 +89,9 @@ describe('CreateRowHandler', () => {
       data: { ver: 3 },
     });
 
-    await expect(runTransaction(command)).rejects.toThrow('data is not valid');
+    await expect(runTransaction(command)).rejects.toThrow(
+      'Table is a system table',
+    );
   });
 
   it('should create a new row if conditions are met', async () => {

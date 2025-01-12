@@ -30,12 +30,12 @@ export class CreateRowHandler extends DraftHandler<
     const { revisionId, tableId, rowId, data } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
+    await this.draftTransactionalCommands.validateNotSystemTable(tableId);
     await this.draftTransactionalCommands.validateData({
       revisionId,
       tableId,
       rows: [{ rowId, data }],
     });
-    await this.draftTransactionalCommands.validateNotSystemTable(tableId);
 
     return this.createRow(input);
   }

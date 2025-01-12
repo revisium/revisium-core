@@ -49,7 +49,6 @@ export class DraftTransactionalCommands {
     readonly tableId: string;
     readonly tableSchema?: JsonSchema;
     readonly rows: { rowId: string; data: Prisma.InputJsonValue }[];
-    readonly skipReferenceValidation?: boolean;
   }) {
     return this.commandBus.execute<ValidateDataCommand>(
       new ValidateDataCommand(data),
