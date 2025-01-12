@@ -1,9 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import {
+  UpdateSchemaCommand,
+  UpdateSchemaCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/update-schema.command';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
-import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
@@ -13,7 +16,6 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { SystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
@@ -75,7 +77,7 @@ export class UpdateTableHandler extends DraftHandler<
     const nextTable = await this.createNextTable(data);
 
     const tableSchema = nextTable.getSchema();
-    await this.saveSchema({
+    await this.updateSchema({
       revisionId: data.revisionId,
       tableId: data.tableId,
       schema: nextTable.getSchema(),
@@ -152,18 +154,19 @@ export class UpdateTableHandler extends DraftHandler<
     }
   }
 
-  private async saveSchema({
+  private async updateSchema({
     revisionId,
     tableId,
     schema,
   }: CreateTableCommand['data']) {
-    await this.commandBus.execute(
-      new UpdateRowCommand({
+    await this.commandBus.execute<
+      UpdateSchemaCommand,
+      UpdateSchemaCommandReturnType
+    >(
+      new UpdateSchemaCommand({
         revisionId,
-        tableId: SystemTables.Schema,
-        rowId: tableId,
+        tableId,
         data: schema,
-        skipCheckingNotSystemTable: true,
       }),
     );
   }

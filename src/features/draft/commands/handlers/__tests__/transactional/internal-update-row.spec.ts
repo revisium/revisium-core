@@ -1,4 +1,8 @@
 import { CommandBus } from '@nestjs/cqrs';
+import {
+  InternalUpdateRowCommand,
+  InternalUpdateRowCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -6,13 +10,11 @@ import {
   createTestingModule,
   prepareBranch,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
-import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
 
-describe('UpdateRowHandler', () => {
+describe('InternalUpdateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareBranch(prismaService);
@@ -21,7 +23,7 @@ describe('UpdateRowHandler', () => {
       new Error('Revision not found'),
     );
 
-    const command = new UpdateRowCommand({
+    const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
       tableId,
       rowId,
@@ -31,25 +33,10 @@ describe('UpdateRowHandler', () => {
     await expect(runTransaction(command)).rejects.toThrow('Revision not found');
   });
 
-  it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
-
-    const command = new UpdateRowCommand({
-      revisionId: draftRevisionId,
-      tableId: SystemTables.Schema,
-      rowId: tableId,
-      data: { ver: 3 },
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow(
-      'Table is a system table',
-    );
-  });
-
   it('should throw an error if the row does not exist', async () => {
     const { draftRevisionId, tableId } = await prepareBranch(prismaService);
 
-    const command = new UpdateRowCommand({
+    const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
       tableId,
       rowId: 'unrealRow',
@@ -61,20 +48,6 @@ describe('UpdateRowHandler', () => {
     );
   });
 
-  it('should throw an error if the data is not valid', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
-
-    const command = new UpdateRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-      data: { unrealKey: 3 },
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow('data is not valid');
-  });
-
   it('should update the row if conditions are met', async () => {
     const {
       draftRevisionId,
@@ -84,7 +57,7 @@ describe('UpdateRowHandler', () => {
       draftRowVersionId,
     } = await prepareBranch(prismaService);
 
-    const command = new UpdateRowCommand({
+    const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
       tableId,
       rowId,
@@ -129,7 +102,7 @@ describe('UpdateRowHandler', () => {
       },
     });
 
-    const command = new UpdateRowCommand({
+    const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
       tableId,
       rowId,
@@ -161,7 +134,7 @@ describe('UpdateRowHandler', () => {
       },
     });
 
-    const command = new UpdateRowCommand({
+    const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
       tableId,
       rowId,
@@ -177,8 +150,8 @@ describe('UpdateRowHandler', () => {
   });
 
   function runTransaction(
-    command: UpdateRowCommand,
-  ): Promise<UpdateRowHandlerReturnType> {
+    command: InternalUpdateRowCommand,
+  ): Promise<InternalUpdateRowCommandReturnType> {
     return transactionService.run(async () => commandBus.execute(command));
   }
 
