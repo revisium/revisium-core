@@ -8,6 +8,7 @@ import { ApiUpdateRowHandler } from 'src/features/draft/commands/handlers/api-up
 import { ApiUpdateTableHandler } from 'src/features/draft/commands/handlers/api-update-table.handler';
 import { CreateRevisionHandler } from 'src/features/draft/commands/handlers/create-revision.handler';
 import { CreateRowHandler } from 'src/features/draft/commands/handlers/create-row.handler';
+import { CreateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/create-schema.handler';
 import { CreateTableHandler } from 'src/features/draft/commands/handlers/create-table.handler';
 import { RemoveRowHandler } from 'src/features/draft/commands/handlers/remove-row.handler';
 import { RemoveTableHandler } from 'src/features/draft/commands/handlers/remove-table.handler';
@@ -50,4 +51,5 @@ export const TABLE_COMMANDS_HANDLERS = [
   ApiCreateRevisionHandler,
   RevertChangesHandler,
   ApiRevertChangesHandler,
+  CreateSchemaHandler,
 ];
