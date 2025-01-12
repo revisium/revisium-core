@@ -7,7 +7,6 @@ export class CreateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
-      skipCheckingNotSystemTable?: boolean;
     },
   ) {}
 }

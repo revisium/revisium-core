@@ -7,7 +7,6 @@ export class ApiCreateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
-      skipCheckingNotSystemTable?: boolean;
     },
   ) {}
 }

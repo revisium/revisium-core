@@ -118,33 +118,6 @@ describe('CreateRowHandler', () => {
     await changelogCheck(ids, command.data.rowId);
   });
 
-  it('should create a new row if conditions are met if the table is a system table and skipCheckingNotSystemTable = true', async () => {
-    const ids = await prepareBranch(prismaService);
-    const { draftRevisionId } = ids;
-
-    const command = new CreateRowCommand({
-      revisionId: draftRevisionId,
-      tableId: SystemTables.Schema,
-      skipCheckingNotSystemTable: true,
-      rowId: 'newRowId',
-      data: {
-        type: 'object',
-        required: ['test'],
-        properties: {
-          test: {
-            type: 'string',
-            default: '',
-          },
-        },
-        additionalProperties: false,
-      },
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result).toBeTruthy();
-  });
-
   it('should create a new row in a new created table if conditions are met', async () => {
     const ids = await prepareBranch(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
