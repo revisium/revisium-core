@@ -5,7 +5,6 @@ import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
-import { ValidateDataCommand } from 'src/features/draft/commands/impl/transactional/validate-data.command';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';

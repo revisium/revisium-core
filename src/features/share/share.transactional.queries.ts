@@ -20,7 +20,6 @@ import {
   GetTableSchemaQuery,
   GetTableSchemaQueryReturnType,
 } from 'src/features/share/queries/impl';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @Injectable()
 export class ShareTransactionalQueries {
