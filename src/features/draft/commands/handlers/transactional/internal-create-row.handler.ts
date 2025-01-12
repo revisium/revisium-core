@@ -98,6 +98,7 @@ export class InternalCreateRowHandler extends DraftHandler<
         },
         data: data,
         hash: await this.hashService.hashObject(data),
+        schemaHash: '', // TODO
       },
       select: {
         versionId: true,
