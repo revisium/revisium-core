@@ -7,6 +7,7 @@ export class InternalCreateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
+      schemaHash: string;
     },
   ) {}
 }

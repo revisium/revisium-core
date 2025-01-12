@@ -18,8 +18,8 @@ import {
   FindRowInTableOrThrowQuery,
   FindTableInRevisionOrThrowQuery,
   GetTableSchemaQuery,
+  GetTableSchemaQueryReturnType,
 } from 'src/features/share/queries/impl';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @Injectable()
 export class ShareTransactionalQueries {
@@ -116,11 +116,11 @@ export class ShareTransactionalQueries {
     );
   }
 
-  public async getTableSchema(
-    revisionId: string,
-    tableId: string,
-  ): Promise<JsonSchema> {
-    return this.queryBus.execute<GetTableSchemaQuery, JsonSchema>(
+  public async getTableSchema(revisionId: string, tableId: string) {
+    return this.queryBus.execute<
+      GetTableSchemaQuery,
+      GetTableSchemaQueryReturnType
+    >(
       new GetTableSchemaQuery({
         revisionId,
         tableId,

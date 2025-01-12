@@ -284,7 +284,7 @@ export class RemoveRowHandler extends DraftHandler<
           referenceTableId,
         );
 
-      const schema = await this.shareTransactionalQueries.getTableSchema(
+      const { schema } = await this.shareTransactionalQueries.getTableSchema(
         data.revisionId,
         referenceTableId,
       );

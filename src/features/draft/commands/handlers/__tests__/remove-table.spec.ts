@@ -91,6 +91,7 @@ describe('RemoveTableHandler', () => {
         },
         data,
         hash: '',
+        schemaHash: '',
       },
     });
 

@@ -1,3 +1,5 @@
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+
 export class GetTableSchemaQuery {
   constructor(
     public readonly data: {
@@ -6,3 +8,8 @@ export class GetTableSchemaQuery {
     },
   ) {}
 }
+
+export type GetTableSchemaQueryReturnType = {
+  schema: JsonSchema;
+  hash: string;
+};

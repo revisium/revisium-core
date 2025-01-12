@@ -68,7 +68,7 @@ export class ResolveRowReferencesToHandler
   private async transactionHandler(data: ResolveRowReferencesToQuery['data']) {
     const rowData = await this.getRowData(data);
 
-    const schema = await this.shareTransactionalQueries.getTableSchema(
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
     );

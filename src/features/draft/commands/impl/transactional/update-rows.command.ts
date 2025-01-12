@@ -7,6 +7,7 @@ export class UpdateRowsCommand {
       revisionId: string;
       tableId: string;
       tableSchema: JsonSchema;
+      schemaHash: string;
       rows: {
         rowId: string;
         data: Prisma.InputJsonValue;

@@ -45,7 +45,7 @@ export class ResolveTableReferencesToHandler
       throw getEmptyPaginatedResponse<TableWithContext>();
     }
 
-    const schema = await this.shareTransactionalQueries.getTableSchema(
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
     );

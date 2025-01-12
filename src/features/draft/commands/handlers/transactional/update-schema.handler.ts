@@ -9,12 +9,12 @@ import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
+import { DraftContextService } from 'src/features/draft/draft-context.service';
+import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftHandler } from 'src/features/draft/draft.handler';
 
 @CommandHandler(UpdateSchemaCommand)
 export class UpdateSchemaHandler extends DraftHandler<
@@ -42,12 +42,10 @@ export class UpdateSchemaHandler extends DraftHandler<
   }
 
   private async validateSchema(data: Prisma.InputJsonValue) {
-    const schemaHash = this.jsonSchemaValidator.getSchemaHash(metaSchema);
-
     const { result, errors } = await this.jsonSchemaValidator.validate(
       data,
       metaSchema,
-      schemaHash,
+      this.jsonSchemaValidator.metaSchemaHash,
     );
 
     if (!result) {
@@ -67,6 +65,7 @@ export class UpdateSchemaHandler extends DraftHandler<
         tableId: SystemTables.Schema,
         rowId: data.tableId,
         data: data.data,
+        schemaHash: this.jsonSchemaValidator.metaSchemaHash,
       }),
     );
   }

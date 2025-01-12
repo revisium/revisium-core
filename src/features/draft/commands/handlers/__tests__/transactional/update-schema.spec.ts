@@ -1,13 +1,15 @@
 import { CommandBus } from '@nestjs/cqrs';
+import * as objectHash from 'object-hash';
 import {
   createTestingModule,
   prepareBranch,
-  testSchema,
+  testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -32,7 +34,7 @@ describe('UpdateSchemaHandler', () => {
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
-      data: testSchema,
+      data: testSchemaString,
     });
 
     const result = await runTransaction(command);
@@ -53,7 +55,9 @@ describe('UpdateSchemaHandler', () => {
       },
     });
     expect(result).toBe(true);
-    expect(schemaRow.data).toStrictEqual(testSchema);
+    expect(schemaRow.data).toStrictEqual(testSchemaString);
+    expect(schemaRow.hash).toBe(objectHash(testSchemaString));
+    expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });
 
   function runTransaction(

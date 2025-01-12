@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
 import {
   JsonSchemaTypeName,
   JsonStringSchema,
@@ -11,6 +12,7 @@ import {
   createTestingModule,
   prepareBranch,
   PrepareBranchReturnType,
+  testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
@@ -228,6 +230,7 @@ describe('UpdateTableHandler', () => {
 
     expect(row.data).toStrictEqual({ ver: '2' });
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchemaString));
     expect(row.versionId).toBe(draftRowVersionId);
   });
 
@@ -273,6 +276,7 @@ describe('UpdateTableHandler', () => {
 
     expect(row.data).toStrictEqual({ ver: '2' });
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchemaString));
     expect(row.versionId).not.toBe(draftRowVersionId);
   });
 
@@ -320,6 +324,7 @@ describe('UpdateTableHandler', () => {
     });
     expect(row.data).toStrictEqual({ ver: '2' });
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchemaString));
   });
 
   it('should save the schema correctly', async () => {
@@ -379,6 +384,7 @@ describe('UpdateTableHandler', () => {
     expect(schemaRow.id).toBe(tableId);
     expect(schemaRow.data).toStrictEqual(schema);
     expect(schemaRow.hash).toStrictEqual(objectHash(schema));
+    expect(schemaRow.schemaHash).toStrictEqual(objectHash(metaSchema));
   }
 
   function runTransaction(

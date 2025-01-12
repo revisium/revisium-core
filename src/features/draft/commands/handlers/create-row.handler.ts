@@ -31,19 +31,27 @@ export class CreateRowHandler extends DraftHandler<
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
-    await this.draftTransactionalCommands.validateData({
+    const { schemaHash } = await this.draftTransactionalCommands.validateData({
       revisionId,
       tableId,
       rows: [{ rowId, data }],
     });
 
-    return this.createRow(input);
+    return this.createRow(input, schemaHash);
   }
 
-  private createRow(data: CreateRowCommand['data']) {
+  private createRow(data: CreateRowCommand['data'], schemaHash: string) {
     return this.commandBus.execute<
       InternalCreateRowCommand,
       InternalCreateRowCommandReturnType
-    >(new InternalCreateRowCommand(data));
+    >(
+      new InternalCreateRowCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        rowId: data.rowId,
+        data: data.data,
+        schemaHash,
+      }),
+    );
   }
 }

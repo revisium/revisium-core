@@ -1,4 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
+import * as objectHash from 'object-hash';
 import {
   createTestingModule,
   prepareBranch,
@@ -8,6 +9,7 @@ import {
   CreateSchemaCommand,
   CreateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/create-schema.command';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -56,6 +58,8 @@ describe('CreateSchemaHandler', () => {
     });
     expect(result).toBe(true);
     expect(schemaRow.data).toStrictEqual(testSchema);
+    expect(schemaRow.hash).toBe(objectHash(testSchema));
+    expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });
 
   function runTransaction(

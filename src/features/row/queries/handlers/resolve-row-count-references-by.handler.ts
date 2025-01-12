@@ -77,7 +77,7 @@ export class ResolveRowCountReferencesByHandler
         referenceTableId,
       );
 
-    const schema = await this.shareTransactionalQueries.getTableSchema(
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
       revisionId,
       referenceTableId,
     );

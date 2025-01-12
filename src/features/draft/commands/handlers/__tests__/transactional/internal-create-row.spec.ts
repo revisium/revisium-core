@@ -12,6 +12,7 @@ import {
   createTestingModule,
   prepareBranch,
   PrepareBranchReturnType,
+  testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import * as objectHash from 'object-hash';
@@ -25,6 +26,7 @@ describe('InternalCreateRowHandler', () => {
       tableId: tableId,
       rowId: '',
       data: { ver: 3 },
+      schemaHash: objectHash(testSchema),
     });
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
@@ -45,6 +47,7 @@ describe('InternalCreateRowHandler', () => {
       tableId: 'tableId',
       rowId: 'rowId',
       data: { ver: 3 },
+      schemaHash: objectHash(testSchema),
     });
 
     await expect(runTransaction(command)).rejects.toThrow('Revision not found');
@@ -59,6 +62,7 @@ describe('InternalCreateRowHandler', () => {
       tableId: tableId,
       rowId: rowId,
       data: { ver: 3 },
+      schemaHash: objectHash(testSchema),
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
@@ -75,6 +79,7 @@ describe('InternalCreateRowHandler', () => {
       tableId: tableId,
       rowId: 'newRowId',
       data: { ver: 3 },
+      schemaHash: objectHash(testSchema),
     });
 
     const result = await runTransaction(command);
@@ -109,6 +114,7 @@ describe('InternalCreateRowHandler', () => {
       tableId: tableId,
       rowId: 'newRowId',
       data: { ver: 3 },
+      schemaHash: objectHash(testSchema),
     });
 
     const result = await runTransaction(command);
@@ -146,6 +152,7 @@ describe('InternalCreateRowHandler', () => {
     expect(row.data).toStrictEqual(data);
     expect(row.readonly).toBe(false);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
   }
 
   async function changelogCheck(ids: PrepareBranchReturnType, rowId: string) {

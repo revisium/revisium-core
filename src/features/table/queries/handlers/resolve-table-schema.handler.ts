@@ -31,9 +31,11 @@ export class ResolveTableSchemaHandler
       return foundSystemMetaSchema;
     }
 
-    return this.shareTransactionalQueries.getTableSchema(
+    const result = await this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
     );
+
+    return result.schema;
   }
 }

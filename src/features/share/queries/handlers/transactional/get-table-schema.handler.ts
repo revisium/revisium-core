@@ -1,13 +1,16 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { GetTableSchemaQuery } from 'src/features/share/queries/impl';
+import {
+  GetTableSchemaQuery,
+  GetTableSchemaQueryReturnType,
+} from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @QueryHandler(GetTableSchemaQuery)
 export class GetTableSchemaHandler
-  implements IQueryHandler<GetTableSchemaQuery>
+  implements IQueryHandler<GetTableSchemaQuery, GetTableSchemaQueryReturnType>
 {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
@@ -15,7 +18,7 @@ export class GetTableSchemaHandler
     return this.transactionService.getTransaction();
   }
 
-  async execute({ data }: GetTableSchemaQuery): Promise<JsonSchema> {
+  async execute({ data }: GetTableSchemaQuery) {
     return this.getSchema(data.revisionId, data.tableId);
   }
 
@@ -36,6 +39,7 @@ export class GetTableSchemaHandler
       },
       select: {
         data: true,
+        hash: true,
       },
     });
 
@@ -45,6 +49,9 @@ export class GetTableSchemaHandler
       );
     }
 
-    return result.data as JsonSchema;
+    return {
+      schema: result.data as JsonSchema,
+      hash: result.hash,
+    };
   }
 }

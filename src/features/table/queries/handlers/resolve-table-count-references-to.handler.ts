@@ -35,7 +35,7 @@ export class ResolveTableCountReferencesToHandler
       return 0;
     }
 
-    const schema = await this.shareTransactionalQueries.getTableSchema(
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
     );
