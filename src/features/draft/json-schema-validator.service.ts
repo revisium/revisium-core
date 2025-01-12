@@ -72,7 +72,6 @@ export class JsonSchemaValidatorService {
     schema: Schema | Prisma.InputJsonValue,
     schemaHash: string,
   ): Promise<ValidateFunction> {
-    //
     // TODO getting hash from DB
     const cachedValidateFunction =
       await this.cacheManager.get<ValidateFunction>(schemaHash);
