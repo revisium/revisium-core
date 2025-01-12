@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CreateSchemaCommand } from 'src/features/draft/commands/impl/transactional/create-schema.command';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/create-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -12,7 +12,6 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
-import { SystemTables } from 'src/features/share/system-tables.consts';
 
 @CommandHandler(CreateTableCommand)
 export class CreateTableHandler extends DraftHandler<
@@ -117,12 +116,10 @@ export class CreateTableHandler extends DraftHandler<
     schema,
   }: CreateTableCommand['data']) {
     await this.commandBus.execute(
-      new CreateRowCommand({
+      new CreateSchemaCommand({
         revisionId,
-        tableId: SystemTables.Schema,
-        rowId: tableId,
+        tableId,
         data: schema,
-        skipCheckingNotSystemTable: true,
       }),
     );
     await this.jsonSchemaValidator.getOrAddValidateFunction(

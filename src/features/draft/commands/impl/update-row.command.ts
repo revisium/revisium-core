@@ -7,7 +7,6 @@ export class UpdateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
-      skipCheckingNotSystemTable?: boolean;
     },
   ) {}
 }

@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-export class CreateRowCommand {
+export class InternalCreateRowCommand {
   constructor(
     public readonly data: {
       data: Prisma.InputJsonValue;
@@ -10,3 +10,9 @@ export class CreateRowCommand {
     },
   ) {}
 }
+
+export type InternalCreateRowCommandReturnType = {
+  tableVersionId: string;
+  previousTableVersionId: string;
+  rowVersionId: string;
+};

@@ -8,7 +8,6 @@ export class ValidateDataCommand {
       readonly tableId: string;
       readonly tableSchema?: JsonSchema;
       readonly rows: { rowId: string; data: Prisma.InputJsonValue }[];
-      readonly skipReferenceValidation?: boolean;
     },
   ) {}
 }

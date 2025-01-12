@@ -1,6 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import {
+  InternalCreateRowCommand,
+  InternalCreateRowCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -9,17 +13,14 @@ import {
   prepareBranch,
   PrepareBranchReturnType,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
-import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/create-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
 
-describe('CreateRowHandler', () => {
+describe('InternalCreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
     const { draftRevisionId, tableId } = await prepareBranch(prismaService);
 
-    const command = new CreateRowCommand({
+    const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: '',
@@ -39,7 +40,7 @@ describe('CreateRowHandler', () => {
       new Error('Revision not found'),
     );
 
-    const command = new CreateRowCommand({
+    const command = new InternalCreateRowCommand({
       revisionId: 'unreal',
       tableId: 'tableId',
       rowId: 'rowId',
@@ -53,7 +54,7 @@ describe('CreateRowHandler', () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareBranch(prismaService);
 
-    const command = new CreateRowCommand({
+    const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: rowId,
@@ -65,40 +66,11 @@ describe('CreateRowHandler', () => {
     );
   });
 
-  it('should throw an error if the data is not valid', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
-
-    const command = new CreateRowCommand({
-      revisionId: draftRevisionId,
-      tableId: tableId,
-      rowId: rowId,
-      data: { ver: '3' },
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow('data is not valid');
-  });
-
-  it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, rowId } = await prepareBranch(prismaService);
-
-    const command = new CreateRowCommand({
-      revisionId: draftRevisionId,
-      tableId: SystemTables.Schema,
-      rowId: rowId,
-      data: { ver: 3 },
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow(
-      'Table is a system table',
-    );
-  });
-
   it('should create a new row if conditions are met', async () => {
     const ids = await prepareBranch(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
-    const command = new CreateRowCommand({
+    const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: 'newRowId',
@@ -132,7 +104,7 @@ describe('CreateRowHandler', () => {
       },
     });
 
-    const command = new CreateRowCommand({
+    const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
       tableId: tableId,
       rowId: 'newRowId',
@@ -196,8 +168,8 @@ describe('CreateRowHandler', () => {
   }
 
   function runTransaction(
-    command: CreateRowCommand,
-  ): Promise<CreateRowHandlerReturnType> {
+    command: InternalCreateRowCommand,
+  ): Promise<InternalCreateRowCommandReturnType> {
     return transactionService.run(async () => commandBus.execute(command));
   }
 
