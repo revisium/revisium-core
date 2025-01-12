@@ -1,6 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { ValidateDataCommand } from 'src/features/draft/commands/impl/transactional/validate-data.command';
+import {
+  ValidateDataCommand,
+  ValidateDataCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/validate-data.command';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -14,7 +17,8 @@ import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 
 @CommandHandler(ValidateDataCommand)
 export class ValidateDataHandler
-  implements ICommandHandler<ValidateDataCommand>
+  implements
+    ICommandHandler<ValidateDataCommand, ValidateDataCommandReturnType>
 {
   constructor(
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
@@ -52,13 +56,19 @@ export class ValidateDataHandler
         ),
       );
     }
+
+    return {
+      schemaHash,
+    };
   }
 
   private async getSchema(data: ValidateDataCommand['data']) {
-    return this.shareTransactionalQueries.getTableSchema(
+    const result = await this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
     );
+
+    return result.schema;
   }
 
   private async validateReferences(references: GetReferencesFromValueType[]) {

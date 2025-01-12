@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import * as objectHash from 'object-hash';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -141,6 +143,7 @@ describe('CreateTableHandler', () => {
     });
     expect(schemaRow.id).toBe(tableId);
     expect(schemaRow.data).toStrictEqual(schema);
+    expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   }
 
   async function changelogCheck(ids: PrepareBranchReturnType, tableId: string) {

@@ -33,19 +33,27 @@ export class UpdateRowHandler extends DraftHandler<
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
-    await this.draftTransactionalCommands.validateData({
+    const { schemaHash } = await this.draftTransactionalCommands.validateData({
       revisionId,
       tableId,
       rows: [{ rowId, data }],
     });
 
-    return this.updateRow(input);
+    return this.updateRow(input, schemaHash);
   }
 
-  private updateRow(data: UpdateRowCommand['data']) {
+  private updateRow(data: UpdateRowCommand['data'], schemaHash: string) {
     return this.commandBus.execute<
       InternalUpdateRowCommand,
       InternalUpdateRowCommandReturnType
-    >(new InternalUpdateRowCommand(data));
+    >(
+      new InternalUpdateRowCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        rowId: data.rowId,
+        data: data.data,
+        schemaHash,
+      }),
+    );
   }
 }

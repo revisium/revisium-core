@@ -1,5 +1,4 @@
 import { CommandHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
 import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
@@ -31,13 +30,13 @@ export class InternalUpdateRowHandler extends DraftHandler<
   protected async handler({
     data: input,
   }: InternalUpdateRowCommand): Promise<InternalUpdateRowCommandReturnType> {
-    const { revisionId, tableId, rowId, data } = input;
+    const { revisionId, tableId, rowId } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
     await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
 
-    await this.updateDraftRow(data);
+    await this.updateDraftRow(input);
 
     return {
       tableVersionId: this.tableRequestDto.versionId,
@@ -47,14 +46,15 @@ export class InternalUpdateRowHandler extends DraftHandler<
     };
   }
 
-  private async updateDraftRow(data: Prisma.InputJsonValue) {
+  private async updateDraftRow(input: InternalUpdateRowCommand['data']) {
     return this.transaction.row.update({
       where: {
         versionId: this.rowRequestDto.versionId,
       },
       data: {
-        data: data,
-        hash: await this.hashService.hashObject(data),
+        data: input.data,
+        hash: await this.hashService.hashObject(input.data),
+        schemaHash: input.schemaHash,
       },
       select: {
         versionId: true,

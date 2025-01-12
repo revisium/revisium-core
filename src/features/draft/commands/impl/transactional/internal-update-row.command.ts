@@ -7,6 +7,7 @@ export class InternalUpdateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
+      schemaHash: string;
     },
   ) {}
 }

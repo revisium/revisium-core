@@ -42,12 +42,10 @@ export class CreateSchemaHandler extends DraftHandler<
   }
 
   private async validateSchema(data: Prisma.InputJsonValue) {
-    const schemaHash = this.jsonSchemaValidator.getSchemaHash(metaSchema);
-
     const { result, errors } = await this.jsonSchemaValidator.validate(
       data,
       metaSchema,
-      schemaHash,
+      this.jsonSchemaValidator.metaSchemaHash,
     );
 
     if (!result) {
@@ -67,6 +65,7 @@ export class CreateSchemaHandler extends DraftHandler<
         tableId: SystemTables.Schema,
         rowId: data.tableId,
         data: data.data,
+        schemaHash: this.jsonSchemaValidator.metaSchemaHash,
       }),
     );
   }

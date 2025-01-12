@@ -13,6 +13,8 @@ const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 // TODO moved to separate module to have an independent cache
 @Injectable()
 export class JsonSchemaValidatorService {
+  public readonly metaSchemaHash: string;
+
   private readonly ajv = new Ajv();
 
   private readonly metaSchemaValidate: ValidateFunction;
@@ -26,6 +28,7 @@ export class JsonSchemaValidatorService {
 
     this.metaSchemaValidate = this.ajv.compile(metaSchema);
     this.jsonPatchSchemaValidate = this.ajv.compile(jsonPatchSchema);
+    this.metaSchemaHash = this.getSchemaHash(metaSchema);
   }
 
   public validateMetaSchema(data: unknown) {
@@ -75,7 +78,6 @@ export class JsonSchemaValidatorService {
       await this.cacheManager.get<ValidateFunction>(schemaHash);
 
     if (!cachedValidateFunction) {
-      console.log('schema', schema)
       const validateFunction = this.ajv.compile(schema as Schema);
       await this.cacheManager.set(
         schemaHash,

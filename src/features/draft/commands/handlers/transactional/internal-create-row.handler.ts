@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
 import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,
@@ -38,14 +37,14 @@ export class InternalCreateRowHandler extends DraftHandler<
   protected async handler({
     data: input,
   }: InternalCreateRowCommand): Promise<InternalCreateRowCommandReturnType> {
-    const { revisionId, tableId, rowId, data } = input;
+    const { revisionId, tableId, rowId } = input;
 
     this.validateRowId(rowId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
 
     await this.checkRowExistence(rowId);
-    await this.createDraftRow(rowId, data);
+    await this.createDraftRow(input);
 
     return {
       tableVersionId: this.tableRequestDto.versionId,
@@ -82,9 +81,9 @@ export class InternalCreateRowHandler extends DraftHandler<
     }
   }
 
-  private async createDraftRow(rowId: string, data: Prisma.InputJsonValue) {
+  private async createDraftRow(input: InternalCreateRowCommand['data']) {
     this.rowRequestDto.versionId = this.idService.generate();
-    this.rowRequestDto.id = rowId;
+    this.rowRequestDto.id = input.rowId;
 
     await this.transaction.row.create({
       data: {
@@ -96,9 +95,9 @@ export class InternalCreateRowHandler extends DraftHandler<
             versionId: this.tableRequestDto.versionId,
           },
         },
-        data: data,
-        hash: await this.hashService.hashObject(data),
-        schemaHash: '', // TODO
+        data: input.data,
+        hash: await this.hashService.hashObject(input.data),
+        schemaHash: input.schemaHash,
       },
       select: {
         versionId: true,

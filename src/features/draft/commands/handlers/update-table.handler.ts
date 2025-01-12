@@ -5,6 +5,7 @@ import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
+import { ValidateDataCommand } from 'src/features/draft/commands/impl/transactional/validate-data.command';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
@@ -74,7 +75,11 @@ export class UpdateTableHandler extends DraftHandler<
 
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
 
-    const nextTable = await this.createNextTable(data);
+    const currentTableSchema = await this.getTableSchema(data);
+    const nextTable = await this.createNextTable(
+      data,
+      currentTableSchema.schema,
+    );
 
     const tableSchema = nextTable.getSchema();
     await this.updateSchema({
@@ -87,6 +92,7 @@ export class UpdateTableHandler extends DraftHandler<
       revisionId: data.revisionId,
       tableId: data.tableId,
       tableSchema,
+      schemaHash: currentTableSchema.hash,
       rows: nextTable.getRows().map((row) => ({
         rowId: row.id,
         data: row.data as Prisma.InputJsonValue,
@@ -99,9 +105,10 @@ export class UpdateTableHandler extends DraftHandler<
     };
   }
 
-  private async createNextTable(data: UpdateTableCommand['data']) {
-    const currentTableSchema = await this.getTableSchema(data);
-
+  private async createNextTable(
+    data: UpdateTableCommand['data'],
+    currentTableSchema: JsonSchema,
+  ) {
     const schemaTable = new SchemaTable(currentTableSchema);
 
     const rows = await this.getRows(this.tableRequestDto.versionId);
@@ -159,7 +166,7 @@ export class UpdateTableHandler extends DraftHandler<
     tableId,
     schema,
   }: CreateTableCommand['data']) {
-    await this.commandBus.execute<
+    return this.commandBus.execute<
       UpdateSchemaCommand,
       UpdateSchemaCommandReturnType
     >(
@@ -175,6 +182,7 @@ export class UpdateTableHandler extends DraftHandler<
     revisionId: string;
     tableId: string;
     tableSchema: JsonSchema;
+    schemaHash: string;
     rows: { rowId: string; data: Prisma.InputJsonValue }[];
   }) {
     await this.commandBus.execute(
@@ -183,6 +191,7 @@ export class UpdateTableHandler extends DraftHandler<
         tableId: data.tableId,
         tableSchema: data.tableSchema,
         rows: data.rows,
+        schemaHash: data.schemaHash,
       }),
     );
   }

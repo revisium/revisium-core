@@ -1,4 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
+import * as objectHash from 'object-hash';
 import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -24,6 +25,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -42,6 +44,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId: SystemTables.Schema,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -63,6 +66,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -82,6 +86,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -103,6 +108,8 @@ describe('UpdateRowsHandler', () => {
       },
     });
     expect(row.data).toStrictEqual({ ver: 3 });
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
   });
 
   it('should update the rows if conditions are met', async () => {
@@ -118,6 +125,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -140,6 +148,8 @@ describe('UpdateRowsHandler', () => {
     });
     expect(row.data).toStrictEqual({ ver: 3 });
     expect(row.versionId).toBe(draftRowVersionId);
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
   });
 
   it('should update the rows in a new created table if conditions are met', async () => {
@@ -163,6 +173,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -200,6 +211,8 @@ describe('UpdateRowsHandler', () => {
     });
     expect(row.data).toStrictEqual({ ver: 3 });
     expect(row.versionId).toBe(draftRowVersionId);
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(table.versionId).not.toBe(draftTableVersionId);
   });
 
@@ -224,6 +237,7 @@ describe('UpdateRowsHandler', () => {
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
+      schemaHash: objectHash(testSchema),
       rows: [
         {
           rowId,
@@ -261,6 +275,8 @@ describe('UpdateRowsHandler', () => {
     });
     expect(row.data).toStrictEqual({ ver: 3 });
     expect(row.versionId).not.toBe(draftRowVersionId);
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(table.versionId).toBe(draftTableVersionId);
   });
 

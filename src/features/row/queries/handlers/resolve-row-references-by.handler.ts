@@ -73,7 +73,7 @@ export class ResolveRowReferencesByHandler
 
   private async getJsonPaths(revisionId: string, referenceTableId: string) {
     // TODO move to shared
-    const schema = await this.shareTransactionalQueries.getTableSchema(
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
       revisionId,
       referenceTableId,
     );

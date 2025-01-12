@@ -11,6 +11,7 @@ import {
   createTestingModule,
   prepareBranch,
   PrepareBranchReturnType,
+  testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
@@ -228,6 +229,7 @@ describe('UpdateTableHandler', () => {
 
     expect(row.data).toStrictEqual({ ver: '2' });
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(row.versionId).toBe(draftRowVersionId);
   });
 
@@ -273,6 +275,7 @@ describe('UpdateTableHandler', () => {
 
     expect(row.data).toStrictEqual({ ver: '2' });
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(row.versionId).not.toBe(draftRowVersionId);
   });
 
@@ -320,6 +323,7 @@ describe('UpdateTableHandler', () => {
     });
     expect(row.data).toStrictEqual({ ver: '2' });
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
   });
 
   it('should save the schema correctly', async () => {

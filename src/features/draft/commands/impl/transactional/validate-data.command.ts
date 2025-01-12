@@ -11,3 +11,5 @@ export class ValidateDataCommand {
     },
   ) {}
 }
+
+export type ValidateDataCommandReturnType = { schemaHash: string };

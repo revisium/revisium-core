@@ -5,6 +5,7 @@ import {
   createMock,
   createTestingModule,
   prepareBranch,
+  testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
@@ -110,6 +111,7 @@ describe('UpdateRowHandler', () => {
     });
     expect(row.data).toStrictEqual({ ver: 3 });
     expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
   });
 
   it('should update the row in a new created table if conditions are met', async () => {

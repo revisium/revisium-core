@@ -5,7 +5,10 @@ import { GetOrCreateDraftRowCommand } from 'src/features/draft/commands/impl/tra
 import { GetOrCreateDraftRowsCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-rows.command';
 import { GetOrCreateDraftTableCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-table.command';
 import { ResolveDraftRevisionCommand } from 'src/features/draft/commands/impl/transactional/resolve-draft-revision.command';
-import { ValidateDataCommand } from 'src/features/draft/commands/impl/transactional/validate-data.command';
+import {
+  ValidateDataCommand,
+  ValidateDataCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/validate-data.command';
 import { ValidateNotSystemTableCommand } from 'src/features/draft/commands/impl/transactional/validate-not-system-table.command';
 import { ValidateSchemaCommand } from 'src/features/draft/commands/impl/transactional/validate-schema.command';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
@@ -50,9 +53,10 @@ export class DraftTransactionalCommands {
     readonly tableSchema?: JsonSchema;
     readonly rows: { rowId: string; data: Prisma.InputJsonValue }[];
   }) {
-    return this.commandBus.execute<ValidateDataCommand>(
-      new ValidateDataCommand(data),
-    );
+    return this.commandBus.execute<
+      ValidateDataCommand,
+      ValidateDataCommandReturnType
+    >(new ValidateDataCommand(data));
   }
 
   public async validateSchema(schema: Prisma.InputJsonValue) {

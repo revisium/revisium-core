@@ -24,7 +24,7 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
   }
 
   protected async handler({ data: input }: UpdateRowsCommand) {
-    const { revisionId, tableId, rows } = input;
+    const { revisionId, tableId, rows, schemaHash } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
@@ -51,12 +51,16 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
           throw new BadRequestException('Invalid versionId');
         }
 
-        return this.updateDraftRow(versionId, row.data);
+        return this.updateDraftRow(versionId, row.data, schemaHash);
       }),
     );
   }
 
-  private async updateDraftRow(versionId: string, data: Prisma.InputJsonValue) {
+  private async updateDraftRow(
+    versionId: string,
+    data: Prisma.InputJsonValue,
+    schemaHash: string,
+  ) {
     return this.transaction.row.update({
       where: {
         versionId,
@@ -64,7 +68,7 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
       data: {
         data,
         hash: await this.hashService.hashObject(data),
-        schemaHash: '', // TODO
+        schemaHash,
       },
       select: {
         versionId: true,

@@ -7,6 +7,7 @@ import { nanoid } from 'nanoid';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
@@ -236,7 +237,7 @@ export const prepareBranch = async (
       },
       data: testSchema,
       hash: hash(testSchema),
-      schemaHash: '', // TODO
+      schemaHash: hash(metaSchema),
     },
   });
 
@@ -253,7 +254,7 @@ export const prepareBranch = async (
       },
       data: { ver: 1 },
       hash: hash({ ver: 1 }),
-      schemaHash: '', // TODO
+      schemaHash: hash(testSchema),
     },
   });
   await prismaService.row.create({
@@ -268,7 +269,7 @@ export const prepareBranch = async (
       },
       data: { ver: 2 },
       hash: hash({ ver: 2 }),
-      schemaHash: '', // TODO
+      schemaHash: hash(testSchema),
     },
   });
 

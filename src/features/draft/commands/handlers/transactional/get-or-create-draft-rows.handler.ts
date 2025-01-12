@@ -59,7 +59,13 @@ export class GetOrCreateDraftRowsHandler
   private async cloneRows(readonlyRows: FindRowsInTableType) {
     const rows = await this.transaction.row.findMany({
       where: { OR: readonlyRows.map((row) => ({ versionId: row.versionId })) },
-      select: { data: true, hash: true, id: true, versionId: true },
+      select: {
+        data: true,
+        hash: true,
+        schemaHash: true,
+        id: true,
+        versionId: true,
+      },
     });
 
     if (rows.length !== readonlyRows.length) {
@@ -69,6 +75,7 @@ export class GetOrCreateDraftRowsHandler
     const generatedRows = rows.map((row) => ({
       data: row.data,
       hash: row.hash,
+      schemaHash: row.schemaHash,
       id: row.id,
       versionId: this.idService.generate(),
       previousVersionId: row.versionId,
@@ -81,7 +88,7 @@ export class GetOrCreateDraftRowsHandler
         data: row.data as Prisma.InputJsonValue,
         readonly: false,
         hash: row.hash,
-        schemaHash: '', // TODO
+        schemaHash: row.schemaHash,
       }));
 
     await this.transaction.row.createMany({ data: inputs });
