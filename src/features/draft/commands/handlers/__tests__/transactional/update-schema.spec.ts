@@ -3,7 +3,7 @@ import * as objectHash from 'object-hash';
 import {
   createTestingModule,
   prepareBranch,
-  testSchema,
+  testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   UpdateSchemaCommand,
@@ -34,7 +34,7 @@ describe('UpdateSchemaHandler', () => {
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
-      data: testSchema,
+      data: testSchemaString,
     });
 
     const result = await runTransaction(command);
@@ -55,8 +55,8 @@ describe('UpdateSchemaHandler', () => {
       },
     });
     expect(result).toBe(true);
-    expect(schemaRow.data).toStrictEqual(testSchema);
-    expect(schemaRow.hash).toBe(objectHash(testSchema));
+    expect(schemaRow.data).toStrictEqual(testSchemaString);
+    expect(schemaRow.hash).toBe(objectHash(testSchemaString));
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });
 
