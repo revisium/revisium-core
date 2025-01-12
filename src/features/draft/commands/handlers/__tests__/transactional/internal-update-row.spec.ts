@@ -11,7 +11,6 @@ import {
   prepareBranch,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
 
 describe('InternalUpdateRowHandler', () => {
