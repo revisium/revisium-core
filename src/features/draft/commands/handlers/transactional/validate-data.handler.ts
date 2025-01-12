@@ -11,7 +11,6 @@ import {
   GetReferencesFromValueType,
 } from 'src/features/share/utils/schema/lib/getReferencesFromValue';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @CommandHandler(ValidateDataCommand)
 export class ValidateDataHandler
@@ -46,7 +45,7 @@ export class ValidateDataHandler
       await this.validateReferences(
         getReferencesFromValue(
           createJsonValueStore(
-            createJsonSchemaStore(schema as JsonSchema),
+            createJsonSchemaStore(schema),
             itemData.rowId,
             itemData.data as JsonValue,
           ),
