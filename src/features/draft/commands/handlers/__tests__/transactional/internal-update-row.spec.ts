@@ -85,6 +85,48 @@ describe('InternalUpdateRowHandler', () => {
       },
     });
     expect(row.data).toStrictEqual({ ver: 3 });
+    expect(row.meta).toStrictEqual({});
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
+  });
+
+  it('should update the meta field', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftTableVersionId,
+      draftRowVersionId,
+    } = await prepareBranch(prismaService);
+
+    const command = new InternalUpdateRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      data: { ver: 3 },
+      meta: { meta: 2 },
+      schemaHash: objectHash(testSchema),
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+    expect(result.previousRowVersionId).toBe(draftRowVersionId);
+    expect(result.rowVersionId).toBe(draftRowVersionId);
+
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+    expect(row.data).toStrictEqual({ ver: 3 });
+    expect(row.meta).toStrictEqual({ meta: 2 });
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
   });

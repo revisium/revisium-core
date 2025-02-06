@@ -80,6 +80,7 @@ describe('InternalCreateRowHandler', () => {
       rowId: 'newRowId',
       data: { ver: 3 },
       schemaHash: objectHash(testSchema),
+      meta: { meta: 1 },
     });
 
     const result = await runTransaction(command);
@@ -93,6 +94,36 @@ describe('InternalCreateRowHandler', () => {
       command.data.rowId,
       result.rowVersionId,
       command.data.data,
+      { meta: 1 },
+    );
+    await changelogCheck(ids, command.data.rowId);
+  });
+
+  it('should save the optional meta field', async () => {
+    const ids = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+
+    const command = new InternalCreateRowCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      rowId: 'newRowId',
+      data: { ver: 3 },
+      meta: { meta: 1 },
+      schemaHash: objectHash(testSchema),
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.rowVersionId).toBeTruthy();
+
+    await rowCheck(
+      ids,
+      command.data.rowId,
+      result.rowVersionId,
+      command.data.data,
+      { meta: 1 },
     );
     await changelogCheck(ids, command.data.rowId);
   });
@@ -129,6 +160,7 @@ describe('InternalCreateRowHandler', () => {
     rowId: string,
     createdRowVersionId: string,
     data: Prisma.InputJsonValue,
+    meta: Prisma.InputJsonValue,
   ) {
     const { draftRevisionId, tableId } = ids;
 
@@ -150,6 +182,7 @@ describe('InternalCreateRowHandler', () => {
     expect(row.id).toBe(rowId);
     expect(row.versionId).toBe(createdRowVersionId);
     expect(row.data).toStrictEqual(data);
+    expect(row.meta).toStrictEqual(meta);
     expect(row.readonly).toBe(false);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));

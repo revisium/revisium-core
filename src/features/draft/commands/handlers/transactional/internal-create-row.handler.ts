@@ -96,6 +96,7 @@ export class InternalCreateRowHandler extends DraftHandler<
           },
         },
         data: input.data,
+        meta: input.meta,
         hash: await this.hashService.hashObject(input.data),
         schemaHash: input.schemaHash,
       },

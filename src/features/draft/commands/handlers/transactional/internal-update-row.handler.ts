@@ -53,6 +53,7 @@ export class InternalUpdateRowHandler extends DraftHandler<
       },
       data: {
         data: input.data,
+        meta: input.meta,
         hash: await this.hashService.hashObject(input.data),
         schemaHash: input.schemaHash,
       },
