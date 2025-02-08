@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import Ajv, { ErrorObject, Schema, ValidateFunction } from 'ajv/dist/2020';
 import * as hash from 'object-hash';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
+import { historyPatchesSchema } from 'src/features/share/schema/history-patches-schema';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 
@@ -19,6 +20,7 @@ export class JsonSchemaValidatorService {
 
   private readonly metaSchemaValidate: ValidateFunction;
   private readonly jsonPatchSchemaValidate: ValidateFunction;
+  private readonly historyPatchesSchemaValidate: ValidateFunction;
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.ajv.addKeyword({
@@ -28,6 +30,7 @@ export class JsonSchemaValidatorService {
 
     this.metaSchemaValidate = this.ajv.compile(metaSchema);
     this.jsonPatchSchemaValidate = this.ajv.compile(jsonPatchSchema);
+    this.historyPatchesSchemaValidate = this.ajv.compile(historyPatchesSchema);
     this.metaSchemaHash = this.getSchemaHash(metaSchema);
   }
 
@@ -46,6 +49,15 @@ export class JsonSchemaValidatorService {
     return {
       result,
       errors: this.jsonPatchSchemaValidate.errors,
+    };
+  }
+
+  public validateHistoryPatchesSchema(data: unknown) {
+    const result = this.historyPatchesSchemaValidate(data);
+
+    return {
+      result,
+      errors: this.historyPatchesSchemaValidate.errors,
     };
   }
 

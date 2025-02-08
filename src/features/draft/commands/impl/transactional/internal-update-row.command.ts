@@ -8,6 +8,7 @@ export class InternalUpdateRowCommand {
       tableId: string;
       rowId: string;
       schemaHash: string;
+      meta?: Prisma.InputJsonValue;
     },
   ) {}
 }

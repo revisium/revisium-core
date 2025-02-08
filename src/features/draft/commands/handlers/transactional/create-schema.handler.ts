@@ -9,12 +9,14 @@ import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
+import { DraftContextService } from 'src/features/draft/draft-context.service';
+import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftHandler } from 'src/features/draft/draft.handler';
 
 @CommandHandler(CreateSchemaCommand)
 export class CreateSchemaHandler extends DraftHandler<
@@ -26,6 +28,7 @@ export class CreateSchemaHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly hashService: HashService,
   ) {
     super(transactionService, draftContext);
   }
@@ -36,7 +39,10 @@ export class CreateSchemaHandler extends DraftHandler<
     const { data } = input;
 
     await this.validateSchema(data);
-    await this.createRowInSchemaTable(input);
+
+    const historyPatches = await this.getHistoryPatchesByData(data);
+
+    await this.createRowInSchemaTable(input, historyPatches);
 
     return true;
   }
@@ -55,7 +61,25 @@ export class CreateSchemaHandler extends DraftHandler<
     }
   }
 
-  private createRowInSchemaTable(data: CreateSchemaCommand['data']) {
+  private async getHistoryPatchesByData(data: Prisma.InputJsonValue) {
+    return [
+      {
+        patches: [
+          {
+            op: 'add',
+            path: '',
+            value: data as JsonSchema,
+          },
+        ],
+        hash: await this.hashService.hashObject(data),
+      },
+    ] as Prisma.InputJsonValue;
+  }
+
+  private createRowInSchemaTable(
+    data: CreateSchemaCommand['data'],
+    historyPatches: Prisma.InputJsonValue,
+  ) {
     return this.commandBus.execute<
       InternalCreateRowCommand,
       InternalCreateRowCommandReturnType
@@ -65,6 +89,7 @@ export class CreateSchemaHandler extends DraftHandler<
         tableId: SystemTables.Schema,
         rowId: data.tableId,
         data: data.data,
+        meta: historyPatches,
         schemaHash: this.jsonSchemaValidator.metaSchemaHash,
       }),
     );

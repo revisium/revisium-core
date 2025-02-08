@@ -230,6 +230,7 @@ describe('UpdateRowsHandler', () => {
       },
       data: {
         readonly: true,
+        meta: { previousValue: 1 },
       },
     });
 
@@ -274,6 +275,7 @@ describe('UpdateRowsHandler', () => {
       },
     });
     expect(row.data).toStrictEqual({ ver: 3 });
+    expect(row.meta).toStrictEqual({ previousValue: 1 });
     expect(row.versionId).not.toBe(draftRowVersionId);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));

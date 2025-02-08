@@ -49,32 +49,24 @@ export class GetOrCreateDraftRowHandler
   }
 
   private async getRowData(rowId: string) {
-    const { data, hash, schemaHash } =
-      await this.transaction.row.findUniqueOrThrow({
-        where: { versionId: rowId },
-        select: { data: true, hash: true, schemaHash: true },
-      });
-    return { data, hash, schemaHash } as {
-      data: Prisma.InputJsonValue;
-      hash: string;
-      schemaHash: string;
-    };
+    return this.transaction.row.findUniqueOrThrow({
+      where: { versionId: rowId },
+    });
   }
 
-  private createRow(
-    data: Prisma.InputJsonValue,
-    hash: string,
-    schemaHash: string,
-  ) {
+  private async createRow(previousRowId: string) {
+    const previousRow = await this.getRowData(previousRowId);
+
     this.rowRequestDto.versionId = this.idService.generate();
 
     return this.transaction.row.create({
       data: {
         versionId: this.rowRequestDto.versionId,
         id: this.rowRequestDto.id,
-        data,
-        hash,
-        schemaHash,
+        data: previousRow.data as Prisma.InputJsonValue,
+        meta: previousRow.meta as Prisma.InputJsonValue,
+        hash: previousRow.hash,
+        schemaHash: previousRow.schemaHash,
         readonly: false,
         tables: {
           connect: {
@@ -122,8 +114,7 @@ export class GetOrCreateDraftRowHandler
 
   private async createDraftRow(previousRowId: string) {
     await this.disconnectPreviousRow(previousRowId);
-    const { data, hash, schemaHash } = await this.getRowData(previousRowId);
-    await this.createRow(data, hash, schemaHash);
+    await this.createRow(previousRowId);
     await this.addRowToChangelog();
   }
 }

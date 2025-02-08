@@ -22,6 +22,7 @@ export const jsonPatchSchema: Schema = {
     booleanSchema: booleanMetaSchema,
     arraySchema: arrayMetaSchema,
   },
+  minItems: 1,
   items: {
     oneOf: [
       {

@@ -61,6 +61,7 @@ export class GetOrCreateDraftRowsHandler
       where: { OR: readonlyRows.map((row) => ({ versionId: row.versionId })) },
       select: {
         data: true,
+        meta: true,
         hash: true,
         schemaHash: true,
         id: true,
@@ -74,6 +75,7 @@ export class GetOrCreateDraftRowsHandler
 
     const generatedRows = rows.map((row) => ({
       data: row.data,
+      meta: row.meta,
       hash: row.hash,
       schemaHash: row.schemaHash,
       id: row.id,
@@ -86,6 +88,7 @@ export class GetOrCreateDraftRowsHandler
         versionId: row.versionId,
         id: row.id,
         data: row.data as Prisma.InputJsonValue,
+        meta: row.meta as Prisma.InputJsonValue,
         readonly: false,
         hash: row.hash,
         schemaHash: row.schemaHash,

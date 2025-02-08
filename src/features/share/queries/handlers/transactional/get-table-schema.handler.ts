@@ -4,6 +4,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import {
   GetTableSchemaQuery,
   GetTableSchemaQueryReturnType,
+  HistoryPatches,
 } from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
@@ -40,6 +41,7 @@ export class GetTableSchemaHandler
       select: {
         data: true,
         hash: true,
+        meta: true,
       },
     });
 
@@ -52,6 +54,7 @@ export class GetTableSchemaHandler
     return {
       schema: result.data as JsonSchema,
       hash: result.hash,
+      historyPatches: result.meta as HistoryPatches[],
     };
   }
 }

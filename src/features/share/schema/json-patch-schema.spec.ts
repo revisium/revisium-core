@@ -10,7 +10,7 @@ describe('json-patch-schema', () => {
   });
 
   it('empty', () => {
-    expect(ajv.validate(jsonPatchSchema, [])).toBe(true);
+    expect(ajv.validate(jsonPatchSchema, [])).toBe(false);
   });
 
   it('add', () => {

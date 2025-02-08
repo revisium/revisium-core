@@ -12,6 +12,7 @@ import {
   createTestingModule,
   prepareBranch,
   PrepareBranchReturnType,
+  testSchema,
   testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
@@ -232,6 +233,7 @@ describe('UpdateTableHandler', () => {
     expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
     expect(row.schemaHash).toBe(objectHash(testSchemaString));
     expect(row.versionId).toBe(draftRowVersionId);
+    expect(row.meta).toStrictEqual({});
   });
 
   it('should apply patches to a new created row in the table', async () => {
@@ -385,6 +387,25 @@ describe('UpdateTableHandler', () => {
     expect(schemaRow.data).toStrictEqual(schema);
     expect(schemaRow.hash).toStrictEqual(objectHash(schema));
     expect(schemaRow.schemaHash).toStrictEqual(objectHash(metaSchema));
+    expect(schemaRow.meta).toStrictEqual([
+      {
+        patches: [{ op: 'add', path: '', value: testSchema }],
+        hash: objectHash(testSchema),
+      },
+      {
+        patches: [
+          {
+            op: 'replace',
+            path: '/properties/ver',
+            value: {
+              type: JsonSchemaTypeName.String,
+              default: '',
+            },
+          },
+        ],
+        hash: objectHash(schema),
+      },
+    ]);
   }
 
   function runTransaction(

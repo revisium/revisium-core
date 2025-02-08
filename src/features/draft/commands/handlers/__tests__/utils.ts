@@ -8,6 +8,7 @@ import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
@@ -248,6 +249,18 @@ export const prepareBranch = async (
         },
       },
       data: testSchema,
+      meta: [
+        {
+          patches: [
+            {
+              op: 'add',
+              path: '',
+              value: testSchema,
+            } as JsonPatchAdd,
+          ],
+          hash: hash(testSchema),
+        },
+      ],
       hash: hash(testSchema),
       schemaHash: hash(metaSchema),
     },
