@@ -1,3 +1,4 @@
+import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 export class GetTableSchemaQuery {
@@ -9,7 +10,10 @@ export class GetTableSchemaQuery {
   ) {}
 }
 
+export type HistoryPatches = { patches: JsonPatch[]; hash: string };
+
 export type GetTableSchemaQueryReturnType = {
   schema: JsonSchema;
   hash: string;
+  historyPatches: HistoryPatches[];
 };

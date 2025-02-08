@@ -1,9 +1,11 @@
 import { Prisma } from '@prisma/client';
+import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
 
 export class UpdateSchemaCommand {
   constructor(
     public readonly data: {
-      data: Prisma.InputJsonValue;
+      schema: Prisma.InputJsonValue;
+      patches: JsonPatch[];
       revisionId: string;
       tableId: string;
     },

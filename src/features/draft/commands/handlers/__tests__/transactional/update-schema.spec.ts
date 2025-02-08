@@ -1,8 +1,10 @@
 import { CommandBus } from '@nestjs/cqrs';
+import * as hash from 'object-hash';
 import * as objectHash from 'object-hash';
 import {
   createTestingModule,
   prepareBranch,
+  testSchema,
   testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
@@ -11,6 +13,10 @@ import {
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import {
+  JsonPatchAdd,
+  JsonPatchReplace,
+} from 'src/features/share/utils/schema/types/json-patch.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -21,10 +27,40 @@ describe('UpdateSchemaHandler', () => {
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
-      data: {},
+      schema: {},
+      patches: [
+        {
+          op: 'replace',
+          path: '',
+          value: testSchemaString,
+        } as JsonPatchReplace,
+        { op: 'add', path: '', value: testSchema } as JsonPatchAdd,
+      ],
     });
 
     await expect(runTransaction(command)).rejects.toThrow('data is not valid');
+  });
+
+  it('should throw an error if the patches are invalid', async () => {
+    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+
+    const command = new UpdateSchemaCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      schema: testSchema,
+      patches: [
+        {
+          op: 'replace',
+          path: '',
+          value: testSchemaString,
+        } as JsonPatchReplace,
+        { op: 'add', path: '' } as JsonPatchAdd,
+      ],
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      'patches is not valid',
+    );
   });
 
   it('should update the schema if conditions are met', async () => {
@@ -34,7 +70,24 @@ describe('UpdateSchemaHandler', () => {
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
-      data: testSchemaString,
+      schema: testSchemaString,
+      patches: [
+        {
+          op: 'replace',
+          path: '',
+          value: testSchemaString,
+        } as JsonPatchReplace,
+        {
+          op: 'replace',
+          path: '',
+          value: testSchema,
+        } as JsonPatchReplace,
+        {
+          op: 'replace',
+          path: '',
+          value: testSchemaString,
+        } as JsonPatchReplace,
+      ],
     });
 
     const result = await runTransaction(command);
@@ -56,6 +109,38 @@ describe('UpdateSchemaHandler', () => {
     });
     expect(result).toBe(true);
     expect(schemaRow.data).toStrictEqual(testSchemaString);
+    expect(schemaRow.meta).toStrictEqual([
+      {
+        patches: [
+          {
+            op: 'add',
+            path: '',
+            value: testSchema,
+          } as JsonPatchAdd,
+        ],
+        hash: hash(testSchema),
+      },
+      {
+        patches: [
+          {
+            op: 'replace',
+            path: '',
+            value: testSchemaString,
+          } as JsonPatchReplace,
+          {
+            op: 'replace',
+            path: '',
+            value: testSchema,
+          } as JsonPatchReplace,
+          {
+            op: 'replace',
+            path: '',
+            value: testSchemaString,
+          } as JsonPatchReplace,
+        ],
+        hash: hash(testSchemaString),
+      },
+    ]);
     expect(schemaRow.hash).toBe(objectHash(testSchemaString));
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });
