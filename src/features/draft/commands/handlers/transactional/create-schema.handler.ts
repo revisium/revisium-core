@@ -41,7 +41,6 @@ export class CreateSchemaHandler extends DraftHandler<
     await this.validateSchema(data);
 
     const historyPatches = await this.getHistoryPatchesByData(data);
-    this.validateHistoryPatches(historyPatches);
 
     await this.createRowInSchemaTable(input, historyPatches);
 
@@ -57,17 +56,6 @@ export class CreateSchemaHandler extends DraftHandler<
 
     if (!result) {
       throw new BadRequestException('data is not valid', {
-        cause: errors,
-      });
-    }
-  }
-
-  private validateHistoryPatches(data: Prisma.InputJsonValue) {
-    const { result, errors } =
-      this.jsonSchemaValidator.validateHistoryPatchesSchema(data);
-
-    if (!result) {
-      throw new BadRequestException('patches is not valid', {
         cause: errors,
       });
     }
