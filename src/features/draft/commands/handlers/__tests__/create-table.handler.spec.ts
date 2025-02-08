@@ -3,6 +3,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import * as objectHash from 'object-hash';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -143,6 +144,12 @@ describe('CreateTableHandler', () => {
     });
     expect(schemaRow.id).toBe(tableId);
     expect(schemaRow.data).toStrictEqual(schema);
+    expect(schemaRow.meta).toStrictEqual([
+      {
+        patches: [{ op: 'add', path: '', value: schema } as JsonPatchAdd],
+        hash: objectHash(schema),
+      },
+    ]);
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   }
 
