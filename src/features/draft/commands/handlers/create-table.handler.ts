@@ -76,10 +76,12 @@ export class CreateTableHandler extends DraftHandler<
   private async createTable(tableId: string) {
     this.tableRequestDto.id = tableId;
     this.tableRequestDto.versionId = this.idService.generate();
+    this.tableRequestDto.createdId = this.idService.generate();
 
     await this.transaction.table.create({
       data: {
         versionId: this.tableRequestDto.versionId,
+        createdId: this.tableRequestDto.createdId,
         id: this.tableRequestDto.id,
         readonly: false,
         revisions: {

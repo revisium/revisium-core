@@ -22,7 +22,12 @@ export class FindTableInRevisionOrThrowHandler
         id: data.tableId,
         revisions: { some: { id: data.revisionId } },
       },
-      select: { versionId: true, readonly: true, system: true },
+      select: {
+        versionId: true,
+        createdId: true,
+        readonly: true,
+        system: true,
+      },
     });
 
     if (!existingTable) {

@@ -57,7 +57,9 @@ export type PrepareProjectReturnType = {
   headChangelogId: string;
   draftChangelogId: string;
   schemaTableVersionId: string;
+  schemaTableCreatedId: string;
   tableId: string;
+  tableCreatedId: string;
   headTableVersionId: string;
   draftTableVersionId: string;
 };
@@ -76,7 +78,9 @@ export const prepareProject = async (
   const draftChangelogId = nanoid();
 
   const schemaTableVersionId = nanoid();
+  const schemaTableCreatedId = nanoid();
   const tableId = nanoid();
+  const tableCreatedId = nanoid();
   const headTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
 
@@ -133,6 +137,7 @@ export const prepareProject = async (
   await prismaService.table.create({
     data: {
       id: SystemTables.Schema,
+      createdId: schemaTableCreatedId,
       versionId: schemaTableVersionId,
       readonly: true,
       system: true,
@@ -146,6 +151,7 @@ export const prepareProject = async (
   await prismaService.table.create({
     data: {
       id: tableId,
+      createdId: tableCreatedId,
       versionId: headTableVersionId,
       readonly: true,
       revisions: {
@@ -156,6 +162,7 @@ export const prepareProject = async (
   await prismaService.table.create({
     data: {
       id: tableId,
+      createdId: tableCreatedId,
       versionId: draftTableVersionId,
       readonly: false,
       revisions: {
@@ -175,7 +182,9 @@ export const prepareProject = async (
     headChangelogId,
     draftChangelogId,
     schemaTableVersionId,
+    schemaTableCreatedId,
     tableId,
+    tableCreatedId,
     headTableVersionId,
     draftTableVersionId,
   };

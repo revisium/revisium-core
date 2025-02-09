@@ -59,6 +59,7 @@ describe('RemoveTableHandler', () => {
     await prismaService.table.create({
       data: {
         id: anotherTableId,
+        createdId: nanoid(),
         readonly: false,
         versionId: anotherTableVersionId,
         revisions: {

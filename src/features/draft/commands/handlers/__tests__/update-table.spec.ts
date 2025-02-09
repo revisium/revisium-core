@@ -190,13 +190,7 @@ describe('UpdateTableHandler', () => {
 
   it('should apply patches to the row in the table', async () => {
     const ids = await prepareBranch(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      draftTableVersionId,
-      rowId,
-      draftRowVersionId,
-    } = ids;
+    const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -218,27 +212,12 @@ describe('UpdateTableHandler', () => {
     expect(result.tableVersionId).toBe(draftTableVersionId);
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
 
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: result.tableVersionId,
-          },
-        },
-      },
-    });
-
-    expect(row.data).toStrictEqual({ ver: '2' });
-    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
-    expect(row.schemaHash).toBe(objectHash(testSchemaString));
-    expect(row.versionId).toBe(draftRowVersionId);
-    expect(row.meta).toStrictEqual({});
+    await rowAndTableCheck(ids);
   });
 
   it('should apply patches to a new created row in the table', async () => {
     const ids = await prepareBranch(prismaService);
-    const { draftRowVersionId, draftRevisionId, tableId, rowId } = ids;
+    const { draftRowVersionId, draftRevisionId, tableId } = ids;
     await prismaService.row.update({
       where: {
         versionId: draftRowVersionId,
@@ -263,28 +242,16 @@ describe('UpdateTableHandler', () => {
       ],
     });
 
-    const result = await runTransaction(command);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: result.tableVersionId,
-          },
-        },
-      },
+    await runTransaction(command);
+    await rowAndTableCheck(ids, {
+      skipCheckingRowVersionId: true,
+      skipCheckingTableVersionId: true,
     });
-
-    expect(row.data).toStrictEqual({ ver: '2' });
-    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
-    expect(row.schemaHash).toBe(objectHash(testSchemaString));
-    expect(row.versionId).not.toBe(draftRowVersionId);
   });
 
   it('should apply patches to the row in a new created table', async () => {
     const ids = await prepareBranch(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId, rowId } = ids;
+    const { draftRevisionId, tableId, draftTableVersionId } = ids;
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,
@@ -309,24 +276,10 @@ describe('UpdateTableHandler', () => {
       ],
     });
 
-    const result = await runTransaction(command);
-
-    expect(result.tableVersionId).not.toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
-      },
+    await runTransaction(command);
+    await rowAndTableCheck(ids, {
+      skipCheckingTableVersionId: true,
     });
-    expect(row.data).toStrictEqual({ ver: '2' });
-    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
-    expect(row.schemaHash).toBe(objectHash(testSchemaString));
   });
 
   it('should save the schema correctly', async () => {
@@ -352,6 +305,56 @@ describe('UpdateTableHandler', () => {
 
     await schemaCheck(ids);
   });
+
+  async function rowAndTableCheck(
+    ids: PrepareBranchReturnType,
+    {
+      skipCheckingTableVersionId,
+      skipCheckingRowVersionId,
+    }: {
+      skipCheckingTableVersionId?: boolean;
+      skipCheckingRowVersionId?: boolean;
+    } = {},
+  ) {
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: ids.rowId,
+        tables: {
+          some: {
+            revisions: {
+              some: {
+                id: ids.draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(row.data).toStrictEqual({ ver: '2' });
+    expect(row.hash).toStrictEqual(objectHash({ ver: '2' }));
+    expect(row.schemaHash).toBe(objectHash(testSchemaString));
+    expect(row.meta).toStrictEqual({});
+    if (!skipCheckingRowVersionId) {
+      expect(row.versionId).toBe(ids.draftRowVersionId);
+    }
+
+    const table = await prismaService.table.findFirstOrThrow({
+      where: {
+        id: ids.tableId,
+        revisions: {
+          some: {
+            id: ids.draftRevisionId,
+          },
+        },
+      },
+    });
+    expect(table.id).toBe(ids.tableId);
+    expect(table.createdId).toBe(ids.tableCreatedId);
+    if (!skipCheckingTableVersionId) {
+      expect(table.versionId).toBe(ids.draftTableVersionId);
+    }
+  }
 
   async function schemaCheck(ids: PrepareBranchReturnType) {
     const { tableId, draftRevisionId } = ids;

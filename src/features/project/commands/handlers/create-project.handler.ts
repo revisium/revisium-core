@@ -23,6 +23,7 @@ export type CreateProjectHandlerContext = {
   draftRevisionId: string;
   draftChangelogId: string;
   schemaTableId: string;
+  schemaTableCreatedId: string;
 };
 
 @CommandHandler(CreateProjectCommand)
@@ -75,6 +76,7 @@ export class CreateProjectHandler
       draftRevisionId: this.idService.generate(),
       draftChangelogId: this.idService.generate(),
       schemaTableId: this.idService.generate(),
+      schemaTableCreatedId: this.idService.generate(),
     };
 
     return this.asyncLocalStorage.run(context, async () => {
@@ -159,6 +161,7 @@ export class CreateProjectHandler
             ? { connect: this.context.tableIds }
             : {
                 create: {
+                  createdId: this.context.schemaTableCreatedId,
                   versionId: this.context.schemaTableId,
                   id: SystemTables.Schema,
                   readonly: true,
