@@ -36,4 +36,12 @@ export class DraftTableRequestDto {
   public set id(value: string) {
     this.draftContext.setKey(DraftContextKeys.DraftTableId, value);
   }
+
+  public get createdId(): string {
+    return this.draftContext.resolveKey(DraftContextKeys.DraftTableCreatedId);
+  }
+
+  public set createdId(value: string) {
+    this.draftContext.setKey(DraftContextKeys.DraftTableCreatedId, value);
+  }
 }

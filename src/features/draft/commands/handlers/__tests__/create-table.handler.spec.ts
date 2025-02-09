@@ -118,6 +118,9 @@ describe('CreateTableHandler', () => {
     expect(table.id).toBe(tableId);
     expect(table.versionId).toBe(tableVersionId);
     expect(table.readonly).toBe(false);
+    expect(table.createdId).toBeTruthy();
+    expect(table.createdId).not.toBe(table.id);
+    expect(table.createdId).not.toBe(table.versionId);
   }
 
   async function schemaCheck(

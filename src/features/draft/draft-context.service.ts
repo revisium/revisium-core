@@ -8,6 +8,7 @@ export enum DraftContextKeys {
 
   DraftTableId = 'draftTableId',
   DraftTableVersionId = 'draftTableVersionId',
+  DraftTableCreatedId = 'draftTableCreatedId',
   DraftTablePreviousVersionId = 'draftTablePreviousVersionId',
 
   DraftRowId = 'draftRowId',

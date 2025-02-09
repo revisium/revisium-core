@@ -34,6 +34,7 @@ export class GetOrCreateDraftTableHandler
       );
 
     this.tableRequestDto.previousVersionId = previousTable.versionId;
+    this.tableRequestDto.createdId = previousTable.createdId;
 
     if (!previousTable.readonly) {
       this.tableRequestDto.versionId = previousTable.versionId;
@@ -49,22 +50,22 @@ export class GetOrCreateDraftTableHandler
   }
 
   private async createNextVersionTable(
-    previousTableId: string,
+    previousTableVersionId: string,
     system: boolean,
   ) {
     await this.createDraftTable(
-      await this.getPreviousRowsInTable(previousTableId),
+      await this.getPreviousRowsInTable(previousTableVersionId),
       system,
     );
-    await this.disconnectPreviousTable(previousTableId);
+    await this.disconnectPreviousTable(previousTableVersionId);
     await this.addTableToChangelog();
   }
 
-  private getPreviousRowsInTable(tableId: string) {
+  private getPreviousRowsInTable(tableVersionId: string) {
     return this.transaction.table
       .findUniqueOrThrow({
         where: {
-          versionId: tableId,
+          versionId: tableVersionId,
           revisions: { some: { id: this.revisionRequestDto.id } },
         },
       })
@@ -77,6 +78,7 @@ export class GetOrCreateDraftTableHandler
     return this.transaction.table.create({
       data: {
         versionId: this.tableRequestDto.versionId,
+        createdId: this.tableRequestDto.createdId,
         system,
         id: this.tableRequestDto.id,
         revisions: {
@@ -91,7 +93,7 @@ export class GetOrCreateDraftTableHandler
     });
   }
 
-  private disconnectPreviousTable(previousTableId: string) {
+  private disconnectPreviousTable(previousTableVersionId: string) {
     return this.transaction.revision.update({
       where: {
         id: this.revisionRequestDto.id,
@@ -99,7 +101,7 @@ export class GetOrCreateDraftTableHandler
       data: {
         tables: {
           disconnect: {
-            versionId: previousTableId,
+            versionId: previousTableVersionId,
           },
         },
       },
