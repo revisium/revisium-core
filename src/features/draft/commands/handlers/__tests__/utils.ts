@@ -124,6 +124,7 @@ export type PrepareBranchReturnType = {
   headTableVersionId: string;
   draftTableVersionId: string;
   rowId: string;
+  rowCreatedId: string;
   headRowVersionId: string;
   draftRowVersionId: string;
   headEndpointId: string;
@@ -340,6 +341,7 @@ export const prepareBranch = async (
     headTableVersionId,
     draftTableVersionId,
     rowId,
+    rowCreatedId,
     headRowVersionId,
     draftRowVersionId,
     headEndpointId,

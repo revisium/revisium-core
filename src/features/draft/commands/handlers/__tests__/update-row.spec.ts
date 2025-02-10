@@ -83,6 +83,7 @@ describe('UpdateRowHandler', () => {
       rowId,
       draftTableVersionId,
       draftRowVersionId,
+      rowCreatedId,
     } = await prepareBranch(prismaService);
 
     const command = new UpdateRowCommand({
@@ -112,6 +113,7 @@ describe('UpdateRowHandler', () => {
     expect(row.data).toStrictEqual({ ver: 3 });
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
   });
 
   it('should update the row in a new created table if conditions are met', async () => {

@@ -57,6 +57,7 @@ describe('InternalUpdateRowHandler', () => {
       rowId,
       draftTableVersionId,
       draftRowVersionId,
+      rowCreatedId,
     } = await prepareBranch(prismaService);
 
     const command = new InternalUpdateRowCommand({
@@ -88,6 +89,7 @@ describe('InternalUpdateRowHandler', () => {
     expect(row.meta).toStrictEqual({});
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
   });
 
   it('should update the meta field', async () => {
@@ -97,6 +99,7 @@ describe('InternalUpdateRowHandler', () => {
       rowId,
       draftTableVersionId,
       draftRowVersionId,
+      rowCreatedId,
     } = await prepareBranch(prismaService);
 
     const command = new InternalUpdateRowCommand({
@@ -129,6 +132,7 @@ describe('InternalUpdateRowHandler', () => {
     expect(row.meta).toStrictEqual({ meta: 2 });
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
   });
 
   it('should update the row in a new created table if conditions are met', async () => {
@@ -138,6 +142,7 @@ describe('InternalUpdateRowHandler', () => {
       rowId,
       draftTableVersionId,
       draftRowVersionId,
+      rowCreatedId,
     } = await prepareBranch(prismaService);
     await prismaService.table.update({
       where: {
@@ -162,6 +167,18 @@ describe('InternalUpdateRowHandler', () => {
     expect(result.tableVersionId).not.toBe(draftTableVersionId);
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).toBe(draftRowVersionId);
+
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+    expect(row.createdId).toBe(rowCreatedId);
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
