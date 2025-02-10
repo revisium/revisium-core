@@ -84,6 +84,7 @@ describe('RemoveTableHandler', () => {
       data: {
         id: anotherTableId,
         readonly: false,
+        createdId: nanoid(),
         versionId: nanoid(),
         tables: {
           connect: {

@@ -22,7 +22,7 @@ export class FindRowInTableOrThrowHandler
         id: data.rowId,
         tables: { some: { versionId: data.tableVersionId } },
       },
-      select: { versionId: true, readonly: true },
+      select: { versionId: true, createdId: true, readonly: true },
     });
 
     if (!existingRow) {

@@ -47,7 +47,7 @@ describe('FindRowInTableOrThrowHandler', () => {
     const { prisma } = mocks;
     expect(prisma.row.findFirst).nthCalledWith(1, {
       where: { id: rowId, tables: { some: { versionId: tableId } } },
-      select: { versionId: true, readonly: true },
+      select: { versionId: true, readonly: true, createdId: true },
     });
   }
 

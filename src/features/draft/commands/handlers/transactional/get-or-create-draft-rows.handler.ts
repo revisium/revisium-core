@@ -66,6 +66,7 @@ export class GetOrCreateDraftRowsHandler
         schemaHash: true,
         id: true,
         versionId: true,
+        createdId: true,
       },
     });
 
@@ -80,12 +81,14 @@ export class GetOrCreateDraftRowsHandler
       schemaHash: row.schemaHash,
       id: row.id,
       versionId: this.idService.generate(),
+      createdId: row.createdId,
       previousVersionId: row.versionId,
     }));
 
     const inputs: Prisma.RowCreateManyInput[] =
       generatedRows.map<Prisma.RowCreateManyInput>((row) => ({
         versionId: row.versionId,
+        createdId: row.createdId,
         id: row.id,
         data: row.data as Prisma.InputJsonValue,
         meta: row.meta as Prisma.InputJsonValue,

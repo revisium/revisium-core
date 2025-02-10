@@ -79,8 +79,13 @@ describe('UpdateRowsHandler', () => {
   });
 
   it('should update the row if conditions are met', async () => {
-    const { draftRevisionId, tableId, draftTableVersionId, rowId } =
-      await prepareBranch(prismaService);
+    const {
+      draftRevisionId,
+      tableId,
+      draftTableVersionId,
+      rowId,
+      rowCreatedId,
+    } = await prepareBranch(prismaService);
 
     const command = new UpdateRowsCommand({
       revisionId: draftRevisionId,
@@ -110,6 +115,7 @@ describe('UpdateRowsHandler', () => {
     expect(row.data).toStrictEqual({ ver: 3 });
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
   });
 
   it('should update the rows if conditions are met', async () => {
@@ -119,6 +125,7 @@ describe('UpdateRowsHandler', () => {
       draftTableVersionId,
       rowId,
       draftRowVersionId,
+      rowCreatedId,
     } = await prepareBranch(prismaService);
 
     const command = new UpdateRowsCommand({
@@ -150,6 +157,7 @@ describe('UpdateRowsHandler', () => {
     expect(row.versionId).toBe(draftRowVersionId);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
   });
 
   it('should update the rows in a new created table if conditions are met', async () => {
@@ -159,6 +167,7 @@ describe('UpdateRowsHandler', () => {
       draftTableVersionId,
       rowId,
       draftRowVersionId,
+      rowCreatedId,
     } = await prepareBranch(prismaService);
     await prismaService.table.update({
       where: {
@@ -213,6 +222,7 @@ describe('UpdateRowsHandler', () => {
     expect(row.versionId).toBe(draftRowVersionId);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
     expect(table.versionId).not.toBe(draftTableVersionId);
   });
 

@@ -84,10 +84,12 @@ export class InternalCreateRowHandler extends DraftHandler<
   private async createDraftRow(input: InternalCreateRowCommand['data']) {
     this.rowRequestDto.versionId = this.idService.generate();
     this.rowRequestDto.id = input.rowId;
+    this.rowRequestDto.createdId = this.idService.generate();
 
     await this.transaction.row.create({
       data: {
         versionId: this.rowRequestDto.versionId,
+        createdId: this.rowRequestDto.createdId,
         id: this.rowRequestDto.id,
         readonly: false,
         tables: {

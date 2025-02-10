@@ -1,1 +1,5 @@
-export type FindRowInTableType = { versionId: string; readonly: boolean };
+export type FindRowInTableType = {
+  versionId: string;
+  createdId: string;
+  readonly: boolean;
+};
