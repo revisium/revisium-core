@@ -186,6 +186,9 @@ describe('InternalCreateRowHandler', () => {
     expect(row.readonly).toBe(false);
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBeTruthy();
+    expect(row.createdId).not.toBe(row.id);
+    expect(row.createdId).not.toBe(row.versionId);
   }
 
   async function changelogCheck(ids: PrepareBranchReturnType, rowId: string) {
