@@ -198,6 +198,7 @@ model Table {
 
 model Row {
   versionId  String   @id
+  createdId  String
   createdAt  DateTime @default(now())
   readonly   Boolean  @default(false)
   id         String

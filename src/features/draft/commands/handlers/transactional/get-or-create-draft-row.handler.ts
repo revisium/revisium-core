@@ -37,6 +37,7 @@ export class GetOrCreateDraftRowHandler
       );
 
     this.rowRequestDto.previousVersionId = previousRow.versionId;
+    this.rowRequestDto.createdId = previousRow.createdId;
 
     if (!previousRow.readonly) {
       this.rowRequestDto.versionId = previousRow.versionId;
@@ -62,6 +63,7 @@ export class GetOrCreateDraftRowHandler
     return this.transaction.row.create({
       data: {
         versionId: this.rowRequestDto.versionId,
+        createdId: this.rowRequestDto.createdId,
         id: this.rowRequestDto.id,
         data: previousRow.data as Prisma.InputJsonValue,
         meta: previousRow.meta as Prisma.InputJsonValue,

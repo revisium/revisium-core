@@ -152,6 +152,7 @@ export const prepareBranch = async (
   const headTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
   const rowId = nanoid();
+  const rowCreatedId = nanoid();
   const headRowVersionId = nanoid();
   const draftRowVersionId = nanoid();
   const headEndpointId = nanoid();
@@ -249,6 +250,7 @@ export const prepareBranch = async (
     data: {
       id: tableId,
       versionId: nanoid(),
+      createdId: nanoid(),
       readonly: true,
       tables: {
         connect: {
@@ -278,6 +280,7 @@ export const prepareBranch = async (
     data: {
       id: rowId,
       versionId: headRowVersionId,
+      createdId: rowCreatedId,
       readonly: true,
       tables: {
         connect: {
@@ -293,6 +296,7 @@ export const prepareBranch = async (
     data: {
       id: rowId,
       versionId: draftRowVersionId,
+      createdId: rowCreatedId,
       readonly: false,
       tables: {
         connect: {
