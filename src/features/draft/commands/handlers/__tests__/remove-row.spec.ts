@@ -79,6 +79,7 @@ describe('RemoveRowHandler', () => {
       data: {
         id: anotherTableId,
         readonly: false,
+        createdId: nanoid(),
         versionId: nanoid(),
         tables: {
           connect: {
@@ -105,6 +106,7 @@ describe('RemoveRowHandler', () => {
       data: {
         id: anotherRowId,
         readonly: false,
+        createdId: nanoid(),
         versionId: anotherRowVersionId,
         tables: {
           connect: {
