@@ -45,7 +45,7 @@ describe('InternalRenameRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name already exists in the table',
+      `A row with this name = ${rowId} already exists in the table`,
     );
   });
 

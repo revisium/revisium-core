@@ -71,7 +71,7 @@ export class InternalRenameRowHandler extends DraftHandler<
 
     if (existingRow) {
       throw new BadRequestException(
-        'A row with this name already exists in the table',
+        `A row with this name = ${rowId} already exists in the table`,
       );
     }
   }
