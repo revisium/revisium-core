@@ -3,6 +3,7 @@ import { ApiCreateRowHandler } from 'src/features/draft/commands/handlers/api-cr
 import { ApiCreateTableHandler } from 'src/features/draft/commands/handlers/api-create-table.handler';
 import { ApiRemoveRowHandler } from 'src/features/draft/commands/handlers/api-remove-row.handler';
 import { ApiRemoveTableHandler } from 'src/features/draft/commands/handlers/api-remove-table.handler';
+import { ApiRenameRowHandler } from 'src/features/draft/commands/handlers/api-rename-row.handler';
 import { ApiRevertChangesHandler } from 'src/features/draft/commands/handlers/api-revert-changes.handler';
 import { ApiUpdateRowHandler } from 'src/features/draft/commands/handlers/api-update-row.handler';
 import { ApiUpdateTableHandler } from 'src/features/draft/commands/handlers/api-update-table.handler';
@@ -40,6 +41,7 @@ export const TABLE_COMMANDS_HANDLERS = [
   UpdateRowHandler,
   RenameRowHandler,
   ApiUpdateRowHandler,
+  ApiRenameRowHandler,
   UpdateRowsHandler,
   RemoveRowHandler,
   ApiRemoveRowHandler,
