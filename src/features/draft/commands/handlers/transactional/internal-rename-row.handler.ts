@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import {
   InternalRenameRowCommand,
@@ -28,11 +29,14 @@ export class InternalRenameRowHandler extends DraftHandler<
   public async handler({
     data: input,
   }: InternalRenameRowCommand): Promise<InternalRenameRowCommandReturnType> {
-    const { revisionId, tableId, rowId } = input;
+    const { revisionId, tableId, rowId, nextRowId } = input;
 
+    this.validateNextRowId(nextRowId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
     await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
+
+    await this.checkRowExistence(nextRowId);
 
     await this.renameDraftRow(input);
 
@@ -42,6 +46,34 @@ export class InternalRenameRowHandler extends DraftHandler<
       rowVersionId: this.rowRequestDto.versionId,
       previousRowVersionId: this.rowRequestDto.previousVersionId,
     };
+  }
+
+  private validateNextRowId(rowId: string) {
+    if (rowId.length < 1) {
+      throw new BadRequestException(
+        'The length of the row name must be greater than or equal to 1',
+      );
+    }
+  }
+
+  private async checkRowExistence(rowId: string) {
+    const existingRow = await this.transaction.row.findFirst({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            versionId: this.tableRequestDto.versionId,
+          },
+        },
+      },
+      select: { versionId: true },
+    });
+
+    if (existingRow) {
+      throw new BadRequestException(
+        'A row with this name already exists in the table',
+      );
+    }
   }
 
   private async renameDraftRow(input: InternalRenameRowCommand['data']) {

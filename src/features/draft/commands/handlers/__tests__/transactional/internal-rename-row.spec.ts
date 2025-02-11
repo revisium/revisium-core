@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
   InternalRenameRowCommand,
@@ -14,6 +15,39 @@ import { DraftTransactionalCommands } from 'src/features/draft/draft.transaction
 
 describe('InternalRenameRowHandler', () => {
   const nextRowId = 'nextRowId';
+
+  it('should throw an error if the rowId is shorter than 1 character', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareBranch(prismaService);
+
+    const command = new InternalRenameRowCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      rowId,
+      nextRowId: '',
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
+    await expect(runTransaction(command)).rejects.toThrow(
+      'The length of the row name must be greater than or equal to 1',
+    );
+  });
+
+  it('should throw an error if a similar row already exists', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareBranch(prismaService);
+
+    const command = new InternalRenameRowCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      rowId: rowId,
+      nextRowId: rowId,
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      'A row with this name already exists in the table',
+    );
+  });
 
   it('should throw an error if the revision does not exist', async () => {
     const { draftRevisionId, tableId, rowId } =
