@@ -17,6 +17,7 @@ import { GetOrCreateDraftRowHandler } from 'src/features/draft/commands/handlers
 import { GetOrCreateDraftRowsHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-rows.handler';
 import { GetOrCreateDraftTableHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-table.handler';
 import { InternalCreateRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-create-row.handler';
+import { InternalRenameRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-rename-row.handler';
 import { InternalUpdateRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-update-row.handler';
 import { ResolveDraftRevisionHandler } from 'src/features/draft/commands/handlers/transactional/resolve-draft-revision.handler';
 import { UpdateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/update-schema.handler';
@@ -55,5 +56,6 @@ export const TABLE_COMMANDS_HANDLERS = [
   ApiRevertChangesHandler,
   CreateSchemaHandler,
   InternalUpdateRowHandler,
+  InternalRenameRowHandler,
   UpdateSchemaHandler,
 ];
