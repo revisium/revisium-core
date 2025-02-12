@@ -5,6 +5,7 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Put,
   Query,
   UseGuards,
@@ -25,14 +26,23 @@ import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
+import {
+  ApiRenameRowCommand,
+  ApiRenameRowCommandReturnType,
+} from 'src/features/draft/commands/impl/api-rename-row.command';
 import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import { GetRowReferencesByDto, UpdateRowDto } from 'src/api/rest-api/row/dto';
+import {
+  GetRowReferencesByDto,
+  RenameRowDto,
+  UpdateRowDto,
+} from 'src/api/rest-api/row/dto';
 import { GetRowReferencesToDto } from 'src/api/rest-api/row/dto/get-row-references-to.dto';
 import {
   RemoveRowResponse,
+  RenameRowResponse,
   RowModel,
   RowsConnection,
   UpdateRowResponse,
@@ -217,6 +227,43 @@ export class RowByIdController {
         tableId,
         rowId,
         data: data.data,
+      }),
+    );
+
+    return {
+      table: result.table
+        ? transformFromPrismaToTableModel(result.table)
+        : undefined,
+      previousVersionTableId: result.previousVersionTableId,
+      row: result.row ? transformFromPrismaToRowModel(result.row) : undefined,
+      previousVersionRowId: result.previousVersionRowId,
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @Patch('rename')
+  @ApiOperation({ operationId: 'renameRow' })
+  @ApiBody({ type: RenameRowDto })
+  @ApiOkResponse({ type: RenameRowResponse })
+  async renameRow(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Param('rowId') rowId: string,
+    @Body() data: RenameRowDto,
+  ): Promise<RenameRowResponse> {
+    const result = await this.commandBus.execute<
+      ApiRenameRowCommand,
+      ApiRenameRowCommandReturnType
+    >(
+      new ApiRenameRowCommand({
+        revisionId,
+        tableId,
+        rowId,
+        nextRowId: data.nextRowId,
       }),
     );
 
