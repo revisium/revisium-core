@@ -4,6 +4,7 @@ import {
   ICommandHandler,
   QueryBus,
 } from '@nestjs/cqrs';
+import { ApiBaseRowHandler } from 'src/features/draft/commands/handlers/api-base-row.handler';
 import {
   ApiRenameRowCommand,
   ApiRenameRowCommandReturnType,
@@ -13,23 +14,22 @@ import {
   RenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/rename-row.command';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { GetRowByIdQuery } from 'src/features/row/queries/impl';
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
 import { ShareCommands } from 'src/features/share/share.commands';
-import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-id.query';
-import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 @CommandHandler(ApiRenameRowCommand)
 export class ApiRenameRowHandler
+  extends ApiBaseRowHandler
   implements
     ICommandHandler<ApiRenameRowCommand, ApiRenameRowCommandReturnType>
 {
   constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
-    private readonly transactionService: TransactionPrismaService,
-    private readonly shareCommands: ShareCommands,
-  ) {}
+    protected readonly commandBus: CommandBus,
+    protected readonly queryBus: QueryBus,
+    protected readonly transactionService: TransactionPrismaService,
+    protected readonly shareCommands: ShareCommands,
+  ) {
+    super(queryBus, shareCommands);
+  }
 
   async execute({ data }: ApiRenameRowCommand) {
     const {
@@ -41,22 +41,18 @@ export class ApiRenameRowHandler
       async () => this.commandBus.execute(new RenameRowCommand(data)),
     );
 
-    if (tableVersionId !== previousTableVersionId) {
-      await this.shareCommands.notifyEndpoints({ revisionId: data.revisionId });
-    }
+    await this.tryToNotifyEndpoints({
+      tableVersionId,
+      previousTableVersionId,
+      revisionId: data.revisionId,
+    });
 
-    const [table, row] = await Promise.all([
-      this.queryBus.execute<GetTableByIdQuery, GetTableByIdReturnType>(
-        new GetTableByIdQuery({ revisionId: data.revisionId, tableVersionId }),
-      ),
-      this.queryBus.execute<GetRowByIdQuery, GetRowByIdReturnType>(
-        new GetRowByIdQuery({
-          revisionId: data.revisionId,
-          tableId: data.tableId,
-          rowVersionId,
-        }),
-      ),
-    ]);
+    const { table, row } = await this.getTableAndRow({
+      revisionId: data.revisionId,
+      tableVersionId,
+      tableId: data.tableId,
+      rowVersionId,
+    });
 
     const result: ApiRenameRowCommandReturnType = {
       table,
