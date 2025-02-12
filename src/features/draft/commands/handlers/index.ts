@@ -3,11 +3,13 @@ import { ApiCreateRowHandler } from 'src/features/draft/commands/handlers/api-cr
 import { ApiCreateTableHandler } from 'src/features/draft/commands/handlers/api-create-table.handler';
 import { ApiRemoveRowHandler } from 'src/features/draft/commands/handlers/api-remove-row.handler';
 import { ApiRemoveTableHandler } from 'src/features/draft/commands/handlers/api-remove-table.handler';
+import { ApiRenameRowHandler } from 'src/features/draft/commands/handlers/api-rename-row.handler';
 import { ApiRevertChangesHandler } from 'src/features/draft/commands/handlers/api-revert-changes.handler';
 import { ApiUpdateRowHandler } from 'src/features/draft/commands/handlers/api-update-row.handler';
 import { ApiUpdateTableHandler } from 'src/features/draft/commands/handlers/api-update-table.handler';
 import { CreateRevisionHandler } from 'src/features/draft/commands/handlers/create-revision.handler';
 import { CreateRowHandler } from 'src/features/draft/commands/handlers/create-row.handler';
+import { RenameRowHandler } from 'src/features/draft/commands/handlers/rename-row.handler';
 import { CreateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/create-schema.handler';
 import { CreateTableHandler } from 'src/features/draft/commands/handlers/create-table.handler';
 import { RemoveRowHandler } from 'src/features/draft/commands/handlers/remove-row.handler';
@@ -17,6 +19,7 @@ import { GetOrCreateDraftRowHandler } from 'src/features/draft/commands/handlers
 import { GetOrCreateDraftRowsHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-rows.handler';
 import { GetOrCreateDraftTableHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-table.handler';
 import { InternalCreateRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-create-row.handler';
+import { InternalRenameRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-rename-row.handler';
 import { InternalUpdateRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-update-row.handler';
 import { ResolveDraftRevisionHandler } from 'src/features/draft/commands/handlers/transactional/resolve-draft-revision.handler';
 import { UpdateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/update-schema.handler';
@@ -36,7 +39,9 @@ export const TABLE_COMMANDS_HANDLERS = [
   InternalCreateRowHandler,
   ApiCreateRowHandler,
   UpdateRowHandler,
+  RenameRowHandler,
   ApiUpdateRowHandler,
+  ApiRenameRowHandler,
   UpdateRowsHandler,
   RemoveRowHandler,
   ApiRemoveRowHandler,
@@ -55,5 +60,6 @@ export const TABLE_COMMANDS_HANDLERS = [
   ApiRevertChangesHandler,
   CreateSchemaHandler,
   InternalUpdateRowHandler,
+  InternalRenameRowHandler,
   UpdateSchemaHandler,
 ];

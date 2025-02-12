@@ -1,6 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { RenameRowResultModel } from 'src/api/graphql-api/draft/model/rename-row-result.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
@@ -9,6 +10,7 @@ import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create
 import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-create-table.command';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
+import { ApiRenameRowCommand } from 'src/features/draft/commands/impl/api-rename-row.command';
 import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
 import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
 import {
@@ -16,6 +18,7 @@ import {
   CreateTableInput,
   RemoveRowInput,
   RemoveTableInput,
+  RenameRowInput,
   UpdateRowInput,
 } from 'src/api/graphql-api/draft/input';
 import { UpdateTableInput } from 'src/api/graphql-api/draft/input/update-table.input';
@@ -81,6 +84,16 @@ export class DraftResolver {
   @Mutation(() => UpdateRowResultModel)
   async updateRow(@Args('data') data: UpdateRowInput) {
     return this.commandBus.execute(new ApiUpdateRowCommand(data));
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @Mutation(() => RenameRowResultModel)
+  async renameRow(@Args('data') data: RenameRowInput) {
+    return this.commandBus.execute(new ApiRenameRowCommand(data));
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)

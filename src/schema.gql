@@ -299,6 +299,7 @@ type Mutation {
   removeTable(data: RemoveTableInput!): RemoveTableResultModel!
   removeUserFromOrganization(data: RemoveUserFromOrganizationInput!): Boolean!
   removeUserFromProject(data: RemoveUserFromProjectInput!): Boolean!
+  renameRow(data: RenameRowInput!): RenameRowResultModel!
   revertChanges(data: RevertChangesInput!): BranchModel!
   setUsername(data: SetUsernameInput!): Boolean!
   signUp(data: SignUpInput!): Boolean!
@@ -389,6 +390,20 @@ input RemoveUserFromProjectInput {
   organizationId: String!
   projectName: String!
   userId: String!
+}
+
+input RenameRowInput {
+  nextRowId: String!
+  revisionId: String!
+  rowId: String!
+  tableId: String!
+}
+
+type RenameRowResultModel {
+  previousVersionRowId: String!
+  previousVersionTableId: String!
+  row: RowModel!
+  table: TableModel!
 }
 
 input RevertChangesInput {

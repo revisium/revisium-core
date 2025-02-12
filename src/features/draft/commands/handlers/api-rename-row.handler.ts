@@ -1,4 +1,3 @@
-import { InternalServerErrorException } from '@nestjs/common';
 import {
   CommandBus,
   CommandHandler,
@@ -6,18 +5,22 @@ import {
   QueryBus,
 } from '@nestjs/cqrs';
 import { ApiBaseRowHandler } from 'src/features/draft/commands/handlers/api-base-row.handler';
+import {
+  ApiRenameRowCommand,
+  ApiRenameRowCommandReturnType,
+} from 'src/features/draft/commands/impl/api-rename-row.command';
+import {
+  RenameRowCommand,
+  RenameRowCommandReturnType,
+} from 'src/features/draft/commands/impl/rename-row.command';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
-import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
-import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
-import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/create-row.handler.types';
 import { ShareCommands } from 'src/features/share/share.commands';
 
-@CommandHandler(ApiCreateRowCommand)
-export class ApiCreateRowHandler
+@CommandHandler(ApiRenameRowCommand)
+export class ApiRenameRowHandler
   extends ApiBaseRowHandler
   implements
-    ICommandHandler<ApiCreateRowCommand, ApiCreateRowHandlerReturnType>
+    ICommandHandler<ApiRenameRowCommand, ApiRenameRowCommandReturnType>
 {
   constructor(
     protected readonly commandBus: CommandBus,
@@ -28,13 +31,14 @@ export class ApiCreateRowHandler
     super(queryBus, shareCommands);
   }
 
-  async execute({ data }: ApiCreateRowCommand) {
+  async execute({ data }: ApiRenameRowCommand) {
     const {
       tableVersionId,
-      rowVersionId,
       previousTableVersionId,
-    }: CreateRowHandlerReturnType = await this.transactionService.run(
-      async () => this.commandBus.execute(new CreateRowCommand(data)),
+      rowVersionId,
+      previousRowVersionId,
+    }: RenameRowCommandReturnType = await this.transactionService.run(
+      async () => this.commandBus.execute(new RenameRowCommand(data)),
     );
 
     await this.tryToNotifyEndpoints({
@@ -50,14 +54,11 @@ export class ApiCreateRowHandler
       rowVersionId,
     });
 
-    if (!table || !row) {
-      throw new InternalServerErrorException('Invalid ApiCreateRowHandler');
-    }
-
-    const result: ApiCreateRowHandlerReturnType = {
+    const result: ApiRenameRowCommandReturnType = {
       table,
       previousVersionTableId: previousTableVersionId,
-      row: row,
+      row,
+      previousVersionRowId: previousRowVersionId,
     };
 
     return result;
