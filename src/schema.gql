@@ -300,13 +300,14 @@ type Mutation {
   removeUserFromOrganization(data: RemoveUserFromOrganizationInput!): Boolean!
   removeUserFromProject(data: RemoveUserFromProjectInput!): Boolean!
   renameRow(data: RenameRowInput!): RenameRowResultModel!
+  renameTable(data: RenameTableInput!): RenameTableResultModel!
   revertChanges(data: RevertChangesInput!): BranchModel!
   setUsername(data: SetUsernameInput!): Boolean!
   signUp(data: SignUpInput!): Boolean!
   updatePassword(data: UpdatePasswordInput!): Boolean!
   updateProject(data: UpdateProjectInput!): Boolean!
   updateRow(data: UpdateRowInput!): UpdateRowResultModel!
-  updateTable(data: UpdateTableInput!): UpdateRowResultModel!
+  updateTable(data: UpdateTableInput!): UpdateTableResultModel!
 }
 
 type PageInfo {
@@ -403,6 +404,17 @@ type RenameRowResultModel {
   previousVersionRowId: String!
   previousVersionTableId: String!
   row: RowModel!
+  table: TableModel!
+}
+
+input RenameTableInput {
+  nextTableId: String!
+  revisionId: String!
+  tableId: String!
+}
+
+type RenameTableResultModel {
+  previousVersionTableId: String!
   table: TableModel!
 }
 
@@ -531,6 +543,11 @@ input UpdateTableInput {
   patches: JSON!
   revisionId: String!
   tableId: String!
+}
+
+type UpdateTableResultModel {
+  previousTable: TableModel!
+  table: TableModel!
 }
 
 type UserModel {

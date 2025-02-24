@@ -2,6 +2,8 @@ import { UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { RenameRowResultModel } from 'src/api/graphql-api/draft/model/rename-row-result.model';
+import { RenameTableResultModel } from 'src/api/graphql-api/draft/model/rename-table-result.model';
+import { UpdateTableResultModel } from 'src/api/graphql-api/draft/model/update-table-result.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
@@ -11,6 +13,7 @@ import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-crea
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
 import { ApiRenameRowCommand } from 'src/features/draft/commands/impl/api-rename-row.command';
+import { ApiRenameTableCommand } from 'src/features/draft/commands/impl/api-rename-table.command';
 import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
 import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
 import {
@@ -19,6 +22,7 @@ import {
   RemoveRowInput,
   RemoveTableInput,
   RenameRowInput,
+  RenameTableInput,
   UpdateRowInput,
 } from 'src/api/graphql-api/draft/input';
 import { UpdateTableInput } from 'src/api/graphql-api/draft/input/update-table.input';
@@ -61,9 +65,19 @@ export class DraftResolver {
     action: PermissionAction.update,
     subject: PermissionSubject.Table,
   })
-  @Mutation(() => UpdateRowResultModel)
+  @Mutation(() => UpdateTableResultModel)
   async updateTable(@Args('data') data: UpdateTableInput) {
     return this.commandBus.execute(new ApiUpdateTableCommand(data));
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Table,
+  })
+  @Mutation(() => RenameTableResultModel)
+  async renameTable(@Args('data') data: RenameTableInput) {
+    return this.commandBus.execute(new ApiRenameTableCommand(data));
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
