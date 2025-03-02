@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Table } from '@prisma/client';
+import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -26,6 +27,10 @@ import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
 import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
+import {
+  ApiRenameTableCommand,
+  ApiRenameTableCommandReturnType,
+} from 'src/features/draft/commands/impl/api-rename-table.command';
 import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
 import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
 import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
@@ -47,6 +52,7 @@ import {
   GetTableReferencesByDto,
   GetTableReferencesToDto,
   GetTableRowsDto,
+  RenameTableDto,
   UpdateTableDto,
 } from 'src/api/rest-api/table/dto';
 import { CreateRowResponse } from 'src/api/rest-api/table/model';
@@ -279,6 +285,39 @@ export class TableByIdController {
       ApiUpdateTableHandlerReturnType
     >(
       new ApiUpdateTableCommand({ revisionId, tableId, patches: data.patches }),
+    );
+
+    return {
+      table: result.table
+        ? transformFromPrismaToTableModel(result.table)
+        : undefined,
+      previousVersionTableId: result.previousVersionTableId,
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Table,
+  })
+  @Patch('rename')
+  @ApiOperation({ operationId: 'renameTable' })
+  @ApiBody({ type: UpdateTableDto })
+  @ApiOkResponse({ type: UpdateTableResponse })
+  async renameTable(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Body() data: RenameTableDto,
+  ): Promise<RenameTableResponse> {
+    const result = await this.commandBus.execute<
+      ApiRenameTableCommand,
+      ApiRenameTableCommandReturnType
+    >(
+      new ApiRenameTableCommand({
+        revisionId,
+        tableId,
+        nextTableId: data.nextTableId,
+      }),
     );
 
     return {
