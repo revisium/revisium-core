@@ -1,7 +1,10 @@
 import { Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {prepareBranch, PrepareBranchReturnType} from "src/__tests__/utils/prepareBranch";
+import {
+  prepareBranch,
+  PrepareBranchReturnType,
+} from 'src/__tests__/utils/prepareBranch';
 import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,

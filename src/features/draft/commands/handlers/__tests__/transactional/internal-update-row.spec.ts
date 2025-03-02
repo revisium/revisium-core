@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import {prepareBranch} from "src/__tests__/utils/prepareBranch";
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
 import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,

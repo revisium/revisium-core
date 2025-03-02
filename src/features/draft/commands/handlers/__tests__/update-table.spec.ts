@@ -1,6 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {prepareBranch, PrepareBranchReturnType} from "src/__tests__/utils/prepareBranch";
+import {
+  prepareBranch,
+  PrepareBranchReturnType,
+} from 'src/__tests__/utils/prepareBranch';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import {
   JsonSchemaTypeName,

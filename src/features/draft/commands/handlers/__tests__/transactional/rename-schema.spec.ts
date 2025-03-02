@@ -1,9 +1,6 @@
 import { CommandBus } from '@nestjs/cqrs';
-import {prepareBranch} from "src/__tests__/utils/prepareBranch";
-import {
-  createTestingModule,
-
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   RenameSchemaCommand,
   RenameSchemaCommandReturnType,

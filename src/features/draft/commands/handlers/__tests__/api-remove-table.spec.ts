@@ -1,12 +1,11 @@
 import { CommandBus } from '@nestjs/cqrs';
-import {prepareBranch} from "src/__tests__/utils/prepareBranch";
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
 import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
 import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   createMock,
   createTestingModule,
-
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 

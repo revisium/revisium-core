@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import {prepareBranch} from "src/__tests__/utils/prepareBranch";
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
 import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-create-table.command';
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
