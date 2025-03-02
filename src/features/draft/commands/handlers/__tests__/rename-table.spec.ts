@@ -19,6 +19,20 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 describe('RenameTableHandler', () => {
   const nextTableId = 'nextTableId';
 
+  it('should throw an error if the tableId is shorter than 1 character', async () => {
+    const { tableId, draftRevisionId } = await prepareBranch(prismaService);
+
+    const command = new RenameTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      nextTableId: '',
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      'The length of the table name must be greater than or equal to 1',
+    );
+  });
+
   it('should throw an error if the revision does not exist', async () => {
     const { tableId } = await prepareBranch(prismaService);
 
