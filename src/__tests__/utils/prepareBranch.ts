@@ -20,12 +20,19 @@ export const prepareData = async (app: INestApplication) => {
   const prismaService = app.get(PrismaService);
 
   const project = await prepareBranch(prismaService);
+  const anotherProject = await prepareBranch(prismaService);
 
   return {
     project,
     owner: await prepareOrganizationUser(
       app,
       project.organizationId,
+      UserRole.organizationOwner,
+    ),
+    anotherProject,
+    anotherOwner: await prepareOrganizationUser(
+      app,
+      anotherProject.organizationId,
       UserRole.organizationOwner,
     ),
   };
