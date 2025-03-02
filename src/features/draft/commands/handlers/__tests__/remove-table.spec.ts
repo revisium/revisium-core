@@ -1,9 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
-import {
-  createTestingModule,
-  prepareBranch,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';
 import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/remove-table.handler.types';
 import { SystemTables } from 'src/features/share/system-tables.consts';

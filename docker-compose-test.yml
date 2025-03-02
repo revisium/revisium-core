@@ -1,6 +1,12 @@
 version: '3.9'
 
 services:
+  redis:
+    container_name: integration-tests-redis
+    image: redis:7.2-alpine
+    ports:
+      - 6381:6379
+
   db:
     image: postgres:15.4
     restart: always

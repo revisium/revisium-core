@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import {
+  prepareBranch,
+  PrepareBranchReturnType,
+} from 'src/__tests__/utils/prepareBranch';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import {
   JsonSchemaTypeName,
@@ -10,8 +14,6 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
-  PrepareBranchReturnType,
   testSchema,
   testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';

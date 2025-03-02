@@ -85,8 +85,6 @@ export abstract class BasePermissionGuard<T = Record<string, never>>
       const command = this.getCommand(params, permissions, user?.userId);
       await this.commandBus.execute(command);
     } catch (e) {
-      console.error(e);
-
       if (e instanceof Error) {
         throw new ForbiddenException(e.message);
       } else {

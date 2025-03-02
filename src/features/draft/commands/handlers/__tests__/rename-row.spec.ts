@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   RenameRowCommand,

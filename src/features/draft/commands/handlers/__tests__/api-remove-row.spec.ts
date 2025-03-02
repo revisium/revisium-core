@@ -1,11 +1,11 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
