@@ -1,4 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
+import {prepareBranch} from "src/__tests__/utils/prepareBranch";
 import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
 import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
@@ -6,7 +7,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
+
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 

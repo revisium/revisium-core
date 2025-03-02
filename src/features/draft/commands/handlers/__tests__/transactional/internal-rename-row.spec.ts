@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import {prepareBranch} from "src/__tests__/utils/prepareBranch";
 import {
   InternalRenameRowCommand,
   InternalRenameRowCommandReturnType,
@@ -9,7 +10,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
+
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 

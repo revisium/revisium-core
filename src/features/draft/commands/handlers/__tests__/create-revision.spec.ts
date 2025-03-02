@@ -1,12 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import {prepareBranch, PrepareBranchReturnType} from "src/__tests__/utils/prepareBranch";
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
-  PrepareBranchReturnType,
+
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { CreateRevisionCommand } from 'src/features/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';

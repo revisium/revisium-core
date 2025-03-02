@@ -1,10 +1,10 @@
 import { CommandBus } from '@nestjs/cqrs';
+import {prepareBranch} from "src/__tests__/utils/prepareBranch";
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';

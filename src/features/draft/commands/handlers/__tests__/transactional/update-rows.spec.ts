@@ -1,12 +1,12 @@
 import { CommandBus } from '@nestjs/cqrs';
 import * as objectHash from 'object-hash';
+import {prepareBranch} from "src/__tests__/utils/prepareBranch";
 import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';

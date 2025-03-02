@@ -1,9 +1,9 @@
 import { CommandBus } from '@nestjs/cqrs';
 import * as hash from 'object-hash';
 import * as objectHash from 'object-hash';
+import {prepareBranch} from "src/__tests__/utils/prepareBranch";
 import {
   createTestingModule,
-  prepareBranch,
   testSchema,
   testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';

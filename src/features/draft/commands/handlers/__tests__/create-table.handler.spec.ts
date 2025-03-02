@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import * as objectHash from 'object-hash';
+import {prepareBranch, PrepareBranchReturnType} from "src/__tests__/utils/prepareBranch";
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -9,8 +10,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
-  PrepareBranchReturnType,
+
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/create-table.handler.types';

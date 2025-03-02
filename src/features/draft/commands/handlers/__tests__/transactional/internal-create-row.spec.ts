@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import {prepareBranch, PrepareBranchReturnType} from "src/__tests__/utils/prepareBranch";
 import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,
@@ -10,8 +11,6 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import {
   createMock,
   createTestingModule,
-  prepareBranch,
-  PrepareBranchReturnType,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
