@@ -49,8 +49,8 @@ import {
 } from 'src/api/rest-api/share/utils/transformFromPrismaToTableModel';
 import {
   CreateRowDto,
-  GetTableReferencesByDto,
-  GetTableReferencesToDto,
+  GetTableForeignKeysByDto,
+  GetTableForeignKeysToDto,
   GetTableRowsDto,
   RenameTableDto,
   UpdateTableDto,
@@ -63,10 +63,10 @@ import {
 import { UpdateTableResponse } from 'src/api/rest-api/table/model/update-table.response';
 import {
   GetCountRowsInTableQuery,
-  ResolveTableCountReferencesByQuery,
-  ResolveTableCountReferencesToQuery,
-  ResolveTableReferencesByQuery,
-  ResolveTableReferencesToQuery,
+  ResolveTableCountForeignKeysByQuery,
+  ResolveTableCountForeignKeysToQuery,
+  ResolveTableForeignKeysByQuery,
+  ResolveTableForeignKeysToQuery,
   ResolveTableSchemaQuery,
 } from 'src/features/table/queries/impl';
 import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
@@ -185,63 +185,63 @@ export class TableByIdController {
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('count-references-by')
-  @ApiOperation({ operationId: 'tableCountReferencesBy' })
+  @Get('count-foreign-keys-by')
+  @ApiOperation({ operationId: 'tableCountForeignKeysBy' })
   @ApiOkResponse({
     type: Number,
   })
-  async countReferencesBy(
+  async countForeignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ) {
     return this.queryBus.execute(
-      new ResolveTableCountReferencesByQuery({ revisionId, tableId }),
+      new ResolveTableCountForeignKeysByQuery({ revisionId, tableId }),
     );
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('references-by')
-  @ApiOperation({ operationId: 'tableReferencesBy' })
+  @Get('foreign-keys-by')
+  @ApiOperation({ operationId: 'tableForeignKeysBy' })
   @ApiOkResponse({ type: TablesConnection })
-  async referencesBy(
+  async foreignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-    @Query() data: GetTableReferencesByDto,
+    @Query() data: GetTableForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
       await this.queryBus.execute(
-        new ResolveTableReferencesByQuery({ revisionId, tableId, ...data }),
+        new ResolveTableForeignKeysByQuery({ revisionId, tableId, ...data }),
       ),
     );
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('count-references-to')
-  @ApiOperation({ operationId: 'tableCountReferencesTo' })
+  @Get('count-foreign-keys-to')
+  @ApiOperation({ operationId: 'tableCountForeignKeysTo' })
   @ApiOkResponse({
     type: Number,
   })
-  async countReferencesTo(
+  async countForeignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ) {
     return this.queryBus.execute(
-      new ResolveTableCountReferencesToQuery({ revisionId, tableId }),
+      new ResolveTableCountForeignKeysToQuery({ revisionId, tableId }),
     );
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('references-to')
-  @ApiOperation({ operationId: 'tableReferencesTo' })
+  @Get('foreign-keys-to')
+  @ApiOperation({ operationId: 'tableForeignKeysTo' })
   @ApiOkResponse({ type: TablesConnection })
-  async referencesTo(
+  async foreignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-    @Query() data: GetTableReferencesToDto,
+    @Query() data: GetTableForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
       await this.queryBus.execute(
-        new ResolveTableReferencesToQuery({ revisionId, tableId, ...data }),
+        new ResolveTableForeignKeysToQuery({ revisionId, tableId, ...data }),
       ),
     );
   }

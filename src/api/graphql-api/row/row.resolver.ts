@@ -13,21 +13,21 @@ import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-g
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import {
-  GetRowCountReferencesByInput,
+  GetRowCountForeignKeysByInput,
   GetRowInput,
   GetRowsInput,
 } from 'src/api/graphql-api/row/inputs';
-import { GetRowReferencesInput } from 'src/api/graphql-api/row/inputs/get-row-references.input';
+import { GetRowForeignKeysInput } from 'src/api/graphql-api/row/inputs/get-row-foreign-keys.input';
 import { RowModel } from 'src/api/graphql-api/row/model/row.model';
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
 import {
   GetRowQuery,
   GetRowsQuery,
-  ResolveRowCountReferencesToQuery,
-  ResolveRowReferencesByQuery,
-  ResolveRowReferencesToQuery,
+  ResolveRowCountForeignKeysToQuery,
+  ResolveRowForeignKeysByQuery,
+  ResolveRowForeignKeysToQuery,
 } from 'src/features/row/queries/impl';
-import { ResolveRowCountReferencesByQuery } from 'src/features/row/queries/impl/resolve-row-count-references-by.query';
+import { ResolveRowCountForeignKeysByQuery } from 'src/features/row/queries/impl/resolve-row-count-foreign-keys-by.query';
 import { GetRowReturnType } from 'src/features/row/queries/types';
 import { GetRowsReturnType } from 'src/features/row/queries/types/get-rows.types';
 
@@ -49,8 +49,8 @@ export class RowResolver {
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => Int)
-  getRowCountReferencesTo(@Args('data') data: GetRowCountReferencesByInput) {
-    return this.queryBus.execute(new ResolveRowCountReferencesByQuery(data));
+  getRowCountForeignKeysTo(@Args('data') data: GetRowCountForeignKeysByInput) {
+    return this.queryBus.execute(new ResolveRowCountForeignKeysByQuery(data));
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -62,16 +62,16 @@ export class RowResolver {
   }
 
   @ResolveField(() => RowsConnection)
-  rowReferencesBy(
+  rowForeignKeysBy(
     @Parent() row: RowModel,
-    @Args('data') data: GetRowReferencesInput,
+    @Args('data') data: GetRowForeignKeysInput,
   ) {
     return this.queryBus.execute(
-      new ResolveRowReferencesByQuery({
+      new ResolveRowForeignKeysByQuery({
         revisionId: row.context.revisionId,
         tableId: row.context.tableId,
         rowId: row.id,
-        referenceByTableId: data.referenceTableId,
+        foreignKeyByTableId: data.foreignKeyTableId,
         first: data.first,
         after: data.after,
       }),
@@ -79,9 +79,9 @@ export class RowResolver {
   }
 
   @ResolveField(() => Int)
-  countReferencesTo(@Parent() row: RowModel) {
+  countForeignKeysTo(@Parent() row: RowModel) {
     return this.queryBus.execute(
-      new ResolveRowCountReferencesToQuery({
+      new ResolveRowCountForeignKeysToQuery({
         revisionId: row.context.revisionId,
         tableId: row.context.tableId,
         rowId: row.id,
@@ -90,16 +90,16 @@ export class RowResolver {
   }
 
   @ResolveField(() => RowsConnection)
-  rowReferencesTo(
+  rowForeignKeysTo(
     @Parent() row: RowModel,
-    @Args('data') data: GetRowReferencesInput,
+    @Args('data') data: GetRowForeignKeysInput,
   ) {
     return this.queryBus.execute(
-      new ResolveRowReferencesToQuery({
+      new ResolveRowForeignKeysToQuery({
         revisionId: row.context.revisionId,
         tableId: row.context.tableId,
         rowId: row.id,
-        referenceByTableId: data.referenceTableId,
+        foreignKeyToTableId: data.foreignKeyTableId,
         first: data.first,
         after: data.after,
       }),

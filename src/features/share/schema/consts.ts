@@ -1,3 +1,3 @@
 export enum CustomSchemeKeywords {
-  Reference = 'reference',
+  ForeignKey = 'foreignKey',
 }

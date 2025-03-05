@@ -10,7 +10,7 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
-import { ReferencesService } from 'src/features/share/references.service';
+import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
@@ -29,7 +29,7 @@ export class RemoveTableHandler extends DraftHandler<
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly sessionChangelog: SessionChangelogService,
-    protected readonly referencesService: ReferencesService,
+    protected readonly foreignKeysService: ForeignKeysService,
   ) {
     super(transactionService, draftContext);
   }
@@ -50,7 +50,7 @@ export class RemoveTableHandler extends DraftHandler<
       throw new BadRequestException('Table is a system table');
     }
 
-    await this.validateReferences(data);
+    await this.validateForegeinKeys(data);
 
     if (table.readonly) {
       await this.disconnectTableFromRevision(table.versionId, revisionId);
@@ -198,22 +198,22 @@ export class RemoveTableHandler extends DraftHandler<
     );
   }
 
-  private async validateReferences(data: RemoveTableCommand['data']) {
+  private async validateForegeinKeys(data: RemoveTableCommand['data']) {
     const schemaTable =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
         SystemTables.Schema,
       );
 
-    const rows = await this.referencesService.findRowsByKeyValueInData(
+    const rows = await this.foreignKeysService.findRowsByKeyValueInData(
       schemaTable.versionId,
-      CustomSchemeKeywords.Reference,
+      CustomSchemeKeywords.ForeignKey,
       data.tableId,
     );
 
     if (rows.length) {
       throw new BadRequestException(
-        `There are references between ${data.tableId} and [${rows.map((row) => row.id).join(', ')}]`,
+        `There are foreign keys between ${data.tableId} and [${rows.map((row) => row.id).join(', ')}]`,
       );
     }
   }

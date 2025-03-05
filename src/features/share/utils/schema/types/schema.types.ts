@@ -9,7 +9,7 @@ export enum JsonSchemaTypeName {
 export type JsonStringSchema = {
   type: JsonSchemaTypeName.String;
   default: string;
-  reference?: string;
+  foreignKey?: string;
 };
 
 export type JsonNumberSchema = {

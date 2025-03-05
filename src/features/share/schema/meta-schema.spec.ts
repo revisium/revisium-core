@@ -1,13 +1,13 @@
 import Ajv from 'ajv/dist/2020';
 import {
   metaSchema,
-  notReferenceMetaSchema,
+  notForeignKeyMetaSchema,
 } from 'src/features/share/schema/meta-schema';
 
 describe('meta-schema', () => {
   const ajv = new Ajv();
   ajv.addKeyword({
-    keyword: 'isValidTableReference',
+    keyword: 'isValidTableForeignKey',
     type: 'string',
     validate: () => {
       return true;
@@ -31,7 +31,7 @@ describe('meta-schema', () => {
       ajv.validate(metaSchema, {
         type: 'string',
         default: 'default value',
-        reference: 'tableId',
+        foreignKey: 'tableId',
       }),
     ).toBe(true);
 
@@ -53,37 +53,37 @@ describe('meta-schema', () => {
       ajv.validate(metaSchema, {
         type: 'string',
         default: 'default value',
-        reference: 1,
+        foreignKey: 1,
       }),
     ).toBe(false);
   });
 
-  it('string no reference', () => {
+  it('string no foreignKey', () => {
     expect(
-      ajv.validate(notReferenceMetaSchema, {
+      ajv.validate(notForeignKeyMetaSchema, {
         type: 'string',
         default: 'default value',
       }),
     ).toBe(true);
 
     expect(
-      ajv.validate(notReferenceMetaSchema, {
+      ajv.validate(notForeignKeyMetaSchema, {
         type: 'string',
         default: 'default value',
-        reference: 'tableId',
+        foreignKey: 'tableId',
       }),
     ).toBe(false);
 
     expect(
-      ajv.validate(notReferenceMetaSchema, { type: 'string', default: 0 }),
+      ajv.validate(notForeignKeyMetaSchema, { type: 'string', default: 0 }),
     ).toBe(false);
 
-    expect(ajv.validate(notReferenceMetaSchema, { type: 'string' })).toBe(
+    expect(ajv.validate(notForeignKeyMetaSchema, { type: 'string' })).toBe(
       false,
     );
 
     expect(
-      ajv.validate(notReferenceMetaSchema, {
+      ajv.validate(notForeignKeyMetaSchema, {
         type: 'string',
         default: 'default value',
         unexpectedField: 'test',
@@ -91,10 +91,10 @@ describe('meta-schema', () => {
     ).toBe(false);
 
     expect(
-      ajv.validate(notReferenceMetaSchema, {
+      ajv.validate(notForeignKeyMetaSchema, {
         type: 'string',
         default: 'default value',
-        reference: 1,
+        foreignKey: 1,
       }),
     ).toBe(false);
   });

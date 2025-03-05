@@ -3,10 +3,10 @@ import { GetRowsByTableHandler } from 'src/features/table/queries/handlers/get-r
 import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
 import { GetTableHandler } from 'src/features/table/queries/handlers/get-table.handler';
 import { GetTablesHandler } from 'src/features/table/queries/handlers/get-tables.handler';
-import { ResolveTableCountReferencesByHandler } from 'src/features/table/queries/handlers/resolve-table-count-references-by.handler';
-import { ResolveTableCountReferencesToHandler } from 'src/features/table/queries/handlers/resolve-table-count-references-to.handler';
-import { ResolveTableReferencesByHandler } from 'src/features/table/queries/handlers/resolve-table-references-by.handler';
-import { ResolveTableReferencesToHandler } from 'src/features/table/queries/handlers/resolve-table-references-to.handler';
+import { ResolveTableCountForeignKeysByHandler } from 'src/features/table/queries/handlers/resolve-table-count-foreign-keys-by.handler';
+import { ResolveTableCountForeignKeysToHandler } from 'src/features/table/queries/handlers/resolve-table-count-foreign-keys-to.handler';
+import { ResolveTableForeignKeysByHandler } from 'src/features/table/queries/handlers/resolve-table-foreign-keys-by.handler';
+import { ResolveTableForeignKeysToHandler } from 'src/features/table/queries/handlers/resolve-table-foreign-keys-to.handler';
 import { ResolveTableSchemaHandler } from 'src/features/table/queries/handlers/resolve-table-schema.handler';
 
 export const TABLE_QUERIES_HANDLERS = [
@@ -16,8 +16,8 @@ export const TABLE_QUERIES_HANDLERS = [
   GetTablesHandler,
   GetCountRowsInTableHandler,
   ResolveTableSchemaHandler,
-  ResolveTableReferencesByHandler,
-  ResolveTableCountReferencesByHandler,
-  ResolveTableReferencesToHandler,
-  ResolveTableCountReferencesToHandler,
+  ResolveTableForeignKeysByHandler,
+  ResolveTableCountForeignKeysByHandler,
+  ResolveTableForeignKeysToHandler,
+  ResolveTableCountForeignKeysToHandler,
 ];

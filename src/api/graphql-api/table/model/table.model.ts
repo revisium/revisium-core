@@ -33,16 +33,16 @@ export class TableModel {
   schema: Prisma.JsonValue;
 
   @Field(() => TablesConnection)
-  referencesTo: TablesConnection;
+  foreignKeysTo: TablesConnection;
 
   @Field(() => Int)
-  countReferencesTo: number;
+  countForeignKeysTo: number;
 
   @Field(() => TablesConnection)
-  referencesBy: TablesConnection;
+  foreignKeysBy: TablesConnection;
 
   @Field(() => Int)
-  countReferencesBy: number;
+  countForeignKeysBy: number;
 
   context: TableModelContext;
 }

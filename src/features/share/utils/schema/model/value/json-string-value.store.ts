@@ -14,8 +14,8 @@ export class JsonStringValueStore {
     this.index = this.schema.registerValue(this);
   }
 
-  public get reference() {
-    return this.schema.reference;
+  public get foreignKey() {
+    return this.schema.foreignKey;
   }
 
   public getPlainValue() {

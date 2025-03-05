@@ -50,7 +50,7 @@ describe('RemoveRowHandler', () => {
     );
   });
 
-  it('should throw an error if the reference exists', async () => {
+  it('should throw an error if the foreignKey exists', async () => {
     const { draftRevisionId, schemaTableVersionId, tableId, rowId } =
       await prepareBranch(prismaService);
     const anotherTableId = nanoid();
@@ -89,7 +89,7 @@ describe('RemoveRowHandler', () => {
           properties: {
             ref: {
               type: JsonSchemaTypeName.String,
-              reference: tableId,
+              foreignKey: tableId,
               default: '',
             },
           },

@@ -26,13 +26,13 @@ export class RowModel {
   data: Prisma.JsonValue;
 
   @Field(() => RowsConnection)
-  rowReferencesTo: RowsConnection;
+  rowForeignKeysTo: RowsConnection;
 
   @Field(() => Int)
-  countReferencesTo: number;
+  countForeignKeysTo: number;
 
   @Field(() => RowsConnection)
-  rowReferencesBy: RowsConnection;
+  rowForeignKeysBy: RowsConnection;
 
   context: RowModelContext;
 }

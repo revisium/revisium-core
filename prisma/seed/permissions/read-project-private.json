@@ -1,7 +1,5 @@
 {
   "action": "read",
   "subject": "Project",
-  "condition": {
-    "isPublic": false
-  }
+  "condition": {}
 }

@@ -14,7 +14,7 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
   public parent: JsonSchemaStore | null = null;
 
   public default: string = '';
-  public reference?: string;
+  public foreignKey?: string;
   private readonly valuesMap: Map<string, JsonStringValueStore[]> = new Map<
     string,
     JsonStringValueStore[]
@@ -42,8 +42,8 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
       default: this.default,
     };
 
-    if (this.reference) {
-      schema.reference = this.reference;
+    if (this.foreignKey) {
+      schema.foreignKey = this.foreignKey;
     }
 
     return schema;
