@@ -163,7 +163,7 @@ describe('UpdateTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'Itself foreign keys is not supported yet',
+      'Itself foreign key is not supported yet',
     );
   });
 

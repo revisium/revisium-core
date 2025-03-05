@@ -101,7 +101,7 @@ describe('RemoveTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      `There are foreign key between ${tableId} and [${anotherTableId}]`,
+      `There are foreign keys between ${tableId} and [${anotherTableId}]`,
     );
   });
 
