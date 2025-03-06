@@ -19,7 +19,7 @@ export const stringMetaSchema: Schema = {
   required: ['type', 'default'],
 };
 
-export const noForeignKeysStringMetaSchema: Schema = {
+export const noForeignKeyStringMetaSchema: Schema = {
   type: 'object',
   properties: {
     type: {
@@ -143,7 +143,7 @@ export const notForeignKeyMetaSchema: Schema = {
       default: [],
     },
     objectSchema: objectMetaSchema,
-    stringSchema: noForeignKeysStringMetaSchema,
+    stringSchema: noForeignKeyStringMetaSchema,
     numberSchema: numberMetaSchema,
     booleanSchema: booleanMetaSchema,
     arraySchema: arrayMetaSchema,

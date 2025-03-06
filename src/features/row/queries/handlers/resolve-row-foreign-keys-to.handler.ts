@@ -48,7 +48,7 @@ export class ResolveRowForeignKeysToHandler
       return [];
     }
 
-    const foreignKeysRowsIds = foundForeignKey.rowIds.slice(
+    const foreignKeyRowsIds = foundForeignKey.rowIds.slice(
       args.skip,
       args.skip + args.take,
     );
@@ -57,7 +57,7 @@ export class ResolveRowForeignKeysToHandler
       .findUniqueOrThrow({ where: { versionId: foreignKeyTableVersionId } })
       .rows({
         where: {
-          OR: foreignKeysRowsIds.map((id) => ({ id })),
+          OR: foreignKeyRowsIds.map((id) => ({ id })),
         },
         orderBy: {
           id: Prisma.SortOrder.asc,

@@ -23,7 +23,7 @@ export class ValidateSchemaHandler
       this.jsonSchemaValidator.validateMetaSchema(schema);
 
     const store = this.validateSchema(schema as JsonSchema);
-    await this.validateForeignKey(getForeignKeysFromSchema(store));
+    await this.validateForeignKeys(getForeignKeysFromSchema(store));
 
     if (!result) {
       throw new BadRequestException('schema is not valid', {
@@ -36,7 +36,7 @@ export class ValidateSchemaHandler
     return createJsonSchemaStore(schema);
   }
 
-  private async validateForeignKey(tableForeignKeys: string[]) {
+  private async validateForeignKeys(tableForeignKeys: string[]) {
     return Promise.all(
       tableForeignKeys.map((tableForeignKey) =>
         this.shareTransactionalQueries.findTableInRevisionOrThrow(
