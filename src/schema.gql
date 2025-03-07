@@ -546,7 +546,7 @@ input UpdateTableInput {
 }
 
 type UpdateTableResultModel {
-  previousTable: TableModel!
+  previousVersionTableId: String!
   table: TableModel!
 }
 

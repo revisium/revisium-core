@@ -6,6 +6,6 @@ export class UpdateTableResultModel {
   @Field(() => TableModel)
   table: TableModel;
 
-  @Field(() => TableModel)
-  previousTable: TableModel;
+  @Field()
+  previousVersionTableId: string;
 }
