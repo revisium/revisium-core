@@ -50,7 +50,7 @@ export class RemoveTableHandler extends DraftHandler<
       throw new BadRequestException('Table is a system table');
     }
 
-    await this.validateForegeinKeys(data);
+    await this.validateForeignKeys(data);
 
     if (table.readonly) {
       await this.disconnectTableFromRevision(table.versionId, revisionId);
@@ -198,7 +198,7 @@ export class RemoveTableHandler extends DraftHandler<
     );
   }
 
-  private async validateForegeinKeys(data: RemoveTableCommand['data']) {
+  private async validateForeignKeys(data: RemoveTableCommand['data']) {
     const schemaTable =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
