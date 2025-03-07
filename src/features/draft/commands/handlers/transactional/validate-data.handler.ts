@@ -10,9 +10,9 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
-  getReferencesFromValue,
-  GetReferencesFromValueType,
-} from 'src/features/share/utils/schema/lib/getReferencesFromValue';
+  getForeignKeysFromValue,
+  GetForeignKeysFromValueType,
+} from 'src/features/share/utils/schema/lib/getForeignKeysFromValue';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 
 @CommandHandler(ValidateDataCommand)
@@ -45,9 +45,9 @@ export class ValidateDataHandler
     }
 
     for (const itemData of data.rows) {
-      // TODO merge getReferencesFromValue
-      await this.validateReferences(
-        getReferencesFromValue(
+      // TODO merge getForeignKeysFromValue
+      await this.validateForeignKeys(
+        getForeignKeysFromValue(
           createJsonValueStore(
             createJsonSchemaStore(schema),
             itemData.rowId,
@@ -71,18 +71,20 @@ export class ValidateDataHandler
     return result.schema;
   }
 
-  private async validateReferences(references: GetReferencesFromValueType[]) {
+  private async validateForeignKeys(
+    foreignKeys: GetForeignKeysFromValueType[],
+  ) {
     return Promise.all(
-      references.map(async (tableReference) => {
+      foreignKeys.map(async (tableForeignKey) => {
         const table =
           await this.shareTransactionalQueries.findTableInRevisionOrThrow(
             this.revisionRequestDto.id,
-            tableReference.tableId,
+            tableForeignKey.tableId,
           );
 
         return this.shareTransactionalQueries.findRowsInTableOrThrow(
           table.versionId,
-          tableReference.rowIds,
+          tableForeignKey.rowIds,
         );
       }),
     );

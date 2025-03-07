@@ -11,7 +11,7 @@ export const stringMetaSchema: Schema = {
     default: {
       type: 'string',
     },
-    reference: {
+    foreignKey: {
       type: 'string',
     },
   },
@@ -19,7 +19,7 @@ export const stringMetaSchema: Schema = {
   required: ['type', 'default'],
 };
 
-export const noReferenceStringMetaSchema: Schema = {
+export const noForeignKeyStringMetaSchema: Schema = {
   type: 'object',
   properties: {
     type: {
@@ -125,7 +125,7 @@ export const metaSchema: Schema = {
   },
 };
 
-export const notReferenceMetaSchema: Schema = {
+export const notForeignKeyMetaSchema: Schema = {
   type: 'object',
   $dynamicAnchor: 'meta',
   oneOf: [
@@ -143,7 +143,7 @@ export const notReferenceMetaSchema: Schema = {
       default: [],
     },
     objectSchema: objectMetaSchema,
-    stringSchema: noReferenceStringMetaSchema,
+    stringSchema: noForeignKeyStringMetaSchema,
     numberSchema: numberMetaSchema,
     booleanSchema: booleanMetaSchema,
     arraySchema: arrayMetaSchema,

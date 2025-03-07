@@ -187,22 +187,22 @@ input GetRevisionTablesInput {
   first: Int!
 }
 
-input GetRowCountReferencesByInput {
+input GetRowCountForeignKeysByInput {
   revisionId: String!
   rowId: String!
   tableId: String!
+}
+
+input GetRowForeignKeysInput {
+  after: String
+  first: Int!
+  foreignKeyTableId: String!
 }
 
 input GetRowInput {
   revisionId: String!
   rowId: String!
   tableId: String!
-}
-
-input GetRowReferencesInput {
-  after: String
-  first: Int!
-  referenceTableId: String!
 }
 
 input GetRowsInput {
@@ -212,14 +212,14 @@ input GetRowsInput {
   tableId: String!
 }
 
+input GetTableForeignKeysInput {
+  after: String
+  first: Int!
+}
+
 input GetTableInput {
   revisionId: String!
   tableId: String!
-}
-
-input GetTableReferencesInput {
-  after: String
-  first: Int!
 }
 
 input GetTableRowsInput {
@@ -347,7 +347,7 @@ type Query {
   branch(data: GetBranchInput!): BranchModel!
   branches(data: GetBranchesInput!): BranchesConnection!
   configuration: ConfigurationModel!
-  getRowCountReferencesTo(data: GetRowCountReferencesByInput!): Int!
+  getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int!
   me: UserModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
   project(data: GetProjectInput!): ProjectModel!
@@ -458,13 +458,13 @@ type RoleModel {
 }
 
 type RowModel {
-  countReferencesTo: Int!
+  countForeignKeysTo: Int!
   createdAt: DateTime!
   data: JSON!
   id: String!
   readonly: Boolean!
-  rowReferencesBy(data: GetRowReferencesInput!): RowsConnection!
-  rowReferencesTo(data: GetRowReferencesInput!): RowsConnection!
+  rowForeignKeysBy(data: GetRowForeignKeysInput!): RowsConnection!
+  rowForeignKeysTo(data: GetRowForeignKeysInput!): RowsConnection!
   versionId: String!
 }
 
@@ -491,13 +491,13 @@ input SignUpInput {
 
 type TableModel {
   count: Int!
-  countReferencesBy: Int!
-  countReferencesTo: Int!
+  countForeignKeysBy: Int!
+  countForeignKeysTo: Int!
   createdAt: DateTime!
+  foreignKeysBy(data: GetTableForeignKeysInput!): TablesConnection!
+  foreignKeysTo(data: GetTableForeignKeysInput!): TablesConnection!
   id: String!
   readonly: Boolean!
-  referencesBy(data: GetTableReferencesInput!): TablesConnection!
-  referencesTo(data: GetTableReferencesInput!): TablesConnection!
   rows(data: GetTableRowsInput!): RowsConnection!
   schema: JSON!
   versionId: String!

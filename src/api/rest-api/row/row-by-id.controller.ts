@@ -35,11 +35,11 @@ import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
-  GetRowReferencesByDto,
+  GetRowForeignKeysByDto,
   RenameRowDto,
   UpdateRowDto,
 } from 'src/api/rest-api/row/dto';
-import { GetRowReferencesToDto } from 'src/api/rest-api/row/dto/get-row-references-to.dto';
+import { GetRowForeignKeysToDto } from 'src/api/rest-api/row/dto/get-row-foreign-keys-to.dto';
 import {
   RemoveRowResponse,
   RenameRowResponse,
@@ -56,10 +56,10 @@ import {
 import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/transformFromPrismaToTableModel';
 import {
   GetRowQuery,
-  ResolveRowCountReferencesByQuery,
-  ResolveRowCountReferencesToQuery,
-  ResolveRowReferencesByQuery,
-  ResolveRowReferencesToQuery,
+  ResolveRowCountForeignKeysByQuery,
+  ResolveRowCountForeignKeysToQuery,
+  ResolveRowForeignKeysByQuery,
+  ResolveRowForeignKeysToQuery,
 } from 'src/features/row/queries/impl';
 import { GetRowReturnType } from 'src/features/row/queries/types';
 
@@ -97,38 +97,38 @@ export class RowByIdController {
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('count-references-by')
-  @ApiOperation({ operationId: 'rowCountReferencesBy' })
+  @Get('count-foreign-keys-by')
+  @ApiOperation({ operationId: 'rowCountForeignKeysBy' })
   @ApiOkResponse({
     type: Number,
   })
-  async countReferencesBy(
+  async countForeignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ) {
     return this.queryBus.execute(
-      new ResolveRowCountReferencesByQuery({ revisionId, tableId, rowId }),
+      new ResolveRowCountForeignKeysByQuery({ revisionId, tableId, rowId }),
     );
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('references-by')
-  @ApiOperation({ operationId: 'rowReferencesBy' })
+  @Get('foreign-keys-by')
+  @ApiOperation({ operationId: 'rowForeignKeysBy' })
   @ApiOkResponse({ type: RowsConnection })
-  async referencesBy(
+  async foreignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
-    @Query() data: GetRowReferencesByDto,
+    @Query() data: GetRowForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
       await this.queryBus.execute(
-        new ResolveRowReferencesByQuery({
+        new ResolveRowForeignKeysByQuery({
           revisionId,
           tableId,
           rowId,
-          referenceByTableId: data.referenceByTableId,
+          foreignKeyByTableId: data.foreignKeyByTableId,
           after: data.after,
           first: data.first,
         }),
@@ -137,38 +137,38 @@ export class RowByIdController {
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('count-references-to')
-  @ApiOperation({ operationId: 'rowCountReferencesTo' })
+  @Get('count-foreign-keys-to')
+  @ApiOperation({ operationId: 'rowCountForeignKeysTo' })
   @ApiOkResponse({
     type: Number,
   })
-  async countReferencesTo(
+  async countForeignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ) {
     return this.queryBus.execute(
-      new ResolveRowCountReferencesToQuery({ revisionId, tableId, rowId }),
+      new ResolveRowCountForeignKeysToQuery({ revisionId, tableId, rowId }),
     );
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('references-to')
-  @ApiOperation({ operationId: 'rowReferencesTo' })
+  @Get('foreign-keys-to')
+  @ApiOperation({ operationId: 'rowForeignKeysTo' })
   @ApiOkResponse({ type: RowsConnection })
-  async referencesTo(
+  async foreignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
-    @Query() data: GetRowReferencesToDto,
+    @Query() data: GetRowForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
       await this.queryBus.execute(
-        new ResolveRowReferencesToQuery({
+        new ResolveRowForeignKeysToQuery({
           revisionId,
           tableId,
           rowId,
-          referenceByTableId: data.referenceToTableId, // TODO naming
+          foreignKeyToTableId: data.foreignKeyToTableId, // TODO naming
           after: data.after,
           first: data.first,
         }),

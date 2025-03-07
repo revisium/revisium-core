@@ -63,8 +63,8 @@ export class UpdateTableHandler extends DraftHandler<
         tableId,
       );
 
-    if (this.checkItselfReference(data.tableId, data.patches)) {
-      throw new BadRequestException('Itself references is not supported yet');
+    if (this.checkItselfForeignKey(data.tableId, data.patches)) {
+      throw new BadRequestException('Itself foreign key is not supported yet');
     }
 
     if (table.system) {
@@ -186,22 +186,22 @@ export class UpdateTableHandler extends DraftHandler<
     );
   }
 
-  private checkItselfReference(tableId: string, patches: JsonPatch[]) {
+  private checkItselfForeignKey(tableId: string, patches: JsonPatch[]) {
     for (const patch of patches) {
       if (patch.op === 'replace' || patch.op === 'add') {
-        let isThereItselfReference = false;
+        let isThereItselfForeignKey = false;
 
         const schemaStore = createJsonSchemaStore(patch.value);
         traverseStore(schemaStore, (item) => {
           if (
             item.type === JsonSchemaTypeName.String &&
-            item.reference === tableId
+            item.foreignKey === tableId
           ) {
-            isThereItselfReference = true;
+            isThereItselfForeignKey = true;
           }
         });
 
-        if (isThereItselfReference) {
+        if (isThereItselfForeignKey) {
           return true;
         }
       }

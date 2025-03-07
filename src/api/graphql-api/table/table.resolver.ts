@@ -5,7 +5,7 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { GetTableReferencesInput } from 'src/api/graphql-api/table/inputs/get-table-references.input';
+import { GetTableForeignKeysInput } from 'src/api/graphql-api/table/inputs/get-table-foreign-keys.input';
 import { GetTableRowsInput } from 'src/api/graphql-api/table/inputs/get-table-rows.input';
 import { GetTableInput } from 'src/api/graphql-api/table/inputs/get-table.input';
 import { GetTablesInput } from 'src/api/graphql-api/table/inputs/get-tables.input';
@@ -13,10 +13,10 @@ import { TablesConnection } from 'src/api/graphql-api/table/model/table-connecti
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
 import {
   GetCountRowsInTableQuery,
-  ResolveTableCountReferencesByQuery,
-  ResolveTableCountReferencesToQuery,
-  ResolveTableReferencesByQuery,
-  ResolveTableReferencesToQuery,
+  ResolveTableCountForeignKeysByQuery,
+  ResolveTableCountForeignKeysToQuery,
+  ResolveTableForeignKeysByQuery,
+  ResolveTableForeignKeysToQuery,
   ResolveTableSchemaQuery,
 } from 'src/features/table/queries/impl';
 import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
@@ -82,9 +82,9 @@ export class TableResolver {
   }
 
   @ResolveField()
-  countReferencesBy(@Parent() table: TableModel) {
+  countForeignKeysBy(@Parent() table: TableModel) {
     return this.queryBus.execute(
-      new ResolveTableCountReferencesByQuery({
+      new ResolveTableCountForeignKeysByQuery({
         revisionId: table.context.revisionId,
         tableId: table.id,
       }),
@@ -92,12 +92,12 @@ export class TableResolver {
   }
 
   @ResolveField()
-  referencesBy(
+  foreignKeysBy(
     @Parent() table: TableModel,
-    @Args('data') data: GetTableReferencesInput,
+    @Args('data') data: GetTableForeignKeysInput,
   ) {
     return this.queryBus.execute(
-      new ResolveTableReferencesByQuery({
+      new ResolveTableForeignKeysByQuery({
         revisionId: table.context.revisionId,
         tableId: table.id,
         ...data,
@@ -106,9 +106,9 @@ export class TableResolver {
   }
 
   @ResolveField()
-  countReferencesTo(@Parent() table: TableModel) {
+  countForeignKeysTo(@Parent() table: TableModel) {
     return this.queryBus.execute(
-      new ResolveTableCountReferencesToQuery({
+      new ResolveTableCountForeignKeysToQuery({
         revisionId: table.context.revisionId,
         tableId: table.id,
       }),
@@ -116,12 +116,12 @@ export class TableResolver {
   }
 
   @ResolveField()
-  referencesTo(
+  foreignKeysTo(
     @Parent() table: TableModel,
-    @Args('data') data: GetTableReferencesInput,
+    @Args('data') data: GetTableForeignKeysInput,
   ) {
     return this.queryBus.execute(
-      new ResolveTableReferencesToQuery({
+      new ResolveTableForeignKeysToQuery({
         revisionId: table.context.revisionId,
         tableId: table.id,
         ...data,

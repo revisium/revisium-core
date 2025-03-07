@@ -2,7 +2,7 @@ import { JsonStringStore } from 'src/features/share/utils/schema/model/schema/js
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
 
 describe('JsonStringStore', () => {
-  it('reference', () => {
+  it('foreignKey', () => {
     const store = new JsonStringStore();
 
     expect(store.getPlainSchema()).toStrictEqual({
@@ -10,12 +10,12 @@ describe('JsonStringStore', () => {
       default: '',
     });
 
-    store.reference = 'tableId';
+    store.foreignKey = 'tableId';
 
     expect(store.getPlainSchema()).toStrictEqual({
       type: 'string',
       default: '',
-      reference: 'tableId',
+      foreignKey: 'tableId',
     });
   });
 

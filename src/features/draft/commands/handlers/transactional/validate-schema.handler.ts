@@ -5,7 +5,7 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
-import { getReferencesFromSchema } from 'src/features/share/utils/schema/lib/getReferencesFromSchema';
+import { getForeignKeysFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeysFromSchema';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @CommandHandler(ValidateSchemaCommand)
@@ -23,7 +23,7 @@ export class ValidateSchemaHandler
       this.jsonSchemaValidator.validateMetaSchema(schema);
 
     const store = this.validateSchema(schema as JsonSchema);
-    await this.validateReferences(getReferencesFromSchema(store));
+    await this.validateForeignKeys(getForeignKeysFromSchema(store));
 
     if (!result) {
       throw new BadRequestException('schema is not valid', {
@@ -36,12 +36,12 @@ export class ValidateSchemaHandler
     return createJsonSchemaStore(schema);
   }
 
-  private async validateReferences(tableReferences: string[]) {
+  private async validateForeignKeys(tableForeignKeys: string[]) {
     return Promise.all(
-      tableReferences.map((tableReference) =>
+      tableForeignKeys.map((tableForeignKey) =>
         this.shareTransactionalQueries.findTableInRevisionOrThrow(
           this.revisionRequestDto.id,
-          tableReference,
+          tableForeignKey,
         ),
       ),
     );

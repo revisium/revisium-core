@@ -10,7 +10,7 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
-import { ReferencesService } from 'src/features/share/references.service';
+import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
@@ -33,7 +33,7 @@ export class RemoveRowHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly sessionChangelog: SessionChangelogService,
-    protected readonly referencesService: ReferencesService,
+    protected readonly foreignKeysService: ForeignKeysService,
   ) {
     super(transactionService, draftContext);
   }
@@ -49,7 +49,7 @@ export class RemoveRowHandler extends DraftHandler<
     }
 
     if (!avoidCheckingSystemTable) {
-      await this.validateReferences(input);
+      await this.validateForeignKeys(input);
     }
 
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
@@ -260,33 +260,33 @@ export class RemoveRowHandler extends DraftHandler<
     });
   }
 
-  private async validateReferences(data: RemoveRowCommand['data']) {
+  private async validateForeignKeys(data: RemoveRowCommand['data']) {
     const schemaTable =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
         SystemTables.Schema,
       );
 
-    const referenceTableIds = (
-      await this.referencesService.findRowsByKeyValueInData(
+    const foreignKeyTableIds = (
+      await this.foreignKeysService.findRowsByKeyValueInData(
         schemaTable.versionId,
-        CustomSchemeKeywords.Reference,
+        CustomSchemeKeywords.ForeignKey,
         data.tableId,
       )
     ).map((row) => row.id);
 
-    for (const referenceTableId of referenceTableIds) {
+    for (const foreignKeyTableId of foreignKeyTableIds) {
       // TODO move to shared
 
-      const referenceTable =
+      const foreignKeyTable =
         await this.shareTransactionalQueries.findTableInRevisionOrThrow(
           data.revisionId,
-          referenceTableId,
+          foreignKeyTableId,
         );
 
       const { schema } = await this.shareTransactionalQueries.getTableSchema(
         data.revisionId,
-        referenceTableId,
+        foreignKeyTableId,
       );
 
       const schemaStore = createJsonSchemaStore(schema);
@@ -294,16 +294,17 @@ export class RemoveRowHandler extends DraftHandler<
       const paths: string[] = [];
 
       traverseStore(schemaStore, (item) => {
-        if (item.type === JsonSchemaTypeName.String && item.reference) {
+        if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
           paths.push(getValuePathByStore(item));
         }
       });
 
-      const count = await this.referencesService.countRowsByPathsAndValueInData(
-        referenceTable.versionId,
-        paths,
-        data.rowId,
-      );
+      const count =
+        await this.foreignKeysService.countRowsByPathsAndValueInData(
+          foreignKeyTable.versionId,
+          paths,
+          data.rowId,
+        );
 
       if (count) {
         throw new BadRequestException(`The row is related to other rows`);

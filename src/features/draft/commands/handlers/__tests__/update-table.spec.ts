@@ -143,7 +143,7 @@ describe('UpdateTableHandler', () => {
     await expect(runTransaction(command)).rejects.toThrow('Table not found');
   });
 
-  it('should throw an error if itself references are found in checkItselfReference', async () => {
+  it('should throw an error if itself foreign keys are found in checkItselfForeignKey', async () => {
     const { draftRevisionId, tableId } = await prepareBranch(prismaService);
 
     const command = new UpdateTableCommand({
@@ -155,7 +155,7 @@ describe('UpdateTableHandler', () => {
           path: '/properties/ver',
           value: {
             type: JsonSchemaTypeName.String,
-            reference: tableId,
+            foreignKey: tableId,
             default: '',
           },
         },
@@ -163,7 +163,7 @@ describe('UpdateTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'Itself references is not supported yet',
+      'Itself foreign key is not supported yet',
     );
   });
 

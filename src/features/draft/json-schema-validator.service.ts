@@ -24,7 +24,7 @@ export class JsonSchemaValidatorService {
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.ajv.addKeyword({
-      keyword: CustomSchemeKeywords.Reference,
+      keyword: CustomSchemeKeywords.ForeignKey,
       type: 'string',
     });
 

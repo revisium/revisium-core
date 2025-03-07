@@ -21,17 +21,17 @@ describe('createJsonSchemaStore', () => {
   it('complex schema', () => {
     const nested = getObjectSchema({
       subField: getStringSchema(),
-      subField2: getStringSchema({ reference: 'tableId3' }),
-      subField3: getArraySchema(getStringSchema({ reference: 'tableId1' })),
+      subField2: getStringSchema({ foreignKey: 'tableId3' }),
+      subField3: getArraySchema(getStringSchema({ foreignKey: 'tableId1' })),
     });
 
     const schema = getObjectSchema({
       field: getStringSchema({
-        reference: 'tableId2',
+        foreignKey: 'tableId2',
       }),
       ids: getArraySchema(
         getStringSchema({
-          reference: 'tableId4',
+          foreignKey: 'tableId4',
         }),
       ),
       nested,

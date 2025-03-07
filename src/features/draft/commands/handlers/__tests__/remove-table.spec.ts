@@ -47,7 +47,7 @@ describe('RemoveTableHandler', () => {
     );
   });
 
-  it('should throw an error if the reference exists', async () => {
+  it('should throw an error if the foreign keys exists', async () => {
     const { draftRevisionId, schemaTableVersionId, tableId } =
       await prepareBranch(prismaService);
     const anotherTableId = nanoid();
@@ -73,7 +73,7 @@ describe('RemoveTableHandler', () => {
       properties: {
         ref: {
           type: JsonSchemaTypeName.String,
-          reference: tableId,
+          foreignKey: tableId,
           default: '',
         },
       },
@@ -101,7 +101,7 @@ describe('RemoveTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      `There are references between ${tableId} and [${anotherTableId}]`,
+      `There are foreign keys between ${tableId} and [${anotherTableId}]`,
     );
   });
 
