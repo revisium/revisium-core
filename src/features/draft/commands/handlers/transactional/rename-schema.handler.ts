@@ -18,18 +18,9 @@ import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
-import { getPathByStore } from 'src/features/share/utils/schema/lib/getPathByStore';
+import { getForeignKeyPatchesFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeyPatchesFromSchema';
 import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
-import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
-import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
-import {
-  JsonPatch,
-  JsonPatchReplace,
-} from 'src/features/share/utils/schema/types/json-patch.types';
-import {
-  JsonSchema,
-  JsonSchemaTypeName,
-} from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(RenameSchemaCommand)
@@ -70,16 +61,10 @@ export class RenameSchemaHandler extends DraftHandler<
     );
 
     for (const schemaRow of schemaRows) {
-      const currentSchema = schemaRow.data as JsonSchema;
-
-      const store = createJsonSchemaStore(currentSchema);
-      const foreignKeyPatches = this.getForeignKeyPatchesFromSchema(
+      const { schema, patches } = this.updateForeignKeyInSchema(
         data,
-        store,
+        schemaRow.data as JsonSchema,
       );
-
-      const schemaTable = new SchemaTable(currentSchema);
-      schemaTable.applyPatches(foreignKeyPatches);
 
       await this.commandBus.execute<
         UpdateSchemaCommand,
@@ -88,37 +73,30 @@ export class RenameSchemaHandler extends DraftHandler<
         new UpdateSchemaCommand({
           revisionId: data.revisionId,
           tableId: schemaRow.id,
-          patches: foreignKeyPatches,
-          schema: schemaTable.getSchema(),
+          patches,
+          schema,
         }),
       );
     }
   }
 
-  private getForeignKeyPatchesFromSchema(
+  private updateForeignKeyInSchema(
     data: RenameSchemaCommand['data'],
-    store: JsonSchemaStore,
+    currentSchema: JsonSchema,
   ) {
-    const stores: JsonPatch[] = [];
-
-    traverseStore(store, (item) => {
-      if (
-        item.type === JsonSchemaTypeName.String &&
-        item.foreignKey === data.tableId
-      ) {
-        item.foreignKey = data.nextTableId;
-
-        const patch: JsonPatchReplace = {
-          op: 'replace',
-          path: getPathByStore(item),
-          value: item.getPlainSchema(),
-        };
-
-        stores.push(patch);
-      }
+    const store = createJsonSchemaStore(currentSchema);
+    const foreignKeyPatches = getForeignKeyPatchesFromSchema(store, {
+      tableId: data.tableId,
+      nextTableId: data.nextTableId,
     });
 
-    return stores;
+    const schemaTable = new SchemaTable(currentSchema);
+    schemaTable.applyPatches(foreignKeyPatches);
+
+    return {
+      schema: schemaTable.getSchema(),
+      patches: foreignKeyPatches,
+    };
   }
 
   private renameRowInSchemaTable(data: RenameSchemaCommand['data']) {
