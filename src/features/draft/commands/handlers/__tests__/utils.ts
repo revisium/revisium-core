@@ -51,6 +51,19 @@ export const testSchemaString: JsonObjectSchema = {
   additionalProperties: false,
 };
 
+export const getTestLinkedSchema = (tableId: string): JsonObjectSchema => ({
+  type: JsonSchemaTypeName.Object,
+  required: ['link'],
+  properties: {
+    link: {
+      type: JsonSchemaTypeName.String,
+      default: '',
+      foreignKey: tableId,
+    },
+  },
+  additionalProperties: false,
+});
+
 export const createTestingModule = async () => {
   const ANOTHER_QUERIES: QueryHandlerType[] = [
     GetRevisionHandler,
