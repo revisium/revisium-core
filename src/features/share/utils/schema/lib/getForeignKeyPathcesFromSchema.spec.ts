@@ -6,7 +6,7 @@ import {
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getForeignKeyPatchesFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeyPatchesFromSchema';
 
-describe('getForeignKeyFromSchema', () => {
+describe('getForeignKeyPatchesFromSchema', () => {
   it('string', () => {
     const schema = getStringSchema({
       foreignKey: 'tableId',
