@@ -1,6 +1,9 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
-import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
+import {
+  createTestingModule,
+  getTestLinkedSchema,
+} from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   RenameSchemaCommand,
   RenameSchemaCommandReturnType,
@@ -58,6 +61,56 @@ describe('RenameSchemaHandler', () => {
     expect(schemaRow.versionId).not.toBe(previousSchemaRow.versionId);
     expect(schemaRow.createdId).toBe(previousSchemaRow.createdId);
     expect(schemaRow.id).not.toBe(previousSchemaRow.id);
+  });
+
+  it('should updated the linked table', async () => {
+    const ids = await prepareBranch(prismaService, { createLinkedTable: true });
+    const { headRevisionId, draftRevisionId, tableId, linkedTableId } = ids;
+
+    const previousSchemaRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: linkedTableId,
+        tables: {
+          some: {
+            id: SystemTables.Schema,
+            revisions: {
+              some: {
+                id: headRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const command = new RenameSchemaCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      nextTableId,
+    });
+
+    const result = await runTransaction(command);
+
+    const schemaRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: linkedTableId,
+        tables: {
+          some: {
+            id: SystemTables.Schema,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(result).toBe(true);
+    expect(previousSchemaRow.data).toStrictEqual(getTestLinkedSchema(tableId));
+    expect(schemaRow.data).toStrictEqual(getTestLinkedSchema(nextTableId));
+    expect(previousSchemaRow.versionId).not.toBe(schemaRow.versionId);
   });
 
   function runTransaction(
