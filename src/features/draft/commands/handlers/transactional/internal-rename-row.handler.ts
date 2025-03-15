@@ -1,15 +1,27 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { InternalUpdateRowCommand } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
+import { DraftHandler } from 'src/features/draft/draft.handler';
+import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import {
   InternalRenameRowCommand,
   InternalRenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-rename-row.command';
-import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
+import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
-import { DraftHandler } from 'src/features/draft/draft.handler';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
+import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
+import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
+import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
+import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
+import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
+import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { SystemTables } from 'src/features/share/system-tables.consts';
+import { DraftContextService } from 'src/features/draft/draft-context.service';
 
 @CommandHandler(InternalRenameRowCommand)
 export class InternalRenameRowHandler extends DraftHandler<
@@ -17,11 +29,15 @@ export class InternalRenameRowHandler extends DraftHandler<
   InternalRenameRowCommandReturnType
 > {
   constructor(
+    protected readonly commandBus: CommandBus,
     protected readonly transactionService: TransactionPrismaService,
-    protected readonly draftContext: DraftContextService,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
+    protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly rowRequestDto: DraftRowRequestDto,
+    protected readonly shareTransactionalQueries: ShareTransactionalQueries,
+    protected readonly foreignKeysService: ForeignKeysService,
+    protected readonly draftContext: DraftContextService,
   ) {
     super(transactionService, draftContext);
   }
@@ -37,6 +53,7 @@ export class InternalRenameRowHandler extends DraftHandler<
     await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
 
     await this.checkRowExistence(nextRowId);
+    await this.renameFieldsInForeignRows(input);
 
     await this.renameDraftRow(input);
 
@@ -74,6 +91,86 @@ export class InternalRenameRowHandler extends DraftHandler<
         `A row with this name = ${rowId} already exists in the table`,
       );
     }
+  }
+
+  private async renameFieldsInForeignRows(
+    data: InternalRenameRowCommand['data'],
+  ) {
+    const foreignKeyTableIds = await this.getForeignTableIds(data);
+
+    for (const foreignKeyTableId of foreignKeyTableIds) {
+      const foreignKeyTable =
+        await this.shareTransactionalQueries.findTableInRevisionOrThrow(
+          data.revisionId,
+          foreignKeyTableId,
+        );
+
+      const { schema } = await this.shareTransactionalQueries.getTableSchema(
+        data.revisionId,
+        foreignKeyTableId,
+      );
+
+      const schemaStore = createJsonSchemaStore(schema);
+
+      const foreignPathsInSchema: string[] = [];
+
+      traverseStore(schemaStore, (item) => {
+        if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
+          foreignPathsInSchema.push(getValuePathByStore(item));
+        }
+      });
+
+      const rows = await this.foreignKeysService.findRowsByPathsAndValueInData(
+        foreignKeyTable.versionId,
+        foreignPathsInSchema,
+        data.rowId,
+      );
+
+      for (const row of rows) {
+        const value = createJsonValueStore(schemaStore, row.id, row.data);
+
+        let wasUpdated = false;
+
+        traverseValue(value, (item) => {
+          if (
+            item.type === JsonSchemaTypeName.String &&
+            item.foreignKey === data.tableId &&
+            item.value === data.rowId
+          ) {
+            item.value = data.nextRowId;
+            wasUpdated = true;
+          }
+        });
+
+        if (wasUpdated) {
+          await this.commandBus.execute(
+            new InternalUpdateRowCommand({
+              revisionId: data.revisionId,
+              tableId: foreignKeyTableId,
+              rowId: row.id,
+              schemaHash: row.schemaHash,
+              data: value.getPlainValue(),
+            }),
+          );
+        }
+      }
+    }
+  }
+
+  private async getForeignTableIds(data: InternalRenameRowCommand['data']) {
+    const schemaTable =
+      await this.shareTransactionalQueries.findTableInRevisionOrThrow(
+        data.revisionId,
+        SystemTables.Schema,
+      );
+
+    return (
+      await this.foreignKeysService.findRowsByKeyValueInData(
+        schemaTable.versionId,
+        CustomSchemeKeywords.ForeignKey,
+        data.tableId,
+      )
+    ).map((row) => row.id);
   }
 
   private async renameDraftRow(input: InternalRenameRowCommand['data']) {
