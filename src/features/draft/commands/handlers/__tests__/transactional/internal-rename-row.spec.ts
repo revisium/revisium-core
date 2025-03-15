@@ -158,7 +158,7 @@ describe('InternalRenameRowHandler', () => {
         id: nextRowId,
         tables: {
           some: {
-            versionId: draftTableVersionId,
+            versionId: result.tableVersionId,
           },
         },
       },
@@ -217,6 +217,38 @@ describe('InternalRenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.versionId).not.toBe(draftRowVersionId);
+  });
+
+  it('should update foreign keys in linked rows when renaming a row', async () => {
+    const { draftRevisionId, tableId, rowId, linkedTableId, linkedRowId } =
+      await prepareBranch(prismaService, { createLinkedTable: true });
+
+    const command = new InternalRenameRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      nextRowId,
+    });
+
+    await runTransaction(command);
+
+    const linkedRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: linkedRowId,
+        tables: {
+          some: {
+            id: linkedTableId,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(linkedRow.data).toStrictEqual({ link: nextRowId });
   });
 
   function runTransaction(
