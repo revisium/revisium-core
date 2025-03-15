@@ -9,6 +9,8 @@ export class InternalRenameRowCommand {
   ) {}
 }
 
+export type InternalRenameRowCommandData = InternalRenameRowCommand['data'];
+
 export type InternalRenameRowCommandReturnType = {
   tableVersionId: string;
   previousTableVersionId: string;

@@ -5,6 +5,7 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import {
   InternalRenameRowCommand,
+  InternalRenameRowCommandData,
   InternalRenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-rename-row.command';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
@@ -93,9 +94,7 @@ export class InternalRenameRowHandler extends DraftHandler<
     }
   }
 
-  private async renameFieldsInForeignRows(
-    data: InternalRenameRowCommand['data'],
-  ) {
+  private async renameFieldsInForeignRows(data: InternalRenameRowCommandData) {
     const foreignKeyTableIds = await this.getForeignTableIds(data);
 
     for (const foreignKeyTableId of foreignKeyTableIds) {
@@ -151,7 +150,7 @@ export class InternalRenameRowHandler extends DraftHandler<
     }
   }
 
-  private async getForeignTableIds(data: InternalRenameRowCommand['data']) {
+  private async getForeignTableIds(data: InternalRenameRowCommandData) {
     const schemaTable =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
@@ -167,7 +166,7 @@ export class InternalRenameRowHandler extends DraftHandler<
     ).map((row) => row.id);
   }
 
-  private async renameDraftRow(input: InternalRenameRowCommand['data']) {
+  private async renameDraftRow(input: InternalRenameRowCommandData) {
     return this.transaction.row.update({
       where: {
         versionId: this.rowRequestDto.versionId,
