@@ -25,6 +25,7 @@ export const getReplacePatch = ({
   path,
   value,
 });
+
 export const getRemovePatch = ({
   path,
 }: {
@@ -33,6 +34,7 @@ export const getRemovePatch = ({
   op: 'remove',
   path,
 });
+
 export const getAddPatch = ({
   path,
   value,
@@ -44,6 +46,7 @@ export const getAddPatch = ({
   path,
   value,
 });
+
 export const getMovePatch = ({
   from,
   path,
@@ -55,6 +58,7 @@ export const getMovePatch = ({
   from,
   path,
 });
+
 export const getStringSchema = ({
   defaultValue = '',
   foreignKey,
@@ -73,18 +77,21 @@ export const getStringSchema = ({
 
   return schema;
 };
+
 export const getNumberSchema = (
   defaultValue: number = 0,
 ): JsonNumberSchema => ({
   type: JsonSchemaTypeName.Number,
   default: defaultValue,
 });
+
 export const getBooleanSchema = (
   defaultValue: boolean = false,
 ): JsonBooleanSchema => ({
   type: JsonSchemaTypeName.Boolean,
   default: defaultValue,
 });
+
 export const getObjectSchema = (
   properties: Record<string, JsonSchema>,
 ): JsonObjectSchema => ({
@@ -93,6 +100,7 @@ export const getObjectSchema = (
   required: Object.keys(properties).sort(),
   properties,
 });
+
 export const getArraySchema = (items: JsonSchema): JsonArraySchema => ({
   type: JsonSchemaTypeName.Array,
   items,

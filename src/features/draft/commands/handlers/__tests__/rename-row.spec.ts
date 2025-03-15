@@ -243,6 +243,37 @@ describe('RenameRowHandler', () => {
     expect(row.versionId).not.toBe(draftRowVersionId);
   });
 
+  it('should update the linked row', async () => {
+    const { draftRevisionId, tableId, rowId, linkedTableId, linkedRowId } =
+      await prepareBranch(prismaService, { createLinkedTable: true });
+    const command = new RenameRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      nextRowId,
+    });
+
+    await runTransaction(command);
+
+    const linkedRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: linkedRowId,
+        tables: {
+          some: {
+            id: linkedTableId,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(linkedRow.data).toStrictEqual({ link: nextRowId });
+  });
+
   function runTransaction(
     command: RenameRowCommand,
   ): Promise<RenameRowCommandReturnType> {

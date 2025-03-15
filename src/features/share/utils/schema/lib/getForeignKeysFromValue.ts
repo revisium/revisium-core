@@ -8,11 +8,11 @@ export type GetForeignKeysFromValueType = {
 };
 
 export const getForeignKeysFromValue = (
-  store: JsonValueStore,
+  value: JsonValueStore,
 ): GetForeignKeysFromValueType[] => {
   const foreignKeys = new Map<string, Set<string>>();
 
-  traverseValue(store, (item) => {
+  traverseValue(value, (item) => {
     if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
       let tableForeignKey = foreignKeys.get(item.foreignKey);
 
