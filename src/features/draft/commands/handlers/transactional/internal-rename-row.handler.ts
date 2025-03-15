@@ -11,7 +11,7 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
+import { replaceForeignKeyValue } from 'src/features/share/utils/schema/lib/replaceForeignKeyValue';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
@@ -127,19 +127,13 @@ export class InternalRenameRowHandler extends DraftHandler<
       );
 
       for (const row of rows) {
-        const value = createJsonValueStore(schemaStore, row.id, row.data);
+        const valueStore = createJsonValueStore(schemaStore, row.id, row.data);
 
-        let wasUpdated = false;
-
-        traverseValue(value, (item) => {
-          if (
-            item.type === JsonSchemaTypeName.String &&
-            item.foreignKey === data.tableId &&
-            item.value === data.rowId
-          ) {
-            item.value = data.nextRowId;
-            wasUpdated = true;
-          }
+        const wasUpdated = replaceForeignKeyValue({
+          valueStore: valueStore,
+          foreignKey: data.tableId,
+          value: data.rowId,
+          nextValue: data.nextRowId,
         });
 
         if (wasUpdated) {
@@ -149,7 +143,7 @@ export class InternalRenameRowHandler extends DraftHandler<
               tableId: foreignKeyTableId,
               rowId: row.id,
               schemaHash: row.schemaHash,
-              data: value.getPlainValue(),
+              data: valueStore.getPlainValue(),
             }),
           );
         }
