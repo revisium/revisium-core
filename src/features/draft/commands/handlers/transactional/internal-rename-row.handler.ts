@@ -1,28 +1,31 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { InternalUpdateRowCommand } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
-import { DraftHandler } from 'src/features/draft/draft.handler';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { Row } from '@prisma/client';
 import {
   InternalRenameRowCommand,
   InternalRenameRowCommandData,
   InternalRenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-rename-row.command';
+import { InternalUpdateRowCommand } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
+import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { replaceForeignKeyValue } from 'src/features/share/utils/schema/lib/replaceForeignKeyValue';
-import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
+import { DraftHandler } from 'src/features/draft/draft.handler';
+import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
-import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
-import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { DraftContextService } from 'src/features/draft/draft-context.service';
+import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
+import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
+import { replaceForeignKeyValue } from 'src/features/share/utils/schema/lib/replaceForeignKeyValue';
+import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
+import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
+import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(InternalRenameRowCommand)
 export class InternalRenameRowHandler extends DraftHandler<
@@ -46,27 +49,26 @@ export class InternalRenameRowHandler extends DraftHandler<
   public async handler({
     data: input,
   }: InternalRenameRowCommand): Promise<InternalRenameRowCommandReturnType> {
+    await this.validateAndPrepare(input);
+    await this.updateForeignKeys(input);
+    await this.renameDraftRow(input);
+
+    return this.buildResult();
+  }
+
+  private async validateAndPrepare(
+    input: InternalRenameRowCommandData,
+  ): Promise<void> {
     const { revisionId, tableId, rowId, nextRowId } = input;
 
     this.validateNextRowId(nextRowId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
     await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
-
     await this.checkRowExistence(nextRowId);
-    await this.renameFieldsInForeignRows(input);
-
-    await this.renameDraftRow(input);
-
-    return {
-      tableVersionId: this.tableRequestDto.versionId,
-      previousTableVersionId: this.tableRequestDto.previousVersionId,
-      rowVersionId: this.rowRequestDto.versionId,
-      previousRowVersionId: this.rowRequestDto.previousVersionId,
-    };
   }
 
-  private validateNextRowId(rowId: string) {
+  private validateNextRowId(rowId: string): void {
     if (rowId.length < 1) {
       throw new BadRequestException(
         'The length of the row name must be greater than or equal to 1',
@@ -74,7 +76,7 @@ export class InternalRenameRowHandler extends DraftHandler<
     }
   }
 
-  private async checkRowExistence(rowId: string) {
+  private async checkRowExistence(rowId: string): Promise<void> {
     const existingRow = await this.transaction.row.findFirst({
       where: {
         id: rowId,
@@ -94,80 +96,136 @@ export class InternalRenameRowHandler extends DraftHandler<
     }
   }
 
-  private async renameFieldsInForeignRows(data: InternalRenameRowCommandData) {
-    const foreignKeyTableIds = await this.getForeignTableIds(data);
+  private async updateForeignKeys(
+    input: InternalRenameRowCommandData,
+  ): Promise<void> {
+    const foreignKeyTableIds = await this.getForeignTableIds(input);
 
     for (const foreignKeyTableId of foreignKeyTableIds) {
-      const foreignKeyTable =
-        await this.shareTransactionalQueries.findTableInRevisionOrThrow(
-          data.revisionId,
-          foreignKeyTableId,
-        );
+      await this.updateForeignKeysInTable(input, foreignKeyTableId);
+    }
+  }
 
-      const { schema } = await this.shareTransactionalQueries.getTableSchema(
-        data.revisionId,
+  private async updateForeignKeysInTable(
+    input: InternalRenameRowCommandData,
+    foreignKeyTableId: string,
+  ): Promise<void> {
+    const foreignKeyTable =
+      await this.shareTransactionalQueries.findTableInRevisionOrThrow(
+        input.revisionId,
         foreignKeyTableId,
       );
 
-      const schemaStore = createJsonSchemaStore(schema);
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
+      input.revisionId,
+      foreignKeyTableId,
+    );
 
-      const foreignPathsInSchema: string[] = [];
+    const schemaStore = createJsonSchemaStore(schema);
+    const foreignPaths = this.getForeignPathsFromSchema(schemaStore);
+    const rows = await this.getRowsWithForeignKeys(
+      foreignKeyTable.versionId,
+      foreignPaths,
+      input.rowId,
+    );
 
-      traverseStore(schemaStore, (item) => {
-        if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
-          foreignPathsInSchema.push(getValuePathByStore(item));
-        }
+    await this.updateRowsWithNewForeignKey(
+      input,
+      foreignKeyTableId,
+      rows,
+      schemaStore,
+    );
+  }
+
+  private getForeignPathsFromSchema(schemaStore: JsonSchemaStore): string[] {
+    const foreignPaths: string[] = [];
+
+    traverseStore(schemaStore, (item) => {
+      if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
+        foreignPaths.push(getValuePathByStore(item));
+      }
+    });
+
+    return foreignPaths;
+  }
+
+  private async getRowsWithForeignKeys(
+    tableVersionId: string,
+    paths: string[],
+    value: string,
+  ) {
+    return this.foreignKeysService.findRowsByPathsAndValueInData(
+      tableVersionId,
+      paths,
+      value,
+    );
+  }
+
+  private async updateRowsWithNewForeignKey(
+    input: InternalRenameRowCommandData,
+    foreignKeyTableId: string,
+    rows: Row[],
+    schemaStore: JsonSchemaStore,
+  ): Promise<void> {
+    for (const row of rows) {
+      const valueStore = createJsonValueStore(schemaStore, row.id, row.data);
+      const wasUpdated = replaceForeignKeyValue({
+        valueStore: valueStore,
+        foreignKey: input.tableId,
+        value: input.rowId,
+        nextValue: input.nextRowId,
       });
 
-      const rows = await this.foreignKeysService.findRowsByPathsAndValueInData(
-        foreignKeyTable.versionId,
-        foreignPathsInSchema,
-        data.rowId,
-      );
-
-      for (const row of rows) {
-        const valueStore = createJsonValueStore(schemaStore, row.id, row.data);
-
-        const wasUpdated = replaceForeignKeyValue({
-          valueStore: valueStore,
-          foreignKey: data.tableId,
-          value: data.rowId,
-          nextValue: data.nextRowId,
-        });
-
-        if (wasUpdated) {
-          await this.commandBus.execute(
-            new InternalUpdateRowCommand({
-              revisionId: data.revisionId,
-              tableId: foreignKeyTableId,
-              rowId: row.id,
-              schemaHash: row.schemaHash,
-              data: valueStore.getPlainValue(),
-            }),
-          );
-        }
+      if (wasUpdated) {
+        await this.updateRow(
+          input.revisionId,
+          foreignKeyTableId,
+          row,
+          valueStore,
+        );
       }
     }
   }
 
-  private async getForeignTableIds(data: InternalRenameRowCommandData) {
+  private async updateRow(
+    revisionId: string,
+    tableId: string,
+    row: Row,
+    valueStore: JsonValueStore,
+  ): Promise<void> {
+    await this.commandBus.execute(
+      new InternalUpdateRowCommand({
+        revisionId,
+        tableId,
+        rowId: row.id,
+        schemaHash: row.schemaHash,
+        data: valueStore.getPlainValue(),
+      }),
+    );
+  }
+
+  private async getForeignTableIds(
+    input: InternalRenameRowCommandData,
+  ): Promise<string[]> {
     const schemaTable =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
-        data.revisionId,
+        input.revisionId,
         SystemTables.Schema,
       );
 
-    return (
-      await this.foreignKeysService.findRowsByKeyValueInData(
-        schemaTable.versionId,
-        CustomSchemeKeywords.ForeignKey,
-        data.tableId,
-      )
-    ).map((row) => row.id);
+    const rows = await this.foreignKeysService.findRowsByKeyValueInData(
+      schemaTable.versionId,
+      CustomSchemeKeywords.ForeignKey,
+      input.tableId,
+    );
+
+    return rows.map((row) => row.id);
   }
 
-  private async renameDraftRow(input: InternalRenameRowCommandData) {
-    return this.transaction.row.update({
+  private async renameDraftRow(
+    input: InternalRenameRowCommandData,
+  ): Promise<void> {
+    await this.transaction.row.update({
       where: {
         versionId: this.rowRequestDto.versionId,
       },
@@ -178,5 +236,14 @@ export class InternalRenameRowHandler extends DraftHandler<
         versionId: true,
       },
     });
+  }
+
+  private buildResult(): InternalRenameRowCommandReturnType {
+    return {
+      tableVersionId: this.tableRequestDto.versionId,
+      previousTableVersionId: this.tableRequestDto.previousVersionId,
+      rowVersionId: this.rowRequestDto.versionId,
+      previousRowVersionId: this.rowRequestDto.previousVersionId,
+    };
   }
 }
