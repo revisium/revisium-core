@@ -75,7 +75,7 @@ describe('RevertChangesHandler', () => {
       draftRevisionId,
       draftChangelogId,
     } = ids;
-    await prepareChangelog(draftChangelogId);
+    await prepareRevision(ids);
 
     const command = new RevertChangesCommand({
       organizationId,
@@ -86,11 +86,12 @@ describe('RevertChangesHandler', () => {
 
     expect(result.branchId).toBe(branchId);
     expect(result.draftRevisionId).toBe(draftRevisionId);
-    await checkRevisions(ids);
+    await checkRevisionTables(ids);
     await checkChangelog(draftChangelogId);
+    await checkRevision(ids);
   });
 
-  async function checkRevisions(ids: PrepareBranchReturnType) {
+  async function checkRevisionTables(ids: PrepareBranchReturnType) {
     const { headTableVersionId, draftRevisionId } = ids;
 
     const draftRevisionTables = await prismaService.revision
@@ -104,10 +105,15 @@ describe('RevertChangesHandler', () => {
     );
   }
 
-  async function prepareChangelog(draftChangelogId: string) {
+  async function prepareRevision(ids: PrepareBranchReturnType) {
+    await prismaService.revision.update({
+      where: { id: ids.draftRevisionId },
+      data: { hasChanges: true },
+    });
+
     await prismaService.changelog.update({
       where: {
-        id: draftChangelogId,
+        id: ids.draftChangelogId,
       },
       data: {
         hasChanges: true,
@@ -125,6 +131,15 @@ describe('RevertChangesHandler', () => {
         rowDeletes: { test: {} },
       },
     });
+  }
+
+  async function checkRevision(ids: PrepareBranchReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(false);
   }
 
   async function checkChangelog(draftChangelogId: string) {

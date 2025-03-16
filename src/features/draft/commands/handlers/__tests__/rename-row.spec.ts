@@ -1,6 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import {
+  prepareBranch,
+  PrepareBranchReturnType,
+} from 'src/__tests__/utils/prepareBranch';
 import {
   createMock,
   createTestingModule,
@@ -99,6 +102,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should update the row if conditions are met', async () => {
+    const ids = await prepareBranch(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -106,7 +110,7 @@ describe('RenameRowHandler', () => {
       draftTableVersionId,
       draftRowVersionId,
       rowCreatedId,
-    } = await prepareBranch(prismaService);
+    } = ids;
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -139,9 +143,11 @@ describe('RenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.versionId).toBe(draftRowVersionId);
+    await checkRevision(ids);
   });
 
   it('should update the row in a new created table if conditions are met', async () => {
+    const ids = await prepareBranch(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -149,7 +155,7 @@ describe('RenameRowHandler', () => {
       rowCreatedId,
       draftTableVersionId,
       draftRowVersionId,
-    } = await prepareBranch(prismaService);
+    } = ids;
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,
@@ -190,9 +196,12 @@ describe('RenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.versionId).toBe(draftRowVersionId);
+    await checkRevision(ids);
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
+    const ids = await prepareBranch(prismaService);
+
     const {
       draftRevisionId,
       tableId,
@@ -200,7 +209,7 @@ describe('RenameRowHandler', () => {
       rowCreatedId,
       draftTableVersionId,
       draftRowVersionId,
-    } = await prepareBranch(prismaService);
+    } = ids;
     await prismaService.row.update({
       where: {
         versionId: draftRowVersionId,
@@ -241,6 +250,7 @@ describe('RenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.versionId).not.toBe(draftRowVersionId);
+    await checkRevision(ids);
   });
 
   it('should update the linked row', async () => {
@@ -273,6 +283,16 @@ describe('RenameRowHandler', () => {
 
     expect(linkedRow.data).toStrictEqual({ link: nextRowId });
   });
+
+  async function checkRevision(ids: PrepareBranchReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+
+    expect(revision.hasChanges).toBe(true);
+  }
 
   function runTransaction(
     command: RenameRowCommand,

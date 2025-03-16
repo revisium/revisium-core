@@ -36,8 +36,18 @@ export class CreateRowHandler extends DraftHandler<
       tableId,
       rows: [{ rowId, data }],
     });
+    await this.updateRevision(revisionId);
 
     return this.createRow(input, schemaHash);
+  }
+
+  private async updateRevision(revisionId: string) {
+    return this.transaction.revision.update({
+      where: { id: revisionId, hasChanges: false },
+      data: {
+        hasChanges: true,
+      },
+    });
   }
 
   private createRow(data: CreateRowCommand['data'], schemaHash: string) {

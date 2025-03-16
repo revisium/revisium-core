@@ -44,6 +44,7 @@ export class CreateTableHandler extends DraftHandler<
     await this.createTable(tableId);
     await this.draftTransactionalCommands.validateSchema(schema);
     await this.saveSchema(data);
+    await this.updateRevision(this.revisionRequestDto.id);
 
     return {
       branchId: this.revisionRequestDto.branchId,
@@ -96,6 +97,15 @@ export class CreateTableHandler extends DraftHandler<
     });
 
     await this.addTableToChangelog();
+  }
+
+  private async updateRevision(revisionId: string) {
+    return this.transaction.revision.update({
+      where: { id: revisionId, hasChanges: false },
+      data: {
+        hasChanges: true,
+      },
+    });
   }
 
   private async addTableToChangelog() {

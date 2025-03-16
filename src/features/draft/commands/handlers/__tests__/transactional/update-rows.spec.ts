@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import * as objectHash from 'object-hash';
 import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
-import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
+import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -21,7 +21,7 @@ describe('UpdateRowsHandler', () => {
       new Error('Revision not found'),
     );
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
@@ -40,7 +40,7 @@ describe('UpdateRowsHandler', () => {
   it('should throw an error if the table is a system table', async () => {
     const { draftRevisionId, rowId } = await prepareBranch(prismaService);
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId: SystemTables.Schema,
       tableSchema: testSchema,
@@ -62,7 +62,7 @@ describe('UpdateRowsHandler', () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareBranch(prismaService);
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
@@ -87,7 +87,7 @@ describe('UpdateRowsHandler', () => {
       rowCreatedId,
     } = await prepareBranch(prismaService);
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
@@ -128,7 +128,7 @@ describe('UpdateRowsHandler', () => {
       rowCreatedId,
     } = await prepareBranch(prismaService);
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
@@ -178,7 +178,7 @@ describe('UpdateRowsHandler', () => {
       },
     });
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
@@ -244,7 +244,7 @@ describe('UpdateRowsHandler', () => {
       },
     });
 
-    const command = new UpdateRowsCommand({
+    const command = new InternalUpdateRowsCommand({
       revisionId: draftRevisionId,
       tableId,
       tableSchema: testSchema,
@@ -292,7 +292,7 @@ describe('UpdateRowsHandler', () => {
     expect(table.versionId).toBe(draftTableVersionId);
   });
 
-  function runTransaction(command: UpdateRowsCommand): Promise<void> {
+  function runTransaction(command: InternalUpdateRowsCommand): Promise<void> {
     return transactionService.run(async () => commandBus.execute(command));
   }
 

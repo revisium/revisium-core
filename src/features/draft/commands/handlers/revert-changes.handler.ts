@@ -88,6 +88,7 @@ export class RevertChangesHandler extends DraftHandler<
         id: revisionId,
       },
       data: {
+        hasChanges: false,
         tables: {
           set: tables,
         },

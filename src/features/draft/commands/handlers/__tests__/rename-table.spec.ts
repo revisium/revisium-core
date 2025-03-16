@@ -113,6 +113,7 @@ describe('RenameTableHandler', () => {
     expect(schemaRow.id).toStrictEqual(nextTableId);
     expect(table.id).toBe(nextTableId);
     expect(table.versionId).toBe(ids.draftTableVersionId);
+    await revisionCheck(ids);
   });
 
   it('should rename table if the table is readonly', async () => {
@@ -140,7 +141,17 @@ describe('RenameTableHandler', () => {
     expect(schemaRow.id).toStrictEqual(nextTableId);
     expect(table.id).toBe(nextTableId);
     expect(table.versionId).not.toBe(ids.draftTableVersionId);
+    await revisionCheck(ids);
   });
+
+  async function revisionCheck(ids: PrepareBranchReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  }
 
   async function getSchemaRowAndTable(ids: PrepareBranchReturnType) {
     const schemaRow = await prismaService.row.findFirstOrThrow({

@@ -121,6 +121,7 @@ describe('CreateRowHandler', () => {
       command.data.data,
     );
     await changelogCheck(ids, command.data.rowId);
+    await revisionCheck(ids);
   });
 
   it('should create a new row in a new created table if conditions are met', async () => {
@@ -147,7 +148,17 @@ describe('CreateRowHandler', () => {
     expect(result.tableVersionId).not.toBe(draftTableVersionId);
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
     expect(result.rowVersionId).toBeTruthy();
+    await revisionCheck(ids);
   });
+
+  async function revisionCheck(ids: PrepareBranchReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  }
 
   async function rowCheck(
     ids: PrepareBranchReturnType,

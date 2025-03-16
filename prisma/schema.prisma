@@ -126,13 +126,15 @@ model Branch {
 }
 
 model Revision {
-  id          String     @id
-  sequence    Int        @unique @default(autoincrement())
-  createdAt   DateTime   @default(now())
-  comment     String     @default("")
-  isHead      Boolean    @default(false)
-  isDraft     Boolean    @default(false)
-  isStart     Boolean    @default(false)
+  id         String   @id
+  sequence   Int      @unique @default(autoincrement())
+  createdAt  DateTime @default(now())
+  comment    String   @default("")
+  isHead     Boolean  @default(false)
+  isDraft    Boolean  @default(false)
+  isStart    Boolean  @default(false)
+  hasChanges Boolean  @default(false)
+
   branchId    String
   branch      Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
   parentId    String?

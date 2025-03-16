@@ -215,6 +215,7 @@ describe('UpdateTableHandler', () => {
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
 
     await rowAndTableCheck(ids);
+    await revisionCheck(ids);
   });
 
   it('should apply patches to a new created row in the table', async () => {
@@ -249,6 +250,7 @@ describe('UpdateTableHandler', () => {
       skipCheckingRowVersionId: true,
       skipCheckingTableVersionId: true,
     });
+    await revisionCheck(ids);
   });
 
   it('should apply patches to the row in a new created table', async () => {
@@ -282,6 +284,7 @@ describe('UpdateTableHandler', () => {
     await rowAndTableCheck(ids, {
       skipCheckingTableVersionId: true,
     });
+    await revisionCheck(ids);
   });
 
   it('should save the schema correctly', async () => {
@@ -307,6 +310,15 @@ describe('UpdateTableHandler', () => {
 
     await schemaCheck(ids);
   });
+
+  async function revisionCheck(ids: PrepareBranchReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  }
 
   async function rowAndTableCheck(
     ids: PrepareBranchReturnType,

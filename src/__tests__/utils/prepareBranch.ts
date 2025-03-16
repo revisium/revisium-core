@@ -146,11 +146,13 @@ export const prepareBranch = async (
             {
               id: headRevisionId,
               isHead: true,
+              hasChanges: false,
               changelogId: headChangelogId,
             },
             {
               id: draftRevisionId,
               parentId: headRevisionId,
+              hasChanges: false,
               isDraft: true,
               changelogId: draftChangelogId,
             },

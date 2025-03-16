@@ -33,8 +33,9 @@ describe('CreateRevisionHandler', () => {
   });
 
   it('should throw an error if the project does not exist in the organization', async () => {
-    const { organizationId, projectName, branchName } =
-      await prepareBranch(prismaService);
+    const ids = await prepareBranch(prismaService);
+    const { organizationId, projectName, branchName } = ids;
+    await prepareRevision(ids);
 
     shareTransactionalQueries.findProjectInOrganizationOrThrow = createMock(
       new Error('Project not found'),
@@ -50,8 +51,9 @@ describe('CreateRevisionHandler', () => {
   });
 
   it('should throw an error if the branch does not exist in the project', async () => {
-    const { organizationId, projectName, branchName } =
-      await prepareBranch(prismaService);
+    const ids = await prepareBranch(prismaService);
+    const { organizationId, projectName, branchName } = ids;
+    await prepareRevision(ids);
 
     shareTransactionalQueries.findBranchInProjectOrThrow = createMock(
       new Error('Branch not found'),
@@ -86,6 +88,7 @@ describe('CreateRevisionHandler', () => {
         hasChanges: true,
       },
     });
+    await prepareRevision(ids);
     await beforeTableRowChecks(ids);
     await beforeEndpointsChecks(ids);
 
@@ -150,6 +153,13 @@ describe('CreateRevisionHandler', () => {
         })
       ).revisionId,
     ).toEqual(nextDraftRevisionId);
+  }
+
+  async function prepareRevision(ids: PrepareBranchReturnType) {
+    await prismaService.revision.update({
+      where: { id: ids.draftRevisionId },
+      data: { hasChanges: true },
+    });
   }
 
   async function beforeTableRowChecks(ids: PrepareBranchReturnType) {
@@ -285,6 +295,7 @@ describe('CreateRevisionHandler', () => {
     });
     expect(headRevision.isHead).toBeFalsy();
     expect(headRevision.isDraft).toBeFalsy();
+    expect(headRevision.hasChanges).toBe(false);
 
     // previous draft
     const draftRevision = await prismaService.revision.findUniqueOrThrow({
@@ -292,6 +303,7 @@ describe('CreateRevisionHandler', () => {
     });
     expect(draftRevision.isDraft).toBeFalsy();
     expect(draftRevision.isHead).toBeTruthy();
+    expect(draftRevision.hasChanges).toBe(false);
 
     // next draft
     const nextDraftRevision = await prismaService.revision.findFirstOrThrow({
@@ -305,6 +317,7 @@ describe('CreateRevisionHandler', () => {
     expect(nextDraftRevision.isDraft).toBeTruthy();
     expect(nextDraftRevision.parentId).toEqual(draftRevisionId);
     expect(nextDraftRevision.changelog.hasChanges).toEqual(false);
+    expect(nextDraftRevision.hasChanges).toEqual(false);
   }
 
   let prismaService: PrismaService;

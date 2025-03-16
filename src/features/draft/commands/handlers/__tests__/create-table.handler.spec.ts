@@ -159,7 +159,12 @@ describe('CreateTableHandler', () => {
   }
 
   async function changelogCheck(ids: PrepareBranchReturnType, tableId: string) {
-    const { draftChangelogId } = ids;
+    const { draftChangelogId, draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
 
     const changelog = await prismaService.changelog.findFirstOrThrow({
       where: {

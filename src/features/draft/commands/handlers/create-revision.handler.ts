@@ -127,14 +127,14 @@ export class CreateRevisionHandler extends DraftHandler<
   private updatePreviousHeadRevision(revisionId: string) {
     return this.transaction.revision.update({
       where: { id: revisionId },
-      data: { isHead: false, isDraft: false },
+      data: { isHead: false, isDraft: false, hasChanges: false },
     });
   }
 
   private updatePreviousDraftRevision(revisionId: string, comment?: string) {
     return this.transaction.revision.update({
       where: { id: revisionId },
-      data: { isHead: true, isDraft: false, comment },
+      data: { isHead: true, isDraft: false, hasChanges: false, comment },
     });
   }
 
@@ -160,6 +160,7 @@ export class CreateRevisionHandler extends DraftHandler<
             id: branchId,
           },
         },
+        hasChanges: false,
         changelog: {
           create: {
             id: this.idService.generate(),

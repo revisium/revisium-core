@@ -27,21 +27,22 @@ export class GetTouchedByBranchIdHandler
   }
 
   private async transactionHandler(branchId: string) {
-    const { id: draftTransactionQueries } =
+    const { id: revisionId } =
       await this.shareTransactionQueries.findDraftRevisionInBranchOrThrow(
         branchId,
       );
 
-    const { hasChanges } = await this.getChangelog(draftTransactionQueries);
+    const { hasChanges } = await this.getRevision(revisionId);
 
     return hasChanges;
   }
 
-  private getChangelog(draftTransactionQueries: string) {
-    return this.transaction.revision
-      .findUniqueOrThrow({
-        where: { id: draftTransactionQueries },
-      })
-      .changelog({ select: { hasChanges: true } });
+  private getRevision(revisionId: string) {
+    return this.transaction.revision.findUniqueOrThrow({
+      where: { id: revisionId },
+      select: {
+        hasChanges: true,
+      },
+    });
   }
 }

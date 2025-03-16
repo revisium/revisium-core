@@ -3,15 +3,18 @@ import { CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
+import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRowsRequestDto } from 'src/features/draft/draft-request-dto/rows-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 
-@CommandHandler(UpdateRowsCommand)
-export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
+@CommandHandler(InternalUpdateRowsCommand)
+export class InternalUpdateRowsHandler extends DraftHandler<
+  InternalUpdateRowsCommand,
+  void
+> {
   constructor(
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
@@ -23,7 +26,7 @@ export class UpdateRowsHandler extends DraftHandler<UpdateRowsCommand, void> {
     super(transactionService, draftContext);
   }
 
-  protected async handler({ data: input }: UpdateRowsCommand) {
+  protected async handler({ data: input }: InternalUpdateRowsCommand) {
     const { revisionId, tableId, rows, schemaHash } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
