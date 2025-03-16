@@ -64,7 +64,9 @@ describe('RenameSchemaHandler', () => {
   });
 
   it('should updated the linked table', async () => {
-    const ids = await prepareProject(prismaService, { createLinkedTable: true });
+    const ids = await prepareProject(prismaService, {
+      createLinkedTable: true,
+    });
     const { headRevisionId, draftRevisionId, tableId, linkedTableId } = ids;
 
     const previousSchemaRow = await prismaService.row.findFirstOrThrow({
