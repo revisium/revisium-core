@@ -143,13 +143,19 @@ describe('RemoveTableHandler', () => {
   });
 
   it('should set hasChanges as false if conditions are met', async () => {
-    const { draftRevisionId, tableId } = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, headTableVersionId } =
+      await prepareProject(prismaService);
     await prismaService.revision.update({
       where: {
         id: draftRevisionId,
       },
       data: {
-        hasChanges: false,
+        hasChanges: true,
+      },
+    });
+    await prismaService.table.delete({
+      where: {
+        versionId: headTableVersionId,
       },
     });
 
