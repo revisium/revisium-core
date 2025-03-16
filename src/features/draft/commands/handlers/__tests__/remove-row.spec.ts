@@ -170,6 +170,81 @@ describe('RemoveRowHandler', () => {
     await checkRevision(ids, true);
   });
 
+  it('should set hasChanges as false if conditions are met', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, rowId, headRowVersionId } = ids;
+    await prismaService.revision.update({
+      where: {
+        id: draftRevisionId,
+      },
+      data: {
+        hasChanges: true,
+      },
+    });
+    await prismaService.row.delete({
+      where: {
+        versionId: headRowVersionId,
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    await runTransaction(command);
+    await checkRevision(ids, false);
+  });
+
+  it('should not set hasChanges as false if there is another draft row', async () => {
+    const ids = await prepareProject(prismaService);
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      headRowVersionId,
+      draftTableVersionId,
+    } = ids;
+    await prismaService.revision.update({
+      where: {
+        id: draftRevisionId,
+      },
+      data: {
+        hasChanges: true,
+      },
+    });
+    await prismaService.row.delete({
+      where: {
+        versionId: headRowVersionId,
+      },
+    });
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        versionId: nanoid(),
+        createdId: nanoid(),
+        data: {},
+        hash: '',
+        schemaHash: '',
+        tables: {
+          connect: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    await runTransaction(command);
+    await checkRevision(ids, true);
+  });
+
   it('should remove the row if conditions are met and if the table is a system table and skipCheckingNotSystemTable = true', async () => {
     const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
