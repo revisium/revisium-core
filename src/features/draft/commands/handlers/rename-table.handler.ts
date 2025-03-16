@@ -54,11 +54,21 @@ export class RenameTableHandler extends DraftHandler<
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
     await this.renameSchema(data);
     await this.renameTable(data.nextTableId);
+    await this.updateRevision(data.revisionId);
 
     return {
       tableVersionId: this.tableRequestDto.versionId,
       previousTableVersionId: this.tableRequestDto.previousVersionId,
     };
+  }
+
+  private async updateRevision(revisionId: string) {
+    return this.transaction.revision.updateMany({
+      where: { id: revisionId, hasChanges: false },
+      data: {
+        hasChanges: true,
+      },
+    });
   }
 
   private validateNextTableId(nextTableId: string) {

@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -12,7 +12,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('ApiRemoveRowHandler', () => {
   it('should remove the row', async () => {
     const { branchId, draftRevisionId, tableId, draftTableVersionId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
     endpointNotificationService.update = createMock(void 0);
 
     const command = new ApiRemoveRowCommand({
@@ -48,7 +48,7 @@ describe('ApiRemoveRowHandler', () => {
       tableId,
       draftTableVersionId,
       rowId,
-    } = await prepareBranch(prismaService);
+    } = await prepareProject(prismaService);
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,

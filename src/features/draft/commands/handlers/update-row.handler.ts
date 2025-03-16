@@ -38,8 +38,18 @@ export class UpdateRowHandler extends DraftHandler<
       tableId,
       rows: [{ rowId, data }],
     });
+    await this.updateRevision(revisionId);
 
     return this.updateRow(input, schemaHash);
+  }
+
+  private async updateRevision(revisionId: string) {
+    return this.transaction.revision.updateMany({
+      where: { id: revisionId, hasChanges: false },
+      data: {
+        hasChanges: true,
+      },
+    });
   }
 
   private updateRow(data: UpdateRowCommand['data'], schemaHash: string) {

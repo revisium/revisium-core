@@ -35,8 +35,18 @@ export class RenameRowHandler extends DraftHandler<
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
+    await this.updateRevision(revisionId);
 
     return this.renameRow(input);
+  }
+
+  private async updateRevision(revisionId: string) {
+    return this.transaction.revision.updateMany({
+      where: { id: revisionId, hasChanges: false },
+      data: {
+        hasChanges: true,
+      },
+    });
   }
 
   private renameRow(data: RenameRowCommand['data']) {

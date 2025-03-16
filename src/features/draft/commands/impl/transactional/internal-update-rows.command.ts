@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
-export class UpdateRowsCommand {
+export class InternalUpdateRowsCommand {
   constructor(
     public readonly data: {
       revisionId: string;

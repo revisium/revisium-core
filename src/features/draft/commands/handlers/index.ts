@@ -30,7 +30,7 @@ import { ValidateDataHandler } from 'src/features/draft/commands/handlers/transa
 import { ValidateNotSystemTableHandler } from 'src/features/draft/commands/handlers/transactional/validate-not-system-table.handler';
 import { ValidateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/validate-schema.handler';
 import { UpdateRowHandler } from 'src/features/draft/commands/handlers/update-row.handler';
-import { UpdateRowsHandler } from 'src/features/draft/commands/handlers/transactional/update-rows.handler';
+import { InternalUpdateRowsHandler } from 'src/features/draft/commands/handlers/transactional/internal-update-rows.handler';
 import { UpdateTableHandler } from 'src/features/draft/commands/handlers/update-table.handler';
 
 export const TABLE_COMMANDS_HANDLERS = [
@@ -45,7 +45,7 @@ export const TABLE_COMMANDS_HANDLERS = [
   RenameRowHandler,
   ApiUpdateRowHandler,
   ApiRenameRowHandler,
-  UpdateRowsHandler,
+  InternalUpdateRowsHandler,
   RemoveRowHandler,
   ApiRemoveRowHandler,
   GetOrCreateDraftTableHandler,

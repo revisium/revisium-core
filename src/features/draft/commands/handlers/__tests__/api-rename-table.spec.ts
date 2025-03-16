@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   ApiRenameTableCommand,
   ApiRenameTableCommandReturnType,
@@ -16,7 +16,7 @@ describe('ApiRenameTableHandler', () => {
 
   it('should rename the table', async () => {
     const { draftRevisionId, draftEndpointId, draftTableVersionId, tableId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     endpointNotificationService.update = createMock(void 0);
 

@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import {
   JsonSchemaTypeName,
@@ -25,7 +25,7 @@ import * as objectHash from 'object-hash';
 
 describe('UpdateTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
-    const { tableId } = await prepareBranch(prismaService);
+    const { tableId } = await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -50,7 +50,7 @@ describe('UpdateTableHandler', () => {
   });
 
   it('should throw an error if patches length is less than 1', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -65,7 +65,7 @@ describe('UpdateTableHandler', () => {
   });
 
   it('should throw an error if the patches are invalid', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     // the first "replace" patch is invalid
     let command = new UpdateTableCommand({
@@ -119,7 +119,7 @@ describe('UpdateTableHandler', () => {
   });
 
   it('should throw an error if findTableInRevisionOrThrow fails', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Table not found'),
@@ -144,7 +144,7 @@ describe('UpdateTableHandler', () => {
   });
 
   it('should throw an error if itself foreign keys are found in checkItselfForeignKey', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -168,7 +168,7 @@ describe('UpdateTableHandler', () => {
   });
 
   it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId } = await prepareBranch(prismaService);
+    const { draftRevisionId } = await prepareProject(prismaService);
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -191,7 +191,7 @@ describe('UpdateTableHandler', () => {
   });
 
   it('should apply patches to the row in the table', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
     const command = new UpdateTableCommand({
@@ -215,10 +215,11 @@ describe('UpdateTableHandler', () => {
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
 
     await rowAndTableCheck(ids);
+    await revisionCheck(ids);
   });
 
   it('should apply patches to a new created row in the table', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRowVersionId, draftRevisionId, tableId } = ids;
     await prismaService.row.update({
       where: {
@@ -249,10 +250,11 @@ describe('UpdateTableHandler', () => {
       skipCheckingRowVersionId: true,
       skipCheckingTableVersionId: true,
     });
+    await revisionCheck(ids);
   });
 
   it('should apply patches to the row in a new created table', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
     await prismaService.table.update({
       where: {
@@ -282,10 +284,11 @@ describe('UpdateTableHandler', () => {
     await rowAndTableCheck(ids, {
       skipCheckingTableVersionId: true,
     });
+    await revisionCheck(ids);
   });
 
   it('should save the schema correctly', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId } = ids;
 
     const command = new UpdateTableCommand({
@@ -308,8 +311,17 @@ describe('UpdateTableHandler', () => {
     await schemaCheck(ids);
   });
 
+  async function revisionCheck(ids: PrepareProjectReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  }
+
   async function rowAndTableCheck(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     {
       skipCheckingTableVersionId,
       skipCheckingRowVersionId,
@@ -358,7 +370,7 @@ describe('UpdateTableHandler', () => {
     }
   }
 
-  async function schemaCheck(ids: PrepareBranchReturnType) {
+  async function schemaCheck(ids: PrepareProjectReturnType) {
     const { tableId, draftRevisionId } = ids;
 
     const schemaRow = await prismaService.row.findFirstOrThrow({

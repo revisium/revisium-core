@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   ApiRevertChangesCommand,
   ApiRevertChangesCommandReturnType,
@@ -19,11 +19,11 @@ describe('ApiRevertChangesHandler', () => {
       projectName,
       branchName,
       draftEndpointId,
-      draftChangelogId,
-    } = await prepareBranch(prismaService);
-    await prismaService.changelog.update({
+      draftRevisionId,
+    } = await prepareProject(prismaService);
+    await prismaService.revision.update({
       where: {
-        id: draftChangelogId,
+        id: draftRevisionId,
       },
       data: {
         hasChanges: true,

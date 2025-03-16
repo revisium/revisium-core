@@ -4,7 +4,7 @@ import { AsyncLocalStorage } from 'async_hooks';
 export enum DraftContextKeys {
   BranchId = 'branchId',
   DraftRevisionId = 'draftRevisionId',
-  DraftChangelogId = 'draftChangelogId',
+  DraftParentRevisionId = 'draftParentRevisionId',
 
   DraftTableId = 'draftTableId',
   DraftTableVersionId = 'draftTableVersionId',
@@ -22,7 +22,6 @@ export enum DraftContextKeys {
 const SHARED_KEYS: DraftContextKeys[] = [
   DraftContextKeys.BranchId,
   DraftContextKeys.DraftRevisionId,
-  DraftContextKeys.DraftChangelogId,
 ];
 
 type DraftContextType = Partial<Record<DraftContextKeys, unknown>>;

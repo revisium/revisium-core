@@ -13,7 +13,6 @@ import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-req
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 
 @CommandHandler(InternalCreateRowCommand)
 export class InternalCreateRowHandler extends DraftHandler<
@@ -27,7 +26,6 @@ export class InternalCreateRowHandler extends DraftHandler<
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly rowRequestDto: DraftRowRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
-    protected readonly sessionChangelog: SessionChangelogService,
     protected readonly idService: IdService,
     protected readonly hashService: HashService,
   ) {
@@ -104,28 +102,6 @@ export class InternalCreateRowHandler extends DraftHandler<
       },
       select: {
         versionId: true,
-      },
-    });
-
-    await this.addRowToChangelog();
-  }
-
-  private async addRowToChangelog() {
-    const countRows = await this.sessionChangelog.getCountRows('rowInserts');
-
-    if (!countRows) {
-      await this.sessionChangelog.addTableForRow('rowInserts');
-    }
-
-    await this.sessionChangelog.addRow('rowInserts');
-
-    return this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        rowInsertsCount: {
-          increment: 1,
-        },
-        hasChanges: true,
       },
     });
   }

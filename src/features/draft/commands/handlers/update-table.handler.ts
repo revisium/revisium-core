@@ -6,7 +6,7 @@ import {
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { UpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/update-rows.command';
+import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -89,6 +89,7 @@ export class UpdateTableHandler extends DraftHandler<
         data: row.data as Prisma.InputJsonValue,
       })),
     });
+    await this.updateRevision(data.revisionId);
 
     return {
       tableVersionId: this.tableRequestDto.versionId,
@@ -176,7 +177,7 @@ export class UpdateTableHandler extends DraftHandler<
     rows: { rowId: string; data: Prisma.InputJsonValue }[];
   }) {
     await this.commandBus.execute(
-      new UpdateRowsCommand({
+      new InternalUpdateRowsCommand({
         revisionId: data.revisionId,
         tableId: data.tableId,
         tableSchema: data.tableSchema,
@@ -208,5 +209,14 @@ export class UpdateTableHandler extends DraftHandler<
     }
 
     return false;
+  }
+
+  private async updateRevision(revisionId: string) {
+    return this.transaction.revision.updateMany({
+      where: { id: revisionId, hasChanges: false },
+      data: {
+        hasChanges: true,
+      },
+    });
   }
 }

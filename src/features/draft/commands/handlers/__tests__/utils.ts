@@ -8,7 +8,6 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
 import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
@@ -82,7 +81,6 @@ export const createTestingModule = async () => {
     ],
     providers: [
       DraftTransactionalCommands,
-      SessionChangelogService,
       DraftContextService,
       JsonSchemaValidatorService,
       ...DRAFT_REQUEST_DTO,

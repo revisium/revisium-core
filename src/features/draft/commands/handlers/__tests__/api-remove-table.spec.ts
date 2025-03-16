@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
 import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -12,7 +12,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('ApiRemoveTableHandler', () => {
   it('should remove the table', async () => {
     const { draftRevisionId, draftEndpointId, tableId, branchId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     endpointNotificationService.update = createMock(void 0);
 

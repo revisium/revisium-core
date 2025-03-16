@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -12,7 +12,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('ApiUpdateRowHandler', () => {
   it('should update the row', async () => {
     const { draftRevisionId, tableId, draftTableVersionId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
     endpointNotificationService.update = createMock(void 0);
 
     const command = new ApiUpdateRowCommand({
@@ -55,7 +55,7 @@ describe('ApiUpdateRowHandler', () => {
       tableId,
       draftTableVersionId,
       rowId,
-    } = await prepareBranch(prismaService);
+    } = await prepareProject(prismaService);
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,

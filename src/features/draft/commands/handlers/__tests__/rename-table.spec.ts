@@ -1,8 +1,8 @@
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import {
   createMock,
   createTestingModule,
@@ -20,7 +20,7 @@ describe('RenameTableHandler', () => {
   const nextTableId = 'nextTableId';
 
   it('should throw an error if the tableId is shorter than 1 character', async () => {
-    const { tableId, draftRevisionId } = await prepareBranch(prismaService);
+    const { tableId, draftRevisionId } = await prepareProject(prismaService);
 
     const command = new RenameTableCommand({
       revisionId: draftRevisionId,
@@ -34,7 +34,7 @@ describe('RenameTableHandler', () => {
   });
 
   it('should throw an error if the revision does not exist', async () => {
-    const { tableId } = await prepareBranch(prismaService);
+    const { tableId } = await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -50,7 +50,7 @@ describe('RenameTableHandler', () => {
   });
 
   it('should throw an error if findTableInRevisionOrThrow fails', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Table not found'),
@@ -66,7 +66,7 @@ describe('RenameTableHandler', () => {
   });
 
   it('should throw an error if the table already exist', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RenameTableCommand({
       revisionId: draftRevisionId,
@@ -80,7 +80,7 @@ describe('RenameTableHandler', () => {
   });
 
   it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId } = await prepareBranch(prismaService);
+    const { draftRevisionId } = await prepareProject(prismaService);
 
     const command = new RenameTableCommand({
       revisionId: draftRevisionId,
@@ -94,7 +94,7 @@ describe('RenameTableHandler', () => {
   });
 
   it('should rename the table', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
     const command = new RenameTableCommand({
@@ -113,10 +113,11 @@ describe('RenameTableHandler', () => {
     expect(schemaRow.id).toStrictEqual(nextTableId);
     expect(table.id).toBe(nextTableId);
     expect(table.versionId).toBe(ids.draftTableVersionId);
+    await revisionCheck(ids);
   });
 
   it('should rename table if the table is readonly', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
     await prismaService.table.update({
       where: {
@@ -140,9 +141,19 @@ describe('RenameTableHandler', () => {
     expect(schemaRow.id).toStrictEqual(nextTableId);
     expect(table.id).toBe(nextTableId);
     expect(table.versionId).not.toBe(ids.draftTableVersionId);
+    await revisionCheck(ids);
   });
 
-  async function getSchemaRowAndTable(ids: PrepareBranchReturnType) {
+  async function revisionCheck(ids: PrepareProjectReturnType) {
+    const { draftRevisionId } = ids;
+
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  }
+
+  async function getSchemaRowAndTable(ids: PrepareProjectReturnType) {
     const schemaRow = await prismaService.row.findFirstOrThrow({
       where: {
         id: nextTableId,

@@ -1,7 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
+import {
+  RemoveRowCommand,
+  RemoveRowCommandData,
+} from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
@@ -9,7 +12,6 @@ import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-req
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -32,7 +34,6 @@ export class RemoveRowHandler extends DraftHandler<
     protected readonly rowRequestDto: DraftRowRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
-    protected readonly sessionChangelog: SessionChangelogService,
     protected readonly foreignKeysService: ForeignKeysService,
   ) {
     super(transactionService, draftContext);
@@ -44,11 +45,9 @@ export class RemoveRowHandler extends DraftHandler<
     const { revisionId, tableId, rowId, avoidCheckingSystemTable } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
-    if (!avoidCheckingSystemTable) {
-      await this.draftTransactionalCommands.validateNotSystemTable(tableId);
-    }
 
     if (!avoidCheckingSystemTable) {
+      await this.draftTransactionalCommands.validateNotSystemTable(tableId);
       await this.validateForeignKeys(input);
     }
 
@@ -64,16 +63,19 @@ export class RemoveRowHandler extends DraftHandler<
     this.rowRequestDto.id = rowId;
     this.rowRequestDto.versionId = row.versionId;
 
-    const isNewRow = await this.sessionChangelog.checkRowInserts(rowId);
+    const isThereRowInHeadRevision = await this.isThereRowInHeadRevision(
+      input.tableId,
+      input.rowId,
+    );
 
     let wasTableReset = false;
 
-    if (isNewRow) {
-      await this.updateChangelogForNewRow();
-      wasTableReset = await this.resetTableIfNecessary();
-      await this.calculateHasChangesForChangelog();
-    } else {
-      await this.updateChangelogForRow();
+    if (!isThereRowInHeadRevision) {
+      wasTableReset = await this.resetTableIfNecessary(input);
+    }
+
+    if (wasTableReset) {
+      await this.validateRevisionHasChanges(input.revisionId);
     }
 
     return {
@@ -87,8 +89,46 @@ export class RemoveRowHandler extends DraftHandler<
     };
   }
 
-  private async resetTableIfNecessary() {
-    if (await this.checkWasLastChangeInTable()) {
+  private async validateRevisionHasChanges(revisionId: string) {
+    const firstDraftTable = await this.transaction.table.findFirst({
+      where: {
+        readonly: false,
+        revisions: { some: { id: this.revisionRequestDto.parentId } },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!firstDraftTable) {
+      await this.transaction.revision.update({
+        where: { id: revisionId },
+        data: { hasChanges: false },
+      });
+    }
+  }
+
+  private async isThereRowInHeadRevision(tableId: string, rowId: string) {
+    const rowInHeadRevision = await this.transaction.row.findFirst({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            id: tableId,
+            revisions: { some: { id: this.revisionRequestDto.parentId } },
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return Boolean(rowInHeadRevision);
+  }
+
+  private async resetTableIfNecessary(data: RemoveRowCommandData) {
+    if (!(await this.isThereAnyDraftRowInTable(data))) {
       await this.revertTable();
       return true;
     }
@@ -96,115 +136,23 @@ export class RemoveRowHandler extends DraftHandler<
     return false;
   }
 
-  private async checkWasLastChangeInTable() {
-    await this.sessionChangelog.checkTableExistence('rowInserts');
-
-    const noRowChangesDetected =
-      !(await this.sessionChangelog.checkTableExistence('rowInserts')) &&
-      !(await this.sessionChangelog.checkTableExistence('rowUpdates')) &&
-      !(await this.sessionChangelog.checkTableExistence('rowDeletes'));
-
-    const isChangedTable =
-      await this.sessionChangelog.checkTableExistence('tableUpdates');
-
-    const isSchemaChangedForTable =
-      await this.sessionChangelog.checkRowExistence({
-        changelogId: this.revisionRequestDto.changelogId,
-        tableId: SystemTables.Schema,
-        rowId: this.tableRequestDto.id,
-        type: 'rowUpdates',
-      });
-
-    if (noRowChangesDetected && isChangedTable && !isSchemaChangedForTable) {
-      await this.sessionChangelog.removeTable('tableUpdates');
-
-      await this.transaction.changelog.update({
-        where: { id: this.revisionRequestDto.changelogId },
-        data: {
-          tableUpdatesCount: {
-            decrement: 1,
+  private async isThereAnyDraftRowInTable(data: RemoveRowCommandData) {
+    const firstDraftRow = await this.transaction.row.findFirst({
+      where: {
+        readonly: false,
+        tables: {
+          some: {
+            id: data.tableId,
+            revisions: { some: { id: data.revisionId } },
           },
         },
-      });
-
-      return true;
-    }
-  }
-
-  private async calculateHasChangesForChangelog() {
-    // TODO copy from remove-table
-    const {
-      tableInsertsCount,
-      rowInsertsCount,
-      tableUpdatesCount,
-      rowUpdatesCount,
-      tableDeletesCount,
-      rowDeletesCount,
-    } = await this.transaction.changelog.findUniqueOrThrow({
-      where: { id: this.revisionRequestDto.changelogId },
+      },
       select: {
-        tableInsertsCount: true,
-        rowInsertsCount: true,
-        tableUpdatesCount: true,
-        rowUpdatesCount: true,
-        tableDeletesCount: true,
-        rowDeletesCount: true,
+        id: true,
       },
     });
 
-    const hasChanges = Boolean(
-      tableInsertsCount ||
-        rowInsertsCount ||
-        tableUpdatesCount ||
-        rowUpdatesCount ||
-        tableDeletesCount ||
-        rowDeletesCount,
-    );
-
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        hasChanges,
-      },
-    });
-  }
-
-  private async updateChangelogForNewRow() {
-    await this.sessionChangelog.removeRow('rowInserts');
-
-    const countRows = await this.sessionChangelog.getCountRows('rowInserts');
-    if (!countRows) {
-      await this.sessionChangelog.removeTable('rowInserts');
-    }
-
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        rowInsertsCount: {
-          decrement: 1,
-        },
-      },
-    });
-  }
-
-  private async updateChangelogForRow() {
-    const countRows = await this.sessionChangelog.getCountRows('rowDeletes');
-
-    if (!countRows) {
-      await this.sessionChangelog.addTableForRow('rowDeletes');
-    }
-
-    await this.sessionChangelog.addRow('rowDeletes');
-
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        rowDeletesCount: {
-          increment: 1,
-        },
-        hasChanges: true,
-      },
-    });
+    return Boolean(firstDraftRow);
   }
 
   private disconnectRow(rowId: string) {

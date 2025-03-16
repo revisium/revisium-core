@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   InternalRenameRowCommand,
   InternalRenameRowCommandReturnType,
@@ -18,7 +18,7 @@ describe('InternalRenameRowHandler', () => {
 
   it('should throw an error if the rowId is shorter than 1 character', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new InternalRenameRowCommand({
       revisionId: draftRevisionId,
@@ -35,7 +35,7 @@ describe('InternalRenameRowHandler', () => {
 
   it('should throw an error if a similar row already exists', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new InternalRenameRowCommand({
       revisionId: draftRevisionId,
@@ -51,7 +51,7 @@ describe('InternalRenameRowHandler', () => {
 
   it('should throw an error if the revision does not exist', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -68,7 +68,7 @@ describe('InternalRenameRowHandler', () => {
   });
 
   it('should throw an error if the row does not exist', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new InternalRenameRowCommand({
       revisionId: draftRevisionId,
@@ -90,7 +90,7 @@ describe('InternalRenameRowHandler', () => {
       rowCreatedId,
       draftTableVersionId,
       draftRowVersionId,
-    } = await prepareBranch(prismaService);
+    } = await prepareProject(prismaService);
 
     const command = new InternalRenameRowCommand({
       revisionId: draftRevisionId,
@@ -129,7 +129,7 @@ describe('InternalRenameRowHandler', () => {
       rowCreatedId,
       draftTableVersionId,
       draftRowVersionId,
-    } = await prepareBranch(prismaService);
+    } = await prepareProject(prismaService);
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,
@@ -176,7 +176,7 @@ describe('InternalRenameRowHandler', () => {
       rowCreatedId,
       draftTableVersionId,
       draftRowVersionId,
-    } = await prepareBranch(prismaService);
+    } = await prepareProject(prismaService);
     await prismaService.row.update({
       where: {
         versionId: draftRowVersionId,
@@ -221,7 +221,7 @@ describe('InternalRenameRowHandler', () => {
 
   it('should update foreign keys in linked rows when renaming a row', async () => {
     const { draftRevisionId, tableId, rowId, linkedTableId, linkedRowId } =
-      await prepareBranch(prismaService, { createLinkedTable: true });
+      await prepareProject(prismaService, { createLinkedTable: true });
 
     const command = new InternalRenameRowCommand({
       revisionId: draftRevisionId,

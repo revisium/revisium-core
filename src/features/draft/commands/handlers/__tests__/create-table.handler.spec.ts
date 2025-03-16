@@ -3,9 +3,9 @@ import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import * as objectHash from 'object-hash';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -21,7 +21,7 @@ import { SystemTables } from 'src/features/share/system-tables.consts';
 
 describe('CreateTableHandler', () => {
   it('should throw an error if the tableId is shorter than 1 character', async () => {
-    const { draftRevisionId } = await prepareBranch(prismaService);
+    const { draftRevisionId } = await prepareProject(prismaService);
 
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
@@ -36,7 +36,7 @@ describe('CreateTableHandler', () => {
   });
 
   it('should throw an error if the revision does not exist', async () => {
-    await prepareBranch(prismaService);
+    await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -52,7 +52,7 @@ describe('CreateTableHandler', () => {
   });
 
   it('should throw an error if a similar table already exists', async () => {
-    const { tableId, draftRevisionId } = await prepareBranch(prismaService);
+    const { tableId, draftRevisionId } = await prepareProject(prismaService);
 
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
@@ -66,7 +66,7 @@ describe('CreateTableHandler', () => {
   });
 
   it('should throw an error if the schema is invalid', async () => {
-    const { draftRevisionId } = await prepareBranch(prismaService);
+    const { draftRevisionId } = await prepareProject(prismaService);
 
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
@@ -80,7 +80,7 @@ describe('CreateTableHandler', () => {
   });
 
   it('should create a new table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, branchId } = ids;
 
     const command = new CreateTableCommand({
@@ -97,11 +97,11 @@ describe('CreateTableHandler', () => {
 
     await tableCheck(ids, command.data.tableId, result.tableVersionId);
     await schemaCheck(ids, command.data.tableId, command.data.schema);
-    await changelogCheck(ids, command.data.tableId);
+    await revisionCheck(ids);
   });
 
   async function tableCheck(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     tableId: string,
     tableVersionId: string,
   ) {
@@ -126,7 +126,7 @@ describe('CreateTableHandler', () => {
   }
 
   async function schemaCheck(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     tableId: string,
     schema: Prisma.InputJsonValue,
   ) {
@@ -158,31 +158,13 @@ describe('CreateTableHandler', () => {
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   }
 
-  async function changelogCheck(ids: PrepareBranchReturnType, tableId: string) {
-    const { draftChangelogId } = ids;
+  async function revisionCheck(ids: PrepareProjectReturnType) {
+    const { draftRevisionId } = ids;
 
-    const changelog = await prismaService.changelog.findFirstOrThrow({
-      where: {
-        id: draftChangelogId,
-      },
+    const revision = await prismaService.revision.findFirstOrThrow({
+      where: { id: draftRevisionId },
     });
-    expect(changelog.hasChanges).toBe(true);
-    expect(changelog.tableInsertsCount).toBe(1);
-    expect(changelog.tableUpdatesCount).toBe(1);
-    expect(changelog.tableInserts).toStrictEqual({
-      [tableId]: '',
-    });
-    expect(changelog.tableUpdates).toStrictEqual({
-      [SystemTables.Schema]: '',
-    });
-    expect(changelog.rowInsertsCount).toStrictEqual(1);
-    expect(changelog.rowInserts).toStrictEqual({
-      [SystemTables.Schema]: {
-        rows: {
-          [tableId]: '',
-        },
-      },
-    });
+    expect(revision.hasChanges).toBe(true);
   }
 
   function runTransaction(

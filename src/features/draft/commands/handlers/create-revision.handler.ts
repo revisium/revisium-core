@@ -46,7 +46,7 @@ export class CreateRevisionHandler extends DraftHandler<
         branchId,
       );
 
-    const { hasChanges } = await this.getChangelog(previousDraftRevision.id);
+    const { hasChanges } = await this.getRevision(previousDraftRevision.id);
 
     if (!hasChanges) {
       throw new BadRequestException('There are no changes');
@@ -84,12 +84,10 @@ export class CreateRevisionHandler extends DraftHandler<
     };
   }
 
-  private getChangelog(revisionId: string) {
-    return this.transaction.revision
-      .findUniqueOrThrow({
-        where: { id: revisionId },
-      })
-      .changelog({ select: { id: true, hasChanges: true } });
+  private getRevision(revisionId: string) {
+    return this.transaction.revision.findUniqueOrThrow({
+      where: { id: revisionId },
+    });
   }
 
   private async getNotTouchedBranchId(projectId: string, branchName: string) {
@@ -127,14 +125,14 @@ export class CreateRevisionHandler extends DraftHandler<
   private updatePreviousHeadRevision(revisionId: string) {
     return this.transaction.revision.update({
       where: { id: revisionId },
-      data: { isHead: false, isDraft: false },
+      data: { isHead: false, isDraft: false, hasChanges: false },
     });
   }
 
   private updatePreviousDraftRevision(revisionId: string, comment?: string) {
     return this.transaction.revision.update({
       where: { id: revisionId },
-      data: { isHead: true, isDraft: false, comment },
+      data: { isHead: true, isDraft: false, hasChanges: false, comment },
     });
   }
 
@@ -160,11 +158,7 @@ export class CreateRevisionHandler extends DraftHandler<
             id: branchId,
           },
         },
-        changelog: {
-          create: {
-            id: this.idService.generate(),
-          },
-        },
+        hasChanges: false,
       },
       select: {
         id: true,

@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   ApiRenameRowCommand,
   ApiRenameRowCommandReturnType,
@@ -16,7 +16,7 @@ describe('ApiRenameRowHandler', () => {
 
   it('should update the row', async () => {
     const { draftRevisionId, tableId, draftTableVersionId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
     endpointNotificationService.update = createMock(void 0);
 
     const command = new ApiRenameRowCommand({
@@ -63,7 +63,7 @@ describe('ApiRenameRowHandler', () => {
       tableId,
       draftTableVersionId,
       rowId,
-    } = await prepareBranch(prismaService);
+    } = await prepareProject(prismaService);
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,

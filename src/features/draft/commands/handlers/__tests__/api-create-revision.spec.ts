@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   ApiCreateRevisionCommand,
   ApiCreateRevisionCommandReturnType,
@@ -20,11 +20,10 @@ describe('ApiCreateRevisionHandler', () => {
       draftRevisionId,
       headEndpointId,
       draftEndpointId,
-      draftChangelogId,
-    } = await prepareBranch(prismaService);
-    await prismaService.changelog.update({
+    } = await prepareProject(prismaService);
+    await prismaService.revision.update({
       where: {
-        id: draftChangelogId,
+        id: draftRevisionId,
       },
       data: {
         hasChanges: true,

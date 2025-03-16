@@ -7,7 +7,6 @@ import { GetOrCreateDraftRowsCommand } from 'src/features/draft/commands/impl/tr
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftRowsRequestDto } from 'src/features/draft/draft-request-dto/rows-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 import { FindRowsInTableType } from 'src/features/share/queries/types';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
@@ -22,7 +21,6 @@ export class GetOrCreateDraftRowsHandler
     private readonly revisionRequestDto: DraftRevisionRequestDto,
     private readonly tableRequestDto: DraftTableRequestDto,
     private readonly rowsRequestDto: DraftRowsRequestDto,
-    private readonly sessionChangelog: SessionChangelogService,
   ) {}
 
   private get transaction() {
@@ -139,30 +137,8 @@ export class GetOrCreateDraftRowsHandler
     });
   }
 
-  private async addRowsToChangelog(readonlyRows: FindRowsInTableType) {
-    const countRows = await this.sessionChangelog.getCountRows('rowUpdates');
-
-    if (!countRows) {
-      await this.sessionChangelog.addTableForRow('rowUpdates');
-    }
-
-    const ids = readonlyRows.map((row) => row.id);
-    await this.sessionChangelog.addRows('rowUpdates', ids);
-
-    return this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        rowUpdatesCount: {
-          increment: readonlyRows.length,
-        },
-        hasChanges: true,
-      },
-    });
-  }
-
   private async createDraftRows(readonlyRows: FindRowsInTableType) {
     await this.disconnectReadonlyRows(readonlyRows);
     await this.cloneRows(readonlyRows);
-    await this.addRowsToChangelog(readonlyRows);
   }
 }

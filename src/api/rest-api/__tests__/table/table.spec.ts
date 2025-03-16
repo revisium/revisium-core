@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+} from 'src/__tests__/utils/prepareProject';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import * as request from 'supertest';

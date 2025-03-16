@@ -9,7 +9,6 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -28,7 +27,6 @@ export class RemoveTableHandler extends DraftHandler<
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
-    protected readonly sessionChangelog: SessionChangelogService,
     protected readonly foreignKeysService: ForeignKeysService,
   ) {
     super(transactionService, draftContext);
@@ -56,20 +54,18 @@ export class RemoveTableHandler extends DraftHandler<
       await this.disconnectTableFromRevision(table.versionId, revisionId);
     } else {
       await this.removeTable(table.versionId);
+
+      const isThereTableInHeadRevision = await this.isThereTableInHeadRevision(
+        data.tableId,
+      );
+
+      if (!isThereTableInHeadRevision) {
+        await this.validateRevisionHasChanges(revisionId);
+      }
     }
 
     this.tableRequestDto.id = tableId;
     this.tableRequestDto.versionId = table.versionId;
-
-    const isNewTable =
-      await this.sessionChangelog.checkTableExistence('tableInserts');
-    if (isNewTable) {
-      await this.updateChangelogForNewTable();
-    } else {
-      await this.updateChangelogForTable();
-    }
-    await this.revertRowsInChangelog();
-    await this.calculateHasChangesForChangelog();
 
     await this.removeSchema({ revisionId, tableId });
 
@@ -79,95 +75,37 @@ export class RemoveTableHandler extends DraftHandler<
     };
   }
 
-  private async updateChangelogForNewTable() {
-    await this.sessionChangelog.removeTable('tableInserts');
-
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        tableInsertsCount: {
-          decrement: 1,
-        },
+  private async validateRevisionHasChanges(revisionId: string) {
+    const firstDraftTable = await this.transaction.table.findFirst({
+      where: {
+        readonly: false,
+        revisions: { some: { id: this.revisionRequestDto.parentId } },
       },
-    });
-  }
-
-  private async updateChangelogForTable() {
-    await this.sessionChangelog.addTable('tableDeletes');
-
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        tableDeletesCount: {
-          increment: 1,
-        },
-      },
-    });
-  }
-
-  private async revertRowsInChangelog() {
-    const decrementRowInsertsCount =
-      await this.sessionChangelog.getCountRows('rowInserts');
-    const decrementRowUpdatesCount =
-      await this.sessionChangelog.getCountRows('rowUpdates');
-    const decrementRowDeletesCount =
-      await this.sessionChangelog.getCountRows('rowDeletes');
-
-    await this.sessionChangelog.removeTable('rowInserts');
-    await this.sessionChangelog.removeTable('rowUpdates');
-    await this.sessionChangelog.removeTable('rowDeletes');
-
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        rowInsertsCount: {
-          decrement: decrementRowInsertsCount,
-        },
-        rowUpdatesCount: {
-          decrement: decrementRowUpdatesCount,
-        },
-        rowDeletesCount: {
-          decrement: decrementRowDeletesCount,
-        },
-      },
-    });
-  }
-
-  private async calculateHasChangesForChangelog() {
-    const {
-      tableInsertsCount,
-      rowInsertsCount,
-      tableUpdatesCount,
-      rowUpdatesCount,
-      tableDeletesCount,
-      rowDeletesCount,
-    } = await this.transaction.changelog.findUniqueOrThrow({
-      where: { id: this.revisionRequestDto.changelogId },
       select: {
-        tableInsertsCount: true,
-        rowInsertsCount: true,
-        tableUpdatesCount: true,
-        rowUpdatesCount: true,
-        tableDeletesCount: true,
-        rowDeletesCount: true,
+        id: true,
       },
     });
 
-    const hasChanges = Boolean(
-      tableInsertsCount ||
-        rowInsertsCount ||
-        tableUpdatesCount ||
-        rowUpdatesCount ||
-        tableDeletesCount ||
-        rowDeletesCount,
-    );
+    if (!firstDraftTable) {
+      await this.transaction.revision.update({
+        where: { id: revisionId },
+        data: { hasChanges: false },
+      });
+    }
+  }
 
-    await this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        hasChanges,
+  private async isThereTableInHeadRevision(tableId: string) {
+    const tableInHeadRevision = await this.transaction.table.findFirst({
+      where: {
+        id: tableId,
+        revisions: { some: { id: this.revisionRequestDto.parentId } },
+      },
+      select: {
+        id: true,
       },
     });
+
+    return Boolean(tableInHeadRevision);
   }
 
   private removeTable(tableId: string) {

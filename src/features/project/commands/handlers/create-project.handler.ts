@@ -19,9 +19,7 @@ export type CreateProjectHandlerContext = {
   fromRevisionId?: string;
   tableIds?: { versionId: string }[];
   headRevisionId: string;
-  headChangelogId: string;
   draftRevisionId: string;
-  draftChangelogId: string;
   schemaTableId: string;
   schemaTableCreatedId: string;
 };
@@ -72,9 +70,7 @@ export class CreateProjectHandler
       projectId: this.idService.generate(8),
       branchId: this.idService.generate(),
       headRevisionId: this.idService.generate(),
-      headChangelogId: this.idService.generate(),
       draftRevisionId: this.idService.generate(),
-      draftChangelogId: this.idService.generate(),
       schemaTableId: this.idService.generate(),
       schemaTableCreatedId: this.idService.generate(),
     };
@@ -151,11 +147,7 @@ export class CreateProjectHandler
             id: this.context.branchId,
           },
         },
-        changelog: {
-          create: {
-            id: this.context.headChangelogId,
-          },
-        },
+        hasChanges: false,
         tables: {
           ...(this.context.tableIds
             ? { connect: this.context.tableIds }
@@ -188,11 +180,7 @@ export class CreateProjectHandler
             id: this.context.branchId,
           },
         },
-        changelog: {
-          create: {
-            id: this.context.draftChangelogId,
-          },
-        },
+        hasChanges: false,
         tables: {
           ...(this.context.tableIds
             ? { connect: this.context.tableIds }
