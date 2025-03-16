@@ -1,9 +1,9 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
@@ -14,7 +14,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 describe('RemoveRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
-    const { tableId, rowId } = await prepareBranch(prismaService);
+    const { tableId, rowId } = await prepareProject(prismaService);
 
     const command = new RemoveRowCommand({
       revisionId: 'unreal',
@@ -26,7 +26,7 @@ describe('RemoveRowHandler', () => {
   });
 
   it('should throw an error if findRowInTableOrThrow fails', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RemoveRowCommand({
       revisionId: draftRevisionId,
@@ -40,7 +40,7 @@ describe('RemoveRowHandler', () => {
   });
 
   it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, rowId } = await prepareBranch(prismaService);
+    const { draftRevisionId, rowId } = await prepareProject(prismaService);
 
     const command = new RemoveRowCommand({
       revisionId: draftRevisionId,
@@ -55,7 +55,7 @@ describe('RemoveRowHandler', () => {
 
   it('should throw an error if the foreignKey exists', async () => {
     const { draftRevisionId, schemaTableVersionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
     const anotherTableId = nanoid();
     const anotherTableVersionId = nanoid();
     const anotherRowId = nanoid();
@@ -134,7 +134,7 @@ describe('RemoveRowHandler', () => {
   });
 
   it('should remove the row if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, branchId, tableId, draftTableVersionId, rowId } =
       ids;
 
@@ -171,7 +171,7 @@ describe('RemoveRowHandler', () => {
   });
 
   it('should remove the row if conditions are met and if the table is a system table and skipCheckingNotSystemTable = true', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RemoveRowCommand({
       revisionId: draftRevisionId,
@@ -186,7 +186,7 @@ describe('RemoveRowHandler', () => {
   });
 
   it('should remove the row in a new created table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, rowId, draftTableVersionId } = ids;
     await prismaService.table.update({
       where: {
@@ -211,435 +211,8 @@ describe('RemoveRowHandler', () => {
     await checkRevision(ids, true);
   });
 
-  xit('should update changelog if the row is in rowInserts #1', async () => {
-    const { draftRevisionId, tableId, rowId, draftChangelogId } =
-      await prepareBranch(prismaService);
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              anotherRow: '',
-              [rowId]: '',
-            },
-          },
-        },
-        rowInsertsCount: 2,
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    await runTransaction(command);
-
-    const changelog = await prismaService.changelog.findUniqueOrThrow({
-      where: { id: draftChangelogId },
-    });
-
-    expect(changelog.rowInsertsCount).toBe(1);
-    expect(changelog.rowInserts).toStrictEqual({
-      [tableId]: {
-        rows: { anotherRow: '' },
-      },
-    });
-  });
-
-  xit('should update changelog if the row is in rowInserts #2', async () => {
-    const { draftRevisionId, tableId, rowId, draftChangelogId } =
-      await prepareBranch(prismaService);
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              [rowId]: '',
-            },
-          },
-        },
-        rowInsertsCount: 1,
-        hasChanges: true,
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    await runTransaction(command);
-
-    const changelog = await prismaService.changelog.findUniqueOrThrow({
-      where: { id: draftChangelogId },
-    });
-
-    expect(changelog.rowInsertsCount).toBe(0);
-    expect(changelog.rowInserts).toStrictEqual({});
-    expect(changelog.hasChanges).toStrictEqual(false);
-  });
-
-  xit('should update changelog if the row is not in rowInserts', async () => {
-    const { draftRevisionId, tableId, rowId, draftChangelogId } =
-      await prepareBranch(prismaService);
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        rowDeletes: {
-          anotherTable: {},
-        },
-        rowDeletesCount: 0,
-        hasChanges: false,
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    await runTransaction(command);
-
-    const changelog = await prismaService.changelog.findUniqueOrThrow({
-      where: { id: draftChangelogId },
-    });
-
-    expect(changelog.rowDeletesCount).toBe(1);
-    expect(changelog.rowDeletes).toStrictEqual({
-      anotherTable: {},
-      [tableId]: {
-        rows: {
-          [rowId]: '',
-        },
-      },
-    });
-    expect(changelog.hasChanges).toBe(true);
-  });
-
-  it('should revert the table if there was last change in the table', async () => {
-    const ids = await prepareBranch(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftChangelogId,
-      draftTableVersionId,
-      headTableVersionId,
-    } = ids;
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: true,
-      },
-    });
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: false,
-      },
-    });
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        tableUpdates: {
-          anotherTable: '',
-          [tableId]: '',
-        },
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              [rowId]: '',
-            },
-          },
-        },
-        tableUpdatesCount: 1,
-        rowInsertsCount: 1,
-        hasChanges: true,
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBeUndefined();
-    expect(result.tableVersionId).toBeUndefined();
-
-    // table
-    const table = await prismaService.table.findFirstOrThrow({
-      where: {
-        id: tableId,
-        revisions: {
-          some: {
-            id: draftRevisionId,
-          },
-        },
-      },
-    });
-    expect(table.readonly).toBe(true);
-    expect(table.versionId).toBe(headTableVersionId);
-
-    // changelog
-    const changelog = await prismaService.changelog.findUniqueOrThrow({
-      where: { id: draftChangelogId },
-    });
-    expect(changelog.tableUpdatesCount).toBe(0);
-    expect(changelog.tableUpdates).toStrictEqual({
-      anotherTable: '',
-    });
-    await checkRevision(ids, false);
-  });
-
-  it('should not revert the table if the schema is changed', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftChangelogId,
-      draftTableVersionId,
-    } = await prepareBranch(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: false,
-      },
-    });
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        tableUpdates: {
-          [tableId]: '',
-        },
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              [rowId]: '',
-            },
-          },
-        },
-        // changed schema
-        rowUpdates: {
-          [SystemTables.Schema]: {
-            rows: {
-              [tableId]: '',
-            },
-          },
-        },
-        tableUpdatesCount: 1,
-        rowInsertsCount: 1,
-        hasChanges: true,
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-
-    const table = await prismaService.table.findFirstOrThrow({
-      where: {
-        id: tableId,
-        revisions: {
-          some: {
-            id: draftRevisionId,
-          },
-        },
-      },
-    });
-    expect(table.readonly).toBe(false);
-    expect(table.versionId).toBe(draftTableVersionId);
-  });
-
-  it('should not revert the table if there is rowUpdates change', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftChangelogId,
-      draftTableVersionId,
-    } = await prepareBranch(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: false,
-      },
-    });
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        rowUpdates: {
-          [tableId]: {
-            rows: {
-              someRow: '',
-            },
-          },
-        },
-        tableUpdates: {
-          anotherTable: '',
-          [tableId]: '',
-        },
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              [rowId]: '',
-            },
-          },
-        },
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-  });
-
-  it('should not revert the table if there is rowDeletes change', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftChangelogId,
-      draftTableVersionId,
-    } = await prepareBranch(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: false,
-      },
-    });
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        rowDeletes: {
-          [tableId]: {
-            rows: {
-              someRow: '',
-            },
-          },
-        },
-        tableUpdates: {
-          anotherTable: '',
-          [tableId]: '',
-        },
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              [rowId]: '',
-            },
-          },
-        },
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-  });
-
-  it('should not revert the table if there is rowInserts change', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftChangelogId,
-      draftTableVersionId,
-    } = await prepareBranch(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: false,
-      },
-    });
-    await prismaService.changelog.update({
-      where: {
-        id: draftChangelogId,
-      },
-      data: {
-        tableUpdates: {
-          anotherTable: '',
-          [tableId]: '',
-        },
-        rowInserts: {
-          [tableId]: {
-            rows: {
-              [rowId]: '',
-              anotherRow: '',
-            },
-          },
-        },
-      },
-    });
-
-    const command = new RemoveRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-  });
-
   async function checkRevision(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     hasChanges: boolean,
   ) {
     const { draftRevisionId } = ids;

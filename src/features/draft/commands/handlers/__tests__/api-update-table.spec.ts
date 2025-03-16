@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
 import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
@@ -13,7 +13,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('ApiUpdateTableHandler', () => {
   it('should update the table', async () => {
     const { draftRevisionId, draftEndpointId, draftTableVersionId, tableId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     endpointNotificationService.update = createMock(void 0);
 

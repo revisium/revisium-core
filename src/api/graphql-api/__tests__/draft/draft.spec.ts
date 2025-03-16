@@ -4,7 +4,7 @@ import { gql } from 'src/__tests__/utils/gql';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+} from 'src/__tests__/utils/prepareProject';
 import { graphqlQuery, graphqlQueryError } from 'src/__tests__/utils/queryTest';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';

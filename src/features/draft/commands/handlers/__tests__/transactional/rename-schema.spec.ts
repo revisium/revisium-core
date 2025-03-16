@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
   getTestLinkedSchema,
@@ -16,7 +16,7 @@ describe('RenameSchemaHandler', () => {
   const nextTableId = 'nextTableId';
 
   it('should rename the schema if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId } = ids;
     const previousSchemaRow = await prismaService.row.findFirstOrThrow({
       where: {
@@ -64,7 +64,7 @@ describe('RenameSchemaHandler', () => {
   });
 
   it('should updated the linked table', async () => {
-    const ids = await prepareBranch(prismaService, { createLinkedTable: true });
+    const ids = await prepareProject(prismaService, { createLinkedTable: true });
     const { headRevisionId, draftRevisionId, tableId, linkedTableId } = ids;
 
     const previousSchemaRow = await prismaService.row.findFirstOrThrow({

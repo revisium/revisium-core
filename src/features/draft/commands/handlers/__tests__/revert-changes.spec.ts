@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -17,7 +17,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 describe('RevertChangesHandler', () => {
   it('should throw an error if there are no changes', async () => {
     const { organizationId, projectName, branchName } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new RevertChangesCommand({
       organizationId,
@@ -33,7 +33,7 @@ describe('RevertChangesHandler', () => {
 
   it('should throw an error if the project does not exist in the organization', async () => {
     const { organizationId, projectName, branchName } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     shareTransactionalQueries.findProjectInOrganizationOrThrow = createMock(
       new Error('Project not found'),
@@ -50,7 +50,7 @@ describe('RevertChangesHandler', () => {
 
   it('should throw an error if the branch does not exist in the project', async () => {
     const { organizationId, projectName, branchName } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     shareTransactionalQueries.findBranchInProjectOrThrow = createMock(
       new Error('Branch not found'),
@@ -66,14 +66,13 @@ describe('RevertChangesHandler', () => {
   });
 
   it('should revert changes if there are changes', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       organizationId,
       projectName,
       branchId,
       branchName,
       draftRevisionId,
-      draftChangelogId,
     } = ids;
     await prepareRevision(ids);
 
@@ -87,11 +86,10 @@ describe('RevertChangesHandler', () => {
     expect(result.branchId).toBe(branchId);
     expect(result.draftRevisionId).toBe(draftRevisionId);
     await checkRevisionTables(ids);
-    await checkChangelog(draftChangelogId);
     await checkRevision(ids);
   });
 
-  async function checkRevisionTables(ids: PrepareBranchReturnType) {
+  async function checkRevisionTables(ids: PrepareProjectReturnType) {
     const { headTableVersionId, draftRevisionId } = ids;
 
     const draftRevisionTables = await prismaService.revision
@@ -105,62 +103,20 @@ describe('RevertChangesHandler', () => {
     );
   }
 
-  async function prepareRevision(ids: PrepareBranchReturnType) {
+  async function prepareRevision(ids: PrepareProjectReturnType) {
     await prismaService.revision.update({
       where: { id: ids.draftRevisionId },
       data: { hasChanges: true },
     });
-
-    await prismaService.changelog.update({
-      where: {
-        id: ids.draftChangelogId,
-      },
-      data: {
-        hasChanges: true,
-        tableInsertsCount: 10,
-        rowInsertsCount: 10,
-        tableUpdatesCount: 10,
-        rowUpdatesCount: 10,
-        tableDeletesCount: 10,
-        rowDeletesCount: 10,
-        tableInserts: { test: {} },
-        tableUpdates: { test: {} },
-        tableDeletes: { test: {} },
-        rowInserts: { test: {} },
-        rowUpdates: { test: {} },
-        rowDeletes: { test: {} },
-      },
-    });
   }
 
-  async function checkRevision(ids: PrepareBranchReturnType) {
+  async function checkRevision(ids: PrepareProjectReturnType) {
     const { draftRevisionId } = ids;
 
     const revision = await prismaService.revision.findFirstOrThrow({
       where: { id: draftRevisionId },
     });
     expect(revision.hasChanges).toBe(false);
-  }
-
-  async function checkChangelog(draftChangelogId: string) {
-    const changelog = await prismaService.changelog.findUniqueOrThrow({
-      where: { id: draftChangelogId },
-    });
-
-    expect(changelog.hasChanges).toBeFalsy();
-    expect(changelog.tableInsertsCount).toBe(0);
-    expect(changelog.rowInsertsCount).toBe(0);
-    expect(changelog.tableUpdatesCount).toBe(0);
-    expect(changelog.rowUpdatesCount).toBe(0);
-    expect(changelog.tableDeletesCount).toBe(0);
-    expect(changelog.rowDeletesCount).toBe(0);
-
-    expect(changelog.tableInserts).toStrictEqual({});
-    expect(changelog.rowInserts).toStrictEqual({});
-    expect(changelog.tableUpdates).toStrictEqual({});
-    expect(changelog.rowUpdates).toStrictEqual({});
-    expect(changelog.tableDeletes).toStrictEqual({});
-    expect(changelog.rowDeletes).toStrictEqual({});
   }
 
   let prismaService: PrismaService;

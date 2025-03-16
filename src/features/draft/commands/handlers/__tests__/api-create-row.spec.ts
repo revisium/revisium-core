@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
 import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -12,7 +12,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('ApiCreateRowHandler', () => {
   it('should create a new row', async () => {
     const { draftRevisionId, tableId, draftTableVersionId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
     endpointNotificationService.update = createMock(void 0);
 
     const newRowId = 'newRowId';
@@ -50,7 +50,7 @@ describe('ApiCreateRowHandler', () => {
 
   it('should notify endpoints if a new table was created', async () => {
     const { draftRevisionId, draftEndpointId, tableId, draftTableVersionId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,

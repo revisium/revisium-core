@@ -32,15 +32,15 @@ export class DraftRevisionRequestDto {
     return this.draftContext.hasKey(DraftContextKeys.DraftRevisionId);
   }
 
-  public get changelogId(): string {
-    return this.draftContext.resolveKey(DraftContextKeys.DraftChangelogId);
+  public get parentId(): string {
+    return this.draftContext.resolveKey(DraftContextKeys.DraftParentRevisionId);
   }
 
-  public set changelogId(value: string) {
-    this.draftContext.setKey(DraftContextKeys.DraftChangelogId, value);
+  public set parentId(value: string) {
+    this.draftContext.setKey(DraftContextKeys.DraftParentRevisionId, value);
   }
 
-  public get hasChangelogId(): boolean {
-    return this.draftContext.hasKey(DraftContextKeys.DraftChangelogId);
+  public get hasParentId(): boolean {
+    return this.draftContext.hasKey(DraftContextKeys.DraftParentRevisionId);
   }
 }

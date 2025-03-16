@@ -11,7 +11,6 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 
 @CommandHandler(CreateTableCommand)
 export class CreateTableHandler extends DraftHandler<
@@ -25,7 +24,6 @@ export class CreateTableHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly idService: IdService,
-    protected readonly changelogSession: SessionChangelogService,
     protected readonly commandBus: CommandBus,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
   ) {
@@ -95,28 +93,12 @@ export class CreateTableHandler extends DraftHandler<
         versionId: true,
       },
     });
-
-    await this.addTableToChangelog();
   }
 
   private async updateRevision(revisionId: string) {
     return this.transaction.revision.update({
       where: { id: revisionId, hasChanges: false },
       data: {
-        hasChanges: true,
-      },
-    });
-  }
-
-  private async addTableToChangelog() {
-    this.changelogSession.addTable('tableInserts');
-
-    return this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        tableInsertsCount: {
-          increment: 1,
-        },
         hasChanges: true,
       },
     });

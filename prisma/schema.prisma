@@ -135,38 +135,15 @@ model Revision {
   isStart    Boolean  @default(false)
   hasChanges Boolean  @default(false)
 
-  branchId    String
-  branch      Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
-  parentId    String?
-  parent      Revision?  @relation("parentRevision", fields: [parentId], references: [id], onDelete: SetNull)
-  children    Revision[] @relation("parentRevision")
-  tables      Table[]
-  endpoints   Endpoint[]
-  changelogId String     @unique
-  changelog   Changelog  @relation(fields: [changelogId], references: [id], onDelete: Cascade)
+  branchId  String
+  branch    Branch     @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  parentId  String?
+  parent    Revision?  @relation("parentRevision", fields: [parentId], references: [id], onDelete: SetNull)
+  children  Revision[] @relation("parentRevision")
+  tables    Table[]
+  endpoints Endpoint[]
 
   @@index([branchId])
-}
-
-model Changelog {
-  id                String    @id
-  tableInserts      Json      @default("{}")
-  rowInserts        Json      @default("{}")
-  tableUpdates      Json      @default("{}")
-  rowUpdates        Json      @default("{}")
-  tableDeletes      Json      @default("{}")
-  rowDeletes        Json      @default("{}")
-  tableInsertsCount Int       @default(0)
-  rowInsertsCount   Int       @default(0)
-  tableUpdatesCount Int       @default(0)
-  rowUpdatesCount   Int       @default(0)
-  tableDeletesCount Int       @default(0)
-  rowDeletesCount   Int       @default(0)
-  hasChanges        Boolean   @default(false)
-  revision          Revision?
-  revisionId        String?
-
-  @@index([tableInserts, rowInserts, tableUpdates, rowUpdates, tableDeletes, rowDeletes], type: Gin)
 }
 
 enum EndpointType {

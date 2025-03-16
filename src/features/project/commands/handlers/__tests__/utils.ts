@@ -84,19 +84,6 @@ export const prepareProject = async (
   const headTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
 
-  // changelog
-  await prismaService.changelog.create({
-    data: {
-      id: headChangelogId,
-    },
-  });
-
-  await prismaService.changelog.create({
-    data: {
-      id: draftChangelogId,
-    },
-  });
-
   // branch / project / organization / revisions
   await prismaService.branch.create({
     data: {
@@ -119,13 +106,11 @@ export const prepareProject = async (
             {
               id: headRevisionId,
               isHead: true,
-              changelogId: headChangelogId,
             },
             {
               id: draftRevisionId,
               parentId: headRevisionId,
               isDraft: true,
-              changelogId: draftChangelogId,
             },
           ],
         },

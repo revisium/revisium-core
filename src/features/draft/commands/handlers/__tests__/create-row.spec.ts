@@ -2,9 +2,9 @@ import { Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -20,7 +20,7 @@ import * as objectHash from 'object-hash';
 
 describe('CreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
@@ -36,7 +36,7 @@ describe('CreateRowHandler', () => {
   });
 
   it('should throw an error if the revision does not exist', async () => {
-    await prepareBranch(prismaService);
+    await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -54,7 +54,7 @@ describe('CreateRowHandler', () => {
 
   it('should throw an error if a similar row already exists', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
@@ -70,7 +70,7 @@ describe('CreateRowHandler', () => {
 
   it('should throw an error if the data is not valid', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
@@ -83,7 +83,7 @@ describe('CreateRowHandler', () => {
   });
 
   it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, rowId } = await prepareBranch(prismaService);
+    const { draftRevisionId, rowId } = await prepareProject(prismaService);
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
@@ -98,7 +98,7 @@ describe('CreateRowHandler', () => {
   });
 
   it('should create a new row if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
     const command = new CreateRowCommand({
@@ -125,7 +125,7 @@ describe('CreateRowHandler', () => {
   });
 
   it('should create a new row in a new created table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
     await prismaService.table.update({
       where: {
@@ -151,7 +151,7 @@ describe('CreateRowHandler', () => {
     await revisionCheck(ids);
   });
 
-  async function revisionCheck(ids: PrepareBranchReturnType) {
+  async function revisionCheck(ids: PrepareProjectReturnType) {
     const { draftRevisionId } = ids;
 
     const revision = await prismaService.revision.findFirstOrThrow({
@@ -161,7 +161,7 @@ describe('CreateRowHandler', () => {
   }
 
   async function rowCheck(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     rowId: string,
     createdRowVersionId: string,
     data: Prisma.InputJsonValue,
@@ -194,7 +194,7 @@ describe('CreateRowHandler', () => {
     expect(row.createdId).not.toBe(row.versionId);
   }
 
-  async function changelogCheck(ids: PrepareBranchReturnType, rowId: string) {
+  async function changelogCheck(ids: PrepareProjectReturnType, rowId: string) {
     const { draftChangelogId, tableId } = ids;
 
     const changelog = await prismaService.changelog.findFirstOrThrow({

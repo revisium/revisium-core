@@ -1,8 +1,8 @@
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -19,7 +19,7 @@ import * as objectHash from 'object-hash';
 describe('UpdateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -36,7 +36,7 @@ describe('UpdateRowHandler', () => {
   });
 
   it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new UpdateRowCommand({
       revisionId: draftRevisionId,
@@ -51,7 +51,7 @@ describe('UpdateRowHandler', () => {
   });
 
   it('should throw an error if the row does not exist', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new UpdateRowCommand({
       revisionId: draftRevisionId,
@@ -67,7 +67,7 @@ describe('UpdateRowHandler', () => {
 
   it('should throw an error if the data is not valid', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new UpdateRowCommand({
       revisionId: draftRevisionId,
@@ -80,7 +80,7 @@ describe('UpdateRowHandler', () => {
   });
 
   it('should update the row if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -122,7 +122,7 @@ describe('UpdateRowHandler', () => {
   });
 
   it('should update the row in a new created table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -156,7 +156,7 @@ describe('UpdateRowHandler', () => {
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -189,7 +189,7 @@ describe('UpdateRowHandler', () => {
     await revisionCheck(ids);
   });
 
-  async function revisionCheck(ids: PrepareBranchReturnType) {
+  async function revisionCheck(ids: PrepareProjectReturnType) {
     const { draftRevisionId } = ids;
 
     const revision = await prismaService.revision.findFirstOrThrow({

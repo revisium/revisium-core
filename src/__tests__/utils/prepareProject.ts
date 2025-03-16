@@ -14,7 +14,9 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 export type PrepareDataReturnType = Awaited<ReturnType<typeof prepareData>>;
 
-export type PrepareBranchReturnType = Awaited<ReturnType<typeof prepareBranch>>;
+export type PrepareProjectReturnType = Awaited<
+  ReturnType<typeof prepareProject>
+>;
 
 export const hashedPassword =
   '$2a$10$Uj1aVmkVJh4ZV9Ij54bFLexeFcYz71QtySoosQ5V.txpETjOgG0bW';
@@ -22,8 +24,8 @@ export const hashedPassword =
 export const prepareData = async (app: INestApplication) => {
   const prismaService = app.get(PrismaService);
 
-  const project = await prepareBranch(prismaService);
-  const anotherProject = await prepareBranch(prismaService);
+  const project = await prepareProject(prismaService);
+  const anotherProject = await prepareProject(prismaService);
 
   return {
     project,
@@ -76,7 +78,7 @@ const prepareOrganizationUser = async (
   };
 };
 
-export const prepareBranch = async (
+export const prepareProject = async (
   prismaService: PrismaService,
   options?: { createLinkedTable?: boolean },
 ) => {
@@ -87,8 +89,6 @@ export const prepareBranch = async (
   const branchName = `name-${branchId}`;
   const headRevisionId = nanoid();
   const draftRevisionId = nanoid();
-  const headChangelogId = nanoid();
-  const draftChangelogId = nanoid();
 
   const schemaTableVersionId = nanoid();
   const schemaTableCreatedId = nanoid();
@@ -110,19 +110,6 @@ export const prepareBranch = async (
   const draftLinkedRowVersionId = nanoid();
   const headEndpointId = nanoid();
   const draftEndpointId = nanoid();
-
-  // changelog
-  await prismaService.changelog.create({
-    data: {
-      id: headChangelogId,
-    },
-  });
-
-  await prismaService.changelog.create({
-    data: {
-      id: draftChangelogId,
-    },
-  });
 
   // branch / project / organization / revisions
   await prismaService.branch.create({
@@ -147,14 +134,12 @@ export const prepareBranch = async (
               id: headRevisionId,
               isHead: true,
               hasChanges: false,
-              changelogId: headChangelogId,
             },
             {
               id: draftRevisionId,
               parentId: headRevisionId,
-              hasChanges: false,
+              hasChanges: true,
               isDraft: true,
-              changelogId: draftChangelogId,
             },
           ],
         },
@@ -379,8 +364,6 @@ export const prepareBranch = async (
     branchName,
     headRevisionId,
     draftRevisionId,
-    headChangelogId,
-    draftChangelogId,
     tableId,
     linkedTableId,
     tableCreatedId,

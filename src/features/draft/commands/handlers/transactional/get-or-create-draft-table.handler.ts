@@ -4,7 +4,6 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { GetOrCreateDraftTableCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-table.command';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @CommandHandler(GetOrCreateDraftTableCommand)
@@ -17,7 +16,6 @@ export class GetOrCreateDraftTableHandler
     private readonly tableRequestDto: DraftTableRequestDto,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly idService: IdService,
-    private readonly sessionChangelog: SessionChangelogService,
   ) {}
 
   private get transaction() {
@@ -58,7 +56,6 @@ export class GetOrCreateDraftTableHandler
       system,
     );
     await this.disconnectPreviousTable(previousTableVersionId);
-    await this.addTableToChangelog();
   }
 
   private getPreviousRowsInTable(tableVersionId: string) {
@@ -104,20 +101,6 @@ export class GetOrCreateDraftTableHandler
             versionId: previousTableVersionId,
           },
         },
-      },
-    });
-  }
-
-  private async addTableToChangelog() {
-    await this.sessionChangelog.addTable('tableUpdates');
-
-    return this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        tableUpdatesCount: {
-          increment: 1,
-        },
-        hasChanges: true,
       },
     });
   }

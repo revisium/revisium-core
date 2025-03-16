@@ -1,4 +1,7 @@
-import { BadRequestException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ResolveDraftRevisionCommand } from 'src/features/draft/commands/impl/transactional/resolve-draft-revision.command';
@@ -17,7 +20,7 @@ export class ResolveDraftRevisionHandler
     return (
       this.revisionRequestDto.hasBranchId &&
       this.revisionRequestDto.hasId &&
-      this.revisionRequestDto.hasChangelogId
+      this.revisionRequestDto.hasParentId
     );
   }
 
@@ -37,8 +40,8 @@ export class ResolveDraftRevisionHandler
       select: {
         id: true,
         isDraft: true,
-        changelogId: true,
         branchId: true,
+        parentId: true,
       },
     });
 
@@ -52,6 +55,10 @@ export class ResolveDraftRevisionHandler
 
     this.revisionRequestDto.branchId = revision.branchId;
     this.revisionRequestDto.id = revision.id;
-    this.revisionRequestDto.changelogId = revision.changelogId;
+
+    if (!revision.parentId) {
+      throw new InternalServerErrorException('Invalid  parentId');
+    }
+    this.revisionRequestDto.parentId = revision.parentId;
   }
 }

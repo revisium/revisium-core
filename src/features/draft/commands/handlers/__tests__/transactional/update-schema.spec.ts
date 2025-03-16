@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import * as hash from 'object-hash';
 import * as objectHash from 'object-hash';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
   testSchema,
@@ -22,7 +22,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 describe('UpdateSchemaHandler', () => {
   it('should throw an error if the data is invalid', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
@@ -42,7 +42,7 @@ describe('UpdateSchemaHandler', () => {
   });
 
   it('should throw an error if the patches are invalid', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
@@ -64,7 +64,7 @@ describe('UpdateSchemaHandler', () => {
   });
 
   it('should update the schema if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId } = ids;
 
     const command = new UpdateSchemaCommand({

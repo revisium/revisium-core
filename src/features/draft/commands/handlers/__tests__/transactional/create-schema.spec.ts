@@ -1,6 +1,6 @@
 import { CommandBus } from '@nestjs/cqrs';
 import * as objectHash from 'object-hash';
-import { prepareBranch } from 'src/__tests__/utils/prepareBranch';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
   testSchema,
@@ -17,7 +17,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 describe('CreateSchemaHandler', () => {
   it('should throw an error if the data is invalid', async () => {
-    const { draftRevisionId } = await prepareBranch(prismaService);
+    const { draftRevisionId } = await prepareProject(prismaService);
 
     const tableId = 'newTableId';
     const command = new CreateSchemaCommand({
@@ -30,7 +30,7 @@ describe('CreateSchemaHandler', () => {
   });
 
   it('should create a new schema if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId } = ids;
     const tableId = 'newTableId';
 

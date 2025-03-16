@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -17,7 +17,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 describe('CreateRevisionHandler', () => {
   it('should throw an error if there are no changes', async () => {
     const { organizationId, projectName, branchName } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new CreateRevisionCommand({
       organizationId,
@@ -33,7 +33,7 @@ describe('CreateRevisionHandler', () => {
   });
 
   it('should throw an error if the project does not exist in the organization', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { organizationId, projectName, branchName } = ids;
     await prepareRevision(ids);
 
@@ -51,7 +51,7 @@ describe('CreateRevisionHandler', () => {
   });
 
   it('should throw an error if the branch does not exist in the project', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { organizationId, projectName, branchName } = ids;
     await prepareRevision(ids);
 
@@ -69,7 +69,7 @@ describe('CreateRevisionHandler', () => {
   });
 
   it('should create a new draft revision if there are changes', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       organizationId,
       projectName,
@@ -80,7 +80,7 @@ describe('CreateRevisionHandler', () => {
       headEndpointId,
       draftEndpointId,
     } = ids;
-    await prismaService.changelog.update({
+    await prismaService.revision.update({
       where: {
         id: draftChangelogId,
       },
@@ -111,7 +111,7 @@ describe('CreateRevisionHandler', () => {
     await afterEndpointsChecks(ids, result.nextDraftRevisionId);
   });
 
-  async function beforeEndpointsChecks(ids: PrepareBranchReturnType) {
+  async function beforeEndpointsChecks(ids: PrepareProjectReturnType) {
     const { headRevisionId, draftRevisionId, headEndpointId, draftEndpointId } =
       ids;
 
@@ -133,7 +133,7 @@ describe('CreateRevisionHandler', () => {
   }
 
   async function afterEndpointsChecks(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     nextDraftRevisionId: string,
   ) {
     const { draftRevisionId, headEndpointId, draftEndpointId } = ids;
@@ -155,14 +155,14 @@ describe('CreateRevisionHandler', () => {
     ).toEqual(nextDraftRevisionId);
   }
 
-  async function prepareRevision(ids: PrepareBranchReturnType) {
+  async function prepareRevision(ids: PrepareProjectReturnType) {
     await prismaService.revision.update({
       where: { id: ids.draftRevisionId },
       data: { hasChanges: true },
     });
   }
 
-  async function beforeTableRowChecks(ids: PrepareBranchReturnType) {
+  async function beforeTableRowChecks(ids: PrepareProjectReturnType) {
     const {
       headTableVersionId,
       draftTableVersionId,
@@ -206,7 +206,7 @@ describe('CreateRevisionHandler', () => {
   }
 
   async function afterTableRowChecks(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     nextDraftRevisionId: string,
   ) {
     const {
@@ -308,15 +308,11 @@ describe('CreateRevisionHandler', () => {
     // next draft
     const nextDraftRevision = await prismaService.revision.findFirstOrThrow({
       where: { parentId: draftRevisionId },
-      include: {
-        changelog: true,
-      },
     });
     expect(nextDraftRevisionId).toEqual(nextDraftRevision.id);
     expect(nextDraftRevision.isHead).toBeFalsy();
     expect(nextDraftRevision.isDraft).toBeTruthy();
     expect(nextDraftRevision.parentId).toEqual(draftRevisionId);
-    expect(nextDraftRevision.changelog.hasChanges).toEqual(false);
     expect(nextDraftRevision.hasChanges).toEqual(false);
   }
 

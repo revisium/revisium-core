@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import {
   createMock,
   createTestingModule,
@@ -22,7 +22,7 @@ describe('RenameRowHandler', () => {
 
   it('should throw an error if the rowId is shorter than 1 character', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -39,7 +39,7 @@ describe('RenameRowHandler', () => {
 
   it('should throw an error if a similar row already exists', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -55,7 +55,7 @@ describe('RenameRowHandler', () => {
 
   it('should throw an error if the revision does not exist', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -72,7 +72,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -87,7 +87,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should throw an error if the row does not exist', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -102,7 +102,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should update the row if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -147,7 +147,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should update the row in a new created table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       tableId,
@@ -200,7 +200,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
 
     const {
       draftRevisionId,
@@ -255,7 +255,7 @@ describe('RenameRowHandler', () => {
 
   it('should update the linked row', async () => {
     const { draftRevisionId, tableId, rowId, linkedTableId, linkedRowId } =
-      await prepareBranch(prismaService, { createLinkedTable: true });
+      await prepareProject(prismaService, { createLinkedTable: true });
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
       tableId,
@@ -284,7 +284,7 @@ describe('RenameRowHandler', () => {
     expect(linkedRow.data).toStrictEqual({ link: nextRowId });
   });
 
-  async function checkRevision(ids: PrepareBranchReturnType) {
+  async function checkRevision(ids: PrepareProjectReturnType) {
     const { draftRevisionId } = ids;
 
     const revision = await prismaService.revision.findFirstOrThrow({

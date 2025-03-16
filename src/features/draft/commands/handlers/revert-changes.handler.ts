@@ -45,9 +45,7 @@ export class RevertChangesHandler extends DraftHandler<
         branchId,
       );
 
-    const { hasChanges, id: draftChangelogId } = await this.getChangelog(
-      draftRevision.id,
-    );
+    const { hasChanges } = await this.getRevision(draftRevision.id);
 
     if (!hasChanges) {
       throw new BadRequestException('There are no changes');
@@ -58,17 +56,14 @@ export class RevertChangesHandler extends DraftHandler<
     );
 
     await this.resetDraftRevision(draftRevision.id, headRevisionTables);
-    await this.updateChangeLog(draftChangelogId);
 
     return { branchId, draftRevisionId: draftRevision.id };
   }
 
-  private getChangelog(revisionId: string) {
-    return this.transaction.revision
-      .findUniqueOrThrow({
-        where: { id: revisionId },
-      })
-      .changelog({ select: { id: true, hasChanges: true } });
+  private getRevision(revisionId: string) {
+    return this.transaction.revision.findUniqueOrThrow({
+      where: { id: revisionId },
+    });
   }
 
   private getHeadRevisionTables(revisionId: string) {
@@ -93,28 +88,6 @@ export class RevertChangesHandler extends DraftHandler<
           set: tables,
         },
       },
-    });
-  }
-
-  private async updateChangeLog(changelogId: string) {
-    return this.transaction.changelog.update({
-      where: { id: changelogId },
-      data: {
-        tableInserts: {},
-        rowInserts: {},
-        tableUpdates: {},
-        rowUpdates: {},
-        tableDeletes: {},
-        rowDeletes: {},
-        tableInsertsCount: 0,
-        rowInsertsCount: 0,
-        tableUpdatesCount: 0,
-        rowUpdatesCount: 0,
-        tableDeletesCount: 0,
-        rowDeletesCount: 0,
-        hasChanges: false,
-      },
-      select: { id: true },
     });
   }
 }

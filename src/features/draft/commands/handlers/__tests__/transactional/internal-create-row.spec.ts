@@ -2,9 +2,9 @@ import { Prisma } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
-  prepareBranch,
-  PrepareBranchReturnType,
-} from 'src/__tests__/utils/prepareBranch';
+  prepareProject,
+  PrepareProjectReturnType,
+} from 'src/__tests__/utils/prepareProject';
 import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,
@@ -21,7 +21,7 @@ import * as objectHash from 'object-hash';
 
 describe('InternalCreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
-    const { draftRevisionId, tableId } = await prepareBranch(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
@@ -38,7 +38,7 @@ describe('InternalCreateRowHandler', () => {
   });
 
   it('should throw an error if the revision does not exist', async () => {
-    await prepareBranch(prismaService);
+    await prepareProject(prismaService);
 
     draftTransactionalCommands.resolveDraftRevision = createMock(
       new Error('Revision not found'),
@@ -57,7 +57,7 @@ describe('InternalCreateRowHandler', () => {
 
   it('should throw an error if a similar row already exists', async () => {
     const { draftRevisionId, tableId, rowId } =
-      await prepareBranch(prismaService);
+      await prepareProject(prismaService);
 
     const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
@@ -73,7 +73,7 @@ describe('InternalCreateRowHandler', () => {
   });
 
   it('should create a new row if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
     const command = new InternalCreateRowCommand({
@@ -98,11 +98,10 @@ describe('InternalCreateRowHandler', () => {
       command.data.data,
       { meta: 1 },
     );
-    await changelogCheck(ids, command.data.rowId);
   });
 
   it('should save the optional meta field', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
 
     const command = new InternalCreateRowCommand({
@@ -127,11 +126,10 @@ describe('InternalCreateRowHandler', () => {
       command.data.data,
       { meta: 1 },
     );
-    await changelogCheck(ids, command.data.rowId);
   });
 
   it('should create a new row in a new created table if conditions are met', async () => {
-    const ids = await prepareBranch(prismaService);
+    const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
     await prismaService.table.update({
       where: {
@@ -158,7 +156,7 @@ describe('InternalCreateRowHandler', () => {
   });
 
   async function rowCheck(
-    ids: PrepareBranchReturnType,
+    ids: PrepareProjectReturnType,
     rowId: string,
     createdRowVersionId: string,
     data: Prisma.InputJsonValue,
@@ -191,25 +189,6 @@ describe('InternalCreateRowHandler', () => {
     expect(row.createdId).toBeTruthy();
     expect(row.createdId).not.toBe(row.id);
     expect(row.createdId).not.toBe(row.versionId);
-  }
-
-  async function changelogCheck(ids: PrepareBranchReturnType, rowId: string) {
-    const { draftChangelogId, tableId } = ids;
-
-    const changelog = await prismaService.changelog.findFirstOrThrow({
-      where: {
-        id: draftChangelogId,
-      },
-    });
-    expect(changelog.hasChanges).toBe(true);
-    expect(changelog.rowInsertsCount).toBe(1);
-    expect(changelog.rowInserts).toStrictEqual({
-      [tableId]: {
-        rows: {
-          [rowId]: '',
-        },
-      },
-    });
   }
 
   function runTransaction(

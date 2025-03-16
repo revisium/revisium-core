@@ -6,7 +6,6 @@ import { GetOrCreateDraftRowCommand } from 'src/features/draft/commands/impl/tra
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
-import { SessionChangelogService } from 'src/features/draft/session-changelog.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @CommandHandler(GetOrCreateDraftRowCommand)
@@ -20,7 +19,6 @@ export class GetOrCreateDraftRowHandler
     private readonly revisionRequestDto: DraftRevisionRequestDto,
     private readonly tableRequestDto: DraftTableRequestDto,
     private readonly rowRequestDto: DraftRowRequestDto,
-    private readonly sessionChangelog: SessionChangelogService,
   ) {}
 
   private get transaction() {
@@ -94,29 +92,8 @@ export class GetOrCreateDraftRowHandler
     });
   }
 
-  private async addRowToChangelog() {
-    const countRows = await this.sessionChangelog.getCountRows('rowUpdates');
-
-    if (!countRows) {
-      await this.sessionChangelog.addTableForRow('rowUpdates');
-    }
-
-    await this.sessionChangelog.addRow('rowUpdates');
-
-    return this.transaction.changelog.update({
-      where: { id: this.revisionRequestDto.changelogId },
-      data: {
-        rowUpdatesCount: {
-          increment: 1,
-        },
-        hasChanges: true,
-      },
-    });
-  }
-
   private async createDraftRow(previousRowId: string) {
     await this.disconnectPreviousRow(previousRowId);
     await this.createRow(previousRowId);
-    await this.addRowToChangelog();
   }
 }
