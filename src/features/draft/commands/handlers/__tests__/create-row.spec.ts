@@ -120,7 +120,6 @@ describe('CreateRowHandler', () => {
       result.rowVersionId,
       command.data.data,
     );
-    await changelogCheck(ids, command.data.rowId);
     await revisionCheck(ids);
   });
 
@@ -192,25 +191,6 @@ describe('CreateRowHandler', () => {
     expect(row.createdId).toBeTruthy();
     expect(row.createdId).not.toBe(row.id);
     expect(row.createdId).not.toBe(row.versionId);
-  }
-
-  async function changelogCheck(ids: PrepareProjectReturnType, rowId: string) {
-    const { draftChangelogId, tableId } = ids;
-
-    const changelog = await prismaService.changelog.findFirstOrThrow({
-      where: {
-        id: draftChangelogId,
-      },
-    });
-    expect(changelog.hasChanges).toBe(true);
-    expect(changelog.rowInsertsCount).toBe(1);
-    expect(changelog.rowInserts).toStrictEqual({
-      [tableId]: {
-        rows: {
-          [rowId]: '',
-        },
-      },
-    });
   }
 
   function runTransaction(

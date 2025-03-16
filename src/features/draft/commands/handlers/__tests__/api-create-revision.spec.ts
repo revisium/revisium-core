@@ -20,11 +20,10 @@ describe('ApiCreateRevisionHandler', () => {
       draftRevisionId,
       headEndpointId,
       draftEndpointId,
-      draftChangelogId,
     } = await prepareProject(prismaService);
     await prismaService.revision.update({
       where: {
-        id: draftChangelogId,
+        id: draftRevisionId,
       },
       data: {
         hasChanges: true,

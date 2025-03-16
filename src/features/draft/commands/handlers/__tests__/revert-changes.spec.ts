@@ -16,8 +16,16 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 
 describe('RevertChangesHandler', () => {
   it('should throw an error if there are no changes', async () => {
-    const { organizationId, projectName, branchName } =
+    const { organizationId, projectName, branchName, draftRevisionId } =
       await prepareProject(prismaService);
+    await prismaService.revision.update({
+      where: {
+        id: draftRevisionId,
+      },
+      data: {
+        hasChanges: false,
+      },
+    });
 
     const command = new RevertChangesCommand({
       organizationId,

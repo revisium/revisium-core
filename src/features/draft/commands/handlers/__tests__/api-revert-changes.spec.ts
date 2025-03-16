@@ -19,11 +19,11 @@ describe('ApiRevertChangesHandler', () => {
       projectName,
       branchName,
       draftEndpointId,
-      draftChangelogId,
+      draftRevisionId,
     } = await prepareProject(prismaService);
     await prismaService.revision.update({
       where: {
-        id: draftChangelogId,
+        id: draftRevisionId,
       },
       data: {
         hasChanges: true,

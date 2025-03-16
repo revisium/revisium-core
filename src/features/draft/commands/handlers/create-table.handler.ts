@@ -96,7 +96,7 @@ export class CreateTableHandler extends DraftHandler<
   }
 
   private async updateRevision(revisionId: string) {
-    return this.transaction.revision.update({
+    return this.transaction.revision.updateMany({
       where: { id: revisionId, hasChanges: false },
       data: {
         hasChanges: true,

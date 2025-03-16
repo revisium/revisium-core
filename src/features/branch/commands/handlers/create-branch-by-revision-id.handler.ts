@@ -100,11 +100,7 @@ export class CreateBranchByRevisionIdHandler
         tables: {
           connect: tableIds.map((versionId) => ({ versionId })),
         },
-        changelog: {
-          create: {
-            id: this.idService.generate(),
-          },
-        },
+        hasChanges: false,
       },
     });
   }
@@ -135,11 +131,7 @@ export class CreateBranchByRevisionIdHandler
         tables: {
           connect: tableIds.map((versionId) => ({ versionId })),
         },
-        changelog: {
-          create: {
-            id: this.idService.generate(),
-          },
-        },
+        hasChanges: false,
       },
     });
   }
