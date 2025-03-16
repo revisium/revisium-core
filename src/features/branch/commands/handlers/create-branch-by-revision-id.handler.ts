@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { CreateBranchByRevisionIdCommand } from 'src/features/branch/commands/impl';
+import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -28,6 +29,8 @@ export class CreateBranchByRevisionIdHandler
     data: CreateBranchByRevisionIdCommand['data'],
   ) {
     const { revisionId, branchName } = data;
+
+    validateUrlLikeId(branchName);
 
     const { branch, tables, ...revision } =
       await this.getRevisionWithBranchAndTables(revisionId);

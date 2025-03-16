@@ -6,6 +6,7 @@ import {
   CreateUserCommandReturnType,
 } from 'src/features/auth/commands/impl';
 import { isValidSystemRole, UserRole } from 'src/features/auth/consts';
+import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -21,6 +22,10 @@ export class CreateUserHandler
   ) {}
 
   async execute({ data }: CreateUserCommand) {
+    if (data.username) {
+      validateUrlLikeId(data.username);
+    }
+
     if (!isValidSystemRole(data.roleId)) {
       throw new BadRequestException('Invalid SystemRole');
     }

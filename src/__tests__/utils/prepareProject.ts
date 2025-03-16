@@ -82,26 +82,26 @@ export const prepareProject = async (
   prismaService: PrismaService,
   options?: { createLinkedTable?: boolean },
 ) => {
-  const organizationId = nanoid();
-  const projectId = nanoid();
+  const organizationId = `org-${nanoid()}`;
+  const projectId = `project-${nanoid()}`;
   const projectName = `name-${projectId}`;
-  const branchId = nanoid();
+  const branchId = `branch-${nanoid()}`;
   const branchName = `name-${branchId}`;
   const headRevisionId = nanoid();
   const draftRevisionId = nanoid();
 
   const schemaTableVersionId = nanoid();
   const schemaTableCreatedId = nanoid();
-  const tableId = nanoid();
-  const linkedTableId = nanoid();
+  const tableId = `table-${nanoid()}`;
+  const linkedTableId = `table-${nanoid()}`;
   const tableCreatedId = nanoid();
   const linkedTableCreatedId = nanoid();
   const headTableVersionId = nanoid();
   const headLinkedTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
   const draftLinkedTableVersionId = nanoid();
-  const rowId = nanoid();
-  const linkedRowId = nanoid();
+  const rowId = `row-${nanoid()}`;
+  const linkedRowId = `row-${nanoid()}`;
   const rowCreatedId = nanoid();
   const linkedRowCreatedId = nanoid();
   const headRowVersionId = nanoid();

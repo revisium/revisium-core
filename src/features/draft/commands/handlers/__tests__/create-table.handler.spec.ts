@@ -31,7 +31,7 @@ describe('CreateTableHandler', () => {
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
     await expect(runTransaction(command)).rejects.toThrow(
-      'The length of the table name must be greater than or equal to 1',
+      'It must contain between',
     );
   });
 
