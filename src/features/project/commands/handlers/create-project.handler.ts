@@ -2,6 +2,7 @@ import { InternalServerErrorException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { AsyncLocalStorage } from 'async_hooks';
+import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -54,6 +55,12 @@ export class CreateProjectHandler
   execute(
     command: CreateProjectCommand,
   ): Promise<CreateProjectCommandReturnType> {
+    validateUrlLikeId(command.data.projectName);
+
+    if (command.data.branchName) {
+      validateUrlLikeId(command.data.branchName);
+    }
+
     return this.transactionService.run(() => this.transactionHandler(command), {
       isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
     });

@@ -13,6 +13,7 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(RenameTableCommand)
@@ -36,7 +37,7 @@ export class RenameTableHandler extends DraftHandler<
   }: RenameTableCommand): Promise<RenameTableCommandReturnType> {
     const { revisionId, tableId, nextTableId } = data;
 
-    this.validateNextTableId(nextTableId);
+    validateUrlLikeId(nextTableId);
     await this.checkTableExistence(revisionId, nextTableId);
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
@@ -69,14 +70,6 @@ export class RenameTableHandler extends DraftHandler<
         hasChanges: true,
       },
     });
-  }
-
-  private validateNextTableId(nextTableId: string) {
-    if (nextTableId.length < 1) {
-      throw new BadRequestException(
-        'The length of the table name must be greater than or equal to 1',
-      );
-    }
   }
 
   private async checkTableExistence(revisionId: string, nextTableId: string) {

@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { CreateSchemaCommand } from 'src/features/draft/commands/impl/transactional/create-schema.command';
+import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
@@ -35,7 +36,7 @@ export class CreateTableHandler extends DraftHandler<
   }: CreateTableCommand): Promise<CreateTableHandlerReturnType> {
     const { revisionId, tableId, schema } = data;
 
-    this.validateTableId(data.tableId);
+    validateUrlLikeId(data.tableId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.checkTableExistence(revisionId, tableId);
 
@@ -49,14 +50,6 @@ export class CreateTableHandler extends DraftHandler<
       revisionId: this.revisionRequestDto.id,
       tableVersionId: this.tableRequestDto.versionId,
     };
-  }
-
-  private validateTableId(tableId: string) {
-    if (tableId.length < 1) {
-      throw new BadRequestException(
-        'The length of the table name must be greater than or equal to 1',
-      );
-    }
   }
 
   private async checkTableExistence(revisionId: string, tableId: string) {
