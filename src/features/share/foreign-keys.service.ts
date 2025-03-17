@@ -1,9 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { Row } from '@prisma/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-
-// TODO avoid $queryRawUnsafe
-// https://www.prisma.io/docs/orm/prisma-client/queries/raw-database-access/raw-queries#dynamic-table-names-in-postgresql
 
 @Injectable()
 export class ForeignKeysService {
@@ -13,6 +10,35 @@ export class ForeignKeysService {
     return this.transactionService.getTransaction();
   }
 
+  private validateSqlInjection(value: string, paramName: string) {
+    const sqlInjectionPattern = /['";\\]|--/g;
+    if (sqlInjectionPattern.test(value)) {
+      throw new BadRequestException(`${paramName} contains invalid characters`);
+    }
+  }
+
+  private validateCommonParams(tableVersionId: string, value: string) {
+    if (!tableVersionId) {
+      throw new BadRequestException('tableVersionId cannot be empty');
+    }
+
+    if (!value) {
+      throw new BadRequestException('value cannot be empty');
+    }
+
+    this.validateSqlInjection(tableVersionId, 'tableVersionId');
+    this.validateSqlInjection(value, 'value');
+  }
+
+  private validatePaginationParams(limit?: number, offset?: number) {
+    if (typeof limit !== 'undefined' && limit < 0) {
+      throw new BadRequestException('limit cannot be negative');
+    }
+    if (typeof offset !== 'undefined' && offset < 0) {
+      throw new BadRequestException('offset cannot be negative');
+    }
+  }
+
   async findRowsByKeyValueInData(
     tableVersionId: string,
     key: string,
@@ -20,7 +46,15 @@ export class ForeignKeysService {
     limit: number = 100,
     offset: number = 0,
   ) {
-    // TODO refactor  unsafe
+    this.validateCommonParams(tableVersionId, value);
+
+    if (!key) {
+      throw new BadRequestException('key cannot be empty');
+    }
+
+    this.validateSqlInjection(key, 'key');
+    this.validatePaginationParams(limit, offset);
+
     const query = `
       SELECT *
       FROM "Row"
@@ -43,7 +77,12 @@ export class ForeignKeysService {
     key: string,
     value: string,
   ) {
-    // TODO refactor  unsafe
+    this.validateCommonParams(tableVersionId, value);
+    if (!key) {
+      throw new BadRequestException('key cannot be empty');
+    }
+    this.validateSqlInjection(key, 'key');
+
     const query = `
       SELECT count(*)
       FROM "Row"
@@ -68,7 +107,18 @@ export class ForeignKeysService {
     limit: number = 100,
     offset: number = 0,
   ) {
-    // TODO refactor unsafe
+    this.validateCommonParams(tableVersionId, value);
+
+    if (!jsonPaths.length) {
+      throw new BadRequestException('jsonPaths cannot be empty');
+    }
+
+    jsonPaths.forEach((path, index) => {
+      this.validateSqlInjection(path, `jsonPaths[${index}]`);
+    });
+
+    this.validatePaginationParams(limit, offset);
+
     const conditions = jsonPaths
       .map((path) => `jsonb_path_exists("data", '${path} ? (@ == "${value}")')`)
       .join(' OR ');
@@ -95,7 +145,14 @@ export class ForeignKeysService {
     jsonPaths: string[],
     value: string,
   ) {
-    // TODO refactor  unsafe
+    this.validateCommonParams(tableVersionId, value);
+    if (!jsonPaths.length) {
+      throw new BadRequestException('jsonPaths cannot be empty');
+    }
+    jsonPaths.forEach((path, index) => {
+      this.validateSqlInjection(path, `jsonPaths[${index}]`);
+    });
+
     const conditions = jsonPaths
       .map((path) => `jsonb_path_exists("data", '${path} ? (@ == "${value}")')`)
       .join(' OR ');
