@@ -21,6 +21,10 @@ interface PathsQuery extends QueryOptions {
 export class ForeignKeysService {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
+  private get transaction() {
+    return this.transactionService.getTransaction();
+  }
+
   public async findRowsByKeyValueInData(
     tableVersionId: string,
     key: string,
@@ -107,23 +111,38 @@ export class ForeignKeysService {
     return Number(result[0].count);
   }
 
-  private get transaction() {
-    return this.transactionService.getTransaction();
-  }
-
   private validateSqlInjection(value: string, paramName: string) {
-    const sqlInjectionPattern = /['";\\]|--/g;
+    const sqlInjectionPattern =
+      /['";]|\\(?!u[0-9a-f]{4})|--|@@|pg_|sys\.|information_schema/gi;
     if (sqlInjectionPattern.test(value)) {
       throw new BadRequestException(`${paramName} contains invalid characters`);
     }
   }
 
-  private validatePaginationParams(limit?: number, offset?: number) {
-    if (typeof limit !== 'undefined' && limit < 0) {
-      throw new BadRequestException('limit cannot be negative');
+  private validateJsonPathValue(value: string) {
+    const jsonPathPattern = /[\$@\*\[\]\{\}\?().:,&|!<>=]/g;
+    if (jsonPathPattern.test(value)) {
+      throw new BadRequestException(
+        'value contains invalid JSONPath characters',
+      );
     }
-    if (typeof offset !== 'undefined' && offset < 0) {
-      throw new BadRequestException('offset cannot be negative');
+
+    const unicodePattern = /\\u[0-9a-f]{4}/gi;
+    if (unicodePattern.test(value)) {
+      throw new BadRequestException('value contains invalid Unicode sequences');
+    }
+
+    const controlCharsPattern = /[\x00-\x1F\x7F]/g;
+    if (controlCharsPattern.test(value)) {
+      throw new BadRequestException(
+        'value contains invalid control characters',
+      );
+    }
+
+    if (value.length > 1000) {
+      throw new BadRequestException(
+        'value exceeds maximum length of 1000 characters',
+      );
     }
   }
 
@@ -137,6 +156,16 @@ export class ForeignKeysService {
 
     this.validateSqlInjection(tableVersionId, 'tableVersionId');
     this.validateSqlInjection(value, 'value');
+    this.validateJsonPathValue(value);
+  }
+
+  private validatePaginationParams(limit?: number, offset?: number) {
+    if (typeof limit !== 'undefined' && limit < 0) {
+      throw new BadRequestException('limit cannot be negative');
+    }
+    if (typeof offset !== 'undefined' && offset < 0) {
+      throw new BadRequestException('offset cannot be negative');
+    }
   }
 
   private validateKeyValueParams({ key, ...rest }: KeyValueQuery) {

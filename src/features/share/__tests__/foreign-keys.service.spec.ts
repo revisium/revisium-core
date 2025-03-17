@@ -36,6 +36,10 @@ describe('ForeignKeysService', () => {
         '"',
         ';',
         '--',
+        '@@version',
+        'pg_sleep(10)',
+        'sys.tables',
+        'information_schema.tables',
       ];
 
       describe('Common Parameters', () => {
@@ -82,6 +86,82 @@ describe('ForeignKeysService', () => {
             ).rejects.toThrow(/jsonPaths\[\d+\] contains invalid characters/);
           },
         );
+      });
+    });
+
+    describe('JSONPath Value Validation', () => {
+      const jsonPathValues = [
+        { value: '$.store.book[*]', description: 'JSONPath root symbol' },
+        { value: '@.length', description: 'JSONPath current object' },
+        { value: '*', description: 'JSONPath wildcard' },
+        { value: '[0]', description: 'JSONPath array access' },
+        { value: '{key: value}', description: 'JSONPath object' },
+        { value: '?(@.price > 10)', description: 'JSONPath filter expression' },
+        { value: '(1 to 5)', description: 'JSONPath array slice' },
+        { value: '.property', description: 'JSONPath dot notation' },
+        { value: ':key', description: 'JSONPath key' },
+        { value: ',', description: 'JSONPath union' },
+        { value: '&', description: 'JSONPath intersection' },
+        { value: '|', description: 'JSONPath alternative' },
+        { value: '!true', description: 'JSONPath negation' },
+        { value: '<10', description: 'JSONPath comparison' },
+        { value: '=42', description: 'JSONPath equality' },
+        { value: '>0', description: 'JSONPath comparison' },
+      ];
+
+      it.each(jsonPathValues)(
+        'should throw BadRequestException for JSONPath symbol in value: $description',
+        async ({ value }) => {
+          await expect(
+            service.findRowsByKeyValueInData('validId', 'key', value),
+          ).rejects.toThrow('value contains invalid JSONPath characters');
+        },
+      );
+
+      const unicodeValues = ['\\u0000', '\\u0001', '\\uFFFF', '\\u1234'];
+
+      it.each(unicodeValues)(
+        'should throw BadRequestException for Unicode escape sequence in value: %s',
+        async (value) => {
+          await expect(
+            service.findRowsByKeyValueInData('validId', 'key', value),
+          ).rejects.toThrow('value contains invalid Unicode sequences');
+        },
+      );
+
+      const controlChars = [
+        { value: '\x00', description: 'NULL' },
+        { value: '\x0A', description: 'Line Feed' },
+        { value: '\x0D', description: 'Carriage Return' },
+        { value: '\x1F', description: 'Unit Separator' },
+        { value: '\x7F', description: 'Delete' },
+      ];
+
+      it.each(controlChars)(
+        'should throw BadRequestException for control character in value: $description',
+        async ({ value }) => {
+          await expect(
+            service.findRowsByKeyValueInData('validId', 'key', value),
+          ).rejects.toThrow('value contains invalid control characters');
+        },
+      );
+
+      it('should throw BadRequestException for value exceeding maximum length', async () => {
+        const longValue = 'a'.repeat(1001);
+        await expect(
+          service.findRowsByKeyValueInData('validId', 'key', longValue),
+        ).rejects.toThrow('value exceeds maximum length of 1000 characters');
+      });
+
+      it('should accept valid simple string value', async () => {
+        queryRawUnsafeMock.mockResolvedValueOnce([]);
+        await expect(
+          service.findRowsByKeyValueInData(
+            'validId',
+            'key',
+            'simple value 123',
+          ),
+        ).resolves.not.toThrow();
       });
     });
 
