@@ -120,7 +120,7 @@ export class ForeignKeysService {
   }
 
   private validateJsonPathValue(value: string) {
-    const jsonPathPattern = /[\$@\*\[\]\{\}\?().:,&|!<>=]/g;
+    const jsonPathPattern = /[$@*\[\]{}?().:,&|!<>=]/g;
     if (jsonPathPattern.test(value)) {
       throw new BadRequestException(
         'value contains invalid JSONPath characters',
