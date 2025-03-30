@@ -8,7 +8,7 @@ import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/cr
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
+import { validateRowId } from 'src/features/share/utils/validateUrlLikeId/validateRowId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(CreateRowCommand)
@@ -30,7 +30,7 @@ export class CreateRowHandler extends DraftHandler<
   }: CreateRowCommand): Promise<CreateRowHandlerReturnType> {
     const { revisionId, tableId, rowId, data } = input;
 
-    validateUrlLikeId(rowId);
+    validateRowId(rowId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
     const { schemaHash } = await this.draftTransactionalCommands.validateData({
