@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 
 export const validateRowId = (id: string) => {
-  const validPattern = /^[a-zA-Z0-9_][a-zA-Z0-9_-]*$/;
+  const validPattern = /^\w[\w-]*$/;
   const maxLength = 64;
 
   if (id.length < 1 || id.length > maxLength || !validPattern.test(id)) {
