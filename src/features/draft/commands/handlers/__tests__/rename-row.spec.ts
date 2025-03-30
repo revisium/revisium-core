@@ -33,7 +33,7 @@ describe('RenameRowHandler', () => {
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
     await expect(runTransaction(command)).rejects.toThrow(
-      'It must contain between',
+      'Row ID must be 1 to ',
     );
   });
 
