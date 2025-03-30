@@ -7,7 +7,7 @@ import {
   InternalRenameRowCommand,
   InternalRenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-rename-row.command';
-import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
+import { validateRowId } from 'src/features/share/utils/validateUrlLikeId/validateRowId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
@@ -34,7 +34,7 @@ export class RenameRowHandler extends DraftHandler<
   }: RenameRowCommand): Promise<RenameRowCommandReturnType> {
     const { revisionId, tableId, nextRowId } = input;
 
-    validateUrlLikeId(nextRowId);
+    validateRowId(nextRowId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
     await this.updateRevision(revisionId);
