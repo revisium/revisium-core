@@ -1,4 +1,5 @@
 import { Schema } from 'ajv/dist/2020';
+import { SystemSchemas } from 'src/features/share/schema/consts';
 
 // https://json-schema.org/specification#single-vocabulary-meta-schemas
 
@@ -100,7 +101,7 @@ export const arrayMetaSchema: Schema = {
 };
 
 export const metaSchema: Schema = {
-  $id: 'meta-schema.json',
+  $id: SystemSchemas.MetaSchema,
   type: 'object',
   $dynamicAnchor: 'meta',
   oneOf: [

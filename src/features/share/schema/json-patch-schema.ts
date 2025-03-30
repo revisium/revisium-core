@@ -1,4 +1,5 @@
 import { Schema } from 'ajv/dist/2020';
+import { SystemSchemas } from 'src/features/share/schema/consts';
 import {
   arrayMetaSchema,
   booleanMetaSchema,
@@ -10,7 +11,7 @@ import {
 // copied and modified from https://json.schemastore.org/json-patch
 
 export const jsonPatchSchema: Schema = {
-  $id: 'json-patch-schema.json',
+  $id: SystemSchemas.JsonPatchSchema,
   definitions: {
     path: {
       description: 'A JSON Pointer path.',
@@ -39,7 +40,7 @@ export const jsonPatchSchema: Schema = {
             enum: ['add', 'replace'],
           },
           value: {
-            $ref: 'meta-schema.json',
+            $ref: SystemSchemas.MetaSchema,
             description: 'The value to add, replace or test.',
           },
         },

@@ -1,4 +1,5 @@
 import { Schema } from 'ajv/dist/2020';
+import { SystemSchemas } from 'src/features/share/schema/consts';
 
 export const historyPatchesSchema: Schema = {
   $id: 'history-patches-schema.json',
@@ -8,7 +9,7 @@ export const historyPatchesSchema: Schema = {
     type: 'object',
     properties: {
       patches: {
-        $ref: 'json-patch-schema.json',
+        $ref: SystemSchemas.JsonPatchSchema,
       },
       hash: {
         type: 'string',
