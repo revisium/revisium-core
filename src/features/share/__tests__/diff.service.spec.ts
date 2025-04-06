@@ -143,10 +143,143 @@ describe('DiffService', () => {
 
       expect(result.length).toEqual(0);
     });
+
+    it('complex', async () => {
+      const {
+        fromRevision,
+        toRevision,
+        fromModifiedTable,
+        toModifiedTable,
+        addedTable,
+        removedTable,
+      } = await prepareComplexDiffs();
+
+      const result = await diffService.tableDiffs(
+        fromRevision.id,
+        toRevision.id,
+        100,
+      );
+
+      expect(result.length).toEqual(3);
+      expect(
+        result.find((diff) => diff.changeType === TableDiffChangeType.Modified),
+      ).toEqual({
+        id: fromModifiedTable.id,
+        createdId: fromModifiedTable.createdId,
+        fromVersionId: fromModifiedTable.versionId,
+        toVersionId: toModifiedTable.versionId,
+        changeType: TableDiffChangeType.Modified,
+      });
+
+      expect(
+        result.find((diff) => diff.changeType === TableDiffChangeType.Added),
+      ).toEqual({
+        id: addedTable.id,
+        createdId: addedTable.createdId,
+        fromVersionId: null,
+        toVersionId: addedTable.versionId,
+        changeType: TableDiffChangeType.Added,
+      });
+
+      expect(
+        result.find((diff) => diff.changeType === TableDiffChangeType.Removed),
+      ).toEqual({
+        id: removedTable.id,
+        createdId: removedTable.createdId,
+        fromVersionId: removedTable.versionId,
+        toVersionId: null,
+        changeType: TableDiffChangeType.Removed,
+      });
+    });
   });
 
   let prismaService: PrismaService;
   let diffService: DiffService;
+
+  async function prepareComplexDiffs() {
+    const { fromRevision, toRevision } = await prepareRevisions();
+
+    // not modified
+    const notModifiedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: [
+            {
+              id: fromRevision.id,
+            },
+            {
+              id: toRevision.id,
+            },
+          ],
+        },
+      },
+    });
+
+    const fromModifiedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: {
+            id: fromRevision.id,
+          },
+        },
+      },
+    });
+
+    const toModifiedTable = await prismaService.table.create({
+      data: {
+        id: fromModifiedTable.id,
+        createdId: fromModifiedTable.createdId,
+        versionId: nanoid(),
+        revisions: {
+          connect: {
+            id: toRevision.id,
+          },
+        },
+      },
+    });
+
+    const removedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: {
+            id: fromRevision.id,
+          },
+        },
+      },
+    });
+
+    const addedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: {
+            id: toRevision.id,
+          },
+        },
+      },
+    });
+
+    return {
+      fromRevision,
+      toRevision,
+      notModifiedTable,
+      fromModifiedTable,
+      toModifiedTable,
+      addedTable,
+      removedTable,
+    };
+  }
 
   async function prepareRevisions() {
     const branch = await prismaService.branch.create({

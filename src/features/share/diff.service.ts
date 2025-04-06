@@ -12,8 +12,8 @@ export enum TableDiffChangeType {
 export interface TableDiff {
   id: string;
   createdId: string;
-  fromVersionId?: string;
-  toVersionId?: string;
+  fromVersionId: string | null;
+  toVersionId: string | null;
   changeType: TableDiffChangeType;
 }
 
