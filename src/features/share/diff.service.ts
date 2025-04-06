@@ -16,6 +16,8 @@ export enum TableDiffChangeType {
 
 export interface TableDiff {
   id: string;
+  fromId: string | null;
+  toId: string | null;
   createdId: string;
   fromVersionId: string | null;
   toVersionId: string | null;
@@ -70,6 +72,8 @@ export class DiffService {
 
       return {
         id,
+        fromId: row.fromId,
+        toId: row.toId,
         createdId,
         fromVersionId: row.fromVersionId,
         toVersionId: row.toVersionId,
