@@ -24,6 +24,12 @@ export class TransactionPrismaService {
     return transactionInCurrentContext.$prisma;
   }
 
+  public getTransactionUnsafe() {
+    const transactionInCurrentContext = this.asyncLocalStorage.getStore();
+
+    return transactionInCurrentContext?.$prisma;
+  }
+
   public run<T, Func extends (...rest: unknown[]) => Promise<T>>(
     handler: Func,
     options?: {
