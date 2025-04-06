@@ -15,10 +15,12 @@ WITH
         WHERE ("public"."Table"."versionId") IN (SELECT "t1"."B" FROM "public"."_RevisionToTable" AS "t1" INNER JOIN "public"."Revision" AS "j1" ON ("j1"."id") = ("t1"."A") WHERE ("j1"."id" = $2 AND "t1"."B" IS NOT NULL))
     )
 SELECT
-    ct."id",
-    ct."createdId",
-    ct."versionId" AS "toVersionId",
+    pt."id" AS "fromId",
+    pt."createdId" AS "fromCreatedId",
     pt."versionId" AS "fromVersionId",
+    ct."id" AS "toId",
+    ct."createdId" AS "toCreatedId",
+    ct."versionId" AS "toVersionId",
     CASE
         WHEN pt."createdId" IS NULL THEN 'added'
         WHEN ct."createdId" IS NULL THEN 'removed'
