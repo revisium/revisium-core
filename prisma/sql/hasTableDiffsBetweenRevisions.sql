@@ -5,16 +5,16 @@ SELECT EXISTS (
     WITH
     parent_tables AS (SELECT "id", "createdId", "versionId"
                       FROM "Table"
-                      WHERE ("public"."Table"."versionId") IN (SELECT "t1"."B"
-                                                               FROM "public"."_RevisionToTable" AS "t1"
-                                                                        INNER JOIN "public"."Revision" AS "j1" ON ("j1"."id") = ("t1"."A")
-                                                               WHERE ("j1"."id" = $1 AND "t1"."B" IS NOT NULL))),
+                      WHERE ("Table"."versionId") IN (SELECT "t1"."B"
+                                                      FROM "_RevisionToTable" AS "t1"
+                                                               INNER JOIN "Revision" AS "j1" ON ("j1"."id") = ("t1"."A")
+                                                      WHERE ("j1"."id" = $1 AND "t1"."B" IS NOT NULL))),
     child_tables AS (SELECT "id", "createdId", "versionId"
                      FROM "Table"
-                     WHERE ("public"."Table"."versionId") IN (SELECT "t1"."B"
-                                                              FROM "public"."_RevisionToTable" AS "t1"
-                                                                       INNER JOIN "public"."Revision" AS "j1" ON ("j1"."id") = ("t1"."A")
-                                                              WHERE ("j1"."id" = $2 AND "t1"."B" IS NOT NULL)))
+                     WHERE ("Table"."versionId") IN (SELECT "t1"."B"
+                                                     FROM "_RevisionToTable" AS "t1"
+                                                              INNER JOIN "Revision" AS "j1" ON ("j1"."id") = ("t1"."A")
+                                                     WHERE ("j1"."id" = $2 AND "t1"."B" IS NOT NULL)))
     SELECT 1
     FROM
     child_tables ct

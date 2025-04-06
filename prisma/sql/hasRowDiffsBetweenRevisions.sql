@@ -5,12 +5,27 @@
 SELECT EXISTS (
     WITH
     parent_rows AS (SELECT "id", "createdId", "versionId"
-                      FROM "Row"
-                      WHERE ("public"."Row"."versionId") IN (SELECT "t1"."A" FROM "public"."_RowToTable" AS "t1" INNER JOIN "public"."Table" AS "j1" ON ("j1"."versionId") = ("t1"."B") WHERE ("j1"."createdId" = $1 AND ("j1"."versionId") IN (SELECT "t2"."B" FROM "public"."_RevisionToTable" AS "t2" INNER JOIN "public"."Revision" AS "j2" ON ("j2"."id") = ("t2"."A") WHERE ("j2"."id" = $2 AND "t2"."B" IS NOT NULL)) AND "t1"."A" IS NOT NULL))),
+                    FROM "Row"
+                    WHERE ("Row"."versionId") IN (SELECT "t1"."A"
+                                                  FROM "_RowToTable" AS "t1"
+                                                           INNER JOIN "Table" AS "j1" ON ("j1"."versionId") = ("t1"."B")
+                                                  WHERE ("j1"."createdId" = $1 AND
+                                                         ("j1"."versionId") IN (SELECT "t2"."B"
+                                                                                FROM "_RevisionToTable" AS "t2"
+                                                                                         INNER JOIN "Revision" AS "j2" ON ("j2"."id") = ("t2"."A")
+                                                                                WHERE ("j2"."id" = $2 AND "t2"."B" IS NOT NULL)) AND
+                                                         "t1"."A" IS NOT NULL))),
 
     child_rows AS (SELECT "id", "createdId", "versionId"
-                     FROM "Row"
-                     WHERE ("public"."Row"."versionId") IN (SELECT "t1"."A" FROM "public"."_RowToTable" AS "t1" INNER JOIN "public"."Table" AS "j1" ON ("j1"."versionId") = ("t1"."B") WHERE ("j1"."createdId" = $1 AND ("j1"."versionId") IN (SELECT "t2"."B" FROM "public"."_RevisionToTable" AS "t2" INNER JOIN "public"."Revision" AS "j2" ON ("j2"."id") = ("t2"."A") WHERE ("j2"."id" = $3 AND "t2"."B" IS NOT NULL)) AND "t1"."A" IS NOT NULL)))
+                   FROM "Row"
+                   WHERE ("Row"."versionId") IN (SELECT "t1"."A"
+                                                 FROM "_RowToTable" AS "t1"
+                                                          INNER JOIN "Table" AS "j1" ON ("j1"."versionId") = ("t1"."B")
+                                                 WHERE ("j1"."createdId" = $1 AND ("j1"."versionId") IN (SELECT "t2"."B"
+                                                                                                         FROM "_RevisionToTable" AS "t2"
+                                                                                                                  INNER JOIN "Revision" AS "j2" ON ("j2"."id") = ("t2"."A")
+                                                                                                         WHERE ("j2"."id" = $3 AND "t2"."B" IS NOT NULL)) AND
+                                                        "t1"."A" IS NOT NULL)))
     SELECT 1
     FROM
     child_rows ct

@@ -56,8 +56,8 @@ export class RemoveTableHandler extends DraftHandler<
       await this.disconnectTableFromRevision(table.versionId, revisionId);
     } else {
       await this.removeTable(table.versionId);
-      await this.validateRevisionHasChanges();
     }
+    await this.validateRevisionHasChanges();
 
     this.tableRequestDto.id = tableId;
     this.tableRequestDto.versionId = table.versionId;
@@ -76,12 +76,10 @@ export class RemoveTableHandler extends DraftHandler<
       toRevisionId: this.revisionRequestDto.id,
     });
 
-    if (!areThereChangesInRevision) {
-      await this.transaction.revision.update({
-        where: { id: this.revisionRequestDto.id },
-        data: { hasChanges: false },
-      });
-    }
+    await this.transaction.revision.update({
+      where: { id: this.revisionRequestDto.id },
+      data: { hasChanges: areThereChangesInRevision },
+    });
   }
 
   private removeTable(tableId: string) {

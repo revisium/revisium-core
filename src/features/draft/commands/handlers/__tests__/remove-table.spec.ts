@@ -164,6 +164,52 @@ describe('RemoveTableHandler', () => {
     expect(revision.hasChanges).toBe(false);
   });
 
+  it('should set hasChanges as ture if table is readonly', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      headTableVersionId,
+      draftTableVersionId,
+    } = await prepareProject(prismaService);
+    await prismaService.revision.update({
+      where: {
+        id: draftTableVersionId,
+      },
+      data: {
+        hasChanges: false,
+      },
+    });
+    await prismaService.table.delete({
+      where: {
+        versionId: draftTableVersionId,
+      },
+    });
+    await prismaService.table.update({
+      where: {
+        versionId: headTableVersionId,
+      },
+      data: {
+        revisions: {
+          connect: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const revision = await prismaService.revision.findUniqueOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  });
+
   it('should not set hasChanges as false if conditions are not met', async () => {
     const { draftRevisionId, tableId, headTableVersionId } =
       await prepareProject(prismaService);
