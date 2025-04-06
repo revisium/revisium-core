@@ -145,14 +145,6 @@ describe('RemoveTableHandler', () => {
   it('should set hasChanges as false if conditions are met', async () => {
     const { draftRevisionId, tableId, headTableVersionId } =
       await prepareProject(prismaService);
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: true,
-      },
-    });
     await prismaService.table.delete({
       where: {
         versionId: headTableVersionId,
@@ -170,6 +162,41 @@ describe('RemoveTableHandler', () => {
       where: { id: draftRevisionId },
     });
     expect(revision.hasChanges).toBe(false);
+  });
+
+  it('should not set hasChanges as false if conditions are not met', async () => {
+    const { draftRevisionId, tableId, headTableVersionId } =
+      await prepareProject(prismaService);
+    await prismaService.table.delete({
+      where: {
+        versionId: headTableVersionId,
+      },
+    });
+    await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        readonly: false,
+        revisions: {
+          connect: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const revision = await prismaService.revision.findUniqueOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
   });
 
   it('should disconnect the table if the table is readonly', async () => {

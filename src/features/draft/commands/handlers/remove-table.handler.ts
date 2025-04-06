@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';
@@ -28,6 +29,7 @@ export class RemoveTableHandler extends DraftHandler<
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly foreignKeysService: ForeignKeysService,
+    protected readonly diffService: DiffService,
   ) {
     super(transactionService, draftContext);
   }
@@ -54,14 +56,7 @@ export class RemoveTableHandler extends DraftHandler<
       await this.disconnectTableFromRevision(table.versionId, revisionId);
     } else {
       await this.removeTable(table.versionId);
-
-      const isThereTableInHeadRevision = await this.isThereTableInHeadRevision(
-        data.tableId,
-      );
-
-      if (!isThereTableInHeadRevision) {
-        await this.validateRevisionHasChanges(revisionId);
-      }
+      await this.validateRevisionHasChanges();
     }
 
     this.tableRequestDto.id = tableId;
@@ -75,37 +70,18 @@ export class RemoveTableHandler extends DraftHandler<
     };
   }
 
-  private async validateRevisionHasChanges(revisionId: string) {
-    const firstDraftTable = await this.transaction.table.findFirst({
-      where: {
-        readonly: false,
-        revisions: { some: { id: this.revisionRequestDto.parentId } },
-      },
-      select: {
-        id: true,
-      },
-    });
+  private async validateRevisionHasChanges() {
+    const areThereChangesInRevision = await this.diffService.hasTableDiffs(
+      this.revisionRequestDto.parentId,
+      this.revisionRequestDto.id,
+    );
 
-    if (!firstDraftTable) {
+    if (!areThereChangesInRevision) {
       await this.transaction.revision.update({
-        where: { id: revisionId },
+        where: { id: this.revisionRequestDto.id },
         data: { hasChanges: false },
       });
     }
-  }
-
-  private async isThereTableInHeadRevision(tableId: string) {
-    const tableInHeadRevision = await this.transaction.table.findFirst({
-      where: {
-        id: tableId,
-        revisions: { some: { id: this.revisionRequestDto.parentId } },
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    return Boolean(tableInHeadRevision);
   }
 
   private removeTable(tableId: string) {
