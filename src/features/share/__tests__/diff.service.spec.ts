@@ -191,6 +191,10 @@ describe('DiffService', () => {
         changeType: TableDiffChangeType.Removed,
       });
     });
+
+    xit('pagination tests', () => {});
+
+    xit('sort order tests', () => {});
   });
 
   let prismaService: PrismaService;
