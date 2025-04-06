@@ -25,7 +25,6 @@ SELECT
         WHEN pt."createdId" IS NULL THEN 'added'
         WHEN ct."createdId" IS NULL THEN 'removed'
         WHEN ct."versionId" != pt."versionId" THEN 'modified'
-        ELSE 'unchanged'
         END AS "changeType"
 FROM
     child_tables ct

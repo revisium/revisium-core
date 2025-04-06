@@ -114,6 +114,35 @@ describe('DiffService', () => {
         changeType: TableDiffChangeType.Removed,
       });
     });
+
+    it('not touched table', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: [
+              {
+                id: fromRevision.id,
+              },
+              {
+                id: toRevision.id,
+              },
+            ],
+          },
+        },
+      });
+
+      const result = await diffService.tableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result.length).toEqual(0);
+    });
   });
 
   let prismaService: PrismaService;
