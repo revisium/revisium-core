@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { getTableDiffsPaginatedBetweenRevisions } from '@prisma/client/sql';
+import {
+  getTableDiffsPaginatedBetweenRevisions,
+  hasTableDiffsBetweenRevisions,
+} from '@prisma/client/sql';
 
 export enum TableDiffChangeType {
   Modified = 'modified',
@@ -71,5 +74,16 @@ export class DiffService {
         changeType: row.changeType as TableDiffChangeType,
       };
     });
+  }
+
+  public async hasTableDiffs(
+    fromRevisionId: string,
+    toRevisionId: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.$queryRawTyped(
+      hasTableDiffsBetweenRevisions(fromRevisionId, toRevisionId),
+    );
+
+    return Boolean(result[0]?.exists);
   }
 }
