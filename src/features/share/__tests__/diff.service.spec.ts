@@ -258,6 +258,67 @@ describe('DiffService', () => {
     });
   });
 
+  describe('countTableDiffs', () => {
+    it('complex', async () => {
+      const { fromRevision, toRevision } = await prepareComplexDiffs();
+
+      const result = await diffService.countTableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(3);
+    });
+
+    it('empty revision', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      const result = await diffService.countTableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(0);
+    });
+
+    it('modified table', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      const fromTable = await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: {
+              id: fromRevision.id,
+            },
+          },
+        },
+      });
+
+      await prismaService.table.create({
+        data: {
+          id: fromTable.id,
+          createdId: fromTable.createdId,
+          versionId: nanoid(),
+          revisions: {
+            connect: {
+              id: toRevision.id,
+            },
+          },
+        },
+      });
+
+      const result = await diffService.countTableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(1);
+    });
+  });
+
   let prismaService: PrismaService;
   let diffService: DiffService;
 
