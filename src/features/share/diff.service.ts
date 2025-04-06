@@ -104,13 +104,17 @@ export class DiffService {
     return result[0]?.count || 0;
   }
 
-  public async hasRowDiffs(
-    tableId: string,
-    fromRevisionId: string,
-    toRevisionId: string,
-  ): Promise<boolean> {
+  public async hasRowDiffs(options: {
+    tableCreatedId: string;
+    fromRevisionId: string;
+    toRevisionId: string;
+  }): Promise<boolean> {
     const result = await this.prisma.$queryRawTyped(
-      hasRowDiffsBetweenRevisions(tableId, fromRevisionId, toRevisionId),
+      hasRowDiffsBetweenRevisions(
+        options.tableCreatedId,
+        options.fromRevisionId,
+        options.toRevisionId,
+      ),
     );
 
     return Boolean(result[0]?.exists);

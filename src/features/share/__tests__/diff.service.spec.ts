@@ -8,6 +8,8 @@ import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('DiffService', () => {
+  let module: TestingModule;
+
   describe('diffTables', () => {
     it('modified table', async () => {
       const { fromRevision, toRevision } = await prepareRevisions();
@@ -414,11 +416,11 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasRowDiffs(
-        toTable.id,
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: toTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(true);
     });
@@ -459,11 +461,11 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasRowDiffs(
-        toTable.id,
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: toTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(true);
     });
@@ -487,11 +489,11 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasRowDiffs(
-        toTable.id,
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: toTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(true);
     });
@@ -516,11 +518,11 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasRowDiffs(
-        toTable.id,
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: toTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(true);
     });
@@ -555,11 +557,11 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasRowDiffs(
-        fromTable.id,
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: fromTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(false);
     });
@@ -610,11 +612,66 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasRowDiffs(
-        toTable.id,
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: toTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
+
+      expect(result).toEqual(false);
+    });
+
+    it('not modified row but renamed table', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      const fromTable = await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: fromRevision.id },
+          },
+        },
+      });
+
+      const toTable = await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: fromTable.createdId,
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          tables: {
+            connect: [
+              {
+                versionId: fromTable.versionId,
+              },
+              {
+                versionId: toTable.versionId,
+              },
+            ],
+          },
+          data: {},
+          hash: '',
+          schemaHash: '',
+        },
+      });
+
+      const result = await diffService.hasRowDiffs({
+        tableCreatedId: toTable.createdId,
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(false);
     });
@@ -789,12 +846,16 @@ describe('DiffService', () => {
   }
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       imports: [DatabaseModule],
       providers: [DiffService],
     }).compile();
 
     diffService = module.get(DiffService);
     prismaService = module.get(PrismaService);
+  });
+
+  afterEach(async () => {
+    await module.close();
   });
 });
