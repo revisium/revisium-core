@@ -82,23 +82,29 @@ export class DiffService {
     });
   }
 
-  public async hasTableDiffs(
-    fromRevisionId: string,
-    toRevisionId: string,
-  ): Promise<boolean> {
+  public async hasTableDiffs(options: {
+    fromRevisionId: string;
+    toRevisionId: string;
+  }): Promise<boolean> {
     const result = await this.prisma.$queryRawTyped(
-      hasTableDiffsBetweenRevisions(fromRevisionId, toRevisionId),
+      hasTableDiffsBetweenRevisions(
+        options.fromRevisionId,
+        options.toRevisionId,
+      ),
     );
 
     return Boolean(result[0]?.exists);
   }
 
-  public async countTableDiffs(
-    fromRevisionId: string,
-    toRevisionId: string,
-  ): Promise<number> {
+  public async countTableDiffs(options: {
+    fromRevisionId: string;
+    toRevisionId: string;
+  }): Promise<number> {
     const result = await this.prisma.$queryRawTyped(
-      countTableDiffsBetweenRevisions(fromRevisionId, toRevisionId),
+      countTableDiffsBetweenRevisions(
+        options.fromRevisionId,
+        options.toRevisionId,
+      ),
     );
 
     return result[0]?.count || 0;

@@ -261,10 +261,10 @@ describe('DiffService', () => {
     it('has diffs', async () => {
       const { fromRevision, toRevision } = await prepareComplexDiffs();
 
-      const result = await diffService.hasTableDiffs(
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasTableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(true);
     });
@@ -272,10 +272,10 @@ describe('DiffService', () => {
     it('empty revision', async () => {
       const { fromRevision, toRevision } = await prepareRevisions();
 
-      const result = await diffService.hasTableDiffs(
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasTableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(false);
     });
@@ -309,10 +309,10 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.hasTableDiffs(
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.hasTableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(true);
     });
@@ -322,10 +322,10 @@ describe('DiffService', () => {
     it('complex', async () => {
       const { fromRevision, toRevision } = await prepareComplexDiffs();
 
-      const result = await diffService.countTableDiffs(
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.countTableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(3);
     });
@@ -333,10 +333,10 @@ describe('DiffService', () => {
     it('empty revision', async () => {
       const { fromRevision, toRevision } = await prepareRevisions();
 
-      const result = await diffService.countTableDiffs(
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.countTableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(0);
     });
@@ -370,10 +370,10 @@ describe('DiffService', () => {
         },
       });
 
-      const result = await diffService.countTableDiffs(
-        fromRevision.id,
-        toRevision.id,
-      );
+      const result = await diffService.countTableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
 
       expect(result).toEqual(1);
     });

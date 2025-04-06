@@ -71,10 +71,10 @@ export class RemoveTableHandler extends DraftHandler<
   }
 
   private async validateRevisionHasChanges() {
-    const areThereChangesInRevision = await this.diffService.hasTableDiffs(
-      this.revisionRequestDto.parentId,
-      this.revisionRequestDto.id,
-    );
+    const areThereChangesInRevision = await this.diffService.hasTableDiffs({
+      fromRevisionId: this.revisionRequestDto.parentId,
+      toRevisionId: this.revisionRequestDto.id,
+    });
 
     if (!areThereChangesInRevision) {
       await this.transaction.revision.update({
