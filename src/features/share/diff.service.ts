@@ -35,12 +35,17 @@ export class DiffService {
     return this.transactionService.getTransactionUnsafe() ?? this.prismaService;
   }
 
-  public async tableDiffs(
-    fromRevisionId: string,
-    toRevisionId: string,
+  public async tableDiffs({
+    fromRevisionId,
+    toRevisionId,
     limit = 1,
-    offset: number = 0,
-  ): Promise<TableDiff[]> {
+    offset = 0,
+  }: {
+    fromRevisionId: string;
+    toRevisionId: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<TableDiff[]> {
     const result = await this.prisma.$queryRawTyped(
       getTableDiffsPaginatedBetweenRevisions(
         fromRevisionId,
