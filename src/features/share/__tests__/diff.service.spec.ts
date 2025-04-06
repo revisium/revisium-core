@@ -319,6 +319,145 @@ describe('DiffService', () => {
     });
   });
 
+  describe('hasRowDiffs', () => {
+    it('modified row', async () => {
+      const { fromRevision, toRevision, fromTable, toTable } =
+        await prepareTables();
+
+      const fromRow = await prismaService.row.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          tables: {
+            connect: {
+              versionId: fromTable.versionId,
+            },
+          },
+          data: {},
+          hash: '',
+          schemaHash: '',
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          id: fromRow.id,
+          createdId: fromRow.createdId,
+          versionId: nanoid(),
+          tables: {
+            connect: {
+              versionId: toTable.versionId,
+            },
+          },
+          data: {},
+          hash: '',
+          schemaHash: '',
+        },
+      });
+
+      const result = await diffService.hasRowDiffs(
+        toTable.id,
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(true);
+    });
+
+    it('added row revision', async () => {
+      const { fromRevision, toRevision, toTable } = await prepareTables();
+
+      await prismaService.row.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          tables: {
+            connect: {
+              versionId: toTable.versionId,
+            },
+          },
+          data: {},
+          hash: '',
+          schemaHash: '',
+        },
+      });
+
+      const result = await diffService.hasTableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(true);
+    });
+
+    it('removed row', async () => {
+      const { fromRevision, toRevision, fromTable } = await prepareTables();
+
+      await prismaService.row.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          tables: {
+            connect: {
+              versionId: fromTable.versionId,
+            },
+          },
+          data: {},
+          hash: '',
+          schemaHash: '',
+        },
+      });
+
+      const result = await diffService.hasTableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(true);
+    });
+
+    it('not modified row', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      const fromTable = await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: [{ id: fromRevision.id }, { id: toRevision.id }],
+          },
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          tables: {
+            connect: {
+              versionId: fromTable.versionId,
+            },
+          },
+          data: {},
+          hash: '',
+          schemaHash: '',
+        },
+      });
+
+      const result = await diffService.hasTableDiffs(
+        fromRevision.id,
+        toRevision.id,
+      );
+
+      expect(result).toEqual(false);
+    });
+  });
+
   let prismaService: PrismaService;
   let diffService: DiffService;
 
@@ -404,6 +543,39 @@ describe('DiffService', () => {
       toModifiedTable,
       addedTable,
       removedTable,
+    };
+  }
+
+  async function prepareTables() {
+    const { fromRevision, toRevision } = await prepareRevisions();
+
+    const fromTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    const toTable = await prismaService.table.create({
+      data: {
+        id: fromTable.id,
+        createdId: fromTable.createdId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    return {
+      fromRevision,
+      toRevision,
+      fromTable,
+      toTable,
     };
   }
 

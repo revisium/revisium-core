@@ -5,6 +5,7 @@ import {
   getTableDiffsPaginatedBetweenRevisions,
   hasTableDiffsBetweenRevisions,
   countTableDiffsBetweenRevisions,
+  hasRowDiffsBetweenRevisions,
 } from '@prisma/client/sql';
 
 export enum TableDiffChangeType {
@@ -97,5 +98,17 @@ export class DiffService {
     );
 
     return result[0]?.count || 0;
+  }
+
+  public async hasRowDiffs(
+    tableId: string,
+    fromRevisionId: string,
+    toRevisionId: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.$queryRawTyped(
+      hasRowDiffsBetweenRevisions(tableId, fromRevisionId, toRevisionId),
+    );
+
+    return Boolean(result[0]?.exists);
   }
 }
