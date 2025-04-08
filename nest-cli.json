@@ -14,6 +14,11 @@
         "include": "../prisma/**/*.{json,prisma,toml,sql}",
         "outDir": "dist/prisma",
         "watchAssets": true
+      },
+      {
+        "include": "__generated__/sql/*.{js,mjs}",
+        "outDir": "dist/src",
+        "watchAssets": true
       }
     ]
   }
