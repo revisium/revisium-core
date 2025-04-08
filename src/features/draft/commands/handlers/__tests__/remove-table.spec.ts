@@ -143,19 +143,70 @@ describe('RemoveTableHandler', () => {
   });
 
   it('should set hasChanges as false if conditions are met', async () => {
-    const { draftRevisionId, tableId, headTableVersionId } =
-      await prepareProject(prismaService);
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: true,
-      },
-    });
+    const {
+      draftRevisionId,
+      tableId,
+      createdIdForTableInSchemaTable,
+      headTableVersionId,
+      schemaTableCreatedId,
+      schemaTableVersionId,
+    } = await prepareProject(prismaService);
     await prismaService.table.delete({
       where: {
         versionId: headTableVersionId,
+      },
+    });
+    // draft schema table
+    await prismaService.table.update({
+      where: {
+        versionId: schemaTableVersionId,
+      },
+      data: {
+        revisions: {
+          disconnect: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+    await prismaService.row.deleteMany({
+      where: {
+        tables: {
+          some: {
+            versionId: schemaTableVersionId,
+          },
+        },
+      },
+    });
+    const draftSchemaTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Schema,
+        createdId: schemaTableCreatedId,
+        versionId: nanoid(),
+        readonly: false,
+        revisions: {
+          connect: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+    // row in schema table
+    await prismaService.row.create({
+      data: {
+        id: tableId,
+        versionId: nanoid(),
+        createdId: createdIdForTableInSchemaTable,
+        data: {},
+        meta: {},
+        hash: '',
+        schemaHash: '',
+        readonly: false,
+        tables: {
+          connect: {
+            versionId: draftSchemaTable.versionId,
+          },
+        },
       },
     });
 
@@ -170,6 +221,87 @@ describe('RemoveTableHandler', () => {
       where: { id: draftRevisionId },
     });
     expect(revision.hasChanges).toBe(false);
+  });
+
+  it('should set hasChanges as true if table is readonly', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      headTableVersionId,
+      draftTableVersionId,
+    } = await prepareProject(prismaService);
+    await prismaService.revision.update({
+      where: {
+        id: draftRevisionId,
+      },
+      data: {
+        hasChanges: false,
+      },
+    });
+    await prismaService.table.delete({
+      where: {
+        versionId: draftTableVersionId,
+      },
+    });
+    await prismaService.table.update({
+      where: {
+        versionId: headTableVersionId,
+      },
+      data: {
+        revisions: {
+          connect: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const revision = await prismaService.revision.findUniqueOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
+  });
+
+  it('should not set hasChanges as false if conditions are not met', async () => {
+    const { draftRevisionId, tableId, headTableVersionId } =
+      await prepareProject(prismaService);
+    await prismaService.table.delete({
+      where: {
+        versionId: headTableVersionId,
+      },
+    });
+    await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        readonly: false,
+        revisions: {
+          connect: {
+            id: draftRevisionId,
+          },
+        },
+      },
+    });
+
+    const command = new RemoveTableCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    await runTransaction(command);
+
+    const revision = await prismaService.revision.findUniqueOrThrow({
+      where: { id: draftRevisionId },
+    });
+    expect(revision.hasChanges).toBe(true);
   });
 
   it('should disconnect the table if the table is readonly', async () => {

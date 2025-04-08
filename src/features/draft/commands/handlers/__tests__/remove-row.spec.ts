@@ -173,14 +173,6 @@ describe('RemoveRowHandler', () => {
   it('should set hasChanges as false if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, rowId, headRowVersionId } = ids;
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: true,
-      },
-    });
     await prismaService.row.delete({
       where: {
         versionId: headRowVersionId,
@@ -197,7 +189,7 @@ describe('RemoveRowHandler', () => {
     await checkRevision(ids, false);
   });
 
-  it('should not set hasChanges as false if there is another draft row', async () => {
+  it('should not set hasChanges as false if there is another row', async () => {
     const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
@@ -206,14 +198,6 @@ describe('RemoveRowHandler', () => {
       headRowVersionId,
       draftTableVersionId,
     } = ids;
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: true,
-      },
-    });
     await prismaService.row.delete({
       where: {
         versionId: headRowVersionId,
@@ -224,9 +208,56 @@ describe('RemoveRowHandler', () => {
         id: nanoid(),
         versionId: nanoid(),
         createdId: nanoid(),
+        readonly: false,
         data: {},
         hash: '',
         schemaHash: '',
+        tables: {
+          connect: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+
+    const command = new RemoveRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+    });
+
+    await runTransaction(command);
+    await checkRevision(ids, true);
+  });
+
+  it('should set hasChanges as true if remove readonly row', async () => {
+    const ids = await prepareProject(prismaService);
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      headRowVersionId,
+      draftRowVersionId,
+      draftTableVersionId,
+    } = ids;
+    await prismaService.revision.update({
+      where: {
+        id: draftRevisionId,
+      },
+      data: {
+        hasChanges: false,
+      },
+    });
+    await prismaService.row.delete({
+      where: {
+        versionId: draftRowVersionId,
+      },
+    });
+    await prismaService.row.update({
+      where: {
+        versionId: headRowVersionId,
+      },
+      data: {
         tables: {
           connect: {
             versionId: draftTableVersionId,

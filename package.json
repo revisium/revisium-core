@@ -18,6 +18,7 @@
   "scripts": {
     "prisma:db:push": "npx prisma db push",
     "prisma:generate": "npx prisma generate",
+    "prisma:generate:sql": "npx prisma generate --sql && shx rm -rf ./src/__generated__/sql && shx cp -r ./node_modules/.prisma/client/sql ./src/__generated__/sql",
     "prisma:migrate:deploy": "npx prisma migrate deploy",
     "generate:seed:api": "ts-node prisma/seed/generateSeedApi.ts",
     "generate:seed:load": "ts-node prisma/seed/loadFromSeedApi.ts",
@@ -30,7 +31,7 @@
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "NODE_ENV=production npm run prisma:migrate:deploy && npm run seed:prod && node dist/src/main",
-    "lint:ci": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:ci": "eslint \"{src,apps,libs,test}/**/*.ts\" --ignore-pattern \"src/__generated__/sql/**\"",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "NODE_ENV=test jest",
     "test:watch": "NODE_ENV=test jest --watch",
@@ -100,6 +101,7 @@
     "jest-mock-extended": "^3.0.5",
     "prettier": "^3.2.5",
     "prisma": "^6.1.0",
+    "shx": "^0.4.0",
     "source-map-support": "^0.5.21",
     "supertest": "^6.3.4",
     "swagger-typescript-api": "^13.0.22",
@@ -126,6 +128,7 @@
     },
     "collectCoverageFrom": [
       "<rootDir>/src/**/*.(t|j)s",
+      "!<rootDir>/src/__generated__/**",
       "!<rootDir>/src/**/__tests__/**",
       "!<rootDir>/src/**/index.ts"
     ],

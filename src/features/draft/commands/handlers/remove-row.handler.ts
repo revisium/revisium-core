@@ -1,10 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
+import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  RemoveRowCommand,
-  RemoveRowCommandData,
-} from 'src/features/draft/commands/impl/remove-row.command';
+import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
@@ -35,6 +33,7 @@ export class RemoveRowHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly foreignKeysService: ForeignKeysService,
+    protected readonly diffService: DiffService,
   ) {
     super(transactionService, draftContext);
   }
@@ -63,19 +62,20 @@ export class RemoveRowHandler extends DraftHandler<
     this.rowRequestDto.id = rowId;
     this.rowRequestDto.versionId = row.versionId;
 
-    const isThereRowInHeadRevision = await this.isThereRowInHeadRevision(
-      input.tableId,
-      input.rowId,
-    );
+    const areThereChangesInDraftTable = await this.areTheChangesInDraftTable();
 
     let wasTableReset = false;
 
-    if (!isThereRowInHeadRevision) {
-      wasTableReset = await this.resetTableIfNecessary(input);
+    if (!areThereChangesInDraftTable) {
+      await this.revertTable();
+      wasTableReset = true;
     }
 
-    if (wasTableReset) {
-      await this.validateRevisionHasChanges(input.revisionId);
+    const wasTableUpdated =
+      this.tableRequestDto.versionId !== this.tableRequestDto.previousVersionId;
+
+    if (wasTableReset || wasTableUpdated || row.readonly) {
+      await this.validateRevisionHasChanges();
     }
 
     return {
@@ -89,70 +89,24 @@ export class RemoveRowHandler extends DraftHandler<
     };
   }
 
-  private async validateRevisionHasChanges(revisionId: string) {
-    const firstDraftTable = await this.transaction.table.findFirst({
-      where: {
-        readonly: false,
-        revisions: { some: { id: this.revisionRequestDto.parentId } },
-      },
-      select: {
-        id: true,
-      },
+  private async validateRevisionHasChanges() {
+    const areThereChangesInRevision = await this.diffService.hasTableDiffs({
+      fromRevisionId: this.revisionRequestDto.parentId,
+      toRevisionId: this.revisionRequestDto.id,
     });
 
-    if (!firstDraftTable) {
-      await this.transaction.revision.update({
-        where: { id: revisionId },
-        data: { hasChanges: false },
-      });
-    }
-  }
-
-  private async isThereRowInHeadRevision(tableId: string, rowId: string) {
-    const rowInHeadRevision = await this.transaction.row.findFirst({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            id: tableId,
-            revisions: { some: { id: this.revisionRequestDto.parentId } },
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
+    await this.transaction.revision.update({
+      where: { id: this.revisionRequestDto.id },
+      data: { hasChanges: areThereChangesInRevision },
     });
-
-    return Boolean(rowInHeadRevision);
   }
 
-  private async resetTableIfNecessary(data: RemoveRowCommandData) {
-    if (!(await this.isThereAnyDraftRowInTable(data))) {
-      await this.revertTable();
-      return true;
-    }
-
-    return false;
-  }
-
-  private async isThereAnyDraftRowInTable(data: RemoveRowCommandData) {
-    const firstDraftRow = await this.transaction.row.findFirst({
-      where: {
-        readonly: false,
-        tables: {
-          some: {
-            id: data.tableId,
-            revisions: { some: { id: data.revisionId } },
-          },
-        },
-      },
-      select: {
-        id: true,
-      },
+  private async areTheChangesInDraftTable() {
+    return this.diffService.hasRowDiffs({
+      tableCreatedId: this.tableRequestDto.createdId,
+      fromRevisionId: this.revisionRequestDto.parentId,
+      toRevisionId: this.revisionRequestDto.id,
     });
-
-    return Boolean(firstDraftRow);
   }
 
   private disconnectRow(rowId: string) {
