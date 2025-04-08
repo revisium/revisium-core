@@ -6,7 +6,7 @@ import {
   hasTableDiffsBetweenRevisions,
   countTableDiffsBetweenRevisions,
   hasRowDiffsBetweenRevisions,
-} from '@prisma/client/sql';
+} from 'src/__generated__/sql';
 
 export enum TableDiffChangeType {
   Modified = 'modified',
