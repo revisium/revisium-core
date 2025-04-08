@@ -93,6 +93,7 @@ export const prepareProject = async (
   const schemaTableVersionId = nanoid();
   const schemaTableCreatedId = nanoid();
   const tableId = `table-${nanoid()}`;
+  const createdIdForTableInSchemaTable = `table-${nanoid()}`;
   const linkedTableId = `table-${nanoid()}`;
   const tableCreatedId = nanoid();
   const linkedTableCreatedId = nanoid();
@@ -190,7 +191,7 @@ export const prepareProject = async (
     data: {
       id: tableId,
       versionId: nanoid(),
-      createdId: nanoid(),
+      createdId: createdIdForTableInSchemaTable,
       readonly: true,
       tables: {
         connect: {
@@ -365,6 +366,7 @@ export const prepareProject = async (
     headRevisionId,
     draftRevisionId,
     tableId,
+    createdIdForTableInSchemaTable,
     linkedTableId,
     tableCreatedId,
     linkedTableCreatedId,

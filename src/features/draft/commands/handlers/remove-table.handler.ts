@@ -57,12 +57,13 @@ export class RemoveTableHandler extends DraftHandler<
     } else {
       await this.removeTable(table.versionId);
     }
-    await this.validateRevisionHasChanges();
 
     this.tableRequestDto.id = tableId;
     this.tableRequestDto.versionId = table.versionId;
 
     await this.removeSchema({ revisionId, tableId });
+
+    await this.validateRevisionHasChanges();
 
     return {
       branchId: this.revisionRequestDto.branchId,
