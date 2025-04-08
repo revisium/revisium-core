@@ -33,7 +33,7 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run prisma:generate
+      - run: npm run prisma:generate:test
 
       - run: npm run lint:ci
 

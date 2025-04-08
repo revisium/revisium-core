@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "prisma:db:push": "npx prisma db push",
-    "prisma:generate": "npx prisma generate --sql",
+    "prisma:generate": "npx prisma generate",
+    "prisma:generate:test": "dotenv -e .env.test npx prisma generate",
     "prisma:generate:watch": "npx prisma generate --sql --watch",
     "prisma:migrate:deploy": "npx prisma migrate deploy",
     "generate:seed:api": "ts-node prisma/seed/generateSeedApi.ts",
