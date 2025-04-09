@@ -90,6 +90,7 @@ describe('InternalUpdateRowHandler', () => {
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(row.createdId).toBe(rowCreatedId);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update the meta field', async () => {
@@ -179,6 +180,7 @@ describe('InternalUpdateRowHandler', () => {
       },
     });
     expect(row.createdId).toBe(rowCreatedId);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
@@ -212,6 +214,18 @@ describe('InternalUpdateRowHandler', () => {
     expect(result.tableVersionId).toBe(draftTableVersionId);
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).not.toBe(draftRowVersionId);
+
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   function runTransaction(

@@ -119,6 +119,7 @@ describe('InternalRenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.versionId).toBe(draftRowVersionId);
     expect(row.createdId).toBe(rowCreatedId);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should rename the row in a new created table if conditions are met', async () => {
@@ -166,6 +167,7 @@ describe('InternalRenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.versionId).toBe(draftRowVersionId);
     expect(row.createdId).toBe(rowCreatedId);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should rename a new created row in the table if conditions are met', async () => {
@@ -217,6 +219,7 @@ describe('InternalRenameRowHandler', () => {
     expect(row.id).toBe(nextRowId);
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.versionId).not.toBe(draftRowVersionId);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update foreign keys in linked rows when renaming a row', async () => {

@@ -230,6 +230,7 @@ export class InternalRenameRowHandler extends DraftHandler<
         versionId: this.rowRequestDto.versionId,
       },
       data: {
+        updatedAt: new Date(),
         id: input.nextRowId,
       },
       select: {
