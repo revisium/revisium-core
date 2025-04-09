@@ -52,6 +52,7 @@ export class InternalUpdateRowHandler extends DraftHandler<
         versionId: this.rowRequestDto.versionId,
       },
       data: {
+        updatedAt: new Date(),
         data: input.data,
         meta: input.meta,
         hash: await this.hashService.hashObject(input.data),

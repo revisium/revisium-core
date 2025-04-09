@@ -75,14 +75,14 @@ describe('InternalUpdateRowHandler', () => {
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).toBe(draftRowVersionId);
 
+    const previousRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        versionId: result.previousRowVersionId,
+      },
+    });
     const row = await prismaService.row.findFirstOrThrow({
       where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
+        versionId: result.rowVersionId,
       },
     });
     expect(row.data).toStrictEqual({ ver: 3 });
@@ -90,6 +90,10 @@ describe('InternalUpdateRowHandler', () => {
     expect(row.hash).toBe(objectHash({ ver: 3 }));
     expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(row.createdId).toBe(rowCreatedId);
+
+    expect(previousRow.versionId).toStrictEqual(row.versionId);
+    expect(previousRow.createdAt).toStrictEqual(row.createdAt);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update the meta field', async () => {
@@ -152,6 +156,14 @@ describe('InternalUpdateRowHandler', () => {
         readonly: true,
       },
     });
+    await prismaService.row.update({
+      where: {
+        versionId: draftRowVersionId,
+      },
+      data: {
+        readonly: true,
+      },
+    });
 
     const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
@@ -166,19 +178,24 @@ describe('InternalUpdateRowHandler', () => {
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
     expect(result.tableVersionId).not.toBe(draftTableVersionId);
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
+    expect(result.rowVersionId).not.toBe(draftRowVersionId);
 
+    const previousRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        versionId: result.previousRowVersionId,
+      },
+    });
     const row = await prismaService.row.findFirstOrThrow({
       where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
+        versionId: result.rowVersionId,
       },
     });
     expect(row.createdId).toBe(rowCreatedId);
+
+    expect(previousRow.versionId).not.toStrictEqual(row.versionId);
+    expect(previousRow.createdAt).toStrictEqual(row.createdAt);
+    expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
@@ -212,6 +229,21 @@ describe('InternalUpdateRowHandler', () => {
     expect(result.tableVersionId).toBe(draftTableVersionId);
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).not.toBe(draftRowVersionId);
+
+    const previousRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        versionId: result.previousRowVersionId,
+      },
+    });
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        versionId: result.rowVersionId,
+      },
+    });
+    expect(previousRow.versionId).not.toStrictEqual(row.versionId);
+    expect(previousRow.createdAt).toStrictEqual(row.createdAt);
+    expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
+    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
   });
 
   function runTransaction(

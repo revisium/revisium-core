@@ -189,6 +189,7 @@ describe('InternalCreateRowHandler', () => {
     expect(row.createdId).toBeTruthy();
     expect(row.createdId).not.toBe(row.id);
     expect(row.createdId).not.toBe(row.versionId);
+    expect(row.createdAt).toStrictEqual(row.updatedAt);
   }
 
   function runTransaction(

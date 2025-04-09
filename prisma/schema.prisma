@@ -163,12 +163,17 @@ model Endpoint {
 }
 
 model Table {
-  versionId String     @id
+  versionId String @id
   createdId String
-  createdAt DateTime   @default(now())
-  readonly  Boolean    @default(false)
-  system    Boolean    @default(false)
   id        String
+
+  readonly Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  system Boolean @default(false)
+
   revisions Revision[]
   rows      Row[]
 
@@ -176,16 +181,21 @@ model Table {
 }
 
 model Row {
-  versionId  String   @id
-  createdId  String
-  createdAt  DateTime @default(now())
-  readonly   Boolean  @default(false)
-  id         String
-  tables     Table[]
+  versionId String @id
+  createdId String
+  id        String
+
+  readonly Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
   data       Json
-  meta       Json     @default("{}")
+  meta       Json   @default("{}")
   hash       String
   schemaHash String
+
+  tables Table[]
 
   @@index([data], type: Gin)
   @@index([id])

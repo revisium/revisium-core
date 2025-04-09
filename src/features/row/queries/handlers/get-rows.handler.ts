@@ -57,7 +57,7 @@ export class GetRowsHandler
       .rows({
         ...args,
         orderBy: {
-          id: Prisma.SortOrder.asc,
+          createdAt: Prisma.SortOrder.desc,
         },
       });
   }
