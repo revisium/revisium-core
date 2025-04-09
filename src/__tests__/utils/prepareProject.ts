@@ -219,6 +219,8 @@ export const prepareProject = async (
   // row
   await prismaService.row.create({
     data: {
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2024-01-01T00:00:00.000Z'),
       id: rowId,
       versionId: headRowVersionId,
       createdId: rowCreatedId,
@@ -235,6 +237,8 @@ export const prepareProject = async (
   });
   await prismaService.row.create({
     data: {
+      createdAt: new Date('2024-01-01T00:00:00.000Z'),
+      updatedAt: new Date('2025-01-01T00:00:00.000Z'),
       id: rowId,
       versionId: draftRowVersionId,
       createdId: rowCreatedId,
