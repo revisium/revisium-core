@@ -11,16 +11,22 @@ export type RowModelContext = {
 @ObjectType()
 export class RowModel {
   @Field()
+  createdId: string;
+
+  @Field()
+  id: string;
+
+  @Field()
   versionId: string;
 
   @Field(() => Date)
   createdAt: Date;
 
+  @Field(() => Date)
+  updatedAt: Date;
+
   @Field(() => Boolean)
   readonly: boolean;
-
-  @Field()
-  id: string;
 
   @Field(() => GraphQLJSON)
   data: Prisma.JsonValue;
