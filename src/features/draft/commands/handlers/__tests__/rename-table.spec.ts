@@ -110,6 +110,7 @@ describe('RenameTableHandler', () => {
 
     const { schemaRow, table } = await getSchemaRowAndTable(ids);
 
+    expect(result.tableVersionId).toBe(draftTableVersionId);
     expect(schemaRow.id).toStrictEqual(nextTableId);
     expect(table.id).toBe(nextTableId);
     expect(table.versionId).toBe(ids.draftTableVersionId);
@@ -134,13 +135,23 @@ describe('RenameTableHandler', () => {
       nextTableId,
     });
 
-    await runTransaction(command);
+    const result = await runTransaction(command);
 
     const { schemaRow, table } = await getSchemaRowAndTable(ids);
 
+    const previousTable = await prismaService.table.findUniqueOrThrow({
+      where: { versionId: result.previousTableVersionId },
+    });
+    const draftTable = await prismaService.table.findUniqueOrThrow({
+      where: { versionId: result.tableVersionId },
+    });
+
+    expect(result.tableVersionId).not.toBe(draftTableVersionId);
     expect(schemaRow.id).toStrictEqual(nextTableId);
     expect(table.id).toBe(nextTableId);
     expect(table.versionId).not.toBe(ids.draftTableVersionId);
+    expect(draftTable.createdAt).toStrictEqual(previousTable.createdAt);
+    expect(draftTable.createdAt).not.toBe(draftTable.updatedAt);
     await revisionCheck(ids);
   });
 

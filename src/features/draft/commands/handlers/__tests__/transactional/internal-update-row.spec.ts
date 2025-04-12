@@ -91,6 +91,7 @@ describe('InternalUpdateRowHandler', () => {
     expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(row.createdId).toBe(rowCreatedId);
 
+    expect(result.previousTableVersionId).toStrictEqual(result.tableVersionId);
     expect(previousRow.versionId).toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
@@ -180,6 +181,12 @@ describe('InternalUpdateRowHandler', () => {
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).not.toBe(draftRowVersionId);
 
+    const previousTable = await prismaService.table.findUniqueOrThrow({
+      where: { versionId: result.previousTableVersionId },
+    });
+    const draftTable = await prismaService.table.findUniqueOrThrow({
+      where: { versionId: result.tableVersionId },
+    });
     const previousRow = await prismaService.row.findFirstOrThrow({
       where: {
         versionId: result.previousRowVersionId,
@@ -196,6 +203,12 @@ describe('InternalUpdateRowHandler', () => {
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+
+    expect(result.previousTableVersionId).not.toStrictEqual(
+      result.tableVersionId,
+    );
+    expect(previousTable.createdAt).toStrictEqual(draftTable.createdAt);
+    expect(draftTable.createdAt).not.toStrictEqual(draftTable.updatedAt);
   });
 
   it('should update a new created row in the table if conditions are met', async () => {

@@ -123,6 +123,8 @@ describe('InternalRenameRowHandler', () => {
     expect(previousRow.versionId).toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+
+    expect(result.previousTableVersionId).toStrictEqual(result.tableVersionId);
   });
 
   it('should rename the row in a new created table if conditions are met', async () => {
@@ -165,6 +167,12 @@ describe('InternalRenameRowHandler', () => {
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).not.toBe(draftRowVersionId);
 
+    const previousTable = await prismaService.table.findUniqueOrThrow({
+      where: { versionId: result.previousTableVersionId },
+    });
+    const draftTable = await prismaService.table.findUniqueOrThrow({
+      where: { versionId: result.tableVersionId },
+    });
     const previousRow = await prismaService.row.findFirstOrThrow({
       where: {
         versionId: result.previousRowVersionId,
@@ -182,6 +190,12 @@ describe('InternalRenameRowHandler', () => {
     expect(previousRow.versionId).not.toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+
+    expect(result.previousTableVersionId).not.toStrictEqual(
+      result.tableVersionId,
+    );
+    expect(previousTable.createdAt).toStrictEqual(draftTable.createdAt);
+    expect(draftTable.createdAt).not.toStrictEqual(draftTable.updatedAt);
   });
 
   it('should rename a new created row in the table if conditions are met', async () => {
