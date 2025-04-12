@@ -14,9 +14,7 @@ export const getInvalidFieldNamesInSchema = (schema: JsonSchema) => {
 
   traverseStore(schemaStore, (item) => {
     if (item.parent?.type === JsonSchemaTypeName.Object) {
-      try {
-        validateJsonFieldName(item.name);
-      } catch (e) {
+      if (!validateJsonFieldName(item.name)) {
         invalidFields.push(item);
       }
     }

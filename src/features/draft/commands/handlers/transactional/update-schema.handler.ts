@@ -16,7 +16,6 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { getInvalidFieldNamesInSchema } from 'src/features/share/utils/schema/lib/getInvalidFieldNamesInSchema';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -94,9 +93,7 @@ export class UpdateSchemaHandler extends DraftHandler<
   private validateFieldNamesInSchema(patches: JsonPatch[]) {
     for (const patch of patches) {
       if (patch.op === 'add' || patch.op === 'replace') {
-        const invalidFields = getInvalidFieldNamesInSchema(
-          patch.value as JsonSchema,
-        );
+        const invalidFields = getInvalidFieldNamesInSchema(patch.value);
 
         if (invalidFields.length > 0) {
           throw new BadRequestException(
