@@ -9,6 +9,10 @@ import {
   JsonPatchReplace,
 } from 'src/features/share/utils/schema/types/json-patch.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import {
+  VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE,
+  validateJsonFieldName,
+} from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 
 export const applyReplacePatch = (
   store: JsonSchemaStore,
@@ -89,6 +93,14 @@ export const applyMovePatch = (
 
   const foundFromParent = getJsonSchemaStoreByPath(store, fromParentPath);
   const foundToParent = getJsonSchemaStoreByPath(store, toParentPath);
+
+  const isValidToField = validateJsonFieldName(toField);
+
+  if (!isValidToField) {
+    throw new Error(
+      `Invalid name: ${toField}. ${VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE}`,
+    );
+  }
 
   if (!foundFromParent || !foundToParent) {
     throw new Error('Cannot move from or to non-existent parent');

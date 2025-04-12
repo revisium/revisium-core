@@ -1131,6 +1131,24 @@ describe('applyPatches', () => {
       expect(() => applyPatches(schema, [movePatch])).toThrow('Invalid path');
     });
 
+    it('invalid field name', () => {
+      const movePatch = getMovePatch({
+        from: '/properties/field2',
+        path: '/properties/field/properties/123123',
+      });
+
+      const moveField = getArraySchema(getStringSchema());
+
+      const schema = getObjectSchema({
+        field: getObjectSchema({ subField: getStringSchema() }),
+        field2: moveField,
+      });
+
+      expect(() => applyPatches(schema, [movePatch])).toThrow(
+        'Invalid name: 123123. It must contain',
+      );
+    });
+
     it('move and replace in object', () => {
       const movePatch = getMovePatch({
         from: '/properties/field2',
