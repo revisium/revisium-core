@@ -12,9 +12,10 @@ import {
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { getInvalidFieldNamesInSchema } from 'src/features/share/utils/schema/lib/getInvalidFieldNamesInSchema';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -40,6 +41,13 @@ export class CreateSchemaHandler extends DraftHandler<
 
     await this.validateSchema(data);
 
+    const invalidFields = getInvalidFieldNamesInSchema(data as JsonSchema);
+    if (invalidFields.length > 0) {
+      throw new BadRequestException(
+        `Invalid field names: ${invalidFields.map((item) => item.name).join(', ')}. ${VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE}`,
+      );
+    }
+
     const historyPatches = await this.getHistoryPatchesByData(data);
 
     await this.createRowInSchemaTable(input, historyPatches);
@@ -48,11 +56,8 @@ export class CreateSchemaHandler extends DraftHandler<
   }
 
   private async validateSchema(data: Prisma.InputJsonValue) {
-    const { result, errors } = await this.jsonSchemaValidator.validate(
-      data,
-      metaSchema,
-      this.jsonSchemaValidator.metaSchemaHash,
-    );
+    const { result, errors } =
+      this.jsonSchemaValidator.validateMetaSchema(data);
 
     if (!result) {
       throw new BadRequestException('data is not valid', {
