@@ -112,10 +112,10 @@ export const createTestingModule = async () => {
   const prismaService = module.get(PrismaService);
 
   const commandBus = module.get(CommandBus);
-  commandBus.register([...TABLE_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
+  // commandBus.register([...TABLE_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
-  queryBus.register([...SHARE_QUERIES_HANDLERS, ...ANOTHER_QUERIES]);
+  // queryBus.register([...SHARE_QUERIES_HANDLERS, ...ANOTHER_QUERIES]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);

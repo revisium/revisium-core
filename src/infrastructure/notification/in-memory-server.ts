@@ -15,4 +15,10 @@ export class InMemoryServer extends Server implements CustomTransportStrategy {
 
     callback();
   }
+
+  on(): any {}
+
+  unwrap<T>(): T {
+    return undefined as T;
+  }
 }

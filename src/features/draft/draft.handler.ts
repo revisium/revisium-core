@@ -3,9 +3,7 @@ import { ICommand } from '@nestjs/cqrs/dist/interfaces/commands/command.interfac
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 
-export abstract class DraftHandler<T extends ICommand, Result = unknown>
-  implements ICommandHandler<T>
-{
+export abstract class DraftHandler<T extends ICommand, Result = unknown> {
   protected constructor(
     protected transactionService: TransactionPrismaService,
     protected draftContext: DraftContextService,

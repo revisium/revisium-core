@@ -5,6 +5,6 @@ export class CreateTableDto {
   @ApiProperty()
   tableId: string;
 
-  @ApiProperty({ type: 'object' })
+  @ApiProperty({ type: 'object', additionalProperties: false })
   schema: Prisma.InputJsonValue;
 }

@@ -25,4 +25,8 @@ export class InMemoryClient extends ClientProxy {
   protected publish() {
     return () => {};
   }
+
+  unwrap<T>(): T {
+    return undefined as T;
+  }
 }

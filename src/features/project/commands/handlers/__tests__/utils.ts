@@ -29,10 +29,10 @@ export const createTestingModule = async () => {
   const prismaService = module.get(PrismaService);
 
   const commandBus = module.get(CommandBus);
-  commandBus.register([...PROJECT_HANDLERS]);
-
-  const queryBus = module.get(QueryBus);
-  queryBus.register([...(PROJECT_QUERIES as QueryHandlerType[])]);
+  // commandBus.register([...PROJECT_HANDLERS]);
+  //
+  // const queryBus = module.get(QueryBus);
+  // queryBus.register([...(PROJECT_QUERIES as QueryHandlerType[])]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);
