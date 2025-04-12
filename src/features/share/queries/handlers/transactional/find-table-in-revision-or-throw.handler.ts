@@ -25,6 +25,8 @@ export class FindTableInRevisionOrThrowHandler
       select: {
         versionId: true,
         createdId: true,
+        createdAt: true,
+        updatedAt: true,
         readonly: true,
         system: true,
       },

@@ -42,6 +42,7 @@ export class GetOrCreateDraftTableHandler
     await this.createNextVersionTable(
       previousTable.versionId,
       previousTable.system,
+      previousTable.createdAt,
     );
 
     return this.tableRequestDto.versionId;
@@ -50,10 +51,12 @@ export class GetOrCreateDraftTableHandler
   private async createNextVersionTable(
     previousTableVersionId: string,
     system: boolean,
+    createdAt: Date,
   ) {
     await this.createDraftTable(
       await this.getPreviousRowsInTable(previousTableVersionId),
       system,
+      createdAt,
     );
     await this.disconnectPreviousTable(previousTableVersionId);
   }
@@ -69,7 +72,11 @@ export class GetOrCreateDraftTableHandler
       .rows({ select: { versionId: true } });
   }
 
-  private createDraftTable(rowIds: { versionId: string }[], system: boolean) {
+  private createDraftTable(
+    rowIds: { versionId: string }[],
+    system: boolean,
+    createdAt: Date,
+  ) {
     this.tableRequestDto.versionId = this.idService.generate();
 
     return this.transaction.table.create({
@@ -77,6 +84,7 @@ export class GetOrCreateDraftTableHandler
         versionId: this.tableRequestDto.versionId,
         createdId: this.tableRequestDto.createdId,
         system,
+        createdAt,
         id: this.tableRequestDto.id,
         revisions: {
           connect: {
