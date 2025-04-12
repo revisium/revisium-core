@@ -54,7 +54,7 @@ export class GetTablesHandler
           system: false,
         },
         orderBy: {
-          id: Prisma.SortOrder.asc,
+          createdAt: Prisma.SortOrder.desc,
         },
       });
   }

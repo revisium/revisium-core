@@ -53,7 +53,7 @@ export class GetTablesByRevisionIdHandler
           system: false,
         },
         orderBy: {
-          id: Prisma.SortOrder.asc,
+          createdAt: Prisma.SortOrder.desc,
         },
       });
   }
