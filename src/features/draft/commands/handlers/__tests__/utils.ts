@@ -38,6 +38,26 @@ export const testSchema: JsonObjectSchema = {
   additionalProperties: false,
 };
 
+export const invalidTestSchema: JsonObjectSchema = {
+  type: JsonSchemaTypeName.Object,
+  required: ['$ver', '123', 'valid'],
+  properties: {
+    valid: {
+      type: JsonSchemaTypeName.Number,
+      default: 0,
+    },
+    $ver: {
+      type: JsonSchemaTypeName.Number,
+      default: 0,
+    },
+    ['123']: {
+      type: JsonSchemaTypeName.Number,
+      default: 0,
+    },
+  },
+  additionalProperties: false,
+};
+
 export const testSchemaString: JsonObjectSchema = {
   type: JsonSchemaTypeName.Object,
   required: ['ver'],

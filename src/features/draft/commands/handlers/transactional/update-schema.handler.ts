@@ -14,6 +14,10 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { getInvalidFieldNamesInSchema } from 'src/features/share/utils/schema/lib/getInvalidFieldNamesInSchema';
+import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -51,6 +55,7 @@ export class UpdateSchemaHandler extends DraftHandler<
       },
     ];
     this.validateHistoryPatches(nextHistoryPatches);
+    this.validateFieldNamesInSchema(patches);
 
     await this.updateRowInSchemaTable(input, nextHistoryPatches);
 
@@ -83,6 +88,22 @@ export class UpdateSchemaHandler extends DraftHandler<
       throw new BadRequestException('patches is not valid', {
         cause: errors,
       });
+    }
+  }
+
+  private validateFieldNamesInSchema(patches: JsonPatch[]) {
+    for (const patch of patches) {
+      if (patch.op === 'add' || patch.op === 'replace') {
+        const invalidFields = getInvalidFieldNamesInSchema(
+          patch.value as JsonSchema,
+        );
+
+        if (invalidFields.length > 0) {
+          throw new BadRequestException(
+            `Invalid field names: ${invalidFields.map((item) => item.name).join(', ')}. ${VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE}`,
+          );
+        }
+      }
     }
   }
 

@@ -3,6 +3,7 @@ import * as objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
+  invalidTestSchema,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
@@ -27,6 +28,21 @@ describe('CreateSchemaHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow('data is not valid');
+  });
+
+  it('should throw an error if there is invalid field name', async () => {
+    const { draftRevisionId } = await prepareProject(prismaService);
+
+    const tableId = 'newTableId';
+    const command = new CreateSchemaCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      data: invalidTestSchema,
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      'Invalid field names: 123, $ver. It must contain between',
+    );
   });
 
   it('should create a new schema if conditions are met', async () => {

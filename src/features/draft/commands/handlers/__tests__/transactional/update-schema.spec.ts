@@ -4,6 +4,7 @@ import * as objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
+  invalidTestSchema,
   testSchema,
   testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
@@ -60,6 +61,37 @@ describe('UpdateSchemaHandler', () => {
 
     await expect(runTransaction(command)).rejects.toThrow(
       'patches is not valid',
+    );
+  });
+
+  it('should throw an error if there is invalid field name', async () => {
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+    const command = new UpdateSchemaCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      schema: testSchemaString,
+      patches: [
+        {
+          op: 'replace',
+          path: '',
+          value: testSchemaString,
+        } as JsonPatchReplace,
+        {
+          op: 'replace',
+          path: '',
+          value: invalidTestSchema,
+        } as JsonPatchReplace,
+        {
+          op: 'replace',
+          path: '',
+          value: testSchemaString,
+        } as JsonPatchReplace,
+      ],
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      'Invalid field names: 123, $ver. It must contain between',
     );
   });
 
