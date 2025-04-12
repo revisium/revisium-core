@@ -4,9 +4,11 @@ import { IPaginatedType } from 'src/features/share/pagination.interface';
 
 export const transformFromPrismaToTableModel = (data: Table): TableModel => {
   return {
-    versionId: data.versionId,
+    createdId: data.createdId,
     id: data.id,
+    versionId: data.versionId,
     createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
     readonly: data.readonly,
   };
 };
