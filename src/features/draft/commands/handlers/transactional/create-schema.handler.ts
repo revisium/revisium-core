@@ -12,7 +12,6 @@ import {
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { HashService } from 'src/infrastructure/database/hash.service';
@@ -48,11 +47,8 @@ export class CreateSchemaHandler extends DraftHandler<
   }
 
   private async validateSchema(data: Prisma.InputJsonValue) {
-    const { result, errors } = await this.jsonSchemaValidator.validate(
-      data,
-      metaSchema,
-      this.jsonSchemaValidator.metaSchemaHash,
-    );
+    const { result, errors } =
+      this.jsonSchemaValidator.validateMetaSchema(data);
 
     if (!result) {
       throw new BadRequestException('data is not valid', {

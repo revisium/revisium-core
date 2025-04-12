@@ -18,8 +18,8 @@ export class JsonSchemaValidatorService {
 
   private readonly ajv = new Ajv();
 
-  private readonly metaSchemaValidate: ValidateFunction;
-  private readonly jsonPatchSchemaValidate: ValidateFunction;
+  private readonly metaSchemaValidateFunction: ValidateFunction;
+  private readonly jsonPatchSchemaValidateFunction: ValidateFunction;
   private readonly historyPatchesSchemaValidate: ValidateFunction;
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
@@ -28,27 +28,27 @@ export class JsonSchemaValidatorService {
       type: 'string',
     });
 
-    this.metaSchemaValidate = this.ajv.compile(metaSchema);
-    this.jsonPatchSchemaValidate = this.ajv.compile(jsonPatchSchema);
+    this.metaSchemaValidateFunction = this.ajv.compile(metaSchema);
+    this.jsonPatchSchemaValidateFunction = this.ajv.compile(jsonPatchSchema);
     this.historyPatchesSchemaValidate = this.ajv.compile(historyPatchesSchema);
     this.metaSchemaHash = this.getSchemaHash(metaSchema);
   }
 
   public validateMetaSchema(data: unknown) {
-    const result = this.metaSchemaValidate(data);
+    const result = this.metaSchemaValidateFunction(data);
 
     return {
       result,
-      errors: this.metaSchemaValidate.errors,
+      errors: this.metaSchemaValidateFunction.errors,
     };
   }
 
   public validateJsonPatchSchema(data: unknown) {
-    const result = this.jsonPatchSchemaValidate(data);
+    const result = this.jsonPatchSchemaValidateFunction(data);
 
     return {
       result,
-      errors: this.jsonPatchSchemaValidate.errors,
+      errors: this.jsonPatchSchemaValidateFunction.errors,
     };
   }
 
