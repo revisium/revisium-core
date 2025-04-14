@@ -4,6 +4,7 @@ import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/valu
 import { JsonObject } from 'src/features/share/utils/schema/types/json.types';
 import {
   JsonObjectSchema,
+  JsonRefSchema,
   JsonSchema,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
@@ -24,6 +25,7 @@ export type ChangeNameEvent = {
 export class JsonObjectStore implements JsonObjectSchema {
   public readonly type = JsonSchemaTypeName.Object;
 
+  public $ref: string = '';
   public name: string = '';
   public parent: JsonSchemaStore | null = null;
   public default: JsonObject = {};
@@ -180,7 +182,11 @@ export class JsonObjectStore implements JsonObjectSchema {
     return this.properties[name];
   }
 
-  public getPlainSchema(): JsonObjectSchema {
+  public getPlainSchema(): JsonObjectSchema | JsonRefSchema {
+    if (this.$ref) {
+      return { $ref: this.$ref };
+    }
+
     return {
       type: this.type,
       additionalProperties: this.additionalProperties,

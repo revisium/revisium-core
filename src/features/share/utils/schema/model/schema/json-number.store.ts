@@ -4,12 +4,14 @@ import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/js
 import { JsonNumberValueStore } from 'src/features/share/utils/schema/model/value/json-number-value.store';
 import {
   JsonNumberSchema,
+  JsonRefSchema,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
 
 export class JsonNumberStore extends EventEmitter implements JsonNumberSchema {
   public readonly type = JsonSchemaTypeName.Number;
 
+  public $ref: string = '';
   public name: string = '';
   public parent: JsonSchemaStore | null = null;
 
@@ -36,7 +38,11 @@ export class JsonNumberStore extends EventEmitter implements JsonNumberSchema {
     return this.getOrCreateValues(rowId)[index];
   }
 
-  public getPlainSchema(): JsonNumberSchema {
+  public getPlainSchema(): JsonNumberSchema | JsonRefSchema {
+    if (this.$ref) {
+      return { $ref: this.$ref };
+    }
+
     return {
       type: this.type,
       default: this.default,

@@ -19,4 +19,13 @@ describe('JsonBooleanStore', () => {
     expect(store.getValue('row-1', 1)).toEqual(value1_2);
     expect(store.getValue('row-2', 0)).toEqual(value2);
   });
+
+  it('should return $ref', () => {
+    const store = new JsonBooleanStore();
+    store.$ref = 'ref.json';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      $ref: 'ref.json',
+    });
+  });
 });

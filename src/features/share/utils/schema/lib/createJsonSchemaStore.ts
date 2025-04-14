@@ -10,21 +10,40 @@ import { JsonStringStore } from 'src/features/share/utils/schema/model/schema/js
 import {
   JsonObjectSchema,
   JsonSchema,
+  JsonSchemaPrimitives,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
 
-export const createJsonSchemaStore = (schema: JsonSchema): JsonSchemaStore => {
-  if (schema.type === JsonSchemaTypeName.Object) {
-    return createJsonObjectSchemaStore(schema);
-  } else if (schema.type === JsonSchemaTypeName.Array) {
-    return new JsonArrayStore(createJsonSchemaStore(schema.items));
+export type RefsType = Record<string, JsonSchema>;
+
+export const createJsonSchemaStore = (
+  schema: JsonSchema,
+  refs: RefsType = {},
+): JsonSchemaStore => {
+  if ('$ref' in schema) {
+    const refSchema: JsonSchema | undefined = refs[schema.$ref];
+
+    if (!refSchema) {
+      throw new Error(`Not found schema for $ref="${schema.$ref}"`);
+    }
+
+    const refStore = createJsonSchemaStore(refSchema, refs);
+    refStore.$ref = schema.$ref;
+    return refStore;
   } else {
-    return createPrimitiveStoreBySchema(schema);
+    if (schema.type === JsonSchemaTypeName.Object) {
+      return createJsonObjectSchemaStore(schema, refs);
+    } else if (schema.type === JsonSchemaTypeName.Array) {
+      return new JsonArrayStore(createJsonSchemaStore(schema.items, refs));
+    } else {
+      return createPrimitiveStoreBySchema(schema);
+    }
   }
 };
 
 export const createJsonObjectSchemaStore = (
   value: JsonObjectSchema,
+  refs: RefsType = {},
 ): JsonObjectStore => {
   const store = new JsonObjectStore();
 
@@ -37,14 +56,14 @@ export const createJsonObjectSchemaStore = (
   }
 
   Object.entries(value.properties).forEach(([name, item]) => {
-    store.addPropertyWithStore(name, createJsonSchemaStore(item));
+    store.addPropertyWithStore(name, createJsonSchemaStore(item, refs));
   });
 
   return store;
 };
 
 export const createPrimitiveStoreBySchema = (
-  schema: JsonSchema,
+  schema: JsonSchemaPrimitives,
 ): JsonSchemaStorePrimitives => {
   if (schema.type === JsonSchemaTypeName.String) {
     const stringStore = new JsonStringStore();

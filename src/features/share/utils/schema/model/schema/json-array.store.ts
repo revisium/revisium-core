@@ -4,6 +4,7 @@ import { JsonArrayValueStore } from 'src/features/share/utils/schema/model/value
 import { JsonArray } from 'src/features/share/utils/schema/types/json.types';
 import {
   JsonArraySchema,
+  JsonRefSchema,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
 
@@ -20,6 +21,7 @@ export type ReplaceItemsEvent = {
 export class JsonArrayStore implements JsonArraySchema {
   public readonly type = JsonSchemaTypeName.Array;
 
+  public $ref: string = '';
   public name: string = '';
   public parent: JsonSchemaStore | null = null;
   public default: JsonArray[] = [];
@@ -78,7 +80,11 @@ export class JsonArrayStore implements JsonArraySchema {
     }
   }
 
-  public getPlainSchema(): JsonArraySchema {
+  public getPlainSchema(): JsonArraySchema | JsonRefSchema {
+    if (this.$ref) {
+      return { $ref: this.$ref };
+    }
+
     return {
       type: this.type,
       items: this.items.getPlainSchema(),
