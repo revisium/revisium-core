@@ -30,14 +30,12 @@ export const createJsonSchemaStore = (
     const refStore = createJsonSchemaStore(refSchema, refs);
     refStore.$ref = schema.$ref;
     return refStore;
+  } else if (schema.type === JsonSchemaTypeName.Object) {
+    return createJsonObjectSchemaStore(schema, refs);
+  } else if (schema.type === JsonSchemaTypeName.Array) {
+    return new JsonArrayStore(createJsonSchemaStore(schema.items, refs));
   } else {
-    if (schema.type === JsonSchemaTypeName.Object) {
-      return createJsonObjectSchemaStore(schema, refs);
-    } else if (schema.type === JsonSchemaTypeName.Array) {
-      return new JsonArrayStore(createJsonSchemaStore(schema.items, refs));
-    } else {
-      return createPrimitiveStoreBySchema(schema);
-    }
+    return createPrimitiveStoreBySchema(schema);
   }
 };
 
