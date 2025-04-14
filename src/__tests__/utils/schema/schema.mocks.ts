@@ -9,6 +9,7 @@ import {
   JsonBooleanSchema,
   JsonNumberSchema,
   JsonObjectSchema,
+  JsonRefSchema,
   JsonSchema,
   JsonSchemaTypeName,
   JsonStringSchema,
@@ -104,4 +105,8 @@ export const getObjectSchema = (
 export const getArraySchema = (items: JsonSchema): JsonArraySchema => ({
   type: JsonSchemaTypeName.Array,
   items,
+});
+
+export const getRefSchema = ($ref: string): JsonRefSchema => ({
+  $ref,
 });

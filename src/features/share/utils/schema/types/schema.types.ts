@@ -39,7 +39,12 @@ export type JsonArraySchema = {
   items: JsonSchema;
 };
 
+export type JsonRefSchema = {
+  $ref: string;
+};
+
 export type JsonSchema =
   | JsonObjectSchema
   | JsonArraySchema
-  | JsonSchemaPrimitives;
+  | JsonSchemaPrimitives
+  | JsonRefSchema;

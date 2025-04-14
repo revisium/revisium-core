@@ -4,6 +4,7 @@ import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/js
 import { JsonBooleanValueStore } from 'src/features/share/utils/schema/model/value/json-boolean-value.store';
 import {
   JsonBooleanSchema,
+  JsonRefSchema,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
 
@@ -13,6 +14,7 @@ export class JsonBooleanStore
 {
   public readonly type = JsonSchemaTypeName.Boolean;
 
+  public $ref: string = '';
   public name: string = '';
   public parent: JsonSchemaStore | null = null;
 
@@ -39,7 +41,11 @@ export class JsonBooleanStore
     return this.getOrCreateValues(rowId)[index];
   }
 
-  public getPlainSchema(): JsonBooleanSchema {
+  public getPlainSchema(): JsonBooleanSchema | JsonRefSchema {
+    if (this.$ref) {
+      return { $ref: this.$ref };
+    }
+
     return {
       type: this.type,
       default: this.default,

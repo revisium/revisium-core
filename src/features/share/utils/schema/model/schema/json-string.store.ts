@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
 import {
+  JsonRefSchema,
   JsonSchemaTypeName,
   JsonStringSchema,
 } from 'src/features/share/utils/schema/types/schema.types';
@@ -10,6 +11,7 @@ import {
 export class JsonStringStore extends EventEmitter implements JsonStringSchema {
   public readonly type = JsonSchemaTypeName.String;
 
+  public $ref: string = '';
   public name: string = '';
   public parent: JsonSchemaStore | null = null;
 
@@ -36,7 +38,11 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
     return this.getOrCreateValues(rowId)[index];
   }
 
-  public getPlainSchema(): JsonStringSchema {
+  public getPlainSchema(): JsonStringSchema | JsonRefSchema {
+    if (this.$ref) {
+      return { $ref: this.$ref };
+    }
+
     const schema: JsonStringSchema = {
       type: this.type,
       default: this.default,
