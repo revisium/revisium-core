@@ -41,7 +41,7 @@ export const createJsonSchemaStore = (
 
 export const createJsonObjectSchemaStore = (
   value: JsonObjectSchema,
-  refs: RefsType = {},
+  refs: RefsType,
 ): JsonObjectStore => {
   const store = new JsonObjectStore();
 
