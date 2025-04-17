@@ -311,7 +311,7 @@ describe('meta-schema', () => {
         properties: {
           items: { type: 'array', items: { type: 'string', default: '' } },
         },
-        required: ['firstName'],
+        required: ['items'],
       }),
     ).toBe(true);
 
@@ -322,8 +322,58 @@ describe('meta-schema', () => {
         properties: {
           items: { type: 'array' },
         },
-        required: ['firstName'],
+        required: ['items'],
       }),
     ).toBe(false);
+  });
+
+  it('object', () => {
+    expect(ajv.validate(metaSchema, { $ref: 'ref-schema.json' })).toBe(true);
+    expect(ajv.validate(metaSchema, { $ref2: 'ref-schema.json' })).toBe(false);
+    expect(
+      ajv.validate(metaSchema, {
+        $ref: 'ref-schema.json',
+        additionalProperties: false,
+      }),
+    ).toBe(false);
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          person: { $ref: 'ref-schema.json' },
+        },
+        required: ['person'],
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          items: { type: 'array', items: { $ref: 'ref-schema.json' } },
+        },
+        required: ['items'],
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          company: {
+            type: 'object',
+            properties: {
+              code: {
+                $ref: 'ref-schema.json',
+              },
+            },
+            additionalProperties: false,
+            required: ['code'],
+          },
+        },
+        required: ['company'],
+      }),
+    ).toBe(true);
   });
 });
