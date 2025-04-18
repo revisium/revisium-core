@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { DiffService } from 'src/features/share/diff.service';
+import { SchemaStoreService } from 'src/features/share/schema-store.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
@@ -18,6 +19,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
     ShareTransactionalQueries,
     ForeignKeysService,
     DiffService,
+    SchemaStoreService,
     ...SHARE_COMMANDS_HANDLERS,
     ...SHARE_QUERIES_HANDLERS,
   ],
@@ -27,6 +29,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
     ShareTransactionalQueries,
     ForeignKeysService,
     DiffService,
+    SchemaStoreService,
   ],
 })
 export class ShareModule {}
