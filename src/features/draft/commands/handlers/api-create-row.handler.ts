@@ -16,8 +16,7 @@ import { ShareCommands } from 'src/features/share/share.commands';
 @CommandHandler(ApiCreateRowCommand)
 export class ApiCreateRowHandler
   extends ApiBaseRowHandler
-  implements
-    ICommandHandler<ApiCreateRowCommand, ApiCreateRowHandlerReturnType>
+  implements ICommandHandler<ApiCreateRowCommand, ApiCreateRowHandlerReturnType>
 {
   constructor(
     protected readonly commandBus: CommandBus,

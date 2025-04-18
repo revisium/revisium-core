@@ -17,8 +17,7 @@ import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 
 @CommandHandler(ValidateDataCommand)
 export class ValidateDataHandler
-  implements
-    ICommandHandler<ValidateDataCommand, ValidateDataCommandReturnType>
+  implements ICommandHandler<ValidateDataCommand, ValidateDataCommandReturnType>
 {
   constructor(
     protected readonly revisionRequestDto: DraftRevisionRequestDto,

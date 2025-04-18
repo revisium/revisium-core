@@ -47,7 +47,7 @@ export class GetRowHandler
           tableId: data.tableId,
         },
       };
-    } catch (e) {
+    } catch {
       return null;
     }
   }
