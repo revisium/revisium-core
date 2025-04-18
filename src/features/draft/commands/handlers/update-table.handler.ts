@@ -5,6 +5,7 @@ import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
@@ -15,7 +16,6 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
@@ -37,6 +37,7 @@ export class UpdateTableHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -100,7 +101,7 @@ export class UpdateTableHandler extends DraftHandler<
   private async createNextTable(data: UpdateTableCommand['data']) {
     const { schema } = await this.getTableSchema(data);
 
-    const schemaTable = new SchemaTable(schema);
+    const schemaTable = new SchemaTable(schema, this.jsonSchemaStore.refs);
 
     const rows = await this.getRows(this.tableRequestDto.versionId);
     for (const row of rows) {
@@ -192,7 +193,7 @@ export class UpdateTableHandler extends DraftHandler<
       if (patch.op === 'replace' || patch.op === 'add') {
         let isThereItselfForeignKey = false;
 
-        const schemaStore = createJsonSchemaStore(patch.value);
+        const schemaStore = this.jsonSchemaStore.create(patch.value);
         traverseStore(schemaStore, (item) => {
           if (
             item.type === JsonSchemaTypeName.String &&

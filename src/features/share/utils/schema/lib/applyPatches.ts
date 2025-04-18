@@ -8,7 +8,10 @@ import {
   JsonPatchRemove,
   JsonPatchReplace,
 } from 'src/features/share/utils/schema/types/json-patch.types';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import {
+  JsonSchema,
+  JsonSchemaTypeName,
+} from 'src/features/share/utils/schema/types/schema.types';
 import {
   VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE,
   validateJsonFieldName,
@@ -17,8 +20,9 @@ import {
 export const applyReplacePatch = (
   store: JsonSchemaStore,
   patch: JsonPatchReplace,
+  refs: Record<string, JsonSchema> = {},
 ): JsonSchemaStore => {
-  const patchStore = createJsonSchemaStore(patch.value);
+  const patchStore = createJsonSchemaStore(patch.value, refs);
   const foundStore = getJsonSchemaStoreByPath(store, patch.path);
 
   const parent = foundStore.parent;
@@ -59,8 +63,9 @@ export const applyRemovePatch = (
 export const applyAddPatch = (
   rootStore: JsonSchemaStore,
   patch: JsonPatchAdd,
+  refs: Record<string, JsonSchema> = {},
 ): void => {
-  const patchStore = createJsonSchemaStore(patch.value);
+  const patchStore = createJsonSchemaStore(patch.value, refs);
 
   const { parentPath, field } = getParentForPath(patch.path);
   const foundParent = getJsonSchemaStoreByPath(rootStore, parentPath);

@@ -1,9 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ResolveRowCountForeignKeysToQuery } from 'src/features/row/queries/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
   getForeignKeysFromValue,
@@ -19,6 +19,7 @@ export class ResolveRowCountForeignKeysToHandler
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {}
 
   private get transaction() {
@@ -51,7 +52,7 @@ export class ResolveRowCountForeignKeysToHandler
     rowId: string,
     value: JsonValue,
   ): GetForeignKeysFromValueType[] {
-    const schemaStore = createJsonSchemaStore(schema);
+    const schemaStore = this.jsonSchemaStore.create(schema);
 
     return getForeignKeysFromValue(
       createJsonValueStore(schemaStore, rowId, value),

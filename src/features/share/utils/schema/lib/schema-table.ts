@@ -17,15 +17,18 @@ export class SchemaTable {
   private readonly rows = new Map<string, JsonValueStore>();
   private store: JsonSchemaStore;
 
-  constructor(schema: JsonSchema) {
-    this.store = createJsonSchemaStore(schema);
+  constructor(
+    schema: JsonSchema,
+    private readonly refs: Record<string, JsonSchema> = {},
+  ) {
+    this.store = createJsonSchemaStore(schema, refs);
   }
 
   public applyPatches(patches: JsonPatch[]): void {
     patches.forEach((patch) => {
       switch (patch.op) {
         case 'replace': {
-          const nextStore = applyReplacePatch(this.store, patch);
+          const nextStore = applyReplacePatch(this.store, patch, this.refs);
           if (nextStore !== this.store) {
             this.migrateRows(nextStore);
           }

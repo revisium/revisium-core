@@ -1,12 +1,12 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ResolveRowForeignKeysByQuery } from 'src/features/row/queries/impl';
 import { ResolveRowForeignKeysByReturnType } from 'src/features/row/queries/types';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
@@ -23,6 +23,7 @@ export class ResolveRowForeignKeysByHandler
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly foreignKeysService: ForeignKeysService,
+    private readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {}
 
   private get transaction() {
@@ -78,7 +79,7 @@ export class ResolveRowForeignKeysByHandler
       foreignKeyTableId,
     );
 
-    const schemaStore = createJsonSchemaStore(schema);
+    const schemaStore = this.jsonSchemaStore.create(schema);
 
     const jsonPaths: string[] = [];
 
