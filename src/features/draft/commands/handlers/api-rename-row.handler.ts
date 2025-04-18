@@ -19,8 +19,7 @@ import { ShareCommands } from 'src/features/share/share.commands';
 @CommandHandler(ApiRenameRowCommand)
 export class ApiRenameRowHandler
   extends ApiBaseRowHandler
-  implements
-    ICommandHandler<ApiRenameRowCommand, ApiRenameRowCommandReturnType>
+  implements ICommandHandler<ApiRenameRowCommand, ApiRenameRowCommandReturnType>
 {
   constructor(
     protected readonly commandBus: CommandBus,

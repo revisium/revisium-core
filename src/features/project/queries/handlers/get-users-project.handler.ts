@@ -9,8 +9,7 @@ import { Prisma } from '@prisma/client';
 
 @QueryHandler(GetUsersProjectQuery)
 export class GetUsersProjectHandler
-  implements
-    IQueryHandler<GetUsersProjectQuery, GetUsersProjectQueryReturnType>
+  implements IQueryHandler<GetUsersProjectQuery, GetUsersProjectQueryReturnType>
 {
   constructor(private readonly prisma: PrismaService) {}
 

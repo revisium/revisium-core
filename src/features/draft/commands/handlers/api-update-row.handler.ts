@@ -15,8 +15,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 @CommandHandler(ApiUpdateRowCommand)
 export class ApiUpdateRowHandler
   extends ApiBaseRowHandler
-  implements
-    ICommandHandler<ApiUpdateRowCommand, ApiUpdateRowHandlerReturnType>
+  implements ICommandHandler<ApiUpdateRowCommand, ApiUpdateRowHandlerReturnType>
 {
   constructor(
     protected readonly commandBus: CommandBus,
