@@ -39,7 +39,7 @@ export class SchemaTable {
           break;
         }
         case 'add': {
-          applyAddPatch(this.store, patch);
+          applyAddPatch(this.store, patch, this.refs);
           break;
         }
         case 'move': {

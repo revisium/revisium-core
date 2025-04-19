@@ -1,5 +1,5 @@
 import { Schema } from 'ajv/dist/2020';
-import { SchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
@@ -51,6 +51,6 @@ export const fileSchema: JsonObjectSchema = {
 };
 
 export const ajvFileSchema: Schema = {
-  $id: SchemaIds.File,
+  $id: SystemSchemaIds.File,
   ...fileSchema,
 };

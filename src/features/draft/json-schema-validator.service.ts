@@ -7,6 +7,7 @@ import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { historyPatchesSchema } from 'src/features/share/schema/history-patches-schema';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { ajvFileSchema } from 'src/features/share/schema/plugins/file-schema';
 
 // TODO add to config
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
@@ -28,6 +29,7 @@ export class JsonSchemaValidatorService {
       type: 'string',
     });
 
+    this.ajv.compile(ajvFileSchema);
     this.metaSchemaValidateFunction = this.ajv.compile(metaSchema);
     this.jsonPatchSchemaValidateFunction = this.ajv.compile(jsonPatchSchema);
     this.historyPatchesSchemaValidate = this.ajv.compile(historyPatchesSchema);
