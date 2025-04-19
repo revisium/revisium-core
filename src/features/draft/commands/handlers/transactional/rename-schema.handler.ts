@@ -14,10 +14,10 @@ import {
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getForeignKeyPatchesFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeyPatchesFromSchema';
 import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
@@ -34,6 +34,7 @@ export class RenameSchemaHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftContext: DraftContextService,
     protected readonly foreignKeysService: ForeignKeysService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -84,13 +85,16 @@ export class RenameSchemaHandler extends DraftHandler<
     data: RenameSchemaCommand['data'],
     currentSchema: JsonSchema,
   ) {
-    const store = createJsonSchemaStore(currentSchema);
+    const store = this.jsonSchemaStore.create(currentSchema);
     const foreignKeyPatches = getForeignKeyPatchesFromSchema(store, {
       tableId: data.tableId,
       nextTableId: data.nextTableId,
     });
 
-    const schemaTable = new SchemaTable(currentSchema);
+    const schemaTable = new SchemaTable(
+      currentSchema,
+      this.jsonSchemaStore.refs,
+    );
     schemaTable.applyPatches(foreignKeyPatches);
 
     return {

@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ResolveRowForeignKeysByQuery } from 'src/features/row/queries/impl';
 import { ResolveRowCountForeignKeysByQuery } from 'src/features/row/queries/impl/resolve-row-count-foreign-keys-by.query';
@@ -7,7 +8,6 @@ import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
@@ -20,6 +20,7 @@ export class ResolveRowCountForeignKeysByHandler
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly foreignKeysService: ForeignKeysService,
+    private readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {}
 
   private get transaction() {
@@ -82,7 +83,7 @@ export class ResolveRowCountForeignKeysByHandler
       foreignKeyTableId,
     );
 
-    const schemaStore = createJsonSchemaStore(schema);
+    const schemaStore = this.jsonSchemaStore.create(schema);
 
     const paths: string[] = [];
 

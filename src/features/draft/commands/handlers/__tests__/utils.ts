@@ -2,6 +2,12 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
+import {
+  getArraySchema,
+  getNumberSchema,
+  getObjectSchema,
+  getRefSchema,
+} from 'src/__tests__/utils/schema/schema.mocks';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { TABLE_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/index';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -12,6 +18,7 @@ import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-r
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
 import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
 import { SHARE_QUERIES_HANDLERS } from 'src/features/share/queries/handlers';
+import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -26,17 +33,13 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 
-export const testSchema: JsonObjectSchema = {
-  type: JsonSchemaTypeName.Object,
-  required: ['ver'],
-  properties: {
-    ver: {
-      type: JsonSchemaTypeName.Number,
-      default: 0,
-    },
-  },
-  additionalProperties: false,
-};
+export const testSchema: JsonObjectSchema = getObjectSchema({
+  ver: getNumberSchema(),
+});
+
+export const testSchemaWithRef: JsonObjectSchema = getObjectSchema({
+  files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+});
 
 export const invalidTestSchema: JsonObjectSchema = {
   type: JsonSchemaTypeName.Object,

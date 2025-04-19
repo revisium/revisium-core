@@ -91,6 +91,7 @@ export const prepareProject = async (
   const draftRevisionId = nanoid();
 
   const schemaTableVersionId = nanoid();
+  const schemaRowVersionId = nanoid();
   const schemaTableCreatedId = nanoid();
   const tableId = `table-${nanoid()}`;
   const createdIdForTableInSchemaTable = `table-${nanoid()}`;
@@ -190,7 +191,7 @@ export const prepareProject = async (
   await prismaService.row.create({
     data: {
       id: tableId,
-      versionId: nanoid(),
+      versionId: schemaRowVersionId,
       createdId: createdIdForTableInSchemaTable,
       readonly: true,
       tables: {
@@ -389,6 +390,7 @@ export const prepareProject = async (
     headEndpointId,
     draftEndpointId,
     schemaTableVersionId,
+    schemaRowVersionId,
     schemaTableCreatedId,
   };
 };

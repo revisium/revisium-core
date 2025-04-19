@@ -6,8 +6,8 @@ import {
 } from 'src/features/draft/commands/impl/transactional/validate-data.command';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
   getForeignKeysFromValue,
@@ -23,6 +23,7 @@ export class ValidateDataHandler
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {}
 
   async execute({ data }: ValidateDataCommand) {
@@ -48,7 +49,7 @@ export class ValidateDataHandler
       await this.validateForeignKeys(
         getForeignKeysFromValue(
           createJsonValueStore(
-            createJsonSchemaStore(schema),
+            this.jsonSchemaStore.create(schema),
             itemData.rowId,
             itemData.data as JsonValue,
           ),

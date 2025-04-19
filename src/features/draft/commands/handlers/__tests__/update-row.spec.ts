@@ -3,6 +3,12 @@ import {
   prepareProject,
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
+import {
+  getArraySchema,
+  getObjectSchema,
+  getRefSchema,
+} from 'src/__tests__/utils/schema/schema.mocks';
+import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -187,6 +193,42 @@ describe('UpdateRowHandler', () => {
     expect(result.previousRowVersionId).toBe(draftRowVersionId);
     expect(result.rowVersionId).not.toBe(draftRowVersionId);
     await revisionCheck(ids);
+  });
+
+  it('should update row with refs', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, rowId, schemaRowVersionId } = ids;
+
+    await prismaService.row.update({
+      where: { versionId: schemaRowVersionId },
+      data: {
+        data: getObjectSchema({
+          file: getRefSchema(SystemSchemaIds.File),
+          files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+        }),
+      },
+    });
+
+    const file = {
+      status: 'ready',
+      url: 'url',
+      filename: 'filename.png',
+      hash: 'hash',
+      extension: 'png',
+      mimeType: 'mimeType',
+      size: 12345,
+      width: 1000,
+      height: 2000,
+    };
+
+    const command = new UpdateRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      data: { file, files: [file] },
+    });
+
+    await runTransaction(command);
   });
 
   async function revisionCheck(ids: PrepareProjectReturnType) {

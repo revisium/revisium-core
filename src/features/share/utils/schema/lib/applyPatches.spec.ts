@@ -5,10 +5,13 @@ import {
   getMovePatch,
   getNumberSchema,
   getObjectSchema,
+  getRefSchema,
   getRemovePatch,
   getReplacePatch,
   getStringSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
+import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { fileSchema } from 'src/features/share/schema/plugins/file-schema';
 import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
 import {
@@ -158,6 +161,33 @@ describe('applyPatches', () => {
       expect(applyPatches(schema, [replaceNestedPatchString])).toStrictEqual(
         expectedSchema,
       );
+    });
+
+    it('replace nested array items with ref', () => {
+      const replaceNestedPatchString = getReplacePatch({
+        path: '/properties/nested/properties/fieldArray/items',
+        value: getRefSchema(SystemSchemaIds.File),
+      });
+
+      const schema = getObjectSchema({
+        fieldString: getStringSchema(),
+        nested: getObjectSchema({
+          fieldArray: getArraySchema(getNumberSchema()),
+        }),
+      });
+
+      const expectedSchema = getObjectSchema({
+        fieldString: getStringSchema(),
+        nested: getObjectSchema({
+          fieldArray: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+        }),
+      });
+
+      expect(
+        applyPatches(schema, [replaceNestedPatchString], {
+          [SystemSchemaIds.File]: fileSchema,
+        }),
+      ).toStrictEqual(expectedSchema);
     });
 
     describe('values migration', () => {
@@ -1069,6 +1099,32 @@ describe('applyPatches', () => {
         expectedSchema,
       );
     });
+
+    it('add with ref', () => {
+      const addNestedPatchField = getAddPatch({
+        path: '/properties/field2',
+        value: getObjectSchema({ file: getRefSchema(SystemSchemaIds.File) }),
+      });
+
+      const schema = getObjectSchema({
+        field: getObjectSchema({
+          subField: getNumberSchema(),
+        }),
+      });
+
+      const expectedSchema = getObjectSchema({
+        field: getObjectSchema({
+          subField: getNumberSchema(),
+        }),
+        field2: addNestedPatchField.value,
+      });
+
+      expect(
+        applyPatches(schema, [addNestedPatchField], {
+          [SystemSchemaIds.File]: fileSchema,
+        }),
+      ).toEqual(expectedSchema);
+    });
   });
 
   describe('move', () => {
@@ -1258,6 +1314,32 @@ describe('applyPatches', () => {
       expect(applyPatches(schema, [movePatch])).toEqual(expectedSchema);
     });
 
+    it('move with ref', () => {
+      const movePatch = getMovePatch({
+        from: '/properties/field/items/items/properties/field',
+        path: '/properties/field2',
+      });
+
+      const moveField = getArraySchema(getRefSchema(SystemSchemaIds.File));
+
+      const schema = getObjectSchema({
+        field: getArraySchema(
+          getArraySchema(getObjectSchema({ field: moveField })),
+        ),
+      });
+
+      const expectedSchema = getObjectSchema({
+        field: getArraySchema(getArraySchema(getObjectSchema({}))),
+        field2: moveField,
+      });
+
+      expect(
+        applyPatches(schema, [movePatch], {
+          [SystemSchemaIds.File]: fileSchema,
+        }),
+      ).toEqual(expectedSchema);
+    });
+
     describe('values migration', () => {
       it('same parent', () => {
         const schemaTable = new SchemaTable(
@@ -1404,6 +1486,75 @@ describe('applyPatches', () => {
               field: 'field',
             },
           ],
+        });
+      });
+
+      it('different parents with ref', () => {
+        const schemaTable = new SchemaTable(
+          getObjectSchema({
+            parent1: getObjectSchema({
+              nested: getStringSchema(),
+              forReplace: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+            }),
+            parent2: getObjectSchema({
+              willBeReplaced: getBooleanSchema(),
+            }),
+          }),
+          { [SystemSchemaIds.File]: fileSchema },
+        );
+
+        const files = [
+          {
+            status: 'ready',
+            url: 'url',
+            filename: 'filename1.png',
+            hash: 'hash',
+            extension: 'png',
+            mimeType: 'mimeType',
+            size: 1,
+            width: 1,
+            height: 1,
+          },
+          {
+            status: 'ready',
+            url: 'url',
+            filename: 'filename2.png',
+            hash: 'hash',
+            extension: 'png',
+            mimeType: 'mimeType',
+            size: 2,
+            width: 2,
+            height: 2,
+          },
+        ];
+
+        schemaTable.addRow('row-1', {
+          parent1: {
+            nested: 'value',
+            forReplace: files,
+          },
+          parent2: {
+            willBeReplaced: 'willBeReplaced',
+          },
+        });
+
+        schemaTable.applyPatches([
+          getMovePatch({
+            from: '/properties/parent1/properties/nested',
+            path: '/properties/parent2/properties/nested2',
+          }),
+          getMovePatch({
+            from: '/properties/parent1/properties/forReplace',
+            path: '/properties/parent2/properties/willBeReplaced',
+          }),
+        ]);
+
+        expect(schemaTable.getRow('row-1')).toEqual({
+          parent1: {},
+          parent2: {
+            nested2: 'value',
+            willBeReplaced: files,
+          },
         });
       });
     });
@@ -1565,8 +1716,12 @@ describe('applyPatches', () => {
   });
 });
 
-const applyPatches = (schema: JsonSchema, patches: JsonPatch[]): JsonSchema => {
-  const schemaTable = new SchemaTable(schema);
+const applyPatches = (
+  schema: JsonSchema,
+  patches: JsonPatch[],
+  refs: Record<string, JsonSchema> = {},
+): JsonSchema => {
+  const schemaTable = new SchemaTable(schema, refs);
   schemaTable.applyPatches(patches);
   return schemaTable.getSchema();
 };

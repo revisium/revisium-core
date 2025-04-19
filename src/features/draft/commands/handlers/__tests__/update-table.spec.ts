@@ -1,9 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import {
   prepareProject,
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
+import {
+  getArraySchema,
+  getRefSchema,
+} from 'src/__tests__/utils/schema/schema.mocks';
+import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import {
   JsonSchemaTypeName,
@@ -308,7 +314,96 @@ describe('UpdateTableHandler', () => {
 
     await runTransaction(command);
 
-    await schemaCheck(ids);
+    const schema = {
+      type: JsonSchemaTypeName.Object,
+      required: ['ver'],
+      properties: {
+        ver: {
+          type: JsonSchemaTypeName.String,
+          default: '',
+        },
+      },
+      additionalProperties: false,
+    };
+    const meta = [
+      {
+        patches: [{ op: 'add', path: '', value: testSchema }],
+        hash: objectHash(testSchema),
+      },
+      {
+        patches: [
+          {
+            op: 'replace',
+            path: '/properties/ver',
+            value: {
+              type: JsonSchemaTypeName.String,
+              default: '',
+            },
+          },
+        ],
+        hash: objectHash(schema),
+      },
+    ];
+    await schemaCheck(ids, schema, meta);
+  });
+
+  it('should save the schema correctly with ref', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = ids;
+
+    const command = new UpdateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      patches: [
+        {
+          op: 'add',
+          path: '/properties/files',
+          value: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+        },
+      ],
+    });
+
+    await runTransaction(command);
+
+    const schema = {
+      type: JsonSchemaTypeName.Object,
+      required: ['files', 'ver'],
+      properties: {
+        ver: {
+          type: JsonSchemaTypeName.Number,
+          default: 0,
+        },
+        files: {
+          type: JsonSchemaTypeName.Array,
+          items: {
+            $ref: SystemSchemaIds.File,
+          },
+        },
+      },
+      additionalProperties: false,
+    };
+    const meta = [
+      {
+        patches: [{ op: 'add', path: '', value: testSchema }],
+        hash: objectHash(testSchema),
+      },
+      {
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/files',
+            value: {
+              items: {
+                $ref: SystemSchemaIds.File,
+              },
+              type: 'array',
+            },
+          },
+        ],
+        hash: objectHash(schema),
+      },
+    ];
+    await schemaCheck(ids, schema, meta);
   });
 
   async function revisionCheck(ids: PrepareProjectReturnType) {
@@ -370,7 +465,11 @@ describe('UpdateTableHandler', () => {
     }
   }
 
-  async function schemaCheck(ids: PrepareProjectReturnType) {
+  async function schemaCheck(
+    ids: PrepareProjectReturnType,
+    schema: Prisma.InputJsonValue,
+    meta: Prisma.InputJsonValue,
+  ) {
     const { tableId, draftRevisionId } = ids;
 
     const schemaRow = await prismaService.row.findFirstOrThrow({
@@ -389,40 +488,11 @@ describe('UpdateTableHandler', () => {
       },
     });
 
-    const schema = {
-      type: JsonSchemaTypeName.Object,
-      required: ['ver'],
-      properties: {
-        ver: {
-          type: JsonSchemaTypeName.String,
-          default: '',
-        },
-      },
-      additionalProperties: false,
-    };
     expect(schemaRow.id).toBe(tableId);
     expect(schemaRow.data).toStrictEqual(schema);
     expect(schemaRow.hash).toStrictEqual(objectHash(schema));
     expect(schemaRow.schemaHash).toStrictEqual(objectHash(metaSchema));
-    expect(schemaRow.meta).toStrictEqual([
-      {
-        patches: [{ op: 'add', path: '', value: testSchema }],
-        hash: objectHash(testSchema),
-      },
-      {
-        patches: [
-          {
-            op: 'replace',
-            path: '/properties/ver',
-            value: {
-              type: JsonSchemaTypeName.String,
-              default: '',
-            },
-          },
-        ],
-        hash: objectHash(schema),
-      },
-    ]);
+    expect(schemaRow.meta).toStrictEqual(meta);
   }
 
   function runTransaction(

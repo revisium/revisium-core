@@ -7,8 +7,11 @@ import {
 } from 'src/features/share/utils/schema/types/schema.types';
 import { validateJsonFieldName } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 
-export const getInvalidFieldNamesInSchema = (schema: JsonSchema) => {
-  const schemaStore = createJsonSchemaStore(schema);
+export const getInvalidFieldNamesInSchema = (
+  schema: JsonSchema,
+  refs: Record<string, JsonSchema> = {},
+) => {
+  const schemaStore = createJsonSchemaStore(schema, refs);
 
   const invalidFields: JsonSchemaStore[] = [];
 

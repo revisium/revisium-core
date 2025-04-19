@@ -13,6 +13,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import {
   createMock,
   createTestingModule,
+  testSchemaWithRef,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/create-table.handler.types';
@@ -87,6 +88,27 @@ describe('CreateTableHandler', () => {
       revisionId: draftRevisionId,
       tableId: 'config',
       schema: { type: 'string', default: '' },
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.branchId).toBe(branchId);
+    expect(result.revisionId).toBe(draftRevisionId);
+    expect(result.tableVersionId).toBeTruthy();
+
+    await tableCheck(ids, command.data.tableId, result.tableVersionId);
+    await schemaCheck(ids, command.data.tableId, command.data.schema);
+    await revisionCheck(ids);
+  });
+
+  it('should create table with ref', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, branchId } = ids;
+
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: 'config',
+      schema: testSchemaWithRef,
     });
 
     const result = await runTransaction(command);

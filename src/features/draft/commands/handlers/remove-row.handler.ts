@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
 import { DiffService } from 'src/features/share/diff.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
@@ -14,7 +15,6 @@ import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
@@ -34,6 +34,7 @@ export class RemoveRowHandler extends DraftHandler<
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly foreignKeysService: ForeignKeysService,
     protected readonly diffService: DiffService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -191,7 +192,7 @@ export class RemoveRowHandler extends DraftHandler<
         foreignKeyTableId,
       );
 
-      const schemaStore = createJsonSchemaStore(schema);
+      const schemaStore = this.jsonSchemaStore.create(schema);
 
       const paths: string[] = [];
 

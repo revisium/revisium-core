@@ -12,9 +12,9 @@ import {
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { getInvalidFieldNamesInSchema } from 'src/features/share/utils/schema/lib/getInvalidFieldNamesInSchema';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
@@ -32,6 +32,7 @@ export class UpdateSchemaHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly hashService: HashService,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -93,7 +94,9 @@ export class UpdateSchemaHandler extends DraftHandler<
   private validateFieldNamesInSchema(patches: JsonPatch[]) {
     for (const patch of patches) {
       if (patch.op === 'add' || patch.op === 'replace') {
-        const invalidFields = getInvalidFieldNamesInSchema(patch.value);
+        const invalidFields = this.jsonSchemaStore.getInvalidFieldNamesInSchema(
+          patch.value,
+        );
 
         if (invalidFields.length > 0) {
           throw new BadRequestException(

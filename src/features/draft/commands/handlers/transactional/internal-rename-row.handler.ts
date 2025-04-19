@@ -14,10 +14,10 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
 import { replaceForeignKeyValue } from 'src/features/share/utils/schema/lib/replaceForeignKeyValue';
@@ -42,6 +42,7 @@ export class InternalRenameRowHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly foreignKeysService: ForeignKeysService,
     protected readonly draftContext: DraftContextService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -121,7 +122,7 @@ export class InternalRenameRowHandler extends DraftHandler<
       foreignKeyTableId,
     );
 
-    const schemaStore = createJsonSchemaStore(schema);
+    const schemaStore = this.jsonSchemaStore.create(schema);
     const foreignPaths = this.getForeignPathsFromSchema(schemaStore);
     const rows = await this.getRowsWithForeignKeys(
       foreignKeyTable.versionId,
