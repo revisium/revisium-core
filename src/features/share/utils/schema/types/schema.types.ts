@@ -10,16 +10,19 @@ export type JsonStringSchema = {
   type: JsonSchemaTypeName.String;
   default: string;
   foreignKey?: string;
+  readOnly?: boolean;
 };
 
 export type JsonNumberSchema = {
   type: JsonSchemaTypeName.Number;
   default: number;
+  readOnly?: boolean;
 };
 
 export type JsonBooleanSchema = {
   type: JsonSchemaTypeName.Boolean;
   default: boolean;
+  readOnly?: boolean;
 };
 
 export type JsonSchemaPrimitives =
