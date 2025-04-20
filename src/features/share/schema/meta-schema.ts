@@ -25,6 +25,9 @@ export const stringMetaSchema: Schema = {
     foreignKey: {
       type: 'string',
     },
+    readOnly: {
+      type: 'boolean',
+    },
   },
   additionalProperties: false,
   required: ['type', 'default'],
@@ -38,6 +41,9 @@ export const noForeignKeyStringMetaSchema: Schema = {
     },
     default: {
       type: 'string',
+    },
+    readOnly: {
+      type: 'boolean',
     },
   },
   additionalProperties: false,
@@ -53,6 +59,9 @@ export const numberMetaSchema: Schema = {
     default: {
       type: 'number',
     },
+    readOnly: {
+      type: 'boolean',
+    },
   },
   additionalProperties: false,
   required: ['type', 'default'],
@@ -65,6 +74,9 @@ export const booleanMetaSchema: Schema = {
       const: 'boolean',
     },
     default: {
+      type: 'boolean',
+    },
+    readOnly: {
       type: 'boolean',
     },
   },

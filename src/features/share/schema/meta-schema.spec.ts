@@ -67,6 +67,22 @@ describe('meta-schema', () => {
     ).toBe(true);
 
     expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: '',
+        readOnly: true,
+      }),
+    ).toBe(true);
+
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: '',
+        readOnly: false,
+      }),
+    ).toBe(true);
+
+    expect(
       ajv.validate(notForeignKeyMetaSchema, {
         type: 'string',
         default: 'default value',
@@ -104,6 +120,20 @@ describe('meta-schema', () => {
       true,
     );
     expect(
+      ajv.validate(metaSchema, {
+        type: 'number',
+        default: 123,
+        readOnly: true,
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'number',
+        default: 123,
+        readOnly: false,
+      }),
+    ).toBe(true);
+    expect(
       ajv.validate(metaSchema, { type: 'number', default: 'default value' }),
     ).toBe(false);
     expect(ajv.validate(metaSchema, { type: 'number' })).toBe(false);
@@ -126,6 +156,20 @@ describe('meta-schema', () => {
     expect(ajv.validate(metaSchema, { type: 'boolean', default: true })).toBe(
       true,
     );
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'boolean',
+        default: true,
+        readOnly: true,
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'boolean',
+        default: true,
+        readOnly: false,
+      }),
+    ).toBe(true);
     expect(ajv.validate(metaSchema, { type: 'boolean', default: 'true' })).toBe(
       false,
     );
