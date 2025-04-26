@@ -1,7 +1,9 @@
+import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { DiffService } from 'src/features/share/diff.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
@@ -12,7 +14,12 @@ import { ShareTransactionalCommands } from 'src/features/share/share.transaction
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @Module({
-  imports: [DatabaseModule, CqrsModule, NotificationModule],
+  imports: [
+    DatabaseModule,
+    CqrsModule,
+    NotificationModule,
+    CacheModule.register(),
+  ],
   providers: [
     ShareTransactionalCommands,
     ShareCommands,
@@ -20,6 +27,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
     ForeignKeysService,
     DiffService,
     JsonSchemaStoreService,
+    JsonSchemaValidatorService,
     ...SHARE_COMMANDS_HANDLERS,
     ...SHARE_QUERIES_HANDLERS,
   ],
@@ -30,6 +38,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
     ForeignKeysService,
     DiffService,
     JsonSchemaStoreService,
+    JsonSchemaValidatorService,
   ],
 })
 export class ShareModule {}

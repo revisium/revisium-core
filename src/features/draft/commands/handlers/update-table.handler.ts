@@ -14,7 +14,7 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';

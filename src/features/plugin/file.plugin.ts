@@ -10,7 +10,7 @@ import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/valu
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
-export enum FIleStatus {
+export enum FileStatus {
   ready = 'ready',
   error = 'error',
   completed = 'completed',
@@ -34,7 +34,7 @@ export class FilePlugin implements IPluginService {
   private prepareFile(store: JsonObjectValueStore) {
     const fileId = store.value['fileId'] as JsonStringValueStore;
     const status = store.value['status'] as JsonStringValueStore;
-    status.value = FIleStatus.ready;
+    status.value = FileStatus.ready;
     fileId.value = nanoid();
   }
 

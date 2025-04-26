@@ -11,7 +11,7 @@ import {
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
-import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';

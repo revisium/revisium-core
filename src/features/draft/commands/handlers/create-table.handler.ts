@@ -11,7 +11,7 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { JsonSchemaValidatorService } from 'src/features/draft/json-schema-validator.service';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 
 @CommandHandler(CreateTableCommand)
 export class CreateTableHandler extends DraftHandler<
