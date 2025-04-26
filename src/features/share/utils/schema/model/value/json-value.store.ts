@@ -9,7 +9,6 @@ export type JsonValueStorePrimitives =
   | JsonNumberValueStore
   | JsonBooleanValueStore;
 
-export type JsonValueStore =
-  | JsonObjectValueStore
-  | JsonArrayValueStore
-  | JsonValueStorePrimitives;
+export type JsonValueStoreParent = JsonObjectValueStore | JsonArrayValueStore;
+
+export type JsonValueStore = JsonValueStoreParent | JsonValueStorePrimitives;
