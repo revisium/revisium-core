@@ -9,11 +9,25 @@ export type CreateRowOptions = {
   data: Prisma.InputJsonValue;
 };
 
+export type UpdateRowOptions = {
+  revisionId: string;
+  tableId: string;
+  rowId: string;
+  data: Prisma.InputJsonValue;
+};
+
 export type InternalCreateRowOptions = CreateRowOptions & {
   schemaStore: JsonSchemaStore;
   valueStore: JsonValueStore;
 };
 
+export type InternalUpdateRowOptions = CreateRowOptions & {
+  schemaStore: JsonSchemaStore;
+  previousValueStore: JsonValueStore;
+  valueStore: JsonValueStore;
+};
+
 export interface IPluginService {
   createRow(options: InternalCreateRowOptions): Promise<void>;
+  updateRow(options: InternalUpdateRowOptions): Promise<void>;
 }
