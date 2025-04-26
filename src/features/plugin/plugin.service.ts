@@ -1,16 +1,19 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import {
+  ComputeRowsOptions,
   CreateRowOptions,
+  InternalComputeRowsOptions,
   InternalCreateRowOptions,
   InternalUpdateRowOptions,
   UpdateRowOptions,
 } from 'src/features/plugin/types';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -105,6 +108,40 @@ export class PluginService {
     });
 
     return data;
+  }
+
+  public async computeRows(
+    options: ComputeRowsOptions,
+  ): Promise<Prisma.JsonValue[]> {
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
+      options.revisionId,
+      options.tableId,
+    );
+
+    const schemaStore = this.jsonSchemaStore.create(schema);
+
+    const valueStores: JsonValueStore[] = [];
+
+    for (const rowData of options.rowsData) {
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        '',
+        rowData as JsonValue,
+      );
+      valueStores.push(valueStore);
+    }
+
+    const internalOptions: InternalComputeRowsOptions = {
+      ...options,
+      schemaStore,
+      valueStores,
+    };
+
+    for (const plugin of this.pluginsListService.orderedPlugins) {
+      await plugin.computeRows(internalOptions);
+    }
+
+    return valueStores.map((valueStore) => valueStore.getPlainValue());
   }
 
   private async getRow({

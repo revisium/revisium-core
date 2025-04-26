@@ -16,6 +16,12 @@ export type UpdateRowOptions = {
   data: Prisma.InputJsonValue;
 };
 
+export type ComputeRowsOptions = {
+  revisionId: string;
+  tableId: string;
+  rowsData: Prisma.JsonValue[];
+};
+
 export type InternalCreateRowOptions = CreateRowOptions & {
   schemaStore: JsonSchemaStore;
   valueStore: JsonValueStore;
@@ -27,7 +33,13 @@ export type InternalUpdateRowOptions = CreateRowOptions & {
   valueStore: JsonValueStore;
 };
 
+export type InternalComputeRowsOptions = ComputeRowsOptions & {
+  schemaStore: JsonSchemaStore;
+  valueStores: JsonValueStore[];
+};
+
 export interface IPluginService {
   createRow(options: InternalCreateRowOptions): Promise<void>;
   updateRow(options: InternalUpdateRowOptions): Promise<void>;
+  computeRows(options: InternalComputeRowsOptions): Promise<void>;
 }

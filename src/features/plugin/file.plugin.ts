@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import {
+  InternalComputeRowsOptions,
   InternalCreateRowOptions,
   InternalUpdateRowOptions,
   IPluginService,
@@ -109,6 +110,22 @@ export class FilePlugin implements IPluginService {
           `${field} must have value = ${previousFile.value[field].value}`,
         );
       }
+    }
+  }
+
+  public async computeRows(options: InternalComputeRowsOptions): Promise<void> {
+    for (const valueStore of options.valueStores) {
+      traverseValue(valueStore, (item) => {
+        if (item.schema.$ref === SystemSchemaIds.File) {
+          if (item.type === JsonSchemaTypeName.Object) {
+            const fieldIdStore = item.value['fileId'] as JsonStringValueStore;
+            const urlStore = item.value['url'] as JsonStringValueStore;
+            urlStore.value = `https://cdn.revisium.io/${fieldIdStore.getPlainValue()}`; // TODO
+          } else {
+            throw new Error('Invalid schema type');
+          }
+        }
+      });
     }
   }
 }

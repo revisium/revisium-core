@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { GetRowQuery } from 'src/features/row/queries/impl/get-row.query';
 import { GetRowReturnType } from 'src/features/row/queries/types';
@@ -12,6 +13,7 @@ export class GetRowHandler
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly pluginService: PluginService,
   ) {}
 
   private get transaction() {
@@ -34,14 +36,22 @@ export class GetRowHandler
           data.tableId,
         );
 
-      const { versionId: rowId } =
+      const { versionId: rowVersionId } =
         await this.shareTransactionalQueries.findRowInTableOrThrow(
           tableVersionId,
           data.rowId,
         );
 
+      const row = await this.getRow(rowVersionId);
+      const rowsData = await this.pluginService.computeRows({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        rowsData: [row.data],
+      });
+
       return {
-        ...(await this.getRow(rowId)),
+        ...row,
+        data: rowsData[0],
         context: {
           revisionId: data.revisionId,
           tableId: data.tableId,
@@ -52,9 +62,9 @@ export class GetRowHandler
     }
   }
 
-  private getRow(rowId: string) {
+  private getRow(rowVersionId: string) {
     return this.transaction.row.findUniqueOrThrow({
-      where: { versionId: rowId },
+      where: { versionId: rowVersionId },
     });
   }
 }
