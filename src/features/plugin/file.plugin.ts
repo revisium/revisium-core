@@ -64,6 +64,8 @@ export class FilePlugin implements IPluginService {
       }
     });
 
+    const nextFiles: Map<string, JsonObjectValueStore> = new Map();
+
     traverseValue(options.valueStore, (item) => {
       if (item.schema.$ref === SystemSchemaIds.File) {
         if (item.type === JsonSchemaTypeName.Object) {
@@ -81,11 +83,22 @@ export class FilePlugin implements IPluginService {
             this.checkDefaultValues(item);
             this.prepareFile(item);
           }
+
+          nextFiles.set(fileId, item);
         } else {
           throw new Error('Invalid schema type');
         }
       }
     });
+
+    const deletedFiles: Map<string, JsonObjectValueStore> = new Map();
+    for (const [fileId, valueStore] of previousFiles) {
+      if (!nextFiles.has(fileId)) {
+        deletedFiles.set(fileId, valueStore);
+      }
+    }
+
+    // console.log(deletedFiles.keys());
   }
 
   private checkUpdatedFile(
