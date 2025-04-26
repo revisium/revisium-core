@@ -93,15 +93,6 @@ export class FilePlugin implements IPluginService {
         }
       }
     });
-
-    const deletedFiles: Map<string, JsonObjectValueStore> = new Map();
-    for (const [fileId, valueStore] of previousFiles) {
-      if (!nextFiles.has(fileId)) {
-        deletedFiles.set(fileId, valueStore);
-      }
-    }
-
-    // console.log(deletedFiles.keys());
   }
 
   private checkUpdatedFile(
