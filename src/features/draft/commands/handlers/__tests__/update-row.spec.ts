@@ -210,15 +210,16 @@ describe('UpdateRowHandler', () => {
     });
 
     const file = {
-      status: 'ready',
-      url: 'url',
-      filename: 'filename.png',
-      hash: 'hash',
-      extension: 'png',
-      mimeType: 'mimeType',
-      size: 12345,
-      width: 1000,
-      height: 2000,
+      status: '',
+      fileId: '',
+      url: '',
+      filename: '',
+      hash: '',
+      extension: '',
+      mimeType: '',
+      size: 0,
+      width: 0,
+      height: 0,
     };
 
     const command = new UpdateRowCommand({
