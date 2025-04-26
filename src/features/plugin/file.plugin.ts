@@ -79,6 +79,9 @@ export class FilePlugin implements IPluginService {
             }
 
             this.checkUpdatedFile(item, previousFile);
+
+            const urlStore = item.value['url'] as JsonStringValueStore;
+            urlStore.value = '';
           } else {
             this.checkDefaultValues(item);
             this.prepareFile(item);
@@ -108,6 +111,7 @@ export class FilePlugin implements IPluginService {
     for (const [field, item] of Object.entries(file.value)) {
       if (
         field !== 'filename' &&
+        field !== 'url' &&
         item.value !== previousFile.value[field].value
       ) {
         throw new Error(
