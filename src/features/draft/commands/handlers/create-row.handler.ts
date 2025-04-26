@@ -8,6 +8,7 @@ import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/cr
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { PluginService } from 'src/features/plugin/plugin.service';
 import { validateRowId } from 'src/features/share/utils/validateUrlLikeId/validateRowId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -21,6 +22,7 @@ export class CreateRowHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
+    protected readonly pluginService: PluginService,
   ) {
     super(transactionService, draftContext);
   }
@@ -52,7 +54,7 @@ export class CreateRowHandler extends DraftHandler<
     });
   }
 
-  private createRow(data: CreateRowCommand['data'], schemaHash: string) {
+  private async createRow(data: CreateRowCommand['data'], schemaHash: string) {
     return this.commandBus.execute<
       InternalCreateRowCommand,
       InternalCreateRowCommandReturnType
@@ -61,7 +63,7 @@ export class CreateRowHandler extends DraftHandler<
         revisionId: data.revisionId,
         tableId: data.tableId,
         rowId: data.rowId,
-        data: data.data,
+        data: await this.pluginService.createRow(data),
         schemaHash,
       }),
     );

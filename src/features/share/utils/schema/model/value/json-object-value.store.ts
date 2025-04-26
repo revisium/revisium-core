@@ -20,7 +20,7 @@ export class JsonObjectValueStore {
   public index: number;
 
   constructor(
-    private readonly schema: JsonObjectStore,
+    public readonly schema: JsonObjectStore,
     public readonly rowId: string,
     public value: Record<string, JsonValueStore>,
   ) {

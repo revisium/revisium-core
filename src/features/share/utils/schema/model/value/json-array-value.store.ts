@@ -18,7 +18,7 @@ export class JsonArrayValueStore {
   public index: number;
 
   constructor(
-    private readonly schema: JsonArrayStore,
+    public readonly schema: JsonArrayStore,
     public readonly rowId: string,
     public value: JsonValueStore[],
   ) {

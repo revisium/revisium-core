@@ -1,5 +1,6 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetTableSchemaQuery,
@@ -13,10 +14,13 @@ import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 export class GetTableSchemaHandler
   implements IQueryHandler<GetTableSchemaQuery, GetTableSchemaQueryReturnType>
 {
-  constructor(private readonly transactionService: TransactionPrismaService) {}
+  constructor(
+    private readonly transactionService: TransactionPrismaService,
+    private readonly prismaService: PrismaService,
+  ) {}
 
-  private get transaction() {
-    return this.transactionService.getTransaction();
+  private get prisma() {
+    return this.transactionService.getTransactionUnsafe() ?? this.prismaService;
   }
 
   async execute({ data }: GetTableSchemaQuery) {
@@ -24,7 +28,7 @@ export class GetTableSchemaHandler
   }
 
   private async getSchema(revisionId: string, tableId: string) {
-    const result = await this.transaction.row.findFirst({
+    const result = await this.prisma.row.findFirst({
       where: {
         id: tableId,
         tables: {
