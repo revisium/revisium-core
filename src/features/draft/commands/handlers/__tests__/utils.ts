@@ -13,6 +13,7 @@ import { TABLE_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/in
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { PluginModule } from 'src/features/plugin/plugin.module';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
@@ -99,6 +100,7 @@ export const createTestingModule = async () => {
       DatabaseModule,
       CqrsModule,
       ShareModule,
+      PluginModule,
       NotificationModule,
       CacheModule.register(),
     ],
