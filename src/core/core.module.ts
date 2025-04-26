@@ -5,8 +5,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from 'src/features/auth/auth.module';
 
 import { BranchModule } from 'src/features/branch/branch.module';
-import { PluginModule } from 'src/features/plugin/plugin.module';
-import { ShareModule } from 'src/features/share/share.module';
 import { CleanModule } from 'src/infrastructure/clean/clean.module';
 import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
