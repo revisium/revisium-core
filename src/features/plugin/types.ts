@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, Row } from '@prisma/client';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
 
@@ -19,7 +19,7 @@ export type UpdateRowOptions = {
 export type ComputeRowsOptions = {
   revisionId: string;
   tableId: string;
-  rowsData: Prisma.JsonValue[];
+  rows: Row[];
 };
 
 export type InternalCreateRowOptions = CreateRowOptions & {
@@ -35,7 +35,6 @@ export type InternalUpdateRowOptions = CreateRowOptions & {
 
 export type InternalComputeRowsOptions = ComputeRowsOptions & {
   schemaStore: JsonSchemaStore;
-  valueStores: JsonValueStore[];
 };
 
 export interface IPluginService {

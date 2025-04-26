@@ -110,9 +110,7 @@ export class PluginService {
     return data;
   }
 
-  public async computeRows(
-    options: ComputeRowsOptions,
-  ): Promise<Prisma.JsonValue[]> {
+  public async computeRows(options: ComputeRowsOptions): Promise<void> {
     const { schema } = await this.shareTransactionalQueries.getTableSchema(
       options.revisionId,
       options.tableId,
@@ -120,28 +118,14 @@ export class PluginService {
 
     const schemaStore = this.jsonSchemaStore.create(schema);
 
-    const valueStores: JsonValueStore[] = [];
-
-    for (const rowData of options.rowsData) {
-      const valueStore = createJsonValueStore(
-        schemaStore,
-        '',
-        rowData as JsonValue,
-      );
-      valueStores.push(valueStore);
-    }
-
     const internalOptions: InternalComputeRowsOptions = {
       ...options,
       schemaStore,
-      valueStores,
     };
 
     for (const plugin of this.pluginsListService.orderedPlugins) {
       await plugin.computeRows(internalOptions);
     }
-
-    return valueStores.map((valueStore) => valueStore.getPlainValue());
   }
 
   private async getRow({

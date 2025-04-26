@@ -43,15 +43,14 @@ export class GetRowHandler
         );
 
       const row = await this.getRow(rowVersionId);
-      const rowsData = await this.pluginService.computeRows({
+      await this.pluginService.computeRows({
         revisionId: data.revisionId,
         tableId: data.tableId,
-        rowsData: [row.data],
+        rows: [row],
       });
 
       return {
         ...row,
-        data: rowsData[0],
         context: {
           revisionId: data.revisionId,
           tableId: data.tableId,

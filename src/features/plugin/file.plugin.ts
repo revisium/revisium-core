@@ -7,6 +7,7 @@ import {
   IPluginService,
 } from 'src/features/plugin/types';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
 import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
@@ -114,18 +115,26 @@ export class FilePlugin implements IPluginService {
   }
 
   public async computeRows(options: InternalComputeRowsOptions): Promise<void> {
-    for (const valueStore of options.valueStores) {
+    for (const row of options.rows) {
+      const valueStore = createJsonValueStore(
+        options.schemaStore,
+        '',
+        row.data,
+      );
+
       traverseValue(valueStore, (item) => {
         if (item.schema.$ref === SystemSchemaIds.File) {
           if (item.type === JsonSchemaTypeName.Object) {
             const fieldIdStore = item.value['fileId'] as JsonStringValueStore;
             const urlStore = item.value['url'] as JsonStringValueStore;
-            urlStore.value = `https://cdn.revisium.io/${fieldIdStore.getPlainValue()}`; // TODO
+            urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`; // TODO
           } else {
             throw new Error('Invalid schema type');
           }
         }
       });
+
+      row.data = valueStore.getPlainValue();
     }
   }
 }

@@ -39,21 +39,19 @@ export class GetRowsHandler
       findMany: async (args) => {
         const rows = await this.getRows(args, tableId);
 
-        const rowsData = await this.pluginService.computeRows({
+        await this.pluginService.computeRows({
           revisionId: data.revisionId,
           tableId: data.tableId,
-          rowsData: rows.map((row) => row.data),
+          rows,
         });
 
-        return rows
-          .map((row, index) => ({ ...row, data: rowsData[index] }))
-          .map((row) => ({
-            ...row,
-            context: {
-              revisionId: data.revisionId,
-              tableId: data.tableId,
-            },
-          }));
+        return rows.map((row) => ({
+          ...row,
+          context: {
+            revisionId: data.revisionId,
+            tableId: data.tableId,
+          },
+        }));
       },
       count: () => this.getRowsCount(tableId),
     });
