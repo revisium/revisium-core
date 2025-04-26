@@ -6,7 +6,7 @@ import {
   IPluginService,
 } from 'src/features/plugin/types';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
-import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
+import { getDBJsonPathByJsonSchemaStore } from 'src/features/share/utils/schema/lib/getDBJsonPathByJsonSchemaStore';
 import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
 import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
@@ -54,7 +54,7 @@ export class FilePlugin implements IPluginService {
     traverseValue(options.valueStore, (item) => {
       if (item.schema.$ref === SystemSchemaIds.File) {
         if (item.type === JsonSchemaTypeName.Object) {
-          console.log('updateRow', getValuePathByStore(item.schema));
+          console.log('updateRow', getDBJsonPathByJsonSchemaStore(item.schema));
           // this.checkDefaultValues(item);
           // this.prepareFile(item);
         } else {
