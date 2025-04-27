@@ -67,8 +67,6 @@ export class FilePlugin implements IPluginService {
       }
     });
 
-    const nextFiles: Map<string, JsonObjectValueStore> = new Map();
-
     traverseValue(options.valueStore, (item) => {
       if (item.schema.$ref === SystemSchemaIds.File) {
         if (item.type === JsonSchemaTypeName.Object) {
@@ -89,8 +87,6 @@ export class FilePlugin implements IPluginService {
             this.checkDefaultValues(item);
             this.prepareFile(item);
           }
-
-          nextFiles.set(fileId, item);
         } else {
           throw new Error('Invalid schema type');
         }
