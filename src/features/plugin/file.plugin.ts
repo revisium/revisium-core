@@ -17,7 +17,7 @@ import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema
 export enum FileStatus {
   ready = 'ready',
   error = 'error',
-  completed = 'uploaded',
+  uploaded = 'uploaded',
 }
 
 @Injectable()
@@ -127,8 +127,12 @@ export class FilePlugin implements IPluginService {
         if (item.schema.$ref === SystemSchemaIds.File) {
           if (item.type === JsonSchemaTypeName.Object) {
             const fieldIdStore = item.value['fileId'] as JsonStringValueStore;
-            const urlStore = item.value['url'] as JsonStringValueStore;
-            urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`; // TODO
+            const statusStore = item.value['status'] as JsonStringValueStore;
+
+            if (statusStore.getPlainValue() === FileStatus.uploaded) {
+              const urlStore = item.value['url'] as JsonStringValueStore;
+              urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`; // TODO
+            }
           } else {
             throw new Error('Invalid schema type');
           }
