@@ -14,35 +14,13 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 describe('file.plugin', () => {
   describe('createRow', () => {
     it('should update files', async () => {
-      const { draftRevisionId, tableId, schemaRowVersionId } =
-        await prepareProject(prismaService);
-
-      await prismaService.row.update({
-        where: { versionId: schemaRowVersionId },
-        data: {
-          data: getObjectSchema({
-            file: getRefSchema(SystemSchemaIds.File),
-            files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
-          }),
-        },
-      });
-
-      const rowId = nanoid();
-
-      const file = {
-        status: '',
-        fileId: '',
-        url: '',
-        filename: '',
-        hash: '',
-        extension: '',
-        mimeType: '',
-        size: 0,
-        width: 0,
-        height: 0,
+      const { draftRevisionId, tableId, rowId } =
+        await setupProjectWithFileSchema();
+      const emptyFile = createEmptyFile();
+      const data = {
+        file: emptyFile,
+        files: [emptyFile, emptyFile, emptyFile],
       };
-
-      const data = { file, files: [file, file, file] } as const;
 
       const result = (await pluginService.createRow({
         revisionId: draftRevisionId,
@@ -53,6 +31,7 @@ describe('file.plugin', () => {
 
       expect(result.file.status).toBe(FileStatus.ready);
       expect(result.file.fileId).toBeTruthy();
+
       for (const file of result.files) {
         expect(file.status).toBe(FileStatus.ready);
         expect(file.fileId).toBeTruthy();
@@ -60,45 +39,21 @@ describe('file.plugin', () => {
     });
 
     it('should throw error if the data is invalid', async () => {
-      const { draftRevisionId, tableId, schemaRowVersionId } =
-        await prepareProject(prismaService);
-
-      await prismaService.row.update({
-        where: { versionId: schemaRowVersionId },
-        data: {
-          data: getObjectSchema({
-            file: getRefSchema(SystemSchemaIds.File),
-            files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
-          }),
-        },
-      });
-
-      const rowId = nanoid();
-
-      const file = {
-        status: '',
-        fileId: '',
-        url: '',
-        filename: '',
-        hash: '',
-        extension: '',
-        mimeType: '',
-        size: 0,
-        width: 0,
-        height: 0,
-      };
+      const { draftRevisionId, tableId, rowId } =
+        await setupProjectWithFileSchema();
+      const emptyFile = createEmptyFile();
 
       const data = {
-        file,
+        file: emptyFile,
         files: [
-          file,
+          emptyFile,
           {
-            ...file,
+            ...emptyFile,
             size: 1,
           },
-          file,
+          emptyFile,
         ],
-      } as const;
+      };
 
       await expect(
         pluginService.createRow({
@@ -113,6 +68,36 @@ describe('file.plugin', () => {
 
   let prismaService: PrismaService;
   let pluginService: PluginService;
+
+  const setupProjectWithFileSchema = async () => {
+    const { draftRevisionId, tableId, schemaRowVersionId } =
+      await prepareProject(prismaService);
+
+    await prismaService.row.update({
+      where: { versionId: schemaRowVersionId },
+      data: {
+        data: getObjectSchema({
+          file: getRefSchema(SystemSchemaIds.File),
+          files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+        }),
+      },
+    });
+
+    return { draftRevisionId, tableId, rowId: nanoid() };
+  };
+
+  const createEmptyFile = () => ({
+    status: '',
+    fileId: '',
+    url: '',
+    filename: '',
+    hash: '',
+    extension: '',
+    mimeType: '',
+    size: 0,
+    width: 0,
+    height: 0,
+  });
 
   beforeAll(async () => {
     const result = await createTestingModule();
