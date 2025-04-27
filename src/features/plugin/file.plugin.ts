@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import {
   InternalComputeRowsOptions,
   InternalCreateRowOptions,
+  InternalMigrateRowsOptions,
   InternalUpdateRowOptions,
   IPluginService,
 } from 'src/features/plugin/types';
@@ -128,6 +129,34 @@ export class FilePlugin implements IPluginService {
             const fieldIdStore = item.value['fileId'] as JsonStringValueStore;
             const urlStore = item.value['url'] as JsonStringValueStore;
             urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`; // TODO
+          } else {
+            throw new Error('Invalid schema type');
+          }
+        }
+      });
+
+      row.data = valueStore.getPlainValue();
+    }
+  }
+
+  public async migrateRows(options: InternalMigrateRowsOptions): Promise<void> {
+    for (const row of options.rows) {
+      const valueStore = createJsonValueStore(
+        options.schemaStore,
+        '',
+        row.data,
+      );
+
+      traverseValue(valueStore, (item) => {
+        if (item.schema.$ref === SystemSchemaIds.File) {
+          if (item.type === JsonSchemaTypeName.Object) {
+            const fileIdStore = item.value['fileId'] as JsonStringValueStore;
+            const fileId = fileIdStore.getPlainValue();
+
+            if (!fileId) {
+              this.checkDefaultValues(item);
+              this.prepareFile(item);
+            }
           } else {
             throw new Error('Invalid schema type');
           }

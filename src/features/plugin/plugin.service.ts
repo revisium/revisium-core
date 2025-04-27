@@ -7,13 +7,13 @@ import {
   InternalComputeRowsOptions,
   InternalCreateRowOptions,
   InternalUpdateRowOptions,
+  MigrateRowsOptions,
   UpdateRowOptions,
 } from 'src/features/plugin/types';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -125,6 +125,24 @@ export class PluginService {
 
     for (const plugin of this.pluginsListService.orderedPlugins) {
       await plugin.computeRows(internalOptions);
+    }
+  }
+
+  public async migrateRows(options: MigrateRowsOptions): Promise<void> {
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
+      options.revisionId,
+      options.tableId,
+    );
+
+    const schemaStore = this.jsonSchemaStore.create(schema);
+
+    const internalOptions: InternalComputeRowsOptions = {
+      ...options,
+      schemaStore,
+    };
+
+    for (const plugin of this.pluginsListService.orderedPlugins) {
+      await plugin.migrateRows(internalOptions);
     }
   }
 

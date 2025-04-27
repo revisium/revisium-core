@@ -1,10 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma, Row } from '@prisma/client';
 import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
+import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
@@ -38,6 +39,7 @@ export class UpdateTableHandler extends DraftHandler<
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
+    protected readonly pluginTable: PluginService,
   ) {
     super(transactionService, draftContext);
   }
@@ -74,10 +76,9 @@ export class UpdateTableHandler extends DraftHandler<
 
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
 
-    const nextTable = await this.createNextTable(data);
+    const { tableSchema, rows } = await this.createNextTable(data);
 
-    const tableSchema = nextTable.getSchema();
-    await this.updateSchema(data, nextTable.getSchema());
+    await this.updateSchema(data, tableSchema);
 
     const { hash: nextSchemaHash } = await this.getTableSchema(data);
     await this.updateRows({
@@ -85,10 +86,7 @@ export class UpdateTableHandler extends DraftHandler<
       tableId: data.tableId,
       tableSchema,
       schemaHash: nextSchemaHash,
-      rows: nextTable.getRows().map((row) => ({
-        rowId: row.id,
-        data: row.data as Prisma.InputJsonValue,
-      })),
+      rows,
     });
     await this.updateRevision(data.revisionId);
 
@@ -114,7 +112,21 @@ export class UpdateTableHandler extends DraftHandler<
       schemaTable.getSchema(),
     );
 
-    return schemaTable;
+    const patchedRows = new Map(
+      schemaTable.getRows().map((row) => [row.id, row.data]),
+    );
+    for (const row of rows) {
+      const patchRow = patchedRows.get(row.id);
+      if (!patchRow) {
+        throw new BadRequestException(`Patch row not found for ${row.id}`);
+      }
+      row.data = patchRow;
+    }
+
+    return {
+      tableSchema: schemaTable.getSchema(),
+      rows,
+    };
   }
 
   private async getTableSchema(data: UpdateTableCommand['data']) {
@@ -175,14 +187,23 @@ export class UpdateTableHandler extends DraftHandler<
     tableId: string;
     tableSchema: JsonSchema;
     schemaHash: string;
-    rows: { rowId: string; data: Prisma.InputJsonValue }[];
+    rows: Row[];
   }) {
+    await this.pluginTable.migrateRows({
+      revisionId: data.revisionId,
+      tableId: data.tableId,
+      rows: data.rows,
+    });
+
     await this.commandBus.execute(
       new InternalUpdateRowsCommand({
         revisionId: data.revisionId,
         tableId: data.tableId,
         tableSchema: data.tableSchema,
-        rows: data.rows,
+        rows: data.rows.map((row) => ({
+          rowId: row.id,
+          data: row.data as Prisma.InputJsonValue,
+        })),
         schemaHash: data.schemaHash,
       }),
     );

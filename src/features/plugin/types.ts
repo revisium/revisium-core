@@ -22,6 +22,12 @@ export type ComputeRowsOptions = {
   rows: Row[];
 };
 
+export type MigrateRowsOptions = {
+  revisionId: string;
+  tableId: string;
+  rows: Row[];
+};
+
 export type InternalCreateRowOptions = CreateRowOptions & {
   schemaStore: JsonSchemaStore;
   valueStore: JsonValueStore;
@@ -37,8 +43,13 @@ export type InternalComputeRowsOptions = ComputeRowsOptions & {
   schemaStore: JsonSchemaStore;
 };
 
+export type InternalMigrateRowsOptions = MigrateRowsOptions & {
+  schemaStore: JsonSchemaStore;
+};
+
 export interface IPluginService {
   createRow(options: InternalCreateRowOptions): Promise<void>;
   updateRow(options: InternalUpdateRowOptions): Promise<void>;
   computeRows(options: InternalComputeRowsOptions): Promise<void>;
+  migrateRows(options: InternalComputeRowsOptions): Promise<void>;
 }
