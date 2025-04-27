@@ -51,5 +51,5 @@ export interface IPluginService {
   createRow(options: InternalCreateRowOptions): Promise<void>;
   updateRow(options: InternalUpdateRowOptions): Promise<void>;
   computeRows(options: InternalComputeRowsOptions): Promise<void>;
-  migrateRows(options: InternalComputeRowsOptions): Promise<void>;
+  migrateRows(options: InternalMigrateRowsOptions): Promise<void>;
 }
