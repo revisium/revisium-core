@@ -19,6 +19,14 @@ export class GetRowByIdHandler
     });
 
     if (row) {
+      await this.pluginService.computeRows({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        rows: [row],
+      });
+    }
+
+    if (row) {
       return {
         ...row,
         context: {
