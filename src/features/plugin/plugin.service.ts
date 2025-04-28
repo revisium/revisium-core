@@ -16,6 +16,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @Injectable()
@@ -23,6 +24,7 @@ export class PluginService {
   constructor(
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly transactionPrisma: TransactionPrismaService,
+    private readonly prismaService: PrismaService,
     private readonly jsonSchemaStore: JsonSchemaStoreService,
     private readonly jsonSchemaValidator: JsonSchemaValidatorService,
     private readonly pluginsListService: PluginListService,
@@ -195,6 +197,6 @@ export class PluginService {
   }
 
   private get prisma() {
-    return this.transactionPrisma.getTransaction();
+    return this.transactionPrisma.getTransactionUnsafe() || this.prismaService;
   }
 }

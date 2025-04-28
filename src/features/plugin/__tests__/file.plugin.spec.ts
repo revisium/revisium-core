@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid';
 import {
   prepareProject,
+  prepareRow,
   prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
 import {
@@ -17,8 +18,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 describe('file.plugin', () => {
   describe('createRow', () => {
     it('should update files', async () => {
-      const { draftRevisionId, tableId, rowId } =
-        await setupProjectWithFileSchema();
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
       const emptyFile = createEmptyFile();
       const data = {
         file: emptyFile,
@@ -27,8 +27,8 @@ describe('file.plugin', () => {
 
       const result = (await pluginService.createRow({
         revisionId: draftRevisionId,
-        tableId,
-        rowId,
+        tableId: table.tableId,
+        rowId: nanoid(),
         data,
       })) as typeof data;
 
@@ -42,8 +42,7 @@ describe('file.plugin', () => {
     });
 
     it('should throw error if the data is invalid', async () => {
-      const { draftRevisionId, tableId, rowId } =
-        await setupProjectWithFileSchema();
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
       const emptyFile = createEmptyFile();
 
       const data = {
@@ -61,12 +60,125 @@ describe('file.plugin', () => {
       await expect(
         pluginService.createRow({
           revisionId: draftRevisionId,
-          tableId,
-          rowId,
+          tableId: table.tableId,
+          rowId: nanoid(),
           data,
         }),
       ).rejects.toThrow('size must have default value = 0');
     });
+  });
+
+  describe('updateRow', () => {
+    it('should update files', async () => {
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+      const previousData = {
+        file: createPreviousFile(),
+        files: [createPreviousFile()],
+      };
+
+      const data = {
+        file: { ...previousData.file, url: 'url', filename: 'filename' },
+        files: [...previousData.files, createEmptyFile(), createEmptyFile()],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      const result = (await pluginService.updateRow({
+        revisionId: draftRevisionId,
+        tableId: table.tableId,
+        rowId: rowDraft.id,
+        data,
+      })) as typeof data;
+
+      expect(result.file.status).toBe(FileStatus.ready);
+      expect(result.file.fileId).toBeTruthy();
+      expect(result.file.url).toBe('');
+      expect(result.file.filename).toBe('filename');
+
+      for (const file of result.files) {
+        expect(file.status).toBe(FileStatus.ready);
+        expect(file.fileId).toBeTruthy();
+      }
+    });
+
+    it('should throw error if the data is invalid', async () => {
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+      const previousData = {
+        file: createPreviousFile(),
+        files: [createPreviousFile()],
+      };
+
+      const data = {
+        file: { ...previousData.file, size: 100 },
+        files: [...previousData.files, createEmptyFile(), createEmptyFile()],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      await expect(
+        pluginService.updateRow({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          rowId: rowDraft.id,
+          data,
+        }),
+      ).rejects.toThrow('size must have value = 0');
+    });
+
+    it('should throw error if the file does not exist', async () => {
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+      const previousData = {
+        file: createPreviousFile(),
+        files: [],
+      };
+
+      const data = {
+        file: previousData.file,
+        files: [createPreviousFile()],
+      } as const;
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      await expect(
+        pluginService.updateRow({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          rowId: rowDraft.id,
+          data,
+        }),
+      ).rejects.toThrow(`File ${data.files[0].fileId} does not exist`);
+    });
+
+    const createPreviousFile = () => {
+      const file = createEmptyFile();
+      file.status = FileStatus.ready;
+      file.fileId = nanoid();
+      return file;
+    };
   });
 
   let prismaService: PrismaService;
@@ -87,7 +199,7 @@ describe('file.plugin', () => {
       }),
     });
 
-    return { draftRevisionId, tableId: table.tableId, rowId: nanoid() };
+    return { draftRevisionId, table };
   };
 
   const createEmptyFile = () => ({

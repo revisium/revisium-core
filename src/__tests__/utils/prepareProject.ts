@@ -271,6 +271,7 @@ export async function prepareTableWithSchema({
     tableCreatedId,
     headTableVersionId,
     draftTableVersionId,
+    schema,
   };
 }
 
@@ -295,7 +296,7 @@ export async function prepareRow({
   const draftRowVersionId = nanoid();
 
   // row
-  await prismaService.row.create({
+  const row = await prismaService.row.create({
     data: {
       createdAt: new Date('2024-01-01T00:00:00.000Z'),
       updatedAt: new Date('2024-01-01T00:00:00.000Z'),
@@ -313,7 +314,7 @@ export async function prepareRow({
       schemaHash: hash(schema),
     },
   });
-  await prismaService.row.create({
+  const rowDraft = await prismaService.row.create({
     data: {
       createdAt: new Date('2024-01-01T00:00:00.000Z'),
       updatedAt: new Date('2025-01-01T00:00:00.000Z'),
@@ -333,6 +334,8 @@ export async function prepareRow({
   });
 
   return {
+    row,
+    rowDraft,
     rowId,
     rowCreatedId,
     headRowVersionId,
