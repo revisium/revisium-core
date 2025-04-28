@@ -172,13 +172,6 @@ describe('file.plugin', () => {
         }),
       ).rejects.toThrow(`File ${data.files[0].fileId} does not exist`);
     });
-
-    const createPreviousFile = () => {
-      const file = createEmptyFile();
-      file.status = FileStatus.ready;
-      file.fileId = nanoid();
-      return file;
-    };
   });
 
   describe('computeRows', () => {
@@ -227,13 +220,39 @@ describe('file.plugin', () => {
       expect(result.files[1].url).toBe('');
       expect(result.files[2].url).toBe('');
     });
+  });
 
-    const createPreviousFile = () => {
-      const file = createEmptyFile();
-      file.status = FileStatus.ready;
-      file.fileId = nanoid();
-      return file;
-    };
+  describe('migrateRows', () => {
+    it('should migrate files', async () => {
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+      const data = {
+        file: createPreviousFile(),
+        files: [createPreviousFile(), createEmptyFile(), createEmptyFile()],
+      } as const;
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: data,
+        dataDraft: data,
+      });
+
+      await pluginService.migrateRows({
+        revisionId: draftRevisionId,
+        tableId: table.tableId,
+        rows: [rowDraft],
+      });
+
+      const result = rowDraft.data as unknown as typeof data;
+
+      expect(result.files[1].status).toBe(FileStatus.ready);
+      expect(result.files[1].fileId).toBeTruthy();
+      expect(result.files[2].status).toBe(FileStatus.ready);
+      expect(result.files[2].fileId).toBeTruthy();
+    });
   });
 
   let prismaService: PrismaService;
@@ -255,6 +274,13 @@ describe('file.plugin', () => {
     });
 
     return { draftRevisionId, table };
+  };
+
+  const createPreviousFile = () => {
+    const file = createEmptyFile();
+    file.status = FileStatus.ready;
+    file.fileId = nanoid();
+    return file;
   };
 
   const createEmptyFile = () => ({
