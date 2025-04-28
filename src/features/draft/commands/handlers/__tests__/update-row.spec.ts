@@ -1,13 +1,17 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { nanoid } from 'nanoid';
 import {
   prepareProject,
   PrepareProjectReturnType,
+  prepareRow,
+  prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
 import {
   getArraySchema,
   getObjectSchema,
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
+import { FileStatus } from 'src/features/plugin/file.plugin';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -197,21 +201,22 @@ describe('UpdateRowHandler', () => {
 
   it('should update row with refs', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, rowId, schemaRowVersionId } = ids;
+    const { headRevisionId, draftRevisionId, schemaTableVersionId } = ids;
 
-    await prismaService.row.update({
-      where: { versionId: schemaRowVersionId },
-      data: {
-        data: getObjectSchema({
-          file: getRefSchema(SystemSchemaIds.File),
-          files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
-        }),
-      },
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      schema: getObjectSchema({
+        file: getRefSchema(SystemSchemaIds.File),
+        files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+      }),
     });
 
     const file = {
-      status: '',
-      fileId: '',
+      status: FileStatus.ready,
+      fileId: nanoid(),
       url: '',
       filename: '',
       hash: '',
@@ -221,11 +226,24 @@ describe('UpdateRowHandler', () => {
       width: 0,
       height: 0,
     };
+    const data = {
+      file,
+      files: [],
+    };
+
+    const { rowDraft } = await prepareRow({
+      prismaService,
+      headTableVersionId: table.headTableVersionId,
+      draftTableVersionId: table.draftTableVersionId,
+      schema: table.schema,
+      data: data,
+      dataDraft: data,
+    });
 
     const command = new UpdateRowCommand({
       revisionId: draftRevisionId,
-      tableId,
-      rowId,
+      tableId: table.tableId,
+      rowId: rowDraft.id,
       data: { file, files: [file] },
     });
 

@@ -157,7 +157,7 @@ export class PluginService {
     tableId: string;
     rowId: string;
   }) {
-    return this.prisma.row.findFirstOrThrow({
+    const row = await this.prisma.row.findFirst({
       where: {
         id: rowId,
         tables: {
@@ -172,6 +172,14 @@ export class PluginService {
         },
       },
     });
+
+    if (!row) {
+      throw new BadRequestException(
+        'A row with this name does not exist in the revision',
+      );
+    }
+
+    return row;
   }
 
   private async validateData({
