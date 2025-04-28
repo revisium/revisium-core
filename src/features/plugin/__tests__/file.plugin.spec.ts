@@ -181,6 +181,61 @@ describe('file.plugin', () => {
     };
   });
 
+  describe('computeRows', () => {
+    it('should compute rows', async () => {
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+      const data = {
+        file: {
+          ...createPreviousFile(),
+          status: FileStatus.uploaded,
+          url: 'url',
+        },
+        files: [
+          {
+            ...createPreviousFile(),
+            status: FileStatus.uploaded,
+          },
+          createPreviousFile(),
+          createEmptyFile(),
+        ],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: data,
+        dataDraft: data,
+      });
+
+      await pluginService.computeRows({
+        revisionId: draftRevisionId,
+        tableId: table.tableId,
+        rows: [rowDraft],
+      });
+
+      const result = rowDraft.data as typeof data;
+
+      expect(result.file.url).toBe(
+        `https://cdn.revisium.io/${table.tableId}/${rowDraft.createdId}/${result.file.fileId}`,
+      );
+      expect(result.files[0].url).toBe(
+        `https://cdn.revisium.io/${table.tableId}/${rowDraft.createdId}/${result.files[0].fileId}`,
+      );
+      expect(result.files[1].url).toBe('');
+      expect(result.files[2].url).toBe('');
+    });
+
+    const createPreviousFile = () => {
+      const file = createEmptyFile();
+      file.status = FileStatus.ready;
+      file.fileId = nanoid();
+      return file;
+    };
+  });
+
   let prismaService: PrismaService;
   let pluginService: PluginService;
 
