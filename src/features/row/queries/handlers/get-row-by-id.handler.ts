@@ -10,7 +10,7 @@ export class GetRowByIdHandler
 {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly pluginService: PluginService, // TODO
+    private readonly pluginService: PluginService,
   ) {}
 
   public async execute({ data }: GetRowByIdQuery) {

@@ -205,6 +205,6 @@ export class PluginService {
   }
 
   private get prisma() {
-    return this.transactionPrisma.getTransactionUnsafe() || this.prismaService;
+    return this.transactionPrisma.getTransactionUnsafe() ?? this.prismaService;
   }
 }

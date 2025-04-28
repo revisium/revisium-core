@@ -127,7 +127,7 @@ export class FilePlugin implements IPluginService {
 
             if (statusStore.getPlainValue() === FileStatus.uploaded) {
               const urlStore = item.value['url'] as JsonStringValueStore;
-              urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`; // TODO
+              urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`;
             }
           } else {
             throw new Error('Invalid schema type');
