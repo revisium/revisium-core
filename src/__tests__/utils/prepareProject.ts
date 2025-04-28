@@ -274,11 +274,21 @@ async function prepareTableWithSchema({
   };
 }
 
-async function prepareRow(
-  prismaService: PrismaService,
-  headTableVersionId: string,
-  draftTableVersionId: string,
-) {
+async function prepareRow({
+  prismaService,
+  headTableVersionId,
+  draftTableVersionId,
+  data,
+  dataDraft,
+  schema,
+}: {
+  prismaService: PrismaService;
+  headTableVersionId: string;
+  draftTableVersionId: string;
+  data: object;
+  dataDraft: object;
+  schema: JsonSchema;
+}) {
   const rowId = `row-${nanoid()}`;
   const rowCreatedId = nanoid();
   const headRowVersionId = nanoid();
@@ -298,9 +308,9 @@ async function prepareRow(
           versionId: headTableVersionId,
         },
       },
-      data: { ver: 1 },
-      hash: hash({ ver: 1 }),
-      schemaHash: hash(testSchema),
+      data,
+      hash: hash(data),
+      schemaHash: hash(schema),
     },
   });
   await prismaService.row.create({
@@ -316,8 +326,8 @@ async function prepareRow(
           versionId: draftTableVersionId,
         },
       },
-      data: { ver: 2 },
-      hash: hash({ ver: 2 }),
+      data: dataDraft,
+      hash: hash(dataDraft),
       schemaHash: hash(testSchema),
     },
   });
@@ -334,15 +344,6 @@ export const prepareProject = async (
   prismaService: PrismaService,
   options?: { createLinkedTable?: boolean },
 ) => {
-  const linkedTableId = `table-${nanoid()}`;
-  const linkedTableCreatedId = nanoid();
-  const headLinkedTableVersionId = nanoid();
-  const draftLinkedTableVersionId = nanoid();
-  const linkedRowId = `row-${nanoid()}`;
-  const linkedRowCreatedId = nanoid();
-  const headLinkedRowVersionId = nanoid();
-  const draftLinkedRowVersionId = nanoid();
-
   const prepareBranchResult = await prepareBranch(prismaService);
   const { headRevisionId, draftRevisionId, schemaTableVersionId } =
     prepareBranchResult;
@@ -355,103 +356,42 @@ export const prepareProject = async (
   });
   const { headTableVersionId, draftTableVersionId, tableId } =
     resultPrepareTableWithSchema;
-  const resultPrepareRow = await prepareRow(
+  const resultPrepareRow = await prepareRow({
     prismaService,
     headTableVersionId,
     draftTableVersionId,
-  );
+    data: { ver: 1 },
+    dataDraft: { ver: 2 },
+    schema: testSchema,
+  });
   const { rowId } = resultPrepareRow;
 
+  let linkedTable:
+    | Awaited<ReturnType<typeof prepareTableWithSchema>>
+    | undefined = undefined;
+
+  let linkedRow: Awaited<ReturnType<typeof prepareRow>> | undefined = undefined;
+
   if (options?.createLinkedTable) {
-    // schema for linked table in SystemTable.schema
     const linkedSchema = getTestLinkedSchema(tableId);
-    await prismaService.row.create({
-      data: {
-        id: linkedTableId,
-        versionId: nanoid(),
-        createdId: nanoid(),
-        readonly: true,
-        tables: {
-          connect: {
-            versionId: schemaTableVersionId,
-          },
-        },
-        data: linkedSchema,
-        meta: [
-          {
-            patches: [
-              {
-                op: 'add',
-                path: '',
-                value: linkedSchema,
-              } as JsonPatchAdd,
-            ],
-            hash: hash(linkedSchema),
-          },
-        ],
-        hash: hash(linkedSchema),
-        schemaHash: hash(metaSchema),
-      },
+    linkedTable = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      schema: getTestLinkedSchema(tableId),
     });
 
-    // linked table
-    await prismaService.table.create({
-      data: {
-        id: linkedTableId,
-        createdId: linkedTableCreatedId,
-        versionId: headLinkedTableVersionId,
-        readonly: true,
-        revisions: {
-          connect: { id: headRevisionId },
-        },
-      },
-    });
-    await prismaService.table.create({
-      data: {
-        id: linkedTableId,
-        createdId: linkedTableCreatedId,
-        versionId: draftLinkedTableVersionId,
-        readonly: false,
-        revisions: {
-          connect: { id: draftRevisionId },
-        },
-      },
-    });
-
-    // linked row
-    await prismaService.row.create({
-      data: {
-        id: linkedRowId,
-        versionId: headLinkedRowVersionId,
-        createdId: linkedRowCreatedId,
-        readonly: true,
-        tables: {
-          connect: {
-            versionId: headLinkedTableVersionId,
-          },
-        },
-        data: { link: rowId },
-        hash: hash({ link: rowId }),
-        schemaHash: hash(linkedSchema),
-      },
-    });
-    await prismaService.row.create({
-      data: {
-        id: linkedRowId,
-        versionId: draftLinkedRowVersionId,
-        createdId: linkedRowCreatedId,
-        readonly: false,
-        tables: {
-          connect: {
-            versionId: draftLinkedTableVersionId,
-          },
-        },
-        data: { link: rowId },
-        hash: hash({ link: rowId }),
-        schemaHash: hash(linkedSchema),
-      },
+    linkedRow = await prepareRow({
+      prismaService,
+      headTableVersionId: linkedTable.headTableVersionId,
+      draftTableVersionId: linkedTable.draftTableVersionId,
+      data: { link: rowId },
+      dataDraft: { link: rowId },
+      schema: linkedSchema,
     });
   }
+
   const prepareEndpointResult = await prepareEndpoint({
     prismaService,
     headRevisionId,
@@ -463,13 +403,7 @@ export const prepareProject = async (
     ...prepareEndpointResult,
     ...resultPrepareTableWithSchema,
     ...resultPrepareRow,
-    linkedTableId,
-    linkedTableCreatedId,
-    headLinkedTableVersionId,
-    draftLinkedTableVersionId,
-    linkedRowId,
-    linkedRowCreatedId,
-    headLinkedRowVersionId,
-    draftLinkedRowVersionId,
+    linkedTable,
+    linkedRow,
   };
 };
