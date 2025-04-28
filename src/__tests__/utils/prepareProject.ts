@@ -190,7 +190,7 @@ async function prepareEndpoint({
   };
 }
 
-async function prepareTableWithSchema({
+export async function prepareTableWithSchema({
   prismaService,
   headRevisionId,
   draftRevisionId,
@@ -274,7 +274,7 @@ async function prepareTableWithSchema({
   };
 }
 
-async function prepareRow({
+export async function prepareRow({
   prismaService,
   headTableVersionId,
   draftTableVersionId,

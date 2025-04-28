@@ -1,5 +1,8 @@
 import { nanoid } from 'nanoid';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
+import {
+  prepareProject,
+  prepareTableWithSchema,
+} from 'src/__tests__/utils/prepareProject';
 import {
   getArraySchema,
   getObjectSchema,
@@ -70,20 +73,21 @@ describe('file.plugin', () => {
   let pluginService: PluginService;
 
   const setupProjectWithFileSchema = async () => {
-    const { draftRevisionId, tableId, schemaRowVersionId } =
+    const { headRevisionId, draftRevisionId, schemaTableVersionId } =
       await prepareProject(prismaService);
 
-    await prismaService.row.update({
-      where: { versionId: schemaRowVersionId },
-      data: {
-        data: getObjectSchema({
-          file: getRefSchema(SystemSchemaIds.File),
-          files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
-        }),
-      },
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      schema: getObjectSchema({
+        file: getRefSchema(SystemSchemaIds.File),
+        files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+      }),
     });
 
-    return { draftRevisionId, tableId, rowId: nanoid() };
+    return { draftRevisionId, tableId: table.tableId, rowId: nanoid() };
   };
 
   const createEmptyFile = () => ({
