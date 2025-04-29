@@ -1,6 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import * as hash from 'object-hash';
+import {
+  getArraySchema,
+  getObjectSchema,
+  getRefSchema,
+} from 'src/__tests__/utils/schema/schema.mocks';
 import { AuthService } from 'src/features/auth/auth.service';
 import { UserRole } from 'src/features/auth/consts';
 import {
@@ -8,6 +13,7 @@ import {
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file.plugin';
+import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
@@ -409,6 +415,42 @@ export const prepareProject = async (
     ...resultPrepareRow,
     linkedTable,
     linkedRow,
+  };
+};
+
+export const prepareTableAndRowWithFile = async (
+  prismaService: PrismaService,
+  data: object,
+) => {
+  const { headRevisionId, draftRevisionId, schemaTableVersionId } =
+    await prepareProject(prismaService);
+
+  const table = await prepareTableWithSchema({
+    prismaService,
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    schema: getObjectSchema({
+      file: getRefSchema(SystemSchemaIds.File),
+      files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+    }),
+  });
+
+  const { row, rowDraft } = await prepareRow({
+    prismaService,
+    headTableVersionId: table.headTableVersionId,
+    draftTableVersionId: table.draftTableVersionId,
+    schema: table.schema,
+    data: data,
+    dataDraft: data,
+  });
+
+  return {
+    headRevisionId,
+    draftRevisionId,
+    table,
+    row,
+    rowDraft,
   };
 };
 

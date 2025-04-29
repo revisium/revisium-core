@@ -5,12 +5,12 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file.plugin';
-import { GetRowsQuery } from 'src/features/row/queries/impl';
-import { GetRowsReturnType } from 'src/features/row/queries/types';
+import { GetRowQuery } from 'src/features/row/queries/impl';
+import { GetRowReturnType } from 'src/features/row/queries/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
-describe('getRows', () => {
+describe('getRow', () => {
   it('should compute rows', async () => {
     const data = {
       file: {
@@ -21,25 +21,23 @@ describe('getRows', () => {
       files: [],
     };
 
-    const { draftRevisionId, table } = await prepareTableAndRowWithFile(
-      prismaService,
-      data,
-    );
+    const { draftRevisionId, table, rowDraft } =
+      await prepareTableAndRowWithFile(prismaService, data);
 
     const result = await runTransaction(
-      new GetRowsQuery({
+      new GetRowQuery({
         revisionId: draftRevisionId,
         tableId: table.tableId,
-        first: 1,
+        rowId: rowDraft.id,
       }),
     );
 
-    const resultData = result.edges[0].node.data as typeof data;
+    const resultData = result?.data as typeof data;
 
     expect(resultData.file.url).toBeTruthy();
   });
 
-  function runTransaction(query: GetRowsQuery): Promise<GetRowsReturnType> {
+  function runTransaction(query: GetRowQuery): Promise<GetRowReturnType> {
     return transactionService.run(async () => queryBus.execute(query));
   }
 
