@@ -7,6 +7,7 @@ import {
   getTestLinkedSchema,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
+import { FileStatus } from 'src/features/plugin/file.plugin';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
@@ -410,3 +411,23 @@ export const prepareProject = async (
     linkedRow,
   };
 };
+
+export const createPreviousFile = () => {
+  const file = createEmptyFile();
+  file.status = FileStatus.ready;
+  file.fileId = nanoid();
+  return file;
+};
+
+export const createEmptyFile = () => ({
+  status: '',
+  fileId: '',
+  url: '',
+  filename: '',
+  hash: '',
+  extension: '',
+  mimeType: '',
+  size: 0,
+  width: 0,
+  height: 0,
+});

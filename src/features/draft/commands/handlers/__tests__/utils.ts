@@ -14,6 +14,7 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { PluginModule } from 'src/features/plugin/plugin.module';
+import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
@@ -93,6 +94,7 @@ export const createTestingModule = async () => {
     GetBranchByIdHandler,
     GetTableByIdHandler as QueryHandlerType,
     GetRowByIdHandler as QueryHandlerType,
+    GetRowsHandler as QueryHandlerType,
   ];
 
   const module: TestingModule = await Test.createTestingModule({
@@ -132,6 +134,7 @@ export const createTestingModule = async () => {
     module,
     prismaService,
     commandBus,
+    queryBus,
     transactionService,
     shareTransactionalQueries,
     shareTransactionalCommands,
