@@ -6,7 +6,10 @@ import {
   MigratePropertyEvent,
   RemovedPropertyEvent,
 } from 'src/features/share/utils/schema/model/schema/json-object.store';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import {
+  JsonValueStore,
+  JsonValueStoreParent,
+} from 'src/features/share/utils/schema/model/value/json-value.store';
 import { getTransformation } from 'src/features/share/utils/schema/model/value/value-transformation';
 import {
   JsonObject,
@@ -19,12 +22,15 @@ export class JsonObjectValueStore {
 
   public index: number;
 
+  public parent: JsonValueStoreParent | null = null;
+
   constructor(
-    private readonly schema: JsonObjectStore,
+    public readonly schema: JsonObjectStore,
     public readonly rowId: string,
     public value: Record<string, JsonValueStore>,
   ) {
     this.index = this.schema.registerValue(this);
+    this.init();
   }
 
   public getPlainValue(): JsonObject {
@@ -94,5 +100,11 @@ export class JsonObjectValueStore {
     }
 
     return event.property.default;
+  }
+
+  private init() {
+    for (const value of Object.values(this.value)) {
+      value.parent = this;
+    }
   }
 }

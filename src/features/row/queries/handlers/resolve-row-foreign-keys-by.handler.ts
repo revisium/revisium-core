@@ -7,7 +7,7 @@ import { ResolveRowForeignKeysByReturnType } from 'src/features/row/queries/type
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
+import { getDBJsonPathByJsonSchemaStore } from 'src/features/share/utils/schema/lib/getDBJsonPathByJsonSchemaStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
@@ -85,7 +85,7 @@ export class ResolveRowForeignKeysByHandler
 
     traverseStore(schemaStore, (item) => {
       if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
-        jsonPaths.push(getValuePathByStore(item));
+        jsonPaths.push(getDBJsonPathByJsonSchemaStore(item));
       }
     });
 

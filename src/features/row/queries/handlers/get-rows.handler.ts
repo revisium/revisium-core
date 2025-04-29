@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma, Row } from '@prisma/client';
+import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { GetRowsQuery } from 'src/features/row/queries/impl';
 import { GetRowsReturnType } from 'src/features/row/queries/types';
@@ -13,6 +14,7 @@ export class GetRowsHandler
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly pluginService: PluginService,
   ) {}
 
   private get transaction() {
@@ -34,16 +36,23 @@ export class GetRowsHandler
 
     return getOffsetPagination({
       pageData: data,
-      findMany: (args) =>
-        this.getRows(args, tableId).then((rows) =>
-          rows.map((row) => ({
-            ...row,
-            context: {
-              revisionId: data.revisionId,
-              tableId: data.tableId,
-            },
-          })),
-        ),
+      findMany: async (args) => {
+        const rows = await this.getRows(args, tableId);
+
+        await this.pluginService.computeRows({
+          revisionId: data.revisionId,
+          tableId: data.tableId,
+          rows,
+        });
+
+        return rows.map((row) => ({
+          ...row,
+          context: {
+            revisionId: data.revisionId,
+            tableId: data.tableId,
+          },
+        }));
+      },
       count: () => this.getRowsCount(tableId),
     });
   }

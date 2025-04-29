@@ -9,10 +9,8 @@ import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { ajvFileSchema } from 'src/features/share/schema/plugins/file-schema';
 
-// TODO add to config
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 
-// TODO moved to separate module to have an independent cache
 @Injectable()
 export class JsonSchemaValidatorService {
   public readonly metaSchemaHash: string;

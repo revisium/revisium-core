@@ -1,4 +1,5 @@
 import { JsonBooleanStore } from 'src/features/share/utils/schema/model/schema/json-boolean.store';
+import { JsonValueStoreParent } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 export class JsonBooleanValueStore {
@@ -6,8 +7,10 @@ export class JsonBooleanValueStore {
 
   public readonly index: number;
 
+  public parent: JsonValueStoreParent | null = null;
+
   constructor(
-    private readonly schema: JsonBooleanStore,
+    public readonly schema: JsonBooleanStore,
     public readonly rowId: string,
     public value: boolean | null = null,
   ) {

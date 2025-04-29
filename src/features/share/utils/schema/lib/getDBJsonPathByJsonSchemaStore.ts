@@ -1,7 +1,9 @@
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
-export const getValuePathByStore = (store: JsonSchemaStore): string => {
+export const getDBJsonPathByJsonSchemaStore = (
+  store: JsonSchemaStore,
+): string => {
   let node = store;
 
   let path = '';

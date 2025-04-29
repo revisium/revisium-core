@@ -4,7 +4,10 @@ import {
   MigrateItemsEvent,
   ReplaceItemsEvent,
 } from 'src/features/share/utils/schema/model/schema/json-array.store';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import {
+  JsonValueStore,
+  JsonValueStoreParent,
+} from 'src/features/share/utils/schema/model/value/json-value.store';
 import { getTransformation } from 'src/features/share/utils/schema/model/value/value-transformation';
 import {
   JsonArray,
@@ -17,12 +20,15 @@ export class JsonArrayValueStore {
 
   public index: number;
 
+  public parent: JsonValueStoreParent | null = null;
+
   constructor(
-    private readonly schema: JsonArrayStore,
+    public readonly schema: JsonArrayStore,
     public readonly rowId: string,
     public value: JsonValueStore[],
   ) {
     this.index = this.schema.registerValue(this);
+    this.init();
   }
 
   public getPlainValue(): JsonArray {
@@ -60,5 +66,11 @@ export class JsonArrayValueStore {
     }
 
     return event.items.default;
+  }
+
+  private init() {
+    for (const value of this.value) {
+      value.parent = this;
+    }
   }
 }

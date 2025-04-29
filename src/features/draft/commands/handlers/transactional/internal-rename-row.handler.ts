@@ -19,7 +19,7 @@ import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
+import { getDBJsonPathByJsonSchemaStore } from 'src/features/share/utils/schema/lib/getDBJsonPathByJsonSchemaStore';
 import { replaceForeignKeyValue } from 'src/features/share/utils/schema/lib/replaceForeignKeyValue';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
@@ -143,7 +143,7 @@ export class InternalRenameRowHandler extends DraftHandler<
 
     traverseStore(schemaStore, (item) => {
       if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
-        foreignPaths.push(getValuePathByStore(item));
+        foreignPaths.push(getDBJsonPathByJsonSchemaStore(item));
       }
     });
 

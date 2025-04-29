@@ -1,4 +1,5 @@
 import { JsonNumberStore } from 'src/features/share/utils/schema/model/schema/json-number.store';
+import { JsonValueStoreParent } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 export class JsonNumberValueStore {
@@ -6,8 +7,10 @@ export class JsonNumberValueStore {
 
   public readonly index: number;
 
+  public parent: JsonValueStoreParent | null = null;
+
   constructor(
-    private readonly schema: JsonNumberStore,
+    public readonly schema: JsonNumberStore,
     public readonly rowId: string,
     public value: number | null = null,
   ) {

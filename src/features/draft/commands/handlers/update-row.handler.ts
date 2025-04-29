@@ -3,6 +3,7 @@ import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
+import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
@@ -22,6 +23,7 @@ export class UpdateRowHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
+    protected readonly pluginService: PluginService,
   ) {
     super(transactionService, draftContext);
   }
@@ -52,7 +54,7 @@ export class UpdateRowHandler extends DraftHandler<
     });
   }
 
-  private updateRow(data: UpdateRowCommand['data'], schemaHash: string) {
+  private async updateRow(data: UpdateRowCommand['data'], schemaHash: string) {
     return this.commandBus.execute<
       InternalUpdateRowCommand,
       InternalUpdateRowCommandReturnType
@@ -61,7 +63,7 @@ export class UpdateRowHandler extends DraftHandler<
         revisionId: data.revisionId,
         tableId: data.tableId,
         rowId: data.rowId,
-        data: data.data,
+        data: await this.pluginService.updateRow(data),
         schemaHash,
       }),
     );

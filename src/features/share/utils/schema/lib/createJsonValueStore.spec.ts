@@ -6,6 +6,8 @@ import {
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { JsonArrayValueStore } from 'src/features/share/utils/schema/model/value/json-array-value.store';
+import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
 import { JsonObject } from 'src/features/share/utils/schema/types/json.types';
 
 describe('createJsonValueStore', () => {
@@ -24,12 +26,23 @@ describe('createJsonValueStore', () => {
       },
     };
 
-    const expectedValue = createJsonValueStore(
+    const root = createJsonValueStore(
       createJsonSchemaStore(schema),
       '',
       value,
-    ).getPlainValue();
+    ) as JsonObjectValueStore;
+    const array = root.value['fieldArray'] as JsonArrayValueStore;
+    const nested = root.value['nested'] as JsonObjectValueStore;
 
+    expect(root.value['fieldString'].parent).toBe(root);
+    expect(array.parent).toBe(root);
+    for (const arrayValue of array.value) {
+      expect(arrayValue.parent).toBe(array);
+    }
+    expect(nested.parent).toBe(root);
+    expect(nested.value['value'].parent).toBe(nested);
+
+    const expectedValue = root.getPlainValue();
     expect(expectedValue).toStrictEqual(value);
   });
 
@@ -56,12 +69,28 @@ describe('createJsonValueStore', () => {
       ],
     };
 
-    const expectedValue = createJsonValueStore(
+    const root = createJsonValueStore(
       createJsonSchemaStore(schema),
       '',
       value,
-    ).getPlainValue();
+    ) as JsonObjectValueStore;
+    const array = root.value['items'] as JsonArrayValueStore;
 
+    expect(array.parent).toBe(root);
+    for (const arrayValueObject of array.value) {
+      const object = arrayValueObject as JsonObjectValueStore;
+      expect(object.parent).toBe(array);
+      expect(object.value['field'].parent).toBe(object);
+
+      const arrayIds = object.value['ids'] as JsonArrayValueStore;
+      expect(arrayIds.parent).toBe(object);
+
+      for (const arrayValueId of arrayIds.value) {
+        expect(arrayValueId.parent).toBe(arrayIds);
+      }
+    }
+
+    const expectedValue = root.getPlainValue();
     expect(expectedValue).toStrictEqual(value);
   });
 

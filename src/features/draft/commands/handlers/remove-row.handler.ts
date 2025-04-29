@@ -15,7 +15,7 @@ import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { getValuePathByStore } from 'src/features/share/utils/schema/lib/getValuePathByStore';
+import { getDBJsonPathByJsonSchemaStore } from 'src/features/share/utils/schema/lib/getDBJsonPathByJsonSchemaStore';
 import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
@@ -198,7 +198,7 @@ export class RemoveRowHandler extends DraftHandler<
 
       traverseStore(schemaStore, (item) => {
         if (item.type === JsonSchemaTypeName.String && item.foreignKey) {
-          paths.push(getValuePathByStore(item));
+          paths.push(getDBJsonPathByJsonSchemaStore(item));
         }
       });
 

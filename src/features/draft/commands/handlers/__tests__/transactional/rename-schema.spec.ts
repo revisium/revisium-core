@@ -67,11 +67,11 @@ describe('RenameSchemaHandler', () => {
     const ids = await prepareProject(prismaService, {
       createLinkedTable: true,
     });
-    const { headRevisionId, draftRevisionId, tableId, linkedTableId } = ids;
+    const { headRevisionId, draftRevisionId, tableId, linkedTable } = ids;
 
     const previousSchemaRow = await prismaService.row.findFirstOrThrow({
       where: {
-        id: linkedTableId,
+        id: linkedTable?.tableId,
         tables: {
           some: {
             id: SystemTables.Schema,
@@ -95,7 +95,7 @@ describe('RenameSchemaHandler', () => {
 
     const schemaRow = await prismaService.row.findFirstOrThrow({
       where: {
-        id: linkedTableId,
+        id: linkedTable?.tableId,
         tables: {
           some: {
             id: SystemTables.Schema,

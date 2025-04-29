@@ -254,7 +254,7 @@ describe('RenameRowHandler', () => {
   });
 
   it('should update the linked row', async () => {
-    const { draftRevisionId, tableId, rowId, linkedTableId, linkedRowId } =
+    const { draftRevisionId, tableId, rowId, linkedTable, linkedRow } =
       await prepareProject(prismaService, { createLinkedTable: true });
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -265,12 +265,12 @@ describe('RenameRowHandler', () => {
 
     await runTransaction(command);
 
-    const linkedRow = await prismaService.row.findFirstOrThrow({
+    const prismaLinkedRow = await prismaService.row.findFirstOrThrow({
       where: {
-        id: linkedRowId,
+        id: linkedRow?.rowId,
         tables: {
           some: {
-            id: linkedTableId,
+            id: linkedTable?.tableId,
             revisions: {
               some: {
                 id: draftRevisionId,
@@ -281,7 +281,7 @@ describe('RenameRowHandler', () => {
       },
     });
 
-    expect(linkedRow.data).toStrictEqual({ link: nextRowId });
+    expect(prismaLinkedRow.data).toStrictEqual({ link: nextRowId });
   });
 
   async function checkRevision(ids: PrepareProjectReturnType) {

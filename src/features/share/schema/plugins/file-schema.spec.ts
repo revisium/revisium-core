@@ -10,6 +10,12 @@ describe('file-schema', () => {
     expect(ajv.validate(fileSchema, {})).toBe(false);
   });
 
+  it('invalid: invalid fileId', () => {
+    const data = getValidFileData();
+    data.fileId = 0;
+    expect(ajv.validate(fileSchema, data)).toBe(false);
+  });
+
   it('invalid: invalid hash', () => {
     const data = getValidFileData();
     data.hash = 0;
@@ -54,6 +60,7 @@ describe('file-schema', () => {
   function getValidFileData() {
     return {
       status: 'ready',
+      fileId: 'fileId',
       url: 'https://example.com/file.png',
       filename: 'file.png',
       hash: 'a'.repeat(40),
