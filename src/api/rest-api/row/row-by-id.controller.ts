@@ -317,10 +317,7 @@ export class RowByIdController {
     @Param('fileId') fileId: string,
     @UploadedFile(
       new ParseFilePipe({
-        validators: [
-          new MaxFileSizeValidator({ maxSize: 1024 * 1024 }),
-          // new FileTypeValidator({ fileType: 'image/*' }),
-        ],
+        validators: [new MaxFileSizeValidator({ maxSize: 1024 * 1024 * 50 })],
       }),
     )
     file: Express.Multer.File,
