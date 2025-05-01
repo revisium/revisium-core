@@ -2,19 +2,26 @@ import {
   Body,
   Controller,
   Delete,
+  FileTypeValidator,
   Get,
+  MaxFileSizeValidator,
   NotFoundException,
   Param,
+  ParseFilePipe,
   Patch,
+  Post,
   Put,
   Query,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
   ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
@@ -31,6 +38,10 @@ import {
   ApiRenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/api-rename-row.command';
 import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
+import {
+  ApiUploadFileCommand,
+  ApiUploadFileCommandReturnType,
+} from 'src/features/draft/commands/impl/api-upload-file.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
@@ -264,6 +275,66 @@ export class RowByIdController {
         tableId,
         rowId,
         nextRowId: data.nextRowId,
+      }),
+    );
+
+    return {
+      table: result.table
+        ? transformFromPrismaToTableModel(result.table)
+        : undefined,
+      previousVersionTableId: result.previousVersionTableId,
+      row: result.row ? transformFromPrismaToRowModel(result.row) : undefined,
+      previousVersionRowId: result.previousVersionRowId,
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @ApiOperation({ operationId: 'uploadFile' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+      required: ['file'],
+    },
+  })
+  @Post('upload/:fileId')
+  @ApiOkResponse({ type: UpdateRowResponse }) // TODO
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Param('rowId') rowId: string,
+    @Param('fileId') fileId: string,
+    @UploadedFile(
+      new ParseFilePipe({
+        validators: [
+          new MaxFileSizeValidator({ maxSize: 1024 * 1024 }),
+          // new FileTypeValidator({ fileType: 'image/*' }),
+        ],
+      }),
+    )
+    file: Express.Multer.File,
+  ) {
+    const result = await this.commandBus.execute<
+      ApiUploadFileCommand,
+      ApiUploadFileCommandReturnType
+    >(
+      new ApiUploadFileCommand({
+        revisionId,
+        tableId,
+        rowId,
+        fileId,
+        file,
       }),
     );
 

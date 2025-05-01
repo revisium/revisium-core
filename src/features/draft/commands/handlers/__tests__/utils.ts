@@ -9,7 +9,7 @@ import {
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
-import { TABLE_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/index';
+import { DRAFT_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/index';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
@@ -113,7 +113,7 @@ export const createTestingModule = async () => {
       DraftContextService,
       JsonSchemaValidatorService,
       ...DRAFT_REQUEST_DTO,
-      ...TABLE_COMMANDS_HANDLERS,
+      ...DRAFT_COMMANDS_HANDLERS,
       ...ANOTHER_QUERIES,
     ],
   }).compile();
@@ -121,7 +121,7 @@ export const createTestingModule = async () => {
   const prismaService = module.get(PrismaService);
 
   const commandBus = module.get(CommandBus);
-  commandBus.register([...TABLE_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
+  commandBus.register([...DRAFT_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
   queryBus.register([...SHARE_QUERIES_HANDLERS, ...ANOTHER_QUERIES]);
