@@ -8,6 +8,30 @@ import {
 export class DraftRevisionRequestDto {
   constructor(private readonly draftContext: DraftContextService) {}
 
+  public get organizationId(): string {
+    return this.draftContext.resolveKey(DraftContextKeys.OrganizationId);
+  }
+
+  public set organizationId(value: string) {
+    this.draftContext.setKey(DraftContextKeys.OrganizationId, value);
+  }
+
+  public get hasOrganizationId(): boolean {
+    return this.draftContext.hasKey(DraftContextKeys.OrganizationId);
+  }
+
+  public get projectId(): string {
+    return this.draftContext.resolveKey(DraftContextKeys.ProjectId);
+  }
+
+  public set projectId(value: string) {
+    this.draftContext.setKey(DraftContextKeys.ProjectId, value);
+  }
+
+  public get hasProjectId(): boolean {
+    return this.draftContext.hasKey(DraftContextKeys.ProjectId);
+  }
+
   public get branchId(): string {
     return this.draftContext.resolveKey(DraftContextKeys.BranchId);
   }

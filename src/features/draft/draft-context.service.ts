@@ -2,6 +2,8 @@ import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { AsyncLocalStorage } from 'async_hooks';
 
 export enum DraftContextKeys {
+  OrganizationId = 'organizationId',
+  ProjectId = 'projectId',
   BranchId = 'branchId',
   DraftRevisionId = 'draftRevisionId',
   DraftParentRevisionId = 'draftParentRevisionId',
