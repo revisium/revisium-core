@@ -218,7 +218,7 @@ describe('UpdateRowHandler', () => {
       status: FileStatus.ready,
       fileId: nanoid(),
       url: '',
-      filename: '',
+      fileName: '',
       hash: '',
       extension: '',
       mimeType: '',

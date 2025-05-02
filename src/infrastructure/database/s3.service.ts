@@ -53,7 +53,6 @@ export class S3Service {
       );
       return { bucket: this.bucket, key: path };
     } catch (err) {
-      console.error(err);
       throw new InternalServerErrorException(
         'Error uploading file to S3: ' + err.message + '',
       );

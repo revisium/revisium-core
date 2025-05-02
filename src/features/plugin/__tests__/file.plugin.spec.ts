@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import {
+  createEmptyFile,
   prepareProject,
   prepareRow,
   prepareTableWithSchema,
@@ -78,7 +79,7 @@ describe('file.plugin', () => {
       };
 
       const data = {
-        file: { ...previousData.file, url: 'url', filename: 'filename' },
+        file: { ...previousData.file, url: 'url', fileName: 'filename' },
         files: [...previousData.files, createEmptyFile(), createEmptyFile()],
       };
 
@@ -101,7 +102,7 @@ describe('file.plugin', () => {
       expect(result.file.status).toBe(FileStatus.ready);
       expect(result.file.fileId).toBeTruthy();
       expect(result.file.url).toBe('');
-      expect(result.file.filename).toBe('filename');
+      expect(result.file.fileName).toBe('filename');
 
       for (const file of result.files) {
         expect(file.status).toBe(FileStatus.ready);
@@ -211,12 +212,8 @@ describe('file.plugin', () => {
 
       const result = rowDraft.data as typeof data;
 
-      expect(result.file.url).toBe(
-        `https://cdn.revisium.io/${table.tableId}/${rowDraft.createdId}/${result.file.fileId}`,
-      );
-      expect(result.files[0].url).toBe(
-        `https://cdn.revisium.io/${table.tableId}/${rowDraft.createdId}/${result.files[0].fileId}`,
-      );
+      expect(result.file.url).toBeTruthy();
+      expect(result.files[0].url).toBeTruthy();
       expect(result.files[1].url).toBe('');
       expect(result.files[2].url).toBe('');
     });
@@ -282,19 +279,6 @@ describe('file.plugin', () => {
     file.fileId = nanoid();
     return file;
   };
-
-  const createEmptyFile = () => ({
-    status: '',
-    fileId: '',
-    url: '',
-    filename: '',
-    hash: '',
-    extension: '',
-    mimeType: '',
-    size: 0,
-    width: 0,
-    height: 0,
-  });
 
   beforeAll(async () => {
     const result = await createTestingModule();

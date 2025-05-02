@@ -61,7 +61,6 @@ describe('file-schema', () => {
     return {
       status: 'ready',
       fileId: 'fileId',
-      fromRowVersionId: '',
       url: 'https://example.com/file.png',
       fileName: 'file.png',
       hash: 'a'.repeat(40),

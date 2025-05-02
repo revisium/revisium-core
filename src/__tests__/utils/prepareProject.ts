@@ -464,7 +464,6 @@ export const createPreviousFile = () => {
 export const createEmptyFile = () => ({
   status: '',
   fileId: '',
-  fromRowVersionId: '',
   url: '',
   fileName: '',
   hash: '',
