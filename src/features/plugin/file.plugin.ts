@@ -139,16 +139,13 @@ export class FilePlugin implements IPluginService {
       traverseValue(valueStore, (item) => {
         if (item.schema.$ref === SystemSchemaIds.File) {
           if (item.type === JsonSchemaTypeName.Object) {
-            const fieldIdStore = item.value['fileId'] as JsonStringValueStore;
             const statusStore = item.value['status'] as JsonStringValueStore;
-            const fromRowVersionIdStore = item.value[
-              'fromRowVersionId'
-            ] as JsonStringValueStore;
+            const hashStore = item.value['hash'] as JsonStringValueStore;
 
             if (statusStore.getPlainValue() === FileStatus.uploaded) {
               const urlStore = item.value['url'] as JsonStringValueStore;
               urlStore.value = encodeURI(
-                `${this.publicEndpoint}/admin/${fieldIdStore.getPlainValue()}-${fromRowVersionIdStore.getPlainValue()}`,
+                `${this.publicEndpoint}/admin/${hashStore.getPlainValue()}`,
               );
             }
           } else {

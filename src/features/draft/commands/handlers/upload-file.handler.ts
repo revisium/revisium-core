@@ -90,20 +90,16 @@ export class UploadFileHandler extends DraftHandler<
 
     const fileStore = this.findFileStore(jsonValueStore, fileId);
 
+    const hashFile = hash(file.buffer);
     if (fileStore) {
       const statusStore = fileStore.value['status'] as JsonStringValueStore;
       statusStore.value = FileStatus.uploaded;
-
-      const fromRowVersionIdStore = fileStore.value[
-        'fromRowVersionId'
-      ] as JsonStringValueStore;
-      fromRowVersionIdStore.value = row.versionId;
 
       const fileNameStore = fileStore.value['fileName'] as JsonStringValueStore;
       fileNameStore.value = file.originalname;
 
       const hashStore = fileStore.value['hash'] as JsonStringValueStore;
-      hashStore.value = hash(file.buffer);
+      hashStore.value = hashFile;
 
       const mimeTypeStore = fileStore.value['mimeType'] as JsonStringValueStore;
       mimeTypeStore.value = file.mimetype;
@@ -143,7 +139,7 @@ export class UploadFileHandler extends DraftHandler<
 
     await this.s3Service.uploadFile(
       file,
-      `${this.revisionRequestDto.organizationId}/${fileId}-${row.versionId}`,
+      `${this.revisionRequestDto.organizationId}/${hashFile}`,
     );
 
     return this.updateRow({
