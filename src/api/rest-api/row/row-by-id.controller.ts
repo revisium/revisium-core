@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  FileTypeValidator,
   Get,
   MaxFileSizeValidator,
   NotFoundException,
@@ -57,6 +56,7 @@ import {
   RowModel,
   RowsConnection,
   UpdateRowResponse,
+  UploadFileResponse,
 } from 'src/api/rest-api/row/model';
 import { ErrorModel } from 'src/api/rest-api/share/model/error.model';
 import { transformFromPrismaToBranchModel } from 'src/api/rest-api/share/utils/transformFromPrismaToBranchModel';
@@ -308,7 +308,7 @@ export class RowByIdController {
     },
   })
   @Post('upload/:fileId')
-  @ApiOkResponse({ type: UpdateRowResponse }) // TODO
+  @ApiOkResponse({ type: UploadFileResponse })
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Param('revisionId') revisionId: string,

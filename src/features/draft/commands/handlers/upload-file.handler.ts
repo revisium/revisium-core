@@ -116,8 +116,8 @@ export class UploadFileHandler extends DraftHandler<
 
       if (file.mimetype.startsWith('image/')) {
         const metadata = await sharp(file.buffer).metadata();
-        width = metadata.width || 0;
-        height = metadata.height || 0;
+        width = metadata.width ?? 0;
+        height = metadata.height ?? 0;
       }
 
       const widthStore = fileStore.value['width'] as JsonNumberValueStore;
