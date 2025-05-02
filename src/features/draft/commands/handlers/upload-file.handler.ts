@@ -26,7 +26,6 @@ import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 import { S3Service } from 'src/infrastructure/database/s3.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
@@ -54,7 +53,7 @@ export class UploadFileHandler extends DraftHandler<
 
   protected async handler({
     data: input,
-  }: UploadFileCommand): Promise<UpdateRowHandlerReturnType> {
+  }: UploadFileCommand): Promise<UploadFileCommandReturnType> {
     const { revisionId, tableId, rowId, fileId, file } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
@@ -137,18 +136,27 @@ export class UploadFileHandler extends DraftHandler<
     });
     await this.updateRevision(revisionId);
 
-    await this.s3Service.uploadFile(
-      file,
-      `${this.revisionRequestDto.organizationId}/${hashFile}`,
-    );
+    const path = `${this.revisionRequestDto.organizationId}/${hashFile}`;
 
-    return this.updateRow({
+    const result = await this.updateRow({
       revisionId,
       tableId,
       rowId,
       data: nextData,
       schemaHash: schema.hash,
     });
+
+    return {
+      ...result,
+      path,
+    };
+  }
+
+  protected async postActions(
+    { data: { file } }: UploadFileCommand,
+    { path }: UploadFileCommandReturnType,
+  ) {
+    await this.s3Service.uploadFile(file, path);
   }
 
   private async updateRevision(revisionId: string) {

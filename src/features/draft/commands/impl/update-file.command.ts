@@ -17,4 +17,5 @@ export type UploadFileCommandReturnType = {
   previousTableVersionId: string;
   rowVersionId: string;
   previousRowVersionId: string;
+  path: string;
 };
