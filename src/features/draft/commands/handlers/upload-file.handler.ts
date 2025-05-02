@@ -124,21 +124,23 @@ export class UploadFileHandler extends DraftHandler<
       heightStore.value = height;
     }
 
-    await this.s3Service.uploadFile(
-      file,
-      `${this.revisionRequestDto.organizationId}/${fileId}`,
-    );
-
     const nextData = jsonValueStore.getPlainValue();
 
     await this.updateRevision(revisionId);
-    return this.updateRow({
+    const savedRow = await this.updateRow({
       revisionId,
       tableId,
       rowId,
       data: nextData,
       schemaHash: schema.hash,
     });
+
+    await this.s3Service.uploadFile(
+      file,
+      `${this.revisionRequestDto.organizationId}/${fileId}-${savedRow.rowVersionId}`,
+    );
+
+    return savedRow;
   }
 
   private async updateRevision(revisionId: string) {
