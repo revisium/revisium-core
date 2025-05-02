@@ -4,8 +4,8 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
-  private readonly client: S3Client;
-  private readonly bucket: string;
+  private readonly _client: S3Client | null = null;
+  private readonly _bucket: string | null = null;
 
   constructor(private readonly configService: ConfigService) {
     const S3_ENDPOINT = this.configService.get<string>('S3_ENDPOINT');
@@ -16,45 +16,24 @@ export class S3Service {
       'S3_SECRET_ACCESS_KEY',
     );
 
-    if (!S3_ENDPOINT) {
-      throw new Error(`Environment variable not found: S3_ENDPOINT`);
+    if (S3_BUCKET) {
+      this._bucket = S3_BUCKET;
     }
 
-    if (!S3_REGION) {
-      throw new Error(`Environment variable not found: S3_REGION`);
+    if (S3_REGION && S3_ENDPOINT && S3_ACCESS_KEY_ID && S3_SECRET_ACCESS_KEY) {
+      this._client = new S3Client({
+        region: S3_REGION,
+        endpoint: S3_ENDPOINT,
+        credentials: {
+          accessKeyId: S3_ACCESS_KEY_ID,
+          secretAccessKey: S3_SECRET_ACCESS_KEY,
+        },
+      });
     }
+  }
 
-    if (!S3_BUCKET) {
-      throw new Error(`Environment variable not found: S3_BUCKET`);
-    }
-
-    if (!S3_ACCESS_KEY_ID) {
-      throw new Error(`Environment variable not found: S3_ACCESS_KEY_ID`);
-    }
-
-    if (!S3_SECRET_ACCESS_KEY) {
-      throw new Error(`Environment variable not found: S3_SECRET_ACCESS_KEY`);
-    }
-
-    this.bucket = S3_BUCKET;
-
-    console.log({
-      region: S3_REGION,
-      endpoint: S3_ENDPOINT,
-      credentials: {
-        accessKeyId: S3_ACCESS_KEY_ID,
-        secretAccessKey: S3_SECRET_ACCESS_KEY,
-      },
-    });
-
-    this.client = new S3Client({
-      region: S3_REGION,
-      endpoint: S3_ENDPOINT,
-      credentials: {
-        accessKeyId: S3_ACCESS_KEY_ID,
-        secretAccessKey: S3_SECRET_ACCESS_KEY,
-      },
-    });
+  public get isAvailable(): boolean {
+    return Boolean(this._client && this._bucket);
   }
 
   public async uploadFile(
@@ -69,6 +48,7 @@ export class S3Service {
           Body: file.buffer,
           ContentType: file.mimetype,
           ContentLength: file.size,
+          ACL: 'public-read',
         }),
       );
       return { bucket: this.bucket, key: path };
@@ -78,5 +58,19 @@ export class S3Service {
         'Error uploading file to S3: ' + err.message + '',
       );
     }
+  }
+
+  private get client(): S3Client {
+    if (!this._client) {
+      throw new InternalServerErrorException('Invalid S3 client');
+    }
+    return this._client;
+  }
+
+  private get bucket() {
+    if (!this._bucket) {
+      throw new InternalServerErrorException('Invalid S3 bucket');
+    }
+    return this._bucket;
   }
 }

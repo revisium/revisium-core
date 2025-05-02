@@ -19,6 +19,12 @@ export class GithubOauth {
 }
 
 @ObjectType()
+export class PluginsModel {
+  @Field(() => Boolean)
+  file: boolean;
+}
+
+@ObjectType()
 export class ConfigurationModel {
   @Field(() => Boolean)
   availableEmailSignUp: boolean;
@@ -28,4 +34,7 @@ export class ConfigurationModel {
 
   @Field(() => GithubOauth)
   github: GithubOauth;
+
+  @Field(() => PluginsModel)
+  plugins: PluginsModel;
 }

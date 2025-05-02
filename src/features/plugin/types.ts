@@ -48,6 +48,7 @@ export type InternalMigrateRowsOptions = MigrateRowsOptions & {
 };
 
 export interface IPluginService {
+  isAvailable: boolean;
   createRow(options: InternalCreateRowOptions): Promise<void>;
   updateRow(options: InternalUpdateRowOptions): Promise<void>;
   computeRows(options: InternalComputeRowsOptions): Promise<void>;

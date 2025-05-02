@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { nanoid } from 'nanoid';
 import {
   InternalComputeRowsOptions,
@@ -13,6 +14,7 @@ import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue
 import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { S3Service } from 'src/infrastructure/database/s3.service';
 
 export enum FileStatus {
   ready = 'ready',
@@ -22,6 +24,21 @@ export enum FileStatus {
 
 @Injectable()
 export class FilePlugin implements IPluginService {
+  public readonly publicEndpoint: string;
+
+  constructor(
+    private readonly s3Service: S3Service,
+    configService: ConfigService,
+  ) {
+    const endpoint = configService.get('FILE_PLUGIN_PUBLIC_ENDPOINT');
+
+    this.publicEndpoint = endpoint ?? '';
+  }
+
+  public get isAvailable() {
+    return this.s3Service.isAvailable;
+  }
+
   public async createRow(options: InternalCreateRowOptions): Promise<void> {
     traverseValue(options.valueStore, (item) => {
       if (item.schema.$ref === SystemSchemaIds.File) {
@@ -127,7 +144,9 @@ export class FilePlugin implements IPluginService {
 
             if (statusStore.getPlainValue() === FileStatus.uploaded) {
               const urlStore = item.value['url'] as JsonStringValueStore;
-              urlStore.value = `https://cdn.revisium.io/${options.tableId}/${row.createdId}/${fieldIdStore.getPlainValue()}`;
+              urlStore.value = encodeURI(
+                `${this.publicEndpoint}/admin/${fieldIdStore.getPlainValue()}-${row.versionId}`,
+              );
             }
           } else {
             throw new Error('Invalid schema type');
