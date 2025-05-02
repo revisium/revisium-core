@@ -10,6 +10,7 @@ import {
   UploadFileCommand,
   UploadFileCommandReturnType,
 } from 'src/features/draft/commands/impl/update-file.command';
+import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { FileStatus } from 'src/features/plugin/file.plugin';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
@@ -23,6 +24,7 @@ import { JsonStringValueStore } from 'src/features/share/utils/schema/model/valu
 import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { S3Service } from 'src/infrastructure/database/s3.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -39,11 +41,13 @@ export class UploadFileHandler extends DraftHandler<
     protected readonly commandBus: CommandBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
+    protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly pluginService: PluginService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
+    protected readonly s3Service: S3Service,
   ) {
     super(transactionService, draftContext);
   }
@@ -119,6 +123,11 @@ export class UploadFileHandler extends DraftHandler<
       const heightStore = fileStore.value['height'] as JsonNumberValueStore;
       heightStore.value = height;
     }
+
+    await this.s3Service.uploadFile(
+      file,
+      `${this.revisionRequestDto.organizationId}/${fileId}`,
+    );
 
     const nextData = jsonValueStore.getPlainValue();
 
