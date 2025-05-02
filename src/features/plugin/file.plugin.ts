@@ -117,7 +117,7 @@ export class FilePlugin implements IPluginService {
   ) {
     for (const [field, item] of Object.entries(file.value)) {
       if (
-        field !== 'filename' &&
+        field !== 'fileName' &&
         field !== 'url' &&
         item.value !== previousFile.value[field].value
       ) {
@@ -141,11 +141,14 @@ export class FilePlugin implements IPluginService {
           if (item.type === JsonSchemaTypeName.Object) {
             const fieldIdStore = item.value['fileId'] as JsonStringValueStore;
             const statusStore = item.value['status'] as JsonStringValueStore;
+            const fromRowVersionIdStore = item.value[
+              'fromRowVersionId'
+            ] as JsonStringValueStore;
 
             if (statusStore.getPlainValue() === FileStatus.uploaded) {
               const urlStore = item.value['url'] as JsonStringValueStore;
               urlStore.value = encodeURI(
-                `${this.publicEndpoint}/admin/${fieldIdStore.getPlainValue()}-${row.versionId}`,
+                `${this.publicEndpoint}/admin/${fieldIdStore.getPlainValue()}-${fromRowVersionIdStore.getPlainValue()}`,
               );
             }
           } else {

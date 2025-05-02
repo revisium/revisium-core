@@ -72,6 +72,9 @@ export class UploadFileHandler extends DraftHandler<
         rowId,
       );
 
+    await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
+    await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
+
     const row = await this.getRow(rowVersionId);
 
     const schema = await this.shareTransactionalQueries.getTableSchema(
@@ -91,7 +94,12 @@ export class UploadFileHandler extends DraftHandler<
       const statusStore = fileStore.value['status'] as JsonStringValueStore;
       statusStore.value = FileStatus.uploaded;
 
-      const fileNameStore = fileStore.value['filename'] as JsonStringValueStore;
+      const fromRowVersionIdStore = fileStore.value[
+        'fromRowVersionId'
+      ] as JsonStringValueStore;
+      fromRowVersionIdStore.value = row.versionId;
+
+      const fileNameStore = fileStore.value['fileName'] as JsonStringValueStore;
       fileNameStore.value = file.originalname;
 
       const hashStore = fileStore.value['hash'] as JsonStringValueStore;
@@ -126,21 +134,25 @@ export class UploadFileHandler extends DraftHandler<
 
     const nextData = jsonValueStore.getPlainValue();
 
+    await this.draftTransactionalCommands.validateData({
+      revisionId,
+      tableId,
+      rows: [{ rowId, data: nextData }],
+    });
     await this.updateRevision(revisionId);
-    const savedRow = await this.updateRow({
+
+    await this.s3Service.uploadFile(
+      file,
+      `${this.revisionRequestDto.organizationId}/${fileId}-${row.versionId}`,
+    );
+
+    return this.updateRow({
       revisionId,
       tableId,
       rowId,
       data: nextData,
       schemaHash: schema.hash,
     });
-
-    await this.s3Service.uploadFile(
-      file,
-      `${this.revisionRequestDto.organizationId}/${fileId}-${savedRow.rowVersionId}`,
-    );
-
-    return savedRow;
   }
 
   private async updateRevision(revisionId: string) {
