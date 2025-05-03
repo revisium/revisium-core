@@ -1,3 +1,4 @@
+import * as hash from 'object-hash';
 import { nanoid } from 'nanoid';
 import {
   createEmptyFile,
@@ -11,10 +12,14 @@ import {
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FilePlugin, FileStatus } from 'src/features/plugin/file/file.plugin';
 import { PluginService } from 'src/features/plugin/plugin.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { join } from 'path';
+import { readFileSync } from 'fs';
 
 describe('file.plugin', () => {
   describe('afterCreateRow', () => {
@@ -252,25 +257,210 @@ describe('file.plugin', () => {
     });
   });
 
+  describe('uploadFile', () => {
+    it('should upload file', async () => {
+      const { table, schemaStore } = await setupProjectWithFileSchema();
+
+      const previousData = {
+        file: createPreviousFile(),
+        files: [],
+      };
+
+      const data = {
+        file: { ...previousData.file, url: 'url', fileName: 'filename' },
+        files: [],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      const valueStore = createJsonValueStore(schemaStore, '', rowDraft.data);
+      const file = createExpressFile();
+
+      await filePlugin.uploadFile({
+        valueStore,
+        fileId: data.file.fileId,
+        file,
+      });
+
+      const result = valueStore.getPlainValue() as typeof data;
+
+      expect(result.file.status).toBe(FileStatus.uploaded);
+      expect(result.file.fileId).toBe(data.file.fileId);
+      expect(result.file.fileName).toBe(file.originalname);
+      expect(result.file.mimeType).toBe(file.mimetype);
+      expect(result.file.extension).toBe('txt');
+      expect(result.file.hash).toBe(hash(file.buffer));
+      expect(result.file.url).toBe('');
+      expect(result.file.size).toBe(file.size);
+      expect(result.file.width).toBe(0);
+      expect(result.file.height).toBe(0);
+    });
+
+    it('should upload image file', async () => {
+      const { table, schemaStore } = await setupProjectWithFileSchema();
+
+      const previousData = {
+        file: createPreviousFile(),
+        files: [],
+      };
+
+      const data = {
+        file: { ...previousData.file, url: 'url', fileName: 'filename' },
+        files: [],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      const valueStore = createJsonValueStore(schemaStore, '', rowDraft.data);
+      const file = createExpressImageFile();
+
+      await filePlugin.uploadFile({
+        valueStore,
+        fileId: data.file.fileId,
+        file,
+      });
+
+      const result = valueStore.getPlainValue() as typeof data;
+
+      expect(result.file.status).toBe(FileStatus.uploaded);
+      expect(result.file.fileId).toBe(data.file.fileId);
+      expect(result.file.fileName).toBe(file.originalname);
+      expect(result.file.mimeType).toBe(file.mimetype);
+      expect(result.file.extension).toBe('png');
+      expect(result.file.hash).toBe(hash(file.buffer));
+      expect(result.file.url).toBe('');
+      expect(result.file.size).toBe(file.size);
+      expect(result.file.width).toBe(420);
+      expect(result.file.height).toBe(420);
+    });
+
+    it('should throw error if file not found', async () => {
+      const { table, schemaStore } = await setupProjectWithFileSchema();
+
+      const previousData = {
+        file: createPreviousFile(),
+        files: [],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      await expect(
+        filePlugin.uploadFile({
+          valueStore: createJsonValueStore(schemaStore, '', rowDraft.data),
+          fileId: 'unrealId',
+          file: createExpressImageFile(),
+        }),
+      ).rejects.toThrow(`Invalid count of files`);
+    });
+
+    it('should throw error if there is same id', async () => {
+      const { table, schemaStore } = await setupProjectWithFileSchema();
+
+      const file = createPreviousFile();
+
+      const previousData = {
+        file: file,
+        files: [file],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: previousData,
+        dataDraft: previousData,
+      });
+
+      await expect(
+        filePlugin.uploadFile({
+          valueStore: createJsonValueStore(schemaStore, '', rowDraft.data),
+          fileId: file.fileId,
+          file: createExpressImageFile(),
+        }),
+      ).rejects.toThrow(`Invalid count of files`);
+    });
+
+    function createExpressFile(): Express.Multer.File {
+      return {
+        buffer: Buffer.from('data'),
+        mimetype: 'text/plain',
+        size: 4,
+        fieldname: 'file',
+        originalname: 'original-name.txt',
+        encoding: '',
+        stream: null as any,
+        destination: '',
+        filename: 'name',
+        path: '',
+      };
+    }
+
+    function createExpressImageFile(): Express.Multer.File {
+      const filePath = join(__dirname, './logo.png');
+      const buffer = readFileSync(filePath);
+
+      return {
+        buffer,
+        mimetype: 'image/png',
+        size: buffer.length,
+        fieldname: 'file',
+        originalname: `logo.png`,
+        encoding: '7bit',
+        stream: null as any,
+        destination: '',
+        filename: `logo.png`,
+        path: '',
+      };
+    }
+  });
+
   let prismaService: PrismaService;
   let pluginService: PluginService;
+  let filePlugin: FilePlugin;
+  let jsonSchemaStore: JsonSchemaStoreService;
 
   const setupProjectWithFileSchema = async () => {
     const { headRevisionId, draftRevisionId, schemaTableVersionId } =
       await prepareProject(prismaService);
+
+    const schema = getObjectSchema({
+      file: getRefSchema(SystemSchemaIds.File),
+      files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+    });
+
+    const schemaStore = jsonSchemaStore.create(schema);
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
-      schema: getObjectSchema({
-        file: getRefSchema(SystemSchemaIds.File),
-        files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
-      }),
+      schema,
     });
 
-    return { draftRevisionId, table };
+    return { draftRevisionId, table, schema, schemaStore };
   };
 
   const createPreviousFile = () => {
@@ -284,6 +474,8 @@ describe('file.plugin', () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     pluginService = result.module.get(PluginService);
+    filePlugin = result.module.get(FilePlugin);
+    jsonSchemaStore = result.module.get(JsonSchemaStoreService);
   });
 
   afterAll(async () => {
