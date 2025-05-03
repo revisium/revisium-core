@@ -180,15 +180,39 @@ async function prepareEndpoint({
   await prismaService.endpoint.create({
     data: {
       id: headEndpointId,
-      revisionId: headRevisionId,
+      revision: {
+        connect: {
+          id: headRevisionId,
+        },
+      },
       type: 'REST_API',
+      version: {
+        connect: {
+          type_version: {
+            type: 'REST_API',
+            version: 1,
+          },
+        },
+      },
     },
   });
   await prismaService.endpoint.create({
     data: {
       id: draftEndpointId,
-      revisionId: draftRevisionId,
+      revision: {
+        connect: {
+          id: draftRevisionId,
+        },
+      },
       type: 'GRAPHQL',
+      version: {
+        connect: {
+          type_version: {
+            type: 'GRAPHQL',
+            version: 1,
+          },
+        },
+      },
     },
   });
 

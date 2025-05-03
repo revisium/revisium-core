@@ -4,12 +4,23 @@ import * as fs from 'fs/promises';
 import { nanoid } from 'nanoid';
 import * as process from 'node:process';
 import { join } from 'path';
-import { PrismaClient, RoleLevel } from '@prisma/client';
+import { EndpointType, PrismaClient, RoleLevel } from '@prisma/client';
 import { UserRole } from '../src/features/auth/consts';
 import { Permission, Role } from './seed/__generated__/seed';
 import { SystemOrganizations } from '../src/features/share/system-organizations.consts';
 
 const prisma = new PrismaClient();
+
+async function instance() {
+  const instance = await prisma.instance.findFirst();
+  if (!instance) {
+    await prisma.instance.create({
+      data: {
+        id: nanoid(),
+      },
+    });
+  }
+}
 
 async function upsertData<T>(
   directory: string,
@@ -72,6 +83,38 @@ async function roles() {
       },
     }),
   );
+}
+
+async function addEndpointVersions() {
+  await prisma.endpointVersion.upsert({
+    where: {
+      type_version: {
+        type: EndpointType.GRAPHQL,
+        version: 1,
+      },
+    },
+    create: {
+      id: `${EndpointType.GRAPHQL}-1`,
+      type: EndpointType.GRAPHQL,
+      version: 1,
+    },
+    update: {},
+  });
+
+  await prisma.endpointVersion.upsert({
+    where: {
+      type_version: {
+        type: EndpointType.REST_API,
+        version: 1,
+      },
+    },
+    create: {
+      id: `${EndpointType.REST_API}-1`,
+      type: EndpointType.REST_API,
+      version: 1,
+    },
+    update: {},
+  });
 }
 
 async function addSystemAdmin() {
@@ -147,9 +190,11 @@ async function addSystemFullApiRead() {
 }
 
 async function main() {
+  await instance();
   await organization();
   await permissions();
   await roles();
+  await addEndpointVersions();
   await addSystemAdmin();
   await addSystemFullApiRead();
 }

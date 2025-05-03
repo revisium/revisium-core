@@ -5,6 +5,13 @@ CREATE TYPE "RoleLevel" AS ENUM ('System', 'Organization', 'Project');
 CREATE TYPE "EndpointType" AS ENUM ('GRAPHQL', 'REST_API');
 
 -- CreateTable
+CREATE TABLE "Instance" (
+    "id" TEXT NOT NULL,
+
+    CONSTRAINT "Instance_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -43,6 +50,7 @@ CREATE TABLE "Permission" (
 -- CreateTable
 CREATE TABLE "Organization" (
     "id" TEXT NOT NULL,
+    "createdId" TEXT NOT NULL,
 
     CONSTRAINT "Organization_pkey" PRIMARY KEY ("id")
 );
@@ -100,32 +108,20 @@ CREATE TABLE "Revision" (
     "isHead" BOOLEAN NOT NULL DEFAULT false,
     "isDraft" BOOLEAN NOT NULL DEFAULT false,
     "isStart" BOOLEAN NOT NULL DEFAULT false,
+    "hasChanges" BOOLEAN NOT NULL DEFAULT false,
     "branchId" TEXT NOT NULL,
     "parentId" TEXT,
-    "changelogId" TEXT NOT NULL,
 
     CONSTRAINT "Revision_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
-CREATE TABLE "Changelog" (
+CREATE TABLE "EndpointVersion" (
     "id" TEXT NOT NULL,
-    "tableInserts" JSONB NOT NULL DEFAULT '{}',
-    "rowInserts" JSONB NOT NULL DEFAULT '{}',
-    "tableUpdates" JSONB NOT NULL DEFAULT '{}',
-    "rowUpdates" JSONB NOT NULL DEFAULT '{}',
-    "tableDeletes" JSONB NOT NULL DEFAULT '{}',
-    "rowDeletes" JSONB NOT NULL DEFAULT '{}',
-    "tableInsertsCount" INTEGER NOT NULL DEFAULT 0,
-    "rowInsertsCount" INTEGER NOT NULL DEFAULT 0,
-    "tableUpdatesCount" INTEGER NOT NULL DEFAULT 0,
-    "rowUpdatesCount" INTEGER NOT NULL DEFAULT 0,
-    "tableDeletesCount" INTEGER NOT NULL DEFAULT 0,
-    "rowDeletesCount" INTEGER NOT NULL DEFAULT 0,
-    "hasChanges" BOOLEAN NOT NULL DEFAULT false,
-    "revisionId" TEXT,
+    "type" "EndpointType" NOT NULL,
+    "version" INTEGER NOT NULL DEFAULT 1,
 
-    CONSTRAINT "Changelog_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "EndpointVersion_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -135,6 +131,7 @@ CREATE TABLE "Endpoint" (
     "type" "EndpointType" NOT NULL,
     "revisionId" TEXT NOT NULL,
     "isDeleted" BOOLEAN NOT NULL DEFAULT false,
+    "versionId" TEXT NOT NULL,
 
     CONSTRAINT "Endpoint_pkey" PRIMARY KEY ("id")
 );
@@ -142,10 +139,12 @@ CREATE TABLE "Endpoint" (
 -- CreateTable
 CREATE TABLE "Table" (
     "versionId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "readonly" BOOLEAN NOT NULL DEFAULT false,
-    "system" BOOLEAN NOT NULL DEFAULT false,
+    "createdId" TEXT NOT NULL,
     "id" TEXT NOT NULL,
+    "readonly" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "system" BOOLEAN NOT NULL DEFAULT false,
 
     CONSTRAINT "Table_pkey" PRIMARY KEY ("versionId")
 );
@@ -153,10 +152,15 @@ CREATE TABLE "Table" (
 -- CreateTable
 CREATE TABLE "Row" (
     "versionId" TEXT NOT NULL,
-    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "readonly" BOOLEAN NOT NULL DEFAULT false,
+    "createdId" TEXT NOT NULL,
     "id" TEXT NOT NULL,
+    "readonly" BOOLEAN NOT NULL DEFAULT false,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "data" JSONB NOT NULL,
+    "meta" JSONB NOT NULL DEFAULT '{}',
+    "hash" TEXT NOT NULL,
+    "schemaHash" TEXT NOT NULL,
 
     CONSTRAINT "Row_pkey" PRIMARY KEY ("versionId")
 );
@@ -164,19 +168,25 @@ CREATE TABLE "Row" (
 -- CreateTable
 CREATE TABLE "_PermissionToRole" (
     "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_PermissionToRole_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateTable
 CREATE TABLE "_RevisionToTable" (
     "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_RevisionToTable_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateTable
 CREATE TABLE "_RowToTable" (
     "A" TEXT NOT NULL,
-    "B" TEXT NOT NULL
+    "B" TEXT NOT NULL,
+
+    CONSTRAINT "_RowToTable_AB_pkey" PRIMARY KEY ("A","B")
 );
 
 -- CreateIndex
@@ -184,6 +194,9 @@ CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "User_username_key" ON "User"("username");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Organization_createdId_key" ON "Organization"("createdId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "UserOrganization_organizationId_userId_key" ON "UserOrganization"("organizationId", "userId");
@@ -201,13 +214,10 @@ CREATE UNIQUE INDEX "Branch_name_projectId_key" ON "Branch"("name", "projectId")
 CREATE UNIQUE INDEX "Revision_sequence_key" ON "Revision"("sequence");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Revision_changelogId_key" ON "Revision"("changelogId");
-
--- CreateIndex
 CREATE INDEX "Revision_branchId_idx" ON "Revision"("branchId");
 
 -- CreateIndex
-CREATE INDEX "Changelog_tableInserts_rowInserts_tableUpdates_rowUpdates_t_idx" ON "Changelog" USING GIN ("tableInserts", "rowInserts", "tableUpdates", "rowUpdates", "tableDeletes", "rowDeletes");
+CREATE UNIQUE INDEX "EndpointVersion_type_version_key" ON "EndpointVersion"("type", "version");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Endpoint_revisionId_type_key" ON "Endpoint"("revisionId", "type");
@@ -222,19 +232,16 @@ CREATE INDEX "Row_data_idx" ON "Row" USING GIN ("data");
 CREATE INDEX "Row_id_idx" ON "Row"("id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_PermissionToRole_AB_unique" ON "_PermissionToRole"("A", "B");
+CREATE INDEX "Row_hash_idx" ON "Row"("hash");
+
+-- CreateIndex
+CREATE INDEX "Row_schemaHash_idx" ON "Row"("schemaHash");
 
 -- CreateIndex
 CREATE INDEX "_PermissionToRole_B_index" ON "_PermissionToRole"("B");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "_RevisionToTable_AB_unique" ON "_RevisionToTable"("A", "B");
-
--- CreateIndex
 CREATE INDEX "_RevisionToTable_B_index" ON "_RevisionToTable"("B");
-
--- CreateIndex
-CREATE UNIQUE INDEX "_RowToTable_AB_unique" ON "_RowToTable"("A", "B");
 
 -- CreateIndex
 CREATE INDEX "_RowToTable_B_index" ON "_RowToTable"("B");
@@ -273,7 +280,7 @@ ALTER TABLE "Revision" ADD CONSTRAINT "Revision_branchId_fkey" FOREIGN KEY ("bra
 ALTER TABLE "Revision" ADD CONSTRAINT "Revision_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Revision"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Revision" ADD CONSTRAINT "Revision_changelogId_fkey" FOREIGN KEY ("changelogId") REFERENCES "Changelog"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Endpoint" ADD CONSTRAINT "Endpoint_versionId_fkey" FOREIGN KEY ("versionId") REFERENCES "EndpointVersion"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Endpoint" ADD CONSTRAINT "Endpoint_revisionId_fkey" FOREIGN KEY ("revisionId") REFERENCES "Revision"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -295,4 +302,3 @@ ALTER TABLE "_RowToTable" ADD CONSTRAINT "_RowToTable_A_fkey" FOREIGN KEY ("A") 
 
 -- AddForeignKey
 ALTER TABLE "_RowToTable" ADD CONSTRAINT "_RowToTable_B_fkey" FOREIGN KEY ("B") REFERENCES "Table"("versionId") ON DELETE CASCADE ON UPDATE CASCADE;
-
