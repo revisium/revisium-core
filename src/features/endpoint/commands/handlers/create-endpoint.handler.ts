@@ -47,8 +47,20 @@ export class CreateEndpointHandler
     return this.prisma.endpoint.create({
       data: {
         id: nanoid(),
-        revisionId,
+        revision: {
+          connect: {
+            id: revisionId,
+          },
+        },
         type,
+        version: {
+          connect: {
+            type_version: {
+              type,
+              version: 1,
+            },
+          },
+        },
       },
     });
   }

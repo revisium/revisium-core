@@ -152,13 +152,26 @@ enum EndpointType {
   REST_API
 }
 
+model EndpointVersion {
+  id       String       @id
+  type     EndpointType
+  version  Int          @default(1)
+  endpoint Endpoint[]
+
+  @@unique([type, version])
+}
+
 model Endpoint {
   id         String       @id
   createdAt  DateTime     @default(now())
   type       EndpointType
   revisionId String
-  revision   Revision     @relation(fields: [revisionId], references: [id], onDelete: Cascade)
   isDeleted  Boolean      @default(false)
+
+  versionId String
+  version   EndpointVersion @relation(fields: [versionId], references: [id])
+
+  revision Revision @relation(fields: [revisionId], references: [id], onDelete: Cascade)
 
   @@unique([revisionId, type])
 }
