@@ -50,7 +50,7 @@ describe('CreateProjectHandler', () => {
     });
     expect(result).toBe(project.id);
     expect(branch.name).toBe(DEFAULT_BRANCH_NAME);
-    expect(tables.length).toBe(1); // schema table
+    expect(tables.length).toBe(2); // schema table and shared schemas table
   });
 
   it('should create a new project with specified branch name', async () => {

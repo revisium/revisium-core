@@ -21,8 +21,10 @@ export type CreateProjectHandlerContext = {
   tableIds?: { versionId: string }[];
   headRevisionId: string;
   draftRevisionId: string;
-  schemaTableId: string;
+  schemaTableVersionId: string;
   schemaTableCreatedId: string;
+  sharedSchemasTableVersionId: string;
+  sharedSchemasTableCreatedId: string;
 };
 
 @CommandHandler(CreateProjectCommand)
@@ -78,8 +80,10 @@ export class CreateProjectHandler
       branchId: this.idService.generate(),
       headRevisionId: this.idService.generate(),
       draftRevisionId: this.idService.generate(),
-      schemaTableId: this.idService.generate(),
+      schemaTableVersionId: this.idService.generate(),
       schemaTableCreatedId: this.idService.generate(),
+      sharedSchemasTableVersionId: this.idService.generate(),
+      sharedSchemasTableCreatedId: this.idService.generate(),
     };
 
     return this.asyncLocalStorage.run(context, async () => {
@@ -159,13 +163,22 @@ export class CreateProjectHandler
           ...(this.context.tableIds
             ? { connect: this.context.tableIds }
             : {
-                create: {
-                  createdId: this.context.schemaTableCreatedId,
-                  versionId: this.context.schemaTableId,
-                  id: SystemTables.Schema,
-                  readonly: true,
-                  system: true,
-                },
+                create: [
+                  {
+                    createdId: this.context.schemaTableCreatedId,
+                    versionId: this.context.schemaTableVersionId,
+                    id: SystemTables.Schema,
+                    readonly: true,
+                    system: true,
+                  },
+                  {
+                    createdId: this.context.sharedSchemasTableCreatedId,
+                    versionId: this.context.sharedSchemasTableVersionId,
+                    id: SystemTables.SharedSchemas,
+                    readonly: true,
+                    system: true,
+                  },
+                ],
               }),
         },
       },
@@ -192,9 +205,14 @@ export class CreateProjectHandler
           ...(this.context.tableIds
             ? { connect: this.context.tableIds }
             : {
-                connect: {
-                  versionId: this.context.schemaTableId,
-                },
+                connect: [
+                  {
+                    versionId: this.context.schemaTableVersionId,
+                  },
+                  {
+                    versionId: this.context.sharedSchemasTableVersionId,
+                  },
+                ],
               }),
         },
       },
