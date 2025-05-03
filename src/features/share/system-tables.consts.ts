@@ -2,7 +2,7 @@ import { Schema } from 'ajv/dist/2020';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 
 export enum SystemTables {
-  Schema = 'schema',
+  Schema = 'revisium_schema_table',
 }
 
 export const findSchemaForSystemTables = (
