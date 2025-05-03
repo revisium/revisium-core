@@ -96,6 +96,7 @@ export const prepareProject = async (
           organization: {
             create: {
               id: organizationId,
+              createdId: nanoid(),
             },
           },
         },

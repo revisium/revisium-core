@@ -1,7 +1,7 @@
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Organization, Prisma } from '@prisma/client';
+import { Prisma, UserOrganization, UserProject } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/__tests__/create-models';
 import {
@@ -116,6 +116,7 @@ describe('GetProjectsByUserIdHandler', () => {
     return prismaService.organization.create({
       data: {
         id: organizationId,
+        createdId: nanoid(),
       },
     });
   };
@@ -124,7 +125,7 @@ describe('GetProjectsByUserIdHandler', () => {
     organizationId: string,
     userId: string,
     roleId: UserOrganizationRoles,
-  ): Promise<Organization> => {
+  ): Promise<UserOrganization> => {
     const data: Prisma.UserOrganizationCreateInput = {
       id: nanoid(),
       role: {
@@ -153,7 +154,7 @@ describe('GetProjectsByUserIdHandler', () => {
     projectId: string,
     userId: string,
     roleId: UserProjectRoles,
-  ): Promise<Organization> => {
+  ): Promise<UserProject> => {
     const data: Prisma.UserProjectCreateInput = {
       id: nanoid(),
       role: {
