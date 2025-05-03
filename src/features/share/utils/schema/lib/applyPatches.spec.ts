@@ -1507,7 +1507,7 @@ describe('applyPatches', () => {
           {
             status: 'ready',
             url: 'url',
-            filename: 'filename1.png',
+            fileName: 'filename1.png',
             hash: 'hash',
             extension: 'png',
             mimeType: 'mimeType',
@@ -1518,7 +1518,7 @@ describe('applyPatches', () => {
           {
             status: 'ready',
             url: 'url',
-            filename: 'filename2.png',
+            fileName: 'filename2.png',
             hash: 'hash',
             extension: 'png',
             mimeType: 'mimeType',

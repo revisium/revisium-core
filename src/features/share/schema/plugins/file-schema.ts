@@ -11,7 +11,7 @@ export const fileSchema: JsonObjectSchema = {
     status: { type: JsonSchemaTypeName.String, default: '', readOnly: true },
     fileId: { type: JsonSchemaTypeName.String, default: '', readOnly: true },
     url: { type: JsonSchemaTypeName.String, default: '', readOnly: true },
-    filename: { type: JsonSchemaTypeName.String, default: '' },
+    fileName: { type: JsonSchemaTypeName.String, default: '' },
     hash: {
       type: JsonSchemaTypeName.String,
       default: '',
@@ -47,7 +47,7 @@ export const fileSchema: JsonObjectSchema = {
     'status',
     'fileId',
     'url',
-    'filename',
+    'fileName',
     'hash',
     'extension',
     'mimeType',

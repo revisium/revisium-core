@@ -63,7 +63,7 @@ export class CreateRowHandler extends DraftHandler<
         revisionId: data.revisionId,
         tableId: data.tableId,
         rowId: data.rowId,
-        data: await this.pluginService.createRow(data),
+        data: await this.pluginService.afterCreateRow(data),
         schemaHash,
       }),
     );

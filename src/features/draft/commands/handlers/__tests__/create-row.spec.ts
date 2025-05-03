@@ -174,7 +174,7 @@ describe('CreateRowHandler', () => {
       status: '',
       fileId: '',
       url: '',
-      filename: '',
+      fileName: '',
       hash: '',
       extension: '',
       mimeType: '',

@@ -63,7 +63,7 @@ export class UpdateRowHandler extends DraftHandler<
         revisionId: data.revisionId,
         tableId: data.tableId,
         rowId: data.rowId,
-        data: await this.pluginService.updateRow(data),
+        data: await this.pluginService.afterUpdateRow(data),
         schemaHash,
       }),
     );

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FilePlugin } from 'src/features/plugin/file.plugin';
+import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { IPluginService } from 'src/features/plugin/types';
 
 @Injectable()

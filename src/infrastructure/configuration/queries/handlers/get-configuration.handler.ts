@@ -1,6 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
+import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import {
   GetConfigurationQuery,
   GetConfigurationQueryReturnType,
@@ -16,6 +17,7 @@ export class GetConfigurationHandler
     private readonly emailService: EmailService,
     private readonly googleOauthService: GoogleOauthService,
     private readonly githubOauthService: GitHubAuthService,
+    private readonly filePlugin: FilePlugin,
   ) {}
 
   public async execute(): Promise<GetConfigurationQueryReturnType> {
@@ -28,6 +30,9 @@ export class GetConfigurationHandler
       github: {
         available: this.githubOauthService.isAvailable,
         clientId: this.githubOauthService.clientId,
+      },
+      plugins: {
+        file: this.filePlugin.isAvailable,
       },
     };
   }

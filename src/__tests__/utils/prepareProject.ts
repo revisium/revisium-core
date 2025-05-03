@@ -12,7 +12,7 @@ import {
   getTestLinkedSchema,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/file.plugin';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
@@ -465,7 +465,7 @@ export const createEmptyFile = () => ({
   status: '',
   fileId: '',
   url: '',
-  filename: '',
+  fileName: '',
   hash: '',
   extension: '',
   mimeType: '',

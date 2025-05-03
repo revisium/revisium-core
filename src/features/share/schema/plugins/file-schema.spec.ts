@@ -62,7 +62,7 @@ describe('file-schema', () => {
       status: 'ready',
       fileId: 'fileId',
       url: 'https://example.com/file.png',
-      filename: 'file.png',
+      fileName: 'file.png',
       hash: 'a'.repeat(40),
       extension: 'png',
       mimeType: 'image/png',

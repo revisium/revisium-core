@@ -8,6 +8,7 @@ import { ApiRenameTableHandler } from 'src/features/draft/commands/handlers/api-
 import { ApiRevertChangesHandler } from 'src/features/draft/commands/handlers/api-revert-changes.handler';
 import { ApiUpdateRowHandler } from 'src/features/draft/commands/handlers/api-update-row.handler';
 import { ApiUpdateTableHandler } from 'src/features/draft/commands/handlers/api-update-table.handler';
+import { ApiUploadFileHandler } from 'src/features/draft/commands/handlers/api-upload-file.handler';
 import { CreateRevisionHandler } from 'src/features/draft/commands/handlers/create-revision.handler';
 import { CreateRowHandler } from 'src/features/draft/commands/handlers/create-row.handler';
 import { RenameRowHandler } from 'src/features/draft/commands/handlers/rename-row.handler';
@@ -32,8 +33,9 @@ import { ValidateSchemaHandler } from 'src/features/draft/commands/handlers/tran
 import { UpdateRowHandler } from 'src/features/draft/commands/handlers/update-row.handler';
 import { InternalUpdateRowsHandler } from 'src/features/draft/commands/handlers/transactional/internal-update-rows.handler';
 import { UpdateTableHandler } from 'src/features/draft/commands/handlers/update-table.handler';
+import { UploadFileHandler } from 'src/features/draft/commands/handlers/upload-file.handler';
 
-export const TABLE_COMMANDS_HANDLERS = [
+export const DRAFT_COMMANDS_HANDLERS = [
   CreateTableHandler,
   ApiCreateTableHandler,
   RemoveTableHandler,
@@ -68,4 +70,6 @@ export const TABLE_COMMANDS_HANDLERS = [
   InternalRenameRowHandler,
   UpdateSchemaHandler,
   RenameSchemaHandler,
+  UploadFileHandler,
+  ApiUploadFileHandler,
 ];

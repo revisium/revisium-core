@@ -18,6 +18,8 @@ export class ResolveDraftRevisionHandler
 
   public get isAlreadyResolved() {
     return (
+      this.revisionRequestDto.hasOrganizationId &&
+      this.revisionRequestDto.hasProjectId &&
       this.revisionRequestDto.hasBranchId &&
       this.revisionRequestDto.hasId &&
       this.revisionRequestDto.hasParentId
@@ -42,6 +44,16 @@ export class ResolveDraftRevisionHandler
         isDraft: true,
         branchId: true,
         parentId: true,
+        branch: {
+          select: {
+            project: {
+              select: {
+                id: true,
+                organizationId: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -53,6 +65,9 @@ export class ResolveDraftRevisionHandler
       throw new BadRequestException('The revision is not a draft');
     }
 
+    this.revisionRequestDto.organizationId =
+      revision.branch.project.organizationId;
+    this.revisionRequestDto.projectId = revision.branch.project.id;
     this.revisionRequestDto.branchId = revision.branchId;
     this.revisionRequestDto.id = revision.id;
 

@@ -4,7 +4,7 @@ import {
   prepareTableAndRowWithFile,
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/file.plugin';
 import { GetRowsQuery } from 'src/features/row/queries/impl';
 import { GetRowsReturnType } from 'src/features/row/queries/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
