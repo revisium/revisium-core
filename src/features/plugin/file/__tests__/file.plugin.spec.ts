@@ -11,13 +11,13 @@ import {
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/file.plugin';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('file.plugin', () => {
-  describe('createRow', () => {
+  describe('afterCreateRow', () => {
     it('should update files', async () => {
       const { draftRevisionId, table } = await setupProjectWithFileSchema();
       const emptyFile = createEmptyFile();
@@ -26,7 +26,7 @@ describe('file.plugin', () => {
         files: [emptyFile, emptyFile, emptyFile],
       };
 
-      const result = (await pluginService.createRow({
+      const result = (await pluginService.afterCreateRow({
         revisionId: draftRevisionId,
         tableId: table.tableId,
         rowId: nanoid(),
@@ -59,7 +59,7 @@ describe('file.plugin', () => {
       };
 
       await expect(
-        pluginService.createRow({
+        pluginService.afterCreateRow({
           revisionId: draftRevisionId,
           tableId: table.tableId,
           rowId: nanoid(),
@@ -69,7 +69,7 @@ describe('file.plugin', () => {
     });
   });
 
-  describe('updateRow', () => {
+  describe('afterUpdateRow', () => {
     it('should update files', async () => {
       const { draftRevisionId, table } = await setupProjectWithFileSchema();
 
@@ -92,7 +92,7 @@ describe('file.plugin', () => {
         dataDraft: previousData,
       });
 
-      const result = (await pluginService.updateRow({
+      const result = (await pluginService.afterUpdateRow({
         revisionId: draftRevisionId,
         tableId: table.tableId,
         rowId: rowDraft.id,
@@ -133,7 +133,7 @@ describe('file.plugin', () => {
       });
 
       await expect(
-        pluginService.updateRow({
+        pluginService.afterUpdateRow({
           revisionId: draftRevisionId,
           tableId: table.tableId,
           rowId: rowDraft.id,
@@ -165,7 +165,7 @@ describe('file.plugin', () => {
       });
 
       await expect(
-        pluginService.updateRow({
+        pluginService.afterUpdateRow({
           revisionId: draftRevisionId,
           tableId: table.tableId,
           rowId: rowDraft.id,
@@ -219,7 +219,7 @@ describe('file.plugin', () => {
     });
   });
 
-  describe('migrateRows', () => {
+  describe('afterMigrateRows', () => {
     it('should migrate files', async () => {
       const { draftRevisionId, table } = await setupProjectWithFileSchema();
 
@@ -237,7 +237,7 @@ describe('file.plugin', () => {
         dataDraft: data,
       });
 
-      await pluginService.migrateRows({
+      await pluginService.afterMigrateRows({
         revisionId: draftRevisionId,
         tableId: table.tableId,
         rows: [rowDraft],

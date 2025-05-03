@@ -3,12 +3,12 @@ import { Prisma } from '@prisma/client';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import {
   ComputeRowsOptions,
-  CreateRowOptions,
+  AfterCreateRowOptions,
   InternalComputeRowsOptions,
-  InternalCreateRowOptions,
-  InternalUpdateRowOptions,
-  MigrateRowsOptions,
-  UpdateRowOptions,
+  InternalAfterCreateRowOptions,
+  InternalAfterUpdateRowOptions,
+  AfterMigrateRowsOptions,
+  AfterUpdateRowOptions,
 } from 'src/features/plugin/types';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
@@ -30,30 +30,26 @@ export class PluginService {
     private readonly pluginsListService: PluginListService,
   ) {}
 
-  public async createRow(
-    options: CreateRowOptions,
+  public async afterCreateRow(
+    options: AfterCreateRowOptions,
   ): Promise<Prisma.InputJsonValue> {
-    const { schema, hash: schemaHash } =
-      await this.shareTransactionalQueries.getTableSchema(
-        options.revisionId,
-        options.tableId,
-      );
+    const { schema, schemaHash, schemaStore } =
+      await this.prepareSchemaContext(options);
 
-    const schemaStore = this.jsonSchemaStore.create(schema);
     const valueStore = createJsonValueStore(
       schemaStore,
       options.rowId,
       options.data as JsonValue,
     );
 
-    const internalOptions: InternalCreateRowOptions = {
+    const internalOptions: InternalAfterCreateRowOptions = {
       ...options,
       schemaStore,
       valueStore,
     };
 
     for (const plugin of this.pluginsListService.orderedPlugins) {
-      await plugin.createRow(internalOptions);
+      await plugin.afterCreateRow(internalOptions);
     }
 
     const data = valueStore.getPlainValue();
@@ -67,16 +63,12 @@ export class PluginService {
     return data;
   }
 
-  public async updateRow(
-    options: UpdateRowOptions,
+  public async afterUpdateRow(
+    options: AfterUpdateRowOptions,
   ): Promise<Prisma.InputJsonValue> {
-    const { schema, hash: schemaHash } =
-      await this.shareTransactionalQueries.getTableSchema(
-        options.revisionId,
-        options.tableId,
-      );
+    const { schema, schemaHash, schemaStore } =
+      await this.prepareSchemaContext(options);
 
-    const schemaStore = this.jsonSchemaStore.create(schema);
     const valueStore = createJsonValueStore(
       schemaStore,
       options.rowId,
@@ -90,7 +82,7 @@ export class PluginService {
       row.data,
     );
 
-    const internalOptions: InternalUpdateRowOptions = {
+    const internalOptions: InternalAfterUpdateRowOptions = {
       ...options,
       schemaStore,
       valueStore,
@@ -98,7 +90,7 @@ export class PluginService {
     };
 
     for (const plugin of this.pluginsListService.orderedPlugins) {
-      await plugin.updateRow(internalOptions);
+      await plugin.afterUpdateRow(internalOptions);
     }
 
     const data = valueStore.getPlainValue();
@@ -113,12 +105,7 @@ export class PluginService {
   }
 
   public async computeRows(options: ComputeRowsOptions): Promise<void> {
-    const { schema } = await this.shareTransactionalQueries.getTableSchema(
-      options.revisionId,
-      options.tableId,
-    );
-
-    const schemaStore = this.jsonSchemaStore.create(schema);
+    const { schemaStore } = await this.prepareSchemaContext(options);
 
     const internalOptions: InternalComputeRowsOptions = {
       ...options,
@@ -130,13 +117,10 @@ export class PluginService {
     }
   }
 
-  public async migrateRows(options: MigrateRowsOptions): Promise<void> {
-    const { schema } = await this.shareTransactionalQueries.getTableSchema(
-      options.revisionId,
-      options.tableId,
-    );
-
-    const schemaStore = this.jsonSchemaStore.create(schema);
+  public async afterMigrateRows(
+    options: AfterMigrateRowsOptions,
+  ): Promise<void> {
+    const { schemaStore } = await this.prepareSchemaContext(options);
 
     const internalOptions: InternalComputeRowsOptions = {
       ...options,
@@ -144,8 +128,27 @@ export class PluginService {
     };
 
     for (const plugin of this.pluginsListService.orderedPlugins) {
-      await plugin.migrateRows(internalOptions);
+      await plugin.afterMigrateRows(internalOptions);
     }
+  }
+
+  public async prepareSchemaContext(options: {
+    revisionId: string;
+    tableId: string;
+  }) {
+    const { schema, hash: schemaHash } =
+      await this.shareTransactionalQueries.getTableSchema(
+        options.revisionId,
+        options.tableId,
+      );
+
+    const schemaStore = this.jsonSchemaStore.create(schema);
+
+    return {
+      schema,
+      schemaHash,
+      schemaStore,
+    };
   }
 
   private async getRow({

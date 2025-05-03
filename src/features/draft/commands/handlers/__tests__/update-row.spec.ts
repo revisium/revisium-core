@@ -11,7 +11,7 @@ import {
   getObjectSchema,
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
-import { FileStatus } from 'src/features/plugin/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/file.plugin';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';

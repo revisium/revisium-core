@@ -1,7 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
-import { FilePlugin } from 'src/features/plugin/file.plugin';
+import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import {
   GetConfigurationQuery,
   GetConfigurationQueryReturnType,

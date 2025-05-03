@@ -189,7 +189,7 @@ export class UpdateTableHandler extends DraftHandler<
     schemaHash: string;
     rows: Row[];
   }) {
-    await this.pluginTable.migrateRows({
+    await this.pluginTable.afterMigrateRows({
       revisionId: data.revisionId,
       tableId: data.tableId,
       rows: data.rows,
