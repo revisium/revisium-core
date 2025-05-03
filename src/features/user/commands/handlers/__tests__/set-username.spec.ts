@@ -72,6 +72,7 @@ describe('SetUsernameHandler', () => {
             id: 'generatedId',
             organization: {
               create: {
+                createdId: 'generatedId',
                 id: 'newUsername',
               },
             },
