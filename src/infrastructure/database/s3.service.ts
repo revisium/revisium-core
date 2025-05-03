@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
-  private logger = new Logger(S3Service.name);
+  private readonly logger = new Logger(S3Service.name);
 
   private readonly _client: S3Client | null = null;
   private readonly _bucket: string | null = null;
