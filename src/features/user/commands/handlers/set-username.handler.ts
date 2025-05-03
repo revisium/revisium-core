@@ -54,6 +54,7 @@ export class SetUsernameHandler
             organization: {
               create: {
                 id: data.username,
+                createdId: this.idService.generate(8),
               },
             },
             role: {

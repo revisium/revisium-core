@@ -108,6 +108,7 @@ async function prepareBranch(prismaService: PrismaService) {
           organization: {
             create: {
               id: organizationId,
+              createdId: nanoid(),
             },
           },
         },

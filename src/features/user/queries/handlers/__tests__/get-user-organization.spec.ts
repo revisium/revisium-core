@@ -1,7 +1,7 @@
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Organization, Prisma } from '@prisma/client';
+import { Prisma, UserOrganization } from '@prisma/client';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/__tests__/create-models';
 import { UserOrganizationRoles } from 'src/features/auth/consts';
@@ -43,7 +43,7 @@ describe('GetUserOrganizationHandler', () => {
   const setupTestEntities = async (
     organizationId: string,
     userId: string,
-  ): Promise<Organization> => {
+  ): Promise<UserOrganization> => {
     await testCreateUser(prismaService, { id: userId });
 
     const data: Prisma.UserOrganizationCreateInput = {
@@ -56,6 +56,7 @@ describe('GetUserOrganizationHandler', () => {
       organization: {
         create: {
           id: organizationId,
+          createdId: nanoid(),
         },
       },
       user: {

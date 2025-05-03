@@ -32,6 +32,7 @@ async function organization() {
     where: { id: SystemOrganizations.Revisium },
     create: {
       id: SystemOrganizations.Revisium,
+      createdId: nanoid(8),
     },
     update: {},
   });
@@ -94,6 +95,7 @@ async function addSystemAdmin() {
           organization: {
             create: {
               id: userId,
+              createdId: nanoid(8),
             },
           },
           role: {
@@ -129,6 +131,7 @@ async function addSystemFullApiRead() {
           organization: {
             create: {
               id: userId,
+              createdId: nanoid(8),
             },
           },
           role: {
