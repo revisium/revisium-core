@@ -38,7 +38,6 @@ export class ValidateDataHandler
       );
 
       if (!result) {
-        console.log({ errors });
         throw new BadRequestException('data is not valid', {
           cause: errors,
         });

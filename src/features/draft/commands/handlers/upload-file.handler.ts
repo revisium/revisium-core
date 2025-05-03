@@ -77,7 +77,7 @@ export class UploadFileHandler extends DraftHandler<
 
     return {
       ...result,
-      path: this.filePlugin.getUrl(fileHash),
+      path: this.filePlugin.getPathname(fileHash),
     };
   }
 

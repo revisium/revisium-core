@@ -1,9 +1,15 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class S3Service {
+  private logger = new Logger(S3Service.name);
+
   private readonly _client: S3Client | null = null;
   private readonly _bucket: string | null = null;
 
@@ -51,8 +57,15 @@ export class S3Service {
           ACL: 'public-read',
         }),
       );
+
+      this.logger.log(`File uploaded to S3: ${path}, bucket: ${this.bucket}`);
+
       return { bucket: this.bucket, key: path };
     } catch (err) {
+      this.logger.error(
+        `Error uploading file to S3: path=${path} ${err.message}`,
+      );
+
       throw new InternalServerErrorException(
         'Error uploading file to S3: ' + err.message + '',
       );

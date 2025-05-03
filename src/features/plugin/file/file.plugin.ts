@@ -140,7 +140,11 @@ export class FilePlugin implements IPluginService {
   }
 
   public getUrl(hash: string) {
-    return encodeURI(`${this.publicEndpoint}/${hash}`);
+    return encodeURI(`${this.publicEndpoint}/${this.getPathname(hash)}`);
+  }
+
+  public getPathname(hash: string) {
+    return encodeURI(`${hash}`);
   }
 
   private forEachFile(

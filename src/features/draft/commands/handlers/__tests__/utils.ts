@@ -32,6 +32,7 @@ import {
 import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { S3Service } from 'src/infrastructure/database/s3.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
@@ -99,6 +100,14 @@ export const createTestingModule = async () => {
     GetRowHandler as QueryHandlerType,
   ];
 
+  const mockS3 = {
+    isAvailable: true,
+    uploadFile: jest.fn().mockResolvedValue({
+      bucket: 'test-bucket',
+      key: 'uploads/fake.png',
+    }),
+  };
+
   const module: TestingModule = await Test.createTestingModule({
     imports: [
       DatabaseModule,
@@ -116,7 +125,10 @@ export const createTestingModule = async () => {
       ...DRAFT_COMMANDS_HANDLERS,
       ...ANOTHER_QUERIES,
     ],
-  }).compile();
+  })
+    .overrideProvider(S3Service)
+    .useValue(mockS3)
+    .compile();
 
   const prismaService = module.get(PrismaService);
 
