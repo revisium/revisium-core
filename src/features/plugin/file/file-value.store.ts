@@ -42,10 +42,6 @@ export class FileValueStore {
     }
   }
 
-  public getPlainValue() {
-    return this.store.getPlainValue();
-  }
-
   public ensureDefaults(): void {
     for (const [field, item] of Object.entries(this.store.value)) {
       if (item.value !== item.schema.default) {

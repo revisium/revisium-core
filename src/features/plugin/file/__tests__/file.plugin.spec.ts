@@ -1,6 +1,10 @@
 import * as hash from 'object-hash';
 import { nanoid } from 'nanoid';
 import {
+  createExpressFile,
+  createExpressImageFile,
+} from 'src/__tests__/utils/file';
+import {
   createEmptyFile,
   prepareProject,
   prepareRow,
@@ -18,8 +22,6 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { join } from 'path';
-import { readFileSync } from 'fs';
 
 describe('file.plugin', () => {
   describe('afterCreateRow', () => {
@@ -401,39 +403,6 @@ describe('file.plugin', () => {
         }),
       ).rejects.toThrow(`Invalid count of files`);
     });
-
-    function createExpressFile(): Express.Multer.File {
-      return {
-        buffer: Buffer.from('data'),
-        mimetype: 'text/plain',
-        size: 4,
-        fieldname: 'file',
-        originalname: 'original-name.txt',
-        encoding: '',
-        stream: null as any,
-        destination: '',
-        filename: 'name',
-        path: '',
-      };
-    }
-
-    function createExpressImageFile(): Express.Multer.File {
-      const filePath = join(__dirname, './logo.png');
-      const buffer = readFileSync(filePath);
-
-      return {
-        buffer,
-        mimetype: 'image/png',
-        size: buffer.length,
-        fieldname: 'file',
-        originalname: `logo.png`,
-        encoding: '7bit',
-        stream: null as any,
-        destination: '',
-        filename: `logo.png`,
-        path: '',
-      };
-    }
   });
 
   let prismaService: PrismaService;
