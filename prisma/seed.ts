@@ -11,6 +11,17 @@ import { SystemOrganizations } from '../src/features/share/system-organizations.
 
 const prisma = new PrismaClient();
 
+async function instance() {
+  const instance = await prisma.instance.findFirst();
+  if (!instance) {
+    await prisma.instance.create({
+      data: {
+        id: nanoid(),
+      },
+    });
+  }
+}
+
 async function upsertData<T>(
   directory: string,
   upsertCallback: (id: string, data: T) => Promise<unknown>,
@@ -179,6 +190,7 @@ async function addSystemFullApiRead() {
 }
 
 async function main() {
+  await instance();
   await organization();
   await permissions();
   await roles();
