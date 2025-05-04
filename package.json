@@ -1,6 +1,6 @@
 {
   "name": "@revisium/core",
-  "version": "0.11.0-alpha.1",
+  "version": "0.11.0-alpha.2",
   "description": "Revisium is a tool (UI/API) inspired by JSON (JSON Schema) and Git, designed to provide a flexible and low-level headless CMS solution.",
   "private": false,
   "homepage": "https://revisium.io",
@@ -40,7 +40,9 @@
     "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json",
     "tsc": "tsc -p tsconfig.json",
     "docker:test-container-up": "docker compose -f docker-compose-test.yml -p revisium-core-test up -d && sleep 1 && dotenv -e .env.test npm run prisma:migrate:deploy && dotenv -e .env.test npm run seed",
-    "docker:test-container-down": "docker compose -f docker-compose-test.yml -p revisium-core-test down --volumes"
+    "docker:test-container-down": "docker compose -f docker-compose-test.yml -p revisium-core-test down --volumes",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:patch": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
     "@apollo/server": "^4.10.1",
