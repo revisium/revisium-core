@@ -39,14 +39,16 @@ async function upsertData<T>(
 }
 
 async function organization() {
-  await prisma.organization.upsert({
-    where: { id: SystemOrganizations.Revisium },
-    create: {
-      id: SystemOrganizations.Revisium,
-      createdId: nanoid(8),
-    },
-    update: {},
-  });
+  for (const organization of Object.values(SystemOrganizations)) {
+    await prisma.organization.upsert({
+      where: { id: organization },
+      create: {
+        id: organization,
+        createdId: nanoid(8),
+      },
+      update: {},
+    });
+  }
 }
 
 async function permissions() {
