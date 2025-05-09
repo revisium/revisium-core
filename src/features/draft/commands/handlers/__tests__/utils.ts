@@ -29,6 +29,7 @@ import {
   JsonObjectSchema,
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
+import { GetRowsByTableHandler } from 'src/features/table/queries/handlers/get-rows-by-table.handler';
 import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -98,6 +99,7 @@ export const createTestingModule = async () => {
     GetRowByIdHandler as QueryHandlerType,
     GetRowsHandler as QueryHandlerType,
     GetRowHandler as QueryHandlerType,
+    GetRowsByTableHandler,
   ];
 
   const mockS3 = {

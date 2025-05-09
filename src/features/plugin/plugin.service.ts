@@ -13,6 +13,7 @@ import {
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { systemTablesIds } from 'src/features/share/system-tables.consts';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
@@ -105,6 +106,10 @@ export class PluginService {
   }
 
   public async computeRows(options: ComputeRowsOptions): Promise<void> {
+    if (systemTablesIds.includes(options.tableId)) {
+      return;
+    }
+
     const { schemaStore } = await this.prepareSchemaContext(options);
 
     const internalOptions: InternalComputeRowsOptions = {
