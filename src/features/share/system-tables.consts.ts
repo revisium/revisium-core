@@ -6,6 +6,11 @@ export enum SystemTables {
   SharedSchemas = 'revisium_shared_schemas_table',
 }
 
+export const systemTablesIds: string[] = [
+  SystemTables.Schema,
+  SystemTables.SharedSchemas,
+];
+
 export const findSchemaForSystemTables = (
   tableId: string,
 ): Schema | undefined => {

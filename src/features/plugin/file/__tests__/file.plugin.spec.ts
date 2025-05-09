@@ -20,6 +20,7 @@ import { FilePlugin, FileStatus } from 'src/features/plugin/file/file.plugin';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -223,6 +224,38 @@ describe('file.plugin', () => {
       expect(result.files[0].url).toBeTruthy();
       expect(result.files[1].url).toBe('');
       expect(result.files[2].url).toBe('');
+    });
+
+    it('should not compute rows for system table', async () => {
+      const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+      const data = {
+        file: {
+          ...createPreviousFile(),
+          status: FileStatus.uploaded,
+          url: 'test',
+        },
+        files: [],
+      };
+
+      const { rowDraft } = await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        schema: table.schema,
+        data: data,
+        dataDraft: data,
+      });
+
+      await pluginService.computeRows({
+        revisionId: draftRevisionId,
+        tableId: SystemTables.Schema,
+        rows: [rowDraft],
+      });
+
+      const result = rowDraft.data as typeof data;
+
+      expect(result.file.url).toBe('test');
     });
   });
 
