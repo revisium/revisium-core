@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserRole } from 'src/features/auth/consts';
+import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
@@ -21,6 +22,8 @@ export class SetUsernameHandler
     if (data.username.length < 3) {
       throw new BadRequestException('Username must be at least 3 characters');
     }
+
+    validateUrlLikeId(data.username);
 
     const user = await this.getUser(data);
 

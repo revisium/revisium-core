@@ -15,6 +15,15 @@ describe('SetUsernameHandler', () => {
     );
   });
 
+  it('should throw an error if the username is not valid', async () => {
+    const command = createCommand({ username: '---ab' });
+
+    await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
+    await expect(handler.execute(command)).rejects.toThrow(
+      'It must contain between 1 and 64 characters, start with a let',
+    );
+  });
+
   it('should throw an error if the current user already has a username', async () => {
     prismaService.user.findFirstOrThrow = createMock({
       id: 'anotherUserId',
