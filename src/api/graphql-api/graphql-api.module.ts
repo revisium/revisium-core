@@ -32,7 +32,7 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
       inject: [GraphqlMetricsPlugin],
       useFactory: (graphqlMetricsPlugin: GraphqlMetricsPlugin) => ({
         context: ({ res }: { res: any }) => ({ res }),
-        path: '/-/graphql',
+        path: '/graphql',
         resolvers: { JSON: GraphQLJSON },
         playground: false,
         autoSchemaFile: join(process.cwd(), 'src/schema.gql'),

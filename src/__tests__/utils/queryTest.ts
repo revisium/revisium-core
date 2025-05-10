@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 
 const STATUS = 200;
-const GRAPHQL_URL = '/-/graphql';
+const GRAPHQL_URL = '/graphql';
 
 export const graphqlQuery = async ({
   app,

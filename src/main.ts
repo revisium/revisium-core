@@ -18,7 +18,7 @@ async function bootstrap() {
   initSwagger(app);
 
   const config = app.get(ConfigService);
-  const port = config.get('PORT') || 8080;
+  const port = config.get('PORT') ?? 8080;
 
   app.enableShutdownHooks();
   await app.listen(port);
@@ -39,7 +39,7 @@ function initSwagger(app: INestApplication<any>) {
     .build();
 
   const document = SwaggerModule.createDocument(app, documentBuilder);
-  SwaggerModule.setup('/-/api', app, document, {
+  SwaggerModule.setup('/api', app, document, {
     swaggerOptions: {
       tryItOutEnabled: true,
       filter: true,

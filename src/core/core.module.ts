@@ -32,7 +32,7 @@ import { UserModule } from 'src/features/user/user.module';
     RestApiModule,
     RouterModule.register([
       {
-        path: '/-/api',
+        path: '/api',
         module: RestApiModule,
       },
     ]),
