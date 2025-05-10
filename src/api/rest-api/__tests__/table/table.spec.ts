@@ -71,7 +71,7 @@ describe('restapi - table', () => {
     });
 
     function getUrl() {
-      return `/-/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rename`;
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rename`;
     }
   });
 });

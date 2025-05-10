@@ -47,7 +47,7 @@ describe('restapi - row - upload file', () => {
 
   function getUrl(fileId: string) {
     const { draftRevisionId } = preparedData.project;
-    return `/-/api/revision/${draftRevisionId}/tables/${tableId}/rows/${rowId}/upload/${fileId}`;
+    return `/api/revision/${draftRevisionId}/tables/${tableId}/rows/${rowId}/upload/${fileId}`;
   }
 
   let app: INestApplication;
