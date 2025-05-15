@@ -2,12 +2,17 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EndpointType, Prisma } from '@prisma/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
-import { DeleteProjectCommand } from 'src/features/project/commands/impl';
+import {
+  DeleteProjectCommand,
+  DeleteProjectCommandData,
+  DeleteProjectCommandReturnType,
+} from 'src/features/project/commands/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @CommandHandler(DeleteProjectCommand)
 export class DeleteProjectHandler
-  implements ICommandHandler<DeleteProjectCommand, boolean>
+  implements
+    ICommandHandler<DeleteProjectCommand, DeleteProjectCommandReturnType>
 {
   constructor(
     private readonly transactionPrisma: TransactionPrismaService,
@@ -30,7 +35,7 @@ export class DeleteProjectHandler
     return true;
   }
 
-  private async transactionHandler(data: DeleteProjectCommand['data']) {
+  private async transactionHandler(data: DeleteProjectCommandData) {
     const { organizationId, projectName } = data;
 
     const { id: projectId } =
@@ -46,7 +51,10 @@ export class DeleteProjectHandler
   }
 
   private deleteProject(projectId: string) {
-    return this.transaction.project.delete({ where: { id: projectId } });
+    return this.transaction.project.update({
+      where: { id: projectId },
+      data: { isDeleted: true },
+    });
   }
 
   private getEndpoints(projectId: string) {

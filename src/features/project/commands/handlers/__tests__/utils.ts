@@ -5,12 +5,14 @@ import { AsyncLocalStorage } from 'async_hooks';
 import { nanoid } from 'nanoid';
 import { PROJECT_HANDLERS } from 'src/features/project/commands/handlers/index';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
+import { SHARE_QUERIES_HANDLERS } from 'src/features/share/queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 
 export const createTestingModule = async () => {
@@ -32,10 +34,14 @@ export const createTestingModule = async () => {
   commandBus.register([...PROJECT_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
-  queryBus.register([...(PROJECT_QUERIES as QueryHandlerType[])]);
+  queryBus.register([
+    ...SHARE_QUERIES_HANDLERS,
+    ...(PROJECT_QUERIES as QueryHandlerType[]),
+  ]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);
+  const endpointNotificationService = module.get(EndpointNotificationService);
 
   return {
     module,
@@ -43,6 +49,7 @@ export const createTestingModule = async () => {
     commandBus,
     transactionService,
     shareTransactionalQueries,
+    endpointNotificationService,
   };
 };
 
