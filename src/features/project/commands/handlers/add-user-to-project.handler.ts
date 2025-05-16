@@ -73,6 +73,7 @@ export class AddUserToProjectHandler
           organizationId: data.organizationId,
           name: data.projectName,
         },
+        isDeleted: false,
       },
       select: { id: true },
     });
