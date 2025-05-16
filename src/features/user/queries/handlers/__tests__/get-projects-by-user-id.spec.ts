@@ -70,6 +70,31 @@ describe('GetProjectsByUserIdHandler', () => {
     expect(result.pageInfo.startCursor).toEqual('1');
   });
 
+  it('should not get project', async () => {
+    const userId = nanoid();
+    const organizationId = nanoid();
+    const projectId = nanoid();
+    await testCreateUser(prismaService, { id: userId });
+    await createOrganization(organizationId);
+    await createProject(organizationId, projectId);
+    await addUserToProject(projectId, userId, UserProjectRoles.reader);
+
+    await prismaService.project.update({
+      where: { id: projectId },
+      data: {
+        isDeleted: true,
+      },
+    });
+
+    const query = createQuery({ first: 1, userId });
+    const result = await queryBus.execute<
+      GetProjectsByUserIdQuery,
+      GetProjectsByUserIdQueryReturnType
+    >(query);
+
+    expect(result.totalCount).toEqual(0);
+  });
+
   const createProject = async (organizationId: string, projectId: string) => {
     return prismaService.project.create({
       data: {

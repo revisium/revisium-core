@@ -8,12 +8,15 @@ import {
   getObjectSchema,
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
+import { BRANCH_QUERIES_HANDLERS } from 'src/features/branch/quieries/handlers';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { DRAFT_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/index';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
 import { PluginModule } from 'src/features/plugin/plugin.module';
+import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
@@ -125,6 +128,9 @@ export const createTestingModule = async () => {
       JsonSchemaValidatorService,
       ...DRAFT_REQUEST_DTO,
       ...DRAFT_COMMANDS_HANDLERS,
+      ...ORGANIZATIONS_QUERIES,
+      ...PROJECT_QUERIES,
+      ...BRANCH_QUERIES_HANDLERS,
       ...ANOTHER_QUERIES,
     ],
   })
@@ -138,7 +144,13 @@ export const createTestingModule = async () => {
   commandBus.register([...DRAFT_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
 
   const queryBus = module.get(QueryBus);
-  queryBus.register([...SHARE_QUERIES_HANDLERS, ...ANOTHER_QUERIES]);
+  queryBus.register([
+    ...SHARE_QUERIES_HANDLERS,
+    ...ORGANIZATIONS_QUERIES,
+    ...PROJECT_QUERIES,
+    ...(BRANCH_QUERIES_HANDLERS as QueryHandlerType[]),
+    ...ANOTHER_QUERIES,
+  ]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);

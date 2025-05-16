@@ -1,11 +1,17 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { GetProjectQuery } from 'src/features/project/queries/impl';
+import {
+  GetProjectQuery,
+  GetProjectQueryData,
+  GetProjectQueryReturnType,
+} from 'src/features/project/queries/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetProjectQuery)
-export class GetProjectHandler implements IQueryHandler<GetProjectQuery> {
+export class GetProjectHandler
+  implements IQueryHandler<GetProjectQuery, GetProjectQueryReturnType>
+{
   constructor(
     private readonly transactionPrisma: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
@@ -21,7 +27,7 @@ export class GetProjectHandler implements IQueryHandler<GetProjectQuery> {
     });
   }
 
-  private async transactionHandler(data: GetProjectQuery['data']) {
+  private async transactionHandler(data: GetProjectQueryData) {
     const { id: projectId } =
       await this.shareTransactionalQueries.findProjectInOrganizationOrThrow(
         data.organizationId,
@@ -29,7 +35,7 @@ export class GetProjectHandler implements IQueryHandler<GetProjectQuery> {
       );
 
     return this.transaction.project.findUniqueOrThrow({
-      where: { id: projectId },
+      where: { id: projectId, isDeleted: false },
     });
   }
 }

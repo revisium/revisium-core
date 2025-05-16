@@ -62,8 +62,10 @@ export class GetProjectsByUserIdHandler
       },
     });
 
+    const AND: Prisma.ProjectWhereInput[] = [{ isDeleted: false }, { OR }];
+
     return {
-      OR,
+      AND,
     };
   }
 }

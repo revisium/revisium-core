@@ -1,3 +1,4 @@
+import { NotFoundException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
@@ -11,9 +12,17 @@ export class GetProjectByIdHandler
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  execute({ data }: GetProjectByIdQuery) {
-    return this.prisma.project.findUniqueOrThrow({
-      where: { id: data.projectId },
+  public async execute({ data }: GetProjectByIdQuery) {
+    const project = await this.prisma.project.findUnique({
+      where: { id: data.projectId, isDeleted: false },
     });
+
+    if (!project) {
+      throw new NotFoundException(
+        `A project with this name does not exist in the organization`,
+      );
+    }
+
+    return project;
   }
 }

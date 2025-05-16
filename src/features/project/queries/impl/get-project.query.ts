@@ -1,3 +1,5 @@
+import { Project } from '@prisma/client';
+
 export class GetProjectQuery {
   constructor(
     public data: {
@@ -6,3 +8,7 @@ export class GetProjectQuery {
     },
   ) {}
 }
+
+export type GetProjectQueryData = GetProjectQuery['data'];
+
+export type GetProjectQueryReturnType = Project;

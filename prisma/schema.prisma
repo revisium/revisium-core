@@ -93,6 +93,7 @@ model Project {
   createdAt DateTime @default(now())
   name      String
   isPublic  Boolean  @default(false)
+  isDeleted Boolean  @default(false)
 
   branches       Branch[]
   organization   Organization  @relation(fields: [organizationId], references: [id])

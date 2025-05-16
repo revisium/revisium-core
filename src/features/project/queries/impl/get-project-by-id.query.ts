@@ -8,4 +8,6 @@ export class GetProjectByIdQuery {
   ) {}
 }
 
+export type GetProjectByIdQueryData = GetProjectByIdQuery['data'];
+
 export type GetProjectByIdQueryReturnType = Project;
