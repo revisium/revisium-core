@@ -27,15 +27,6 @@ describe('GetProjectsByOrganizationIdHandler', () => {
       },
     });
 
-    console.log(
-      await prismaService.organization.findUniqueOrThrow({
-        where: { id: organizationId },
-        include: {
-          projects: true,
-        },
-      }),
-    );
-
     const result = await runTransaction(
       new GetProjectsByOrganizationIdQuery({
         organizationId,
