@@ -16,6 +16,7 @@ import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
 import { PluginModule } from 'src/features/plugin/plugin.module';
+import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
@@ -128,6 +129,7 @@ export const createTestingModule = async () => {
       ...DRAFT_REQUEST_DTO,
       ...DRAFT_COMMANDS_HANDLERS,
       ...ORGANIZATIONS_QUERIES,
+      ...PROJECT_QUERIES,
       ...BRANCH_QUERIES_HANDLERS,
       ...ANOTHER_QUERIES,
     ],
@@ -145,6 +147,7 @@ export const createTestingModule = async () => {
   queryBus.register([
     ...SHARE_QUERIES_HANDLERS,
     ...ORGANIZATIONS_QUERIES,
+    ...PROJECT_QUERIES,
     ...(BRANCH_QUERIES_HANDLERS as QueryHandlerType[]),
     ...ANOTHER_QUERIES,
   ]);
