@@ -1,3 +1,6 @@
+import { Branch } from '@prisma/client';
+import { IPaginatedType } from 'src/features/share/pagination.interface';
+
 export class GetBranchesQuery {
   constructor(
     public data: {
@@ -8,3 +11,7 @@ export class GetBranchesQuery {
     },
   ) {}
 }
+
+export type GetBranchesQueryData = GetBranchesQuery['data'];
+
+export type GetBranchesQueryReturnType = IPaginatedType<Branch>;

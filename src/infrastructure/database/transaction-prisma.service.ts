@@ -30,8 +30,8 @@ export class TransactionPrismaService {
     return transactionInCurrentContext?.$prisma;
   }
 
-  public run<T, Func extends (...rest: unknown[]) => Promise<T>>(
-    handler: Func,
+  public run<T>(
+    handler: (...rest: unknown[]) => Promise<T>,
     options?: {
       maxWait?: number;
       timeout?: number;
