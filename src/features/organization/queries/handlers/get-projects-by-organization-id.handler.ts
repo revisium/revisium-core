@@ -2,6 +2,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   GetProjectsByOrganizationIdQuery,
+  GetProjectsByOrganizationIdQueryData,
   GetProjectsByOrganizationIdQueryReturnType,
 } from 'src/features/organization/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
@@ -45,31 +46,34 @@ export class GetProjectsByOrganizationIdHandler
   }
 
   private getWhereInput(
-    data: GetProjectsByOrganizationIdQuery['data'],
+    data: GetProjectsByOrganizationIdQueryData,
   ): Prisma.ProjectWhereInput {
-    const OR: Prisma.ProjectWhereInput[] = [{ isPublic: true }];
+    const OR: Prisma.ProjectWhereInput[] = [
+      {
+        organizationId: data.organizationId,
+        isDeleted: false,
+        isPublic: true,
+      },
+    ];
 
     if (data.userId) {
       OR.push({
+        isDeleted: false,
         organization: {
           userOrganizations: { some: { userId: data.userId } },
         },
       });
 
       OR.push({
+        isDeleted: false,
         userProjects: {
           some: { userId: data.userId },
         },
       });
     }
 
-    const AND: Prisma.ProjectWhereInput[] = [
-      { organizationId: data.organizationId },
-      { OR },
-    ];
-
     return {
-      AND,
+      OR,
     };
   }
 }

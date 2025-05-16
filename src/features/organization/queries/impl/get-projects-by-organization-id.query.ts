@@ -12,5 +12,8 @@ export class GetProjectsByOrganizationIdQuery {
   ) {}
 }
 
+export type GetProjectsByOrganizationIdQueryData =
+  GetProjectsByOrganizationIdQuery['data'];
+
 export type GetProjectsByOrganizationIdQueryReturnType =
   IPaginatedType<Project>;
