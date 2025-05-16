@@ -82,6 +82,7 @@ export class CheckProjectPermissionHandler
         where: {
           organizationId: params.organizationId,
           name: params.projectName,
+          isDeleted: false,
         },
         select: {
           id: true,
@@ -125,7 +126,7 @@ export class CheckProjectPermissionHandler
     projectName: string,
   ) {
     return this.prisma.project.findFirstOrThrow({
-      where: { organizationId, name: projectName },
+      where: { organizationId, name: projectName, isDeleted: false },
     });
   }
 
