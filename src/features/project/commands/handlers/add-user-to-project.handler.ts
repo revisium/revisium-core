@@ -67,12 +67,10 @@ export class AddUserToProjectHandler
   }
 
   private getProject(data: AddUserToProjectCommand['data']) {
-    return this.prisma.project.findUnique({
+    return this.prisma.project.findFirst({
       where: {
-        organizationId_name: {
-          organizationId: data.organizationId,
-          name: data.projectName,
-        },
+        organizationId: data.organizationId,
+        name: data.projectName,
         isDeleted: false,
       },
       select: { id: true },

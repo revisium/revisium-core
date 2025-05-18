@@ -1,4 +1,7 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -87,6 +90,7 @@ export class CreateProjectHandler
     };
 
     return this.asyncLocalStorage.run(context, async () => {
+      await this.checkExistingProject();
       await this.createProject();
       await this.resolveTableIds();
       await this.createHeadRevision();
@@ -94,6 +98,23 @@ export class CreateProjectHandler
 
       return context.projectId;
     });
+  }
+
+  private async checkExistingProject() {
+    const existingProject = await this.transaction.project.findFirst({
+      where: {
+        organizationId: this.context.organizationId,
+        name: this.context.projectName,
+        isDeleted: false,
+      },
+      select: { id: true },
+    });
+
+    if (existingProject) {
+      throw new BadRequestException(
+        `Project with name ${this.context.projectName} already exists`,
+      );
+    }
   }
 
   private async resolveTableIds() {

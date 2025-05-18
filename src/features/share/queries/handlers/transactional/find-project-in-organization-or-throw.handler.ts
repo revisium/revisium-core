@@ -17,12 +17,10 @@ export class FindProjectInOrganizationOrThrowHandler
   async execute({
     data,
   }: FindProjectInOrganizationOrThrowQuery): Promise<FindProjectInOrganizationType> {
-    const existingProject = await this.transaction.project.findUnique({
+    const existingProject = await this.transaction.project.findFirst({
       where: {
-        organizationId_name: {
-          organizationId: data.organizationId,
-          name: data.projectName,
-        },
+        organizationId: data.organizationId,
+        name: data.projectName,
         isDeleted: false,
       },
       select: { id: true },

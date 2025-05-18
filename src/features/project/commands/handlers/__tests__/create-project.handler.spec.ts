@@ -123,6 +123,62 @@ describe('CreateProjectHandler', () => {
     ).toBe(true);
   });
 
+  it('should create a new project with name that was previously used by a deleted project', async () => {
+    const { organizationId } = await prepareProject(prismaService);
+    const projectName = 'reusedProjectName';
+
+    const initialCommand = new CreateProjectCommand({
+      organizationId,
+      projectName,
+    });
+
+    const initialProjectId = await execute(initialCommand);
+
+    await prismaService.project.update({
+      where: { id: initialProjectId },
+      data: { isDeleted: true },
+    });
+
+    const newCommand = new CreateProjectCommand({
+      organizationId,
+      projectName,
+    });
+
+    const newProjectId = await execute(newCommand);
+
+    await prismaService.project.findFirstOrThrow({
+      where: {
+        id: newProjectId,
+        organizationId,
+        name: projectName,
+        isDeleted: false,
+      },
+    });
+
+    expect(newProjectId).not.toBe(initialProjectId);
+  });
+
+  it('should not create a new project with name that is used by another project', async () => {
+    const { organizationId } = await prepareProject(prismaService);
+    const projectName = 'reusedProjectName';
+
+    const initialCommand = new CreateProjectCommand({
+      organizationId,
+      projectName,
+    });
+
+    await execute(initialCommand);
+
+    const sameProject = new CreateProjectCommand({
+      organizationId,
+      projectName,
+    });
+
+    await expect(execute(sameProject)).rejects.toThrow(
+      `Project with name ${projectName} already exists`,
+    );
+  });
+
   let prismaService: PrismaService;
   let commandBus: CommandBus;
 
