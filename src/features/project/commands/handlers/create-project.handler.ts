@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ConflictException,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
