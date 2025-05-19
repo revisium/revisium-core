@@ -18,7 +18,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Prisma, Table } from '@prisma/client';
+import { Table } from '@prisma/client';
 import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
@@ -123,8 +123,6 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Query() { orderBy, ...data }: GetTableRowsDto,
   ) {
-    console.log(orderBy);
-
     const table = await this.resolveTable(revisionId, tableId);
 
     return transformFromPaginatedPrismaToRowModel(
@@ -134,7 +132,7 @@ export class TableByIdController {
           tableId,
           tableVersionId: table.versionId,
           ...data,
-          orderBy: orderBy as unknown as Prisma.RowOrderByWithRelationInput[],
+          orderBy,
         }),
       ),
     );
