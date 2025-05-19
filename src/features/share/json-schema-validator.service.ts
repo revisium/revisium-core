@@ -26,6 +26,17 @@ export class JsonSchemaValidatorService {
       keyword: CustomSchemeKeywords.ForeignKey,
       type: 'string',
     });
+    this.ajv.addFormat('regex', {
+      type: 'string',
+      validate: (str: string) => {
+        try {
+          new RegExp(str);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    });
 
     this.ajv.compile(ajvFileSchema);
     this.metaSchemaValidateFunction = this.ajv.compile(metaSchema);
