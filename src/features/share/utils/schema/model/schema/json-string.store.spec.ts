@@ -19,6 +19,142 @@ describe('JsonStringStore', () => {
     });
   });
 
+  it('title', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.title = 'title';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      title: 'title',
+    });
+  });
+
+  it('description', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.description = 'description';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      description: 'description',
+    });
+  });
+
+  it('deprecated', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.deprecated = true;
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      deprecated: true,
+    });
+  });
+
+  it('readOnly', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.readOnly = true;
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      readOnly: true,
+    });
+  });
+
+  it('pattern', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.pattern = 'pattern';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      pattern: 'pattern',
+    });
+  });
+
+  it('enum', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.enum = ['1', '2', '3'];
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      enum: ['1', '2', '3'],
+    });
+  });
+
+  it('date', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.format = 'date';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      format: 'date',
+    });
+  });
+
+  it('contentMediaType', () => {
+    const store = new JsonStringStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+    });
+
+    store.contentMediaType = 'text/markdown';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'string',
+      default: '',
+      contentMediaType: 'text/markdown',
+    });
+  });
+
   it('registerValue', () => {
     const store = new JsonStringStore();
 

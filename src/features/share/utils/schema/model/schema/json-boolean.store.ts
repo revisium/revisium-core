@@ -19,6 +19,10 @@ export class JsonBooleanStore
   public parent: JsonSchemaStore | null = null;
 
   public default: boolean = false;
+  public readOnly?: boolean;
+  public title?: string;
+  public description?: string;
+  public deprecated?: boolean;
 
   private readonly valuesMap: Map<string, JsonBooleanValueStore[]> = new Map<
     string,
@@ -49,6 +53,10 @@ export class JsonBooleanStore
     return {
       type: this.type,
       default: this.default,
+      ...(this.readOnly ? { readOnly: this.readOnly } : {}),
+      ...(this.title ? { title: this.title } : {}),
+      ...(this.description ? { description: this.description } : {}),
+      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
     };
   }
 

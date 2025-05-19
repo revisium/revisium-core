@@ -4,6 +4,17 @@ import { metaSchema } from 'src/features/share/schema/meta-schema';
 
 describe('json-patch-schema', () => {
   const ajv = new Ajv();
+  ajv.addFormat('regex', {
+    type: 'string',
+    validate: (str: string) => {
+      try {
+        new RegExp(str);
+        return true;
+      } catch {
+        return false;
+      }
+    },
+  });
 
   beforeAll(() => {
     ajv.addSchema(metaSchema);

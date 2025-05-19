@@ -6,11 +6,15 @@ import {
 
 describe('meta-schema', () => {
   const ajv = new Ajv();
-  ajv.addKeyword({
-    keyword: 'isValidTableForeignKey',
+  ajv.addFormat('regex', {
     type: 'string',
-    validate: () => {
-      return true;
+    validate: (str: string) => {
+      try {
+        new RegExp(str);
+        return true;
+      } catch {
+        return false;
+      }
     },
   });
 
@@ -67,22 +71,6 @@ describe('meta-schema', () => {
     ).toBe(true);
 
     expect(
-      ajv.validate(metaSchema, {
-        type: 'string',
-        default: '',
-        readOnly: true,
-      }),
-    ).toBe(true);
-
-    expect(
-      ajv.validate(metaSchema, {
-        type: 'string',
-        default: '',
-        readOnly: false,
-      }),
-    ).toBe(true);
-
-    expect(
       ajv.validate(notForeignKeyMetaSchema, {
         type: 'string',
         default: 'default value',
@@ -113,26 +101,103 @@ describe('meta-schema', () => {
         foreignKey: 1,
       }),
     ).toBe(false);
+
+    checkBaseFields({
+      type: 'string',
+      default: '',
+    });
+
+    // regexp
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: 'abc',
+        pattern: '^[a-z]+$',
+      }),
+    ).toBe(true);
+
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: 'abc',
+        pattern: '[',
+      }),
+    ).toBe(false);
+
+    // enum
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: 'a',
+        enum: ['a', 'b', 'c'],
+      }),
+    ).toBe(true);
+
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: 'a',
+        enum: ['a', 'a'],
+      }),
+    ).toBe(false);
+
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: 'a',
+        enum: [1, 2],
+      }),
+    ).toBe(false);
+
+    // format
+    for (const validFormat of ['date-time', 'date', 'time', 'email', 'regex']) {
+      expect(
+        ajv.validate(metaSchema, {
+          type: 'string',
+          default: '',
+          format: validFormat,
+        }),
+      ).toBe(true);
+    }
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: 'value',
+        format: 'nonexistent-format',
+      }),
+    ).toBe(false);
+
+    // contentMediaType
+    for (const mediaType of [
+      'text/plain',
+      'text/markdown',
+      'text/html',
+      'application/json',
+      'application/schema+json',
+      'application/yaml',
+    ]) {
+      expect(
+        ajv.validate(metaSchema, {
+          type: 'string',
+          default: '',
+          contentMediaType: mediaType,
+        }),
+      ).toBe(true);
+    }
+
+    expect(
+      ajv.validate(metaSchema, {
+        type: 'string',
+        default: '',
+        contentMediaType: 'image/png',
+      }),
+    ).toBe(false);
   });
 
   it('number', () => {
     expect(ajv.validate(metaSchema, { type: 'number', default: 123 })).toBe(
       true,
     );
-    expect(
-      ajv.validate(metaSchema, {
-        type: 'number',
-        default: 123,
-        readOnly: true,
-      }),
-    ).toBe(true);
-    expect(
-      ajv.validate(metaSchema, {
-        type: 'number',
-        default: 123,
-        readOnly: false,
-      }),
-    ).toBe(true);
     expect(
       ajv.validate(metaSchema, { type: 'number', default: 'default value' }),
     ).toBe(false);
@@ -147,6 +212,11 @@ describe('meta-schema', () => {
         unexpectedField: 123,
       }),
     ).toBe(false);
+
+    checkBaseFields({
+      type: 'number',
+      default: 0,
+    });
   });
 
   it('boolean', () => {
@@ -156,20 +226,6 @@ describe('meta-schema', () => {
     expect(ajv.validate(metaSchema, { type: 'boolean', default: true })).toBe(
       true,
     );
-    expect(
-      ajv.validate(metaSchema, {
-        type: 'boolean',
-        default: true,
-        readOnly: true,
-      }),
-    ).toBe(true);
-    expect(
-      ajv.validate(metaSchema, {
-        type: 'boolean',
-        default: true,
-        readOnly: false,
-      }),
-    ).toBe(true);
     expect(ajv.validate(metaSchema, { type: 'boolean', default: 'true' })).toBe(
       false,
     );
@@ -181,6 +237,11 @@ describe('meta-schema', () => {
         unexpectedField: 123,
       }),
     ).toBe(false);
+
+    checkBaseFields({
+      type: 'boolean',
+      default: true,
+    });
   });
 
   it('object', () => {
@@ -220,6 +281,16 @@ describe('meta-schema', () => {
         required: [],
       }),
     ).toBe(true);
+
+    checkBaseFields(
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {},
+        required: [],
+      },
+      { skipReadOnly: true },
+    );
   });
 
   it('nested object', () => {
@@ -231,13 +302,16 @@ describe('meta-schema', () => {
           firstName: {
             type: 'string',
             default: 'firstName',
+            title: 'firstName',
           },
           age: {
             type: 'number',
             default: 10,
+            description: 'age',
           },
           company: {
             type: 'object',
+            title: 'company',
             properties: {
               name: {
                 type: 'string',
@@ -345,6 +419,21 @@ describe('meta-schema', () => {
         },
       }),
     ).toBe(true);
+
+    checkBaseFields(
+      {
+        type: 'array',
+        items: {
+          type: 'array',
+          items: {
+            type: 'string',
+            title: 'title',
+            default: '',
+          },
+        },
+      },
+      { skipReadOnly: true },
+    );
   });
 
   it('nested array', () => {
@@ -420,4 +509,75 @@ describe('meta-schema', () => {
       }),
     ).toBe(true);
   });
+
+  function checkBaseFields(
+    data: Record<string, unknown>,
+    options?: { skipReadOnly?: boolean },
+  ) {
+    if (!options?.skipReadOnly) {
+      expect(
+        ajv.validate(metaSchema, {
+          ...data,
+          readOnly: true,
+        }),
+      ).toBe(true);
+      expect(
+        ajv.validate(metaSchema, {
+          ...data,
+          readOnly: false,
+        }),
+      ).toBe(true);
+      expect(
+        ajv.validate(metaSchema, {
+          ...data,
+          readOnly: 0,
+        }),
+      ).toBe(false);
+    }
+
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        title: 'title',
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        title: 0,
+      }),
+    ).toBe(false);
+
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        description: 'description',
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        description: 0,
+      }),
+    ).toBe(false);
+
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        deprecated: true,
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        deprecated: false,
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...data,
+        description: 0,
+      }),
+    ).toBe(false);
+  }
 });

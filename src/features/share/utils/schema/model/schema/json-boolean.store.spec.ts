@@ -28,4 +28,72 @@ describe('JsonBooleanStore', () => {
       $ref: 'ref.json',
     });
   });
+
+  it('title', () => {
+    const store = new JsonBooleanStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+    });
+
+    store.title = 'title';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+      title: 'title',
+    });
+  });
+
+  it('description', () => {
+    const store = new JsonBooleanStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+    });
+
+    store.description = 'description';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+      description: 'description',
+    });
+  });
+
+  it('deprecated', () => {
+    const store = new JsonBooleanStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+    });
+
+    store.deprecated = true;
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+      deprecated: true,
+    });
+  });
+
+  it('readOnly', () => {
+    const store = new JsonBooleanStore();
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+    });
+
+    store.readOnly = true;
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'boolean',
+      default: false,
+      readOnly: true,
+    });
+  });
 });

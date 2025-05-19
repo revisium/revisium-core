@@ -676,6 +676,74 @@ describe('applyPatches', () => {
         });
       });
 
+      it('from string to string with fields in object', () => {
+        const schemaTable = new SchemaTable(
+          getObjectSchema({
+            field: getStringSchema(),
+          }),
+        );
+
+        schemaTable.addRow('row-1', {
+          field: '### title',
+        });
+
+        schemaTable.applyPatches([
+          getReplacePatch({
+            path: '/properties/field',
+            value: getStringSchema({
+              contentMediaType: 'text/markdown',
+            }),
+          }),
+        ]);
+
+        const expectedSchema = getObjectSchema({
+          field: getStringSchema({
+            contentMediaType: 'text/markdown',
+          }),
+        });
+
+        expect(schemaTable.getSchema()).toStrictEqual(expectedSchema);
+
+        expect(schemaTable.getRow('row-1')).toEqual({
+          field: '### title',
+        });
+      });
+
+      it('from string to string with fields in array', () => {
+        const schemaTable = new SchemaTable(
+          getObjectSchema({
+            field: getArraySchema(getStringSchema()),
+          }),
+        );
+
+        schemaTable.addRow('row-1', {
+          field: ['1', '2', '3', 'value', '', '1123213123ggdfg0'],
+        });
+
+        schemaTable.applyPatches([
+          getReplacePatch({
+            path: '/properties/field/items',
+            value: getStringSchema({
+              contentMediaType: 'text/markdown',
+            }),
+          }),
+        ]);
+
+        const expectedSchema = getObjectSchema({
+          field: getArraySchema(
+            getStringSchema({
+              contentMediaType: 'text/markdown',
+            }),
+          ),
+        });
+
+        expect(schemaTable.getSchema()).toStrictEqual(expectedSchema);
+
+        expect(schemaTable.getRow('row-1')).toEqual({
+          field: ['1', '2', '3', 'value', '', '1123213123ggdfg0'],
+        });
+      });
+
       it('from boolean to string in object', () => {
         const schemaTable = new SchemaTable(
           getObjectSchema({

@@ -16,6 +16,10 @@ export class JsonNumberStore extends EventEmitter implements JsonNumberSchema {
   public parent: JsonSchemaStore | null = null;
 
   public default: number = 0;
+  public readOnly?: boolean;
+  public title?: string;
+  public description?: string;
+  public deprecated?: boolean;
 
   private readonly valuesMap: Map<string, JsonNumberValueStore[]> = new Map<
     string,
@@ -46,6 +50,10 @@ export class JsonNumberStore extends EventEmitter implements JsonNumberSchema {
     return {
       type: this.type,
       default: this.default,
+      ...(this.readOnly ? { readOnly: this.readOnly } : {}),
+      ...(this.title ? { title: this.title } : {}),
+      ...(this.description ? { description: this.description } : {}),
+      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
     };
   }
 

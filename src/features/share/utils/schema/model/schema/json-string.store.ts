@@ -16,7 +16,16 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
   public parent: JsonSchemaStore | null = null;
 
   public default: string = '';
+  public readOnly?: boolean;
+  public title?: string;
+  public description?: string;
+  public deprecated?: boolean;
   public foreignKey?: string;
+  public pattern?: string;
+  public enum?: string[];
+  public format?: JsonStringSchema['format'];
+  public contentMediaType?: JsonStringSchema['contentMediaType'];
+
   private readonly valuesMap: Map<string, JsonStringValueStore[]> = new Map<
     string,
     JsonStringValueStore[]
@@ -43,16 +52,21 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
       return { $ref: this.$ref };
     }
 
-    const schema: JsonStringSchema = {
+    return {
       type: this.type,
       default: this.default,
+      ...(this.foreignKey ? { foreignKey: this.foreignKey } : {}),
+      ...(this.readOnly ? { readOnly: this.readOnly } : {}),
+      ...(this.title ? { title: this.title } : {}),
+      ...(this.description ? { description: this.description } : {}),
+      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
+      ...(this.pattern ? { pattern: this.pattern } : {}),
+      ...(this.enum ? { enum: this.enum } : {}),
+      ...(this.format ? { format: this.format } : {}),
+      ...(this.contentMediaType
+        ? { contentMediaType: this.contentMediaType }
+        : {}),
     };
-
-    if (this.foreignKey) {
-      schema.foreignKey = this.foreignKey;
-    }
-
-    return schema;
   }
 
   private getOrCreateValues(rowId: string): JsonStringValueStore[] {

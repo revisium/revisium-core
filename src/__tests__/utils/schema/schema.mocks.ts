@@ -60,23 +60,14 @@ export const getMovePatch = ({
   path,
 });
 
-export const getStringSchema = ({
-  defaultValue = '',
-  foreignKey,
-}: {
-  defaultValue?: string;
-  foreignKey?: string;
-} = {}): JsonStringSchema => {
-  const schema: JsonStringSchema = {
+export const getStringSchema = (
+  params: Partial<JsonStringSchema> = {},
+): JsonStringSchema => {
+  return {
     type: JsonSchemaTypeName.String,
-    default: defaultValue,
+    default: params.default ?? '',
+    ...params,
   };
-
-  if (foreignKey) {
-    schema.foreignKey = foreignKey;
-  }
-
-  return schema;
 };
 
 export const getNumberSchema = (
