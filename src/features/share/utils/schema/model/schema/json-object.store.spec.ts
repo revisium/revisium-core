@@ -107,4 +107,43 @@ describe('JsonObjectStore', () => {
       $ref: 'ref.json',
     });
   });
+
+  it('title', () => {
+    const store = new JsonObjectStore();
+    store.title = 'title';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'object',
+      additionalProperties: false,
+      properties: {},
+      required: [],
+      title: 'title',
+    });
+  });
+
+  it('description', () => {
+    const store = new JsonObjectStore();
+    store.description = 'description';
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'object',
+      additionalProperties: false,
+      properties: {},
+      required: [],
+      description: 'description',
+    });
+  });
+
+  it('deprecated', () => {
+    const store = new JsonObjectStore();
+    store.deprecated = true;
+
+    expect(store.getPlainSchema()).toStrictEqual({
+      type: 'object',
+      additionalProperties: false,
+      properties: {},
+      required: [],
+      deprecated: true,
+    });
+  });
 });

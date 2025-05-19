@@ -26,6 +26,10 @@ export class JsonArrayStore implements JsonArraySchema {
   public parent: JsonSchemaStore | null = null;
   public default: JsonArray[] = [];
 
+  public title?: string;
+  public description?: string;
+  public deprecated?: boolean;
+
   private readonly valuesMap: Map<string, JsonArrayValueStore[]> = new Map<
     string,
     JsonArrayValueStore[]
@@ -88,6 +92,9 @@ export class JsonArrayStore implements JsonArraySchema {
     return {
       type: this.type,
       items: this.items.getPlainSchema(),
+      ...(this.title ? { title: this.title } : {}),
+      ...(this.description ? { description: this.description } : {}),
+      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
     };
   }
 

@@ -30,6 +30,10 @@ export class JsonObjectStore implements JsonObjectSchema {
   public parent: JsonSchemaStore | null = null;
   public default: JsonObject = {};
 
+  public title?: string;
+  public description?: string;
+  public deprecated?: boolean;
+
   public readonly additionalProperties = false;
   public readonly required: string[] = [];
   public readonly properties: Record<string, JsonSchemaStore> = {};
@@ -197,6 +201,9 @@ export class JsonObjectStore implements JsonObjectSchema {
         result[name] = store.getPlainSchema();
         return result;
       }, {}),
+      ...(this.title ? { title: this.title } : {}),
+      ...(this.description ? { description: this.description } : {}),
+      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
     };
   }
 

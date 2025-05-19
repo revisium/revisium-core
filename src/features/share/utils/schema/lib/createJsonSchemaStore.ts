@@ -12,6 +12,7 @@ import {
   JsonSchema,
   JsonSchemaPrimitives,
   JsonSchemaTypeName,
+  JsonSchemaWithoutRef,
 } from 'src/features/share/utils/schema/types/schema.types';
 
 export type RefsType = Record<string, JsonSchema>;
@@ -31,11 +32,22 @@ export const createJsonSchemaStore = (
     refStore.$ref = schema.$ref;
     return refStore;
   } else if (schema.type === JsonSchemaTypeName.Object) {
-    return createJsonObjectSchemaStore(schema, refs);
+    const objectStore = createJsonObjectSchemaStore(schema, refs);
+    saveSharedFields(objectStore, schema);
+
+    return objectStore;
   } else if (schema.type === JsonSchemaTypeName.Array) {
-    return new JsonArrayStore(createJsonSchemaStore(schema.items, refs));
+    const itemsStore = createJsonSchemaStore(schema.items, refs);
+    const arrayStore = new JsonArrayStore(itemsStore);
+    saveSharedFields(arrayStore, schema);
+
+    return arrayStore;
   } else {
-    return createPrimitiveStoreBySchema(schema);
+    const primitivesStore = createPrimitiveStoreBySchema(schema);
+    saveSharedFields(primitivesStore, schema);
+    primitivesStore.readOnly = schema.readOnly;
+
+    return primitivesStore;
   }
 };
 
@@ -66,6 +78,10 @@ export const createPrimitiveStoreBySchema = (
   if (schema.type === JsonSchemaTypeName.String) {
     const stringStore = new JsonStringStore();
     stringStore.foreignKey = schema.foreignKey;
+    stringStore.format = schema.format;
+    stringStore.enum = schema.enum;
+    stringStore.contentMediaType = schema.contentMediaType;
+    stringStore.pattern = schema.pattern;
     return stringStore;
   } else if (schema.type === JsonSchemaTypeName.Number) {
     return new JsonNumberStore();
@@ -74,4 +90,13 @@ export const createPrimitiveStoreBySchema = (
   } else {
     throw new Error('this type is not allowed');
   }
+};
+
+export const saveSharedFields = (
+  store: JsonSchemaStore,
+  schema: JsonSchemaWithoutRef,
+) => {
+  store.title = schema.title;
+  store.description = schema.description;
+  store.deprecated = schema.deprecated;
 };

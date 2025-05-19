@@ -29,7 +29,16 @@ describe('createJsonSchemaStore', () => {
     const refs: RefsType = { 'ref-schema.json': refSchema };
 
     const nested = getObjectSchema({
-      subField: getStringSchema(),
+      subField: getStringSchema({
+        format: 'date',
+        pattern: 'pattern',
+        contentMediaType: 'text/plain',
+        enum: ['1', '2', '3'],
+        readOnly: true,
+        title: 'title',
+        description: 'description',
+        deprecated: true,
+      }),
       subField2: getStringSchema({ foreignKey: 'tableId3' }),
       subField3: getArraySchema(getStringSchema({ foreignKey: 'tableId1' })),
       nestedRef: getObjectSchema({
