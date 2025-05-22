@@ -55,7 +55,7 @@ export class RowCreatedIdPlugin implements IPluginService {
     }
   }
 
-  private forEachRowId(
+  private forEachRow(
     valueStore: JsonValueStore,
     callback: (store: JsonStringValueStore) => void,
   ) {
@@ -70,7 +70,7 @@ export class RowCreatedIdPlugin implements IPluginService {
   }
 
   private setCreatedId(valueStore: JsonValueStore, value: string) {
-    this.forEachRowId(valueStore, (item) => {
+    this.forEachRow(valueStore, (item) => {
       item.value = value;
     });
   }

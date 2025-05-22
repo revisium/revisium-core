@@ -55,7 +55,7 @@ export class RowHashPlugin implements IPluginService {
     }
   }
 
-  private forEachRowId(
+  private forEachRow(
     valueStore: JsonValueStore,
     callback: (store: JsonStringValueStore) => void,
   ) {
@@ -70,7 +70,7 @@ export class RowHashPlugin implements IPluginService {
   }
 
   private setHash(valueStore: JsonValueStore, value: string) {
-    this.forEachRowId(valueStore, (item) => {
+    this.forEachRow(valueStore, (item) => {
       item.value = value;
     });
   }

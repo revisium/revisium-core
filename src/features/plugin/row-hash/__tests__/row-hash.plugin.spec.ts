@@ -127,7 +127,7 @@ describe('row-hash.plugin', () => {
       const { draftRevisionId, table } = await setupProjectWithFileSchema();
 
       const data = {
-        customHash: '2025-05-22T05:59:51.079Z',
+        customHash: 'hash',
       } as const;
 
       const { rowDraft } = await prepareRow({
