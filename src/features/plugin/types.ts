@@ -49,8 +49,10 @@ export type InternalAfterMigrateRowsOptions = AfterMigrateRowsOptions & {
 
 export interface IPluginService {
   isAvailable: boolean;
-  afterCreateRow(options: InternalAfterCreateRowOptions): Promise<void>;
-  afterUpdateRow(options: InternalAfterUpdateRowOptions): Promise<void>;
-  computeRows(options: InternalComputeRowsOptions): Promise<void>;
-  afterMigrateRows(options: InternalAfterMigrateRowsOptions): Promise<void>;
+  afterCreateRow(options: InternalAfterCreateRowOptions): Promise<void> | void;
+  afterUpdateRow(options: InternalAfterUpdateRowOptions): Promise<void> | void;
+  computeRows(options: InternalComputeRowsOptions): Promise<void> | void;
+  afterMigrateRows(
+    options: InternalAfterMigrateRowsOptions,
+  ): Promise<void> | void;
 }
