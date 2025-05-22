@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
 import { Prisma } from '@prisma/client';
 
 export enum SortDirection {
@@ -14,6 +14,14 @@ export enum SortField {
   id = 'id',
 }
 
+export class OrderByItemDto {
+  @IsEnum(SortField)
+  field: SortField;
+
+  @IsEnum(SortDirection)
+  direction: SortDirection;
+}
+
 export class GetTableRowsDto {
   @ApiProperty({ default: 100 })
   @Transform(({ value }) => parseInt(value, 10))
@@ -25,44 +33,45 @@ export class GetTableRowsDto {
   after?: string;
 
   @ApiPropertyOptional({
-    type: 'object',
-    properties: {
-      orderBy: {
-        type: 'array',
-        example: [{ [SortField.createdAt]: SortDirection.asc }],
-        items: {
-          type: 'object',
-        },
-      },
-    },
     description: 'Array of sorting criteria',
+    example: [
+      { field: SortField.createdAt, direction: SortDirection.asc },
+      { field: SortField.updatedAt, direction: SortDirection.desc },
+    ],
+    type: [OrderByItemDto],
   })
   @Transform(({ value }) => {
     try {
-      const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+      const parsed: unknown =
+        typeof value === 'string' ? JSON.parse(value) : value;
 
       if (!Array.isArray(parsed)) {
         throw new Error('orderBy must be an array');
       }
 
-      return parsed.map((entry) => {
-        const keys = Object.keys(entry);
-        if (keys.length !== 1) {
-          throw new Error('Each orderBy item must have exactly one key');
+      return parsed.map((item) => {
+        if (
+          typeof item !== 'object' ||
+          Array.isArray(item) ||
+          !item.field ||
+          !item.direction
+        ) {
+          throw new Error('Each orderBy item must have field and direction');
         }
 
-        const key = keys[0];
-        const direction = entry[key];
-
-        if (!(key in SortField)) {
-          throw new Error(`Invalid sort field: ${key}`);
+        if (!(item.field in SortField)) {
+          throw new Error(`Invalid sort field: ${item.field}`);
         }
 
-        if (!(Object.values(SortDirection) as string[]).includes(direction)) {
-          throw new Error(`Invalid sort direction for ${key}: ${direction}`);
+        if (
+          !(Object.values(SortDirection) as string[]).includes(item.direction)
+        ) {
+          throw new Error(`Invalid sort direction: ${item.direction}`);
         }
 
-        return { [key]: direction } as Prisma.RowOrderByWithRelationInput;
+        return {
+          [item.field]: item.direction,
+        } as Prisma.RowOrderByWithRelationInput;
       });
     } catch (e) {
       throw new Error('Invalid orderBy format: ' + e.message);

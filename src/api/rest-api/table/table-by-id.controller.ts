@@ -115,13 +115,13 @@ export class TableByIdController {
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('rows')
+  @Post('rows')
   @ApiOperation({ operationId: 'rows' })
   @ApiOkResponse({ type: RowsConnection })
   async rows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-    @Query() { orderBy, ...data }: GetTableRowsDto,
+    @Body() { orderBy, ...data }: GetTableRowsDto,
   ) {
     const table = await this.resolveTable(revisionId, tableId);
 
@@ -143,7 +143,7 @@ export class TableByIdController {
     action: PermissionAction.create,
     subject: PermissionSubject.Row,
   })
-  @Post('rows')
+  @Post('createRow')
   @ApiOperation({ operationId: 'createRow' })
   @ApiBody({ type: CreateRowDto })
   @ApiOkResponse({ type: CreateRowResponse })
