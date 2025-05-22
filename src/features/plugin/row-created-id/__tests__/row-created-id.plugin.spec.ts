@@ -91,7 +91,7 @@ describe('row-created-id.plugin', () => {
 
       const result = rowDraft.data as typeof data;
 
-      expect(result.customCreatedId).toBe(rowDraft.id);
+      expect(result.customCreatedId).toBe(rowDraft.createdId);
     });
 
     it('should not compute rows for system table', async () => {

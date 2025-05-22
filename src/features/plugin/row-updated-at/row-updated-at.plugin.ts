@@ -14,17 +14,17 @@ import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 @Injectable()
-export class RowCreatedIdPlugin implements IPluginService {
+export class RowUpdatedAtPlugin implements IPluginService {
   public readonly isAvailable = true;
 
   constructor() {}
 
   public afterCreateRow(options: InternalAfterCreateRowOptions) {
-    this.setCreatedId(options.valueStore, '');
+    this.setUpdatedAt(options.valueStore, '');
   }
 
   public afterUpdateRow(options: InternalAfterUpdateRowOptions) {
-    this.setCreatedId(options.valueStore, '');
+    this.setUpdatedAt(options.valueStore, '');
   }
 
   public computeRows(options: InternalComputeRowsOptions) {
@@ -35,7 +35,7 @@ export class RowCreatedIdPlugin implements IPluginService {
         row.data,
       );
 
-      this.setCreatedId(valueStore, row.createdId);
+      this.setUpdatedAt(valueStore, row.updatedAt.toISOString());
 
       row.data = valueStore.getPlainValue();
     }
@@ -49,7 +49,7 @@ export class RowCreatedIdPlugin implements IPluginService {
         row.data,
       );
 
-      this.setCreatedId(valueStore, '');
+      this.setUpdatedAt(valueStore, '');
 
       row.data = valueStore.getPlainValue();
     }
@@ -61,7 +61,7 @@ export class RowCreatedIdPlugin implements IPluginService {
   ) {
     traverseValue(valueStore, (item) => {
       if (
-        item.schema.$ref === SystemSchemaIds.RowCreatedId &&
+        item.schema.$ref === SystemSchemaIds.RowUpdatedAt &&
         item.type === JsonSchemaTypeName.String
       ) {
         callback(item);
@@ -69,7 +69,7 @@ export class RowCreatedIdPlugin implements IPluginService {
     });
   }
 
-  private setCreatedId(valueStore: JsonValueStore, value: string) {
+  private setUpdatedAt(valueStore: JsonValueStore, value: string) {
     this.forEachRowId(valueStore, (item) => {
       item.value = value;
     });
