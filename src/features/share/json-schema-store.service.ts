@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
-import { fileSchema } from 'src/features/share/schema/plugins/file-schema';
+import {
+  fileSchema,
+  rowCreatedAtSchema,
+  rowCreatedIdSchema,
+  rowHashSchema,
+  rowIdSchema,
+  rowSchemaHashSchema,
+  rowUpdatedAtSchema,
+  rowVersionIdSchema,
+} from 'src/features/share/schema/plugins';
 import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
 import { getInvalidFieldNamesInSchema } from 'src/features/share/utils/schema/lib/getInvalidFieldNamesInSchema';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
@@ -8,6 +17,13 @@ import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 @Injectable()
 export class JsonSchemaStoreService {
   public readonly refs: Readonly<Record<string, JsonSchema>> = {
+    [SystemSchemaIds.RowId]: rowIdSchema,
+    [SystemSchemaIds.RowCreatedId]: rowCreatedIdSchema,
+    [SystemSchemaIds.RowVersionId]: rowVersionIdSchema,
+    [SystemSchemaIds.RowCreatedAt]: rowCreatedAtSchema,
+    [SystemSchemaIds.RowUpdatedAt]: rowUpdatedAtSchema,
+    [SystemSchemaIds.RowHash]: rowHashSchema,
+    [SystemSchemaIds.RowSchemaHash]: rowSchemaHashSchema,
     [SystemSchemaIds.File]: fileSchema,
   };
 

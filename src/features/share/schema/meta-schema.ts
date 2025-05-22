@@ -1,18 +1,7 @@
 import { Schema } from 'ajv/dist/2020';
+import { sharedFields } from 'src/features/share/schema/shared-fields';
 
 // https://json-schema.org/specification#single-vocabulary-meta-schemas
-
-export const sharedFields: Schema = {
-  deprecated: {
-    type: 'boolean',
-  },
-  title: {
-    type: 'string',
-  },
-  description: {
-    type: 'string',
-  },
-};
 
 export const refMetaSchema: Schema = {
   type: 'object',

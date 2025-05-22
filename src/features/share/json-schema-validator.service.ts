@@ -7,7 +7,16 @@ import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { historyPatchesSchema } from 'src/features/share/schema/history-patches-schema';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
-import { ajvFileSchema } from 'src/features/share/schema/plugins/file-schema';
+import {
+  ajvFileSchema,
+  ajvRowCreatedAtSchema,
+  ajvRowCreatedIdSchema,
+  ajvRowHashSchema,
+  ajvRowIdSchema,
+  ajvRowSchemaHashSchema,
+  ajvRowUpdatedAtSchema,
+  ajvRowVersionIdSchema,
+} from 'src/features/share/schema/plugins';
 
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 
@@ -38,7 +47,7 @@ export class JsonSchemaValidatorService {
       },
     });
 
-    this.ajv.compile(ajvFileSchema);
+    this.compilePluginSchemas();
     this.metaSchemaValidateFunction = this.ajv.compile(metaSchema);
     this.jsonPatchSchemaValidateFunction = this.ajv.compile(jsonPatchSchema);
     this.historyPatchesSchemaValidate = this.ajv.compile(historyPatchesSchema);
@@ -95,7 +104,6 @@ export class JsonSchemaValidatorService {
     schema: Schema | Prisma.InputJsonValue,
     schemaHash: string,
   ): Promise<ValidateFunction> {
-    // TODO getting hash from DB
     const cachedValidateFunction =
       await this.cacheManager.get<ValidateFunction>(schemaHash);
 
@@ -110,5 +118,16 @@ export class JsonSchemaValidatorService {
     }
 
     return cachedValidateFunction;
+  }
+
+  private compilePluginSchemas(): void {
+    this.ajv.compile(ajvRowIdSchema);
+    this.ajv.compile(ajvRowCreatedIdSchema);
+    this.ajv.compile(ajvRowVersionIdSchema);
+    this.ajv.compile(ajvRowCreatedAtSchema);
+    this.ajv.compile(ajvRowUpdatedAtSchema);
+    this.ajv.compile(ajvRowHashSchema);
+    this.ajv.compile(ajvRowSchemaHashSchema);
+    this.ajv.compile(ajvFileSchema);
   }
 }
