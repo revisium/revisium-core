@@ -7,8 +7,16 @@ import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { historyPatchesSchema } from 'src/features/share/schema/history-patches-schema';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
-import { ajvFileSchema } from 'src/features/share/schema/plugins/file-schema';
-import { ajvRowIdSchema } from 'src/features/share/schema/plugins/row-id.schema';
+import {
+  ajvFileSchema,
+  ajvRowCreatedAtSchema,
+  ajvRowCreatedIdSchema,
+  ajvRowHashSchema,
+  ajvRowIdSchema,
+  ajvRowSchemaHashSchema,
+  ajvRowUpdatedAtSchema,
+  ajvRowVersionIdSchema,
+} from 'src/features/share/schema/plugins';
 
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 
@@ -114,6 +122,12 @@ export class JsonSchemaValidatorService {
 
   private compilePluginSchemas(): void {
     this.ajv.compile(ajvRowIdSchema);
+    this.ajv.compile(ajvRowCreatedIdSchema);
+    this.ajv.compile(ajvRowVersionIdSchema);
+    this.ajv.compile(ajvRowCreatedAtSchema);
+    this.ajv.compile(ajvRowUpdatedAtSchema);
+    this.ajv.compile(ajvRowHashSchema);
+    this.ajv.compile(ajvRowSchemaHashSchema);
     this.ajv.compile(ajvFileSchema);
   }
 }
