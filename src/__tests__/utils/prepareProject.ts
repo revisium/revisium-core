@@ -377,7 +377,7 @@ export async function prepareRow({
 
 export const prepareProject = async (
   prismaService: PrismaService,
-  options?: { createLinkedTable?: boolean; skipCreatingRows?: boolean },
+  options?: { createLinkedTable?: boolean },
 ) => {
   const prepareBranchResult = await prepareBranch(prismaService);
   const { headRevisionId, draftRevisionId, schemaTableVersionId } =
