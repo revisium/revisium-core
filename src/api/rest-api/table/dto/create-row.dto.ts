@@ -5,6 +5,6 @@ export class CreateRowDto {
   @ApiProperty()
   rowId: string;
 
-  @ApiProperty({ type: 'object' })
+  @ApiProperty({ type: 'object', additionalProperties: true })
   data: Prisma.InputJsonValue;
 }
