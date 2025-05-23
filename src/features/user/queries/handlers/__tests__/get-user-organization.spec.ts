@@ -1,5 +1,4 @@
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, UserOrganization } from '@prisma/client';
 import { nanoid } from 'nanoid';
@@ -21,14 +20,13 @@ describe('GetUserOrganizationHandler', () => {
     expect(result).toEqual(organizationId);
   });
 
-  xit('should return undefined if user is not an owner', async () => {
-    const organizationId = nanoid();
+  it('should return undefined if user is not an owner', async () => {
     const userId = nanoid();
 
     const query = createQuery({ userId });
     const result = await queryBus.execute(query);
 
-    expect(result).toEqual(organizationId);
+    expect(result).toBeUndefined();
   });
 
   const createQuery = (
@@ -77,13 +75,17 @@ describe('GetUserOrganizationHandler', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
-      providers: [GetUserOrganizationHandler, PrismaService],
+      providers: [
+        GetUserOrganizationHandler,
+        PrismaService,
+        GetUserOrganizationHandler,
+      ],
     }).compile();
+
+    await module.init();
 
     prismaService = module.get(PrismaService);
     queryBus = module.get(QueryBus);
-
-    queryBus.register([GetUserOrganizationHandler as QueryHandlerType]);
   });
 
   afterEach(async () => {

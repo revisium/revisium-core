@@ -1,6 +1,5 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   getArraySchema,
@@ -22,8 +21,6 @@ import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handl
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
-import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
-import { SHARE_QUERIES_HANDLERS } from 'src/features/share/queries/handlers';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
@@ -95,16 +92,6 @@ export const getTestLinkedSchema = (tableId: string): JsonObjectSchema => ({
 });
 
 export const createTestingModule = async () => {
-  const ANOTHER_QUERIES: QueryHandlerType[] = [
-    GetRevisionHandler,
-    GetBranchByIdHandler,
-    GetTableByIdHandler as QueryHandlerType,
-    GetRowByIdHandler as QueryHandlerType,
-    GetRowsHandler as QueryHandlerType,
-    GetRowHandler as QueryHandlerType,
-    GetRowsByTableHandler,
-  ];
-
   const mockS3 = {
     isAvailable: true,
     uploadFile: jest.fn().mockResolvedValue({
@@ -131,33 +118,31 @@ export const createTestingModule = async () => {
       ...ORGANIZATIONS_QUERIES,
       ...PROJECT_QUERIES,
       ...BRANCH_QUERIES_HANDLERS,
-      ...ANOTHER_QUERIES,
+      GetRevisionHandler,
+      GetBranchByIdHandler,
+      GetTableByIdHandler,
+      GetRowByIdHandler,
+      GetRowsHandler,
+      GetRowHandler,
+      GetRowsByTableHandler,
     ],
   })
     .overrideProvider(S3Service)
     .useValue(mockS3)
     .compile();
 
+  await module.init();
+
   const prismaService = module.get(PrismaService);
 
   const commandBus = module.get(CommandBus);
-  commandBus.register([...DRAFT_COMMANDS_HANDLERS, ...SHARE_COMMANDS_HANDLERS]);
-
   const queryBus = module.get(QueryBus);
-  queryBus.register([
-    ...SHARE_QUERIES_HANDLERS,
-    ...ORGANIZATIONS_QUERIES,
-    ...PROJECT_QUERIES,
-    ...(BRANCH_QUERIES_HANDLERS as QueryHandlerType[]),
-    ...ANOTHER_QUERIES,
-  ]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);
   const shareTransactionalCommands = module.get(ShareTransactionalCommands);
   const draftTransactionalCommands = module.get(DraftTransactionalCommands);
   const endpointNotificationService = module.get(EndpointNotificationService);
-
   return {
     module,
     prismaService,
