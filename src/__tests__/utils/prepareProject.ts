@@ -348,7 +348,7 @@ export async function prepareRow({
   });
   const rowDraft = await prismaService.row.create({
     data: {
-      createdAt: new Date(),
+      createdAt: row.createdAt,
       updatedAt: new Date(),
       id: rowId,
       versionId: draftRowVersionId,

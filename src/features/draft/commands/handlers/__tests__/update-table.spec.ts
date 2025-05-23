@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma, Row } from '@prisma/client';
 import {
   prepareProject,
   PrepareProjectReturnType,
@@ -198,7 +198,7 @@ describe('UpdateTableHandler', () => {
 
   it('should apply patches to the row in the table', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+    const { draftRevisionId, tableId, draftTableVersionId, row } = ids;
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -220,14 +220,14 @@ describe('UpdateTableHandler', () => {
     expect(result.tableVersionId).toBe(draftTableVersionId);
     expect(result.previousTableVersionId).toBe(draftTableVersionId);
 
-    await rowAndTableCheck(ids);
+    await rowAndTableCheck(ids, {}, row);
     await revisionCheck(ids);
   });
 
   it('should apply patches to a new created row in the table', async () => {
     const ids = await prepareProject(prismaService);
     const { draftRowVersionId, draftRevisionId, tableId } = ids;
-    await prismaService.row.update({
+    const row = await prismaService.row.update({
       where: {
         versionId: draftRowVersionId,
       },
@@ -252,16 +252,20 @@ describe('UpdateTableHandler', () => {
     });
 
     await runTransaction(command);
-    await rowAndTableCheck(ids, {
-      skipCheckingRowVersionId: true,
-      skipCheckingTableVersionId: true,
-    });
+    await rowAndTableCheck(
+      ids,
+      {
+        skipCheckingRowVersionId: true,
+        skipCheckingTableVersionId: true,
+      },
+      row,
+    );
     await revisionCheck(ids);
   });
 
   it('should apply patches to the row in a new created table', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+    const { draftRevisionId, tableId, draftTableVersionId, row } = ids;
     await prismaService.table.update({
       where: {
         versionId: draftTableVersionId,
@@ -287,9 +291,13 @@ describe('UpdateTableHandler', () => {
     });
 
     await runTransaction(command);
-    await rowAndTableCheck(ids, {
-      skipCheckingTableVersionId: true,
-    });
+    await rowAndTableCheck(
+      ids,
+      {
+        skipCheckingTableVersionId: true,
+      },
+      row,
+    );
     await revisionCheck(ids);
   });
 
@@ -424,6 +432,7 @@ describe('UpdateTableHandler', () => {
       skipCheckingTableVersionId?: boolean;
       skipCheckingRowVersionId?: boolean;
     } = {},
+    previousRow: Row,
   ) {
     const row = await prismaService.row.findFirstOrThrow({
       where: {
@@ -447,6 +456,12 @@ describe('UpdateTableHandler', () => {
     if (!skipCheckingRowVersionId) {
       expect(row.versionId).toBe(ids.draftRowVersionId);
     }
+    expect(row.updatedAt.toISOString()).not.toBe(
+      previousRow.updatedAt.toISOString(),
+    );
+    expect(row.createdAt.toISOString()).toBe(
+      previousRow.createdAt.toISOString(),
+    );
 
     const table = await prismaService.table.findFirstOrThrow({
       where: {

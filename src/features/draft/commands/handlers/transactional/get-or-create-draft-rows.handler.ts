@@ -4,7 +4,6 @@ import { Prisma } from '@prisma/client';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { GetOrCreateDraftRowsCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-rows.command';
-import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftRowsRequestDto } from 'src/features/draft/draft-request-dto/rows-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { FindRowsInTableType } from 'src/features/share/queries/types';
@@ -18,7 +17,6 @@ export class GetOrCreateDraftRowsHandler
     private readonly transactionService: TransactionPrismaService,
     private readonly idService: IdService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
-    private readonly revisionRequestDto: DraftRevisionRequestDto,
     private readonly tableRequestDto: DraftTableRequestDto,
     private readonly rowsRequestDto: DraftRowsRequestDto,
   ) {}
@@ -58,6 +56,7 @@ export class GetOrCreateDraftRowsHandler
     const rows = await this.transaction.row.findMany({
       where: { OR: readonlyRows.map((row) => ({ versionId: row.versionId })) },
       select: {
+        createdAt: true,
         data: true,
         meta: true,
         hash: true,
@@ -73,6 +72,7 @@ export class GetOrCreateDraftRowsHandler
     }
 
     const generatedRows = rows.map((row) => ({
+      createdAt: row.createdAt,
       data: row.data,
       meta: row.meta,
       hash: row.hash,
@@ -85,6 +85,7 @@ export class GetOrCreateDraftRowsHandler
 
     const inputs: Prisma.RowCreateManyInput[] =
       generatedRows.map<Prisma.RowCreateManyInput>((row) => ({
+        createdAt: row.createdAt,
         versionId: row.versionId,
         createdId: row.createdId,
         id: row.id,
