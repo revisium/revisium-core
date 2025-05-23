@@ -18,17 +18,23 @@ describe('GetTableRowsDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('duplicate fields should fail', async () => {
-    const errors = await getErrors({
+  it('should fail if fields are not unique', async () => {
+    const input = {
       first: 100,
       orderBy: [
         { field: SortField.id, direction: SortDirection.asc },
         { field: SortField.id, direction: SortDirection.desc },
       ],
-    });
-    expect(
-      findConstraint(errors, 'orderBy', 'isUniqueOrderByFields'),
-    ).toBeDefined();
+    };
+
+    const instance = plainToInstance(GetTableRowsDto, input);
+    const errors = await validate(instance);
+
+    const error = errors.find((e) => e.property === 'orderBy');
+    expect(error).toBeDefined();
+
+    const message = error?.constraints?.isUniqueOrderByFields;
+    expect(message).toBe('Each orderBy.field must be unique');
   });
 
   it('empty orderBy should fail', async () => {
