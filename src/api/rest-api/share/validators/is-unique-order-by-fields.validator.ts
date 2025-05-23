@@ -1,8 +1,4 @@
-import {
-  registerDecorator,
-  ValidationOptions,
-  ValidationArguments,
-} from 'class-validator';
+import { registerDecorator, ValidationOptions } from 'class-validator';
 import { OrderByDto } from 'src/api/rest-api/share/model/order-by.model';
 
 export function IsUniqueOrderByFields(validationOptions?: ValidationOptions) {
@@ -23,7 +19,7 @@ export function IsUniqueOrderByFields(validationOptions?: ValidationOptions) {
           }
           return true;
         },
-        defaultMessage(args: ValidationArguments): string {
+        defaultMessage(): string {
           return 'Each orderBy.field must be unique';
         },
       },
