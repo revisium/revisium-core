@@ -52,6 +52,14 @@ describe('GetTableRowsDto', () => {
     );
   });
 
+  it('should throw if orderBy is not valid JSON', async () => {
+    expect(() =>
+      plainToInstance(GetTableRowsDto, {
+        first: 10,
+        orderBy: '[invalid]',
+      }),
+    ).toThrow('`orderBy` must be valid JSON array');
+  });
   const make = (input: Partial<GetTableRowsDto>) =>
     plainToInstance(GetTableRowsDto, input);
 

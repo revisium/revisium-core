@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -119,6 +121,7 @@ export class TableByIdController {
   @Post('rows')
   @ApiOperation({ operationId: 'rows' })
   @ApiOkResponse({ type: RowsConnection })
+  @HttpCode(HttpStatus.OK)
   async rows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
