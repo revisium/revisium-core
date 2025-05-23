@@ -2,11 +2,18 @@ const { dirname } = require('path');
 const globals = require('globals');
 const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
-const prettier = require('eslint-plugin-prettier/recommended');
+const prettier = require('eslint-config-prettier');
 
+/** @type {import('eslint').Linter.FlatConfig[]} */
 module.exports = [
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    files: ['eslint.config.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
   {
     languageOptions: {
       globals: {
@@ -37,5 +44,5 @@ module.exports = [
   prettier,
   {
     ignores: ['src/__generated__/sql/**'],
-  }
+  },
 ];

@@ -1,11 +1,9 @@
-import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
+import { CommandBus, CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AsyncLocalStorage } from 'async_hooks';
 import { nanoid } from 'nanoid';
 import { PROJECT_HANDLERS } from 'src/features/project/commands/handlers/index';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
-import { SHARE_QUERIES_HANDLERS } from 'src/features/share/queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
@@ -28,16 +26,11 @@ export const createTestingModule = async () => {
     ],
   }).compile();
 
+  await module.init();
+
   const prismaService = module.get(PrismaService);
 
   const commandBus = module.get(CommandBus);
-  commandBus.register([...PROJECT_HANDLERS]);
-
-  const queryBus = module.get(QueryBus);
-  queryBus.register([
-    ...SHARE_QUERIES_HANDLERS,
-    ...(PROJECT_QUERIES as QueryHandlerType[]),
-  ]);
 
   const transactionService = module.get(TransactionPrismaService);
   const shareTransactionalQueries = module.get(ShareTransactionalQueries);

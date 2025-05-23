@@ -15,4 +15,16 @@ export class InMemoryServer extends Server implements CustomTransportStrategy {
 
     callback();
   }
+
+  on<EventKey extends string = string, EventCallback = () => void>(
+    event: EventKey,
+    callback: EventCallback,
+  ): any {
+    notificationEventEmitter.on(event, callback as any);
+    return this;
+  }
+
+  unwrap<T>(): T {
+    return notificationEventEmitter as unknown as T;
+  }
 }

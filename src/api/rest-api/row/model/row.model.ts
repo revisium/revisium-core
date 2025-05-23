@@ -21,7 +21,7 @@ export class RowModel {
   @ApiProperty()
   readonly: boolean;
 
-  @ApiProperty({ type: 'object' })
+  @ApiProperty({ type: 'object', additionalProperties: true })
   data: Prisma.JsonValue;
 }
 

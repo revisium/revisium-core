@@ -1,5 +1,4 @@
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { QueryHandlerType } from '@nestjs/cqrs/dist/query-bus';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma, UserOrganization, UserProject } from '@prisma/client';
 import { nanoid } from 'nanoid';
@@ -118,13 +117,10 @@ describe('GetProjectsByUserIdHandler', () => {
       ],
     }).compile();
 
+    await module.init();
+
     prismaService = module.get<PrismaService>(PrismaService);
     queryBus = module.get<QueryBus>(QueryBus);
-
-    queryBus.register([
-      GetProjectsByUserIdHandler,
-      GetUserOrganizationHandler as QueryHandlerType,
-    ]);
   });
 
   const createQuery = (

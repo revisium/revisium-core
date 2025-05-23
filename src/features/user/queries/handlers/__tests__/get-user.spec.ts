@@ -49,10 +49,10 @@ describe('GetUserHandler', () => {
       providers: [PrismaService, GetUserHandler],
     }).compile();
 
+    await module.init();
+
     prismaService = module.get(PrismaService);
     queryBus = module.get(QueryBus);
-
-    queryBus.register([GetUserHandler]);
   });
 
   afterEach(async () => {

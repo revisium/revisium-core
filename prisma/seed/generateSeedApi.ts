@@ -5,7 +5,7 @@ import { generateApi } from 'swagger-typescript-api';
 
 async function main() {
   await generateApi({
-    name: 'seed.ts',
+    fileName: 'seed.ts',
     output: path.resolve(process.cwd(), './prisma/seed/__generated__'),
     url: process.env.SEED_OPENAPI_URL as string,
     apiClassName: 'SeedApi',
