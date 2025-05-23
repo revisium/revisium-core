@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 export class GetRowsByTableQuery {
   constructor(
     public data: {
@@ -6,6 +8,7 @@ export class GetRowsByTableQuery {
       readonly tableVersionId: string;
       readonly first: number;
       readonly after?: string;
+      readonly orderBy?: Prisma.RowOrderByWithRelationInput[];
     },
   ) {}
 }

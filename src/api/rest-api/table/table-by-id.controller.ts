@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -19,6 +21,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Table } from '@prisma/client';
+import { mapToPrismaOrderBy } from 'src/api/rest-api/share/utils/mapToPrismaOrderBy';
 import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
@@ -115,15 +118,18 @@ export class TableByIdController {
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
-  @Get('rows')
+  @Post('rows')
   @ApiOperation({ operationId: 'rows' })
   @ApiOkResponse({ type: RowsConnection })
+  @HttpCode(HttpStatus.OK)
   async rows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-    @Query() data: GetTableRowsDto,
+    @Body() { orderBy, ...data }: GetTableRowsDto,
   ) {
     const table = await this.resolveTable(revisionId, tableId);
+
+    const prismaOrderBy = mapToPrismaOrderBy(orderBy);
 
     return transformFromPaginatedPrismaToRowModel(
       await this.queryBus.execute(
@@ -132,6 +138,7 @@ export class TableByIdController {
           tableId,
           tableVersionId: table.versionId,
           ...data,
+          orderBy: prismaOrderBy,
         }),
       ),
     );
@@ -142,7 +149,7 @@ export class TableByIdController {
     action: PermissionAction.create,
     subject: PermissionSubject.Row,
   })
-  @Post('rows')
+  @Post('create-row')
   @ApiOperation({ operationId: 'createRow' })
   @ApiBody({ type: CreateRowDto })
   @ApiOkResponse({ type: CreateRowResponse })

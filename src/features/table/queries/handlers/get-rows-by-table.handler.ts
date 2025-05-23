@@ -19,7 +19,7 @@ export class GetRowsByTableHandler
     return getOffsetPagination({
       pageData: data,
       findMany: async (args) => {
-        const rows = await this.getRows(args, data.tableVersionId);
+        const rows = await this.getRows(args, data);
 
         await this.pluginService.computeRows({
           revisionId: data.revisionId,
@@ -41,24 +41,23 @@ export class GetRowsByTableHandler
 
   private getRows(
     args: { take: number; skip: number },
-    tableVersionId: string,
+    data: GetRowsByTableQuery['data'],
   ) {
     return this.prisma.table
-      .findUniqueOrThrow({ where: { versionId: tableVersionId } })
+      .findUniqueOrThrow({ where: { versionId: data.tableVersionId } })
       .rows({
         ...args,
-        orderBy: {
+        orderBy: data.orderBy ?? {
           createdAt: Prisma.SortOrder.desc,
         },
       });
   }
 
-  private getRowsCount(tableId: string) {
-    return this.prisma.table
-      .findUniqueOrThrow({
-        where: { versionId: tableId },
-        include: { _count: { select: { rows: true } } },
-      })
-      .then((result) => result._count.rows);
+  private async getRowsCount(tableId: string) {
+    const result = await this.prisma.table.findUniqueOrThrow({
+      where: { versionId: tableId },
+      include: { _count: { select: { rows: true } } },
+    });
+    return result._count.rows;
   }
 }
