@@ -330,8 +330,8 @@ export async function prepareRow({
   // row
   const row = await prismaService.row.create({
     data: {
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2024-01-01T00:00:00.000Z'),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       id: rowId,
       versionId: headRowVersionId,
       createdId: rowCreatedId,
@@ -348,8 +348,8 @@ export async function prepareRow({
   });
   const rowDraft = await prismaService.row.create({
     data: {
-      createdAt: new Date('2024-01-01T00:00:00.000Z'),
-      updatedAt: new Date('2025-01-01T00:00:00.000Z'),
+      createdAt: new Date(),
+      updatedAt: new Date(),
       id: rowId,
       versionId: draftRowVersionId,
       createdId: rowCreatedId,
