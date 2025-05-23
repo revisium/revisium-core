@@ -32,4 +32,9 @@ describe('InMemoryClient', () => {
     const unwrapped = inMemoryClient.unwrap<EventEmitter>();
     expect(unwrapped).toBe(client);
   });
+
+  it('should return a function', () => {
+    const result = inMemoryClient['publish']();
+    expect(typeof result).toBe('function');
+  });
 });
