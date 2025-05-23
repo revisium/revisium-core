@@ -19,9 +19,6 @@ export function IsUniqueOrderByFields(validationOptions?: ValidationOptions) {
           }
           return true;
         },
-        defaultMessage(): string {
-          return 'Each orderBy.field must be unique';
-        },
       },
     });
   };
