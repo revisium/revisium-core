@@ -1,4 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import {
   createPreviousFile,
   prepareProject,
@@ -17,76 +18,43 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 describe('getRowsByTable', () => {
   it('should sort by id', async () => {
-    const {
-      draftTableVersionId,
-      tableId,
-      draftRevisionId,
-      headTableVersionId,
-      draftRowVersionId,
-    } = await prepareProject(prismaService);
+    const context = await prepareContext();
 
-    const anotherRow = await prepareRow({
-      prismaService,
-      draftTableVersionId,
-      headTableVersionId,
+    await setRowIds(context, ['A', 'B']);
+
+    const asc = await querySortedRows(context, [{ id: 'asc' }]);
+    expect(asc.edges.map((e) => e.node.id)).toEqual(['A', 'B']);
+
+    const desc = await querySortedRows(context, [{ id: 'desc' }]);
+    expect(desc.edges.map((e) => e.node.id)).toEqual(['B', 'A']);
+  });
+
+  it('should sort by createdAt', async () => {
+    const ctx = await prepareContext();
+
+    const row1 = await createRow(ctx);
+    await delay();
+    const row2 = await createRow(ctx);
+
+    const result = await querySortedRows(ctx, [{ createdAt: 'asc' }]);
+    expect(result.edges.map((e) => e.node.id)).toEqual([
+      row1.rowId,
+      row2.rowId,
+    ]);
+  });
+
+  it('should sort by updatedAt', async () => {
+    const ctx = await prepareContext();
+
+    const row1 = await createRow(ctx);
+    await delay();
+    await prismaService.row.update({
+      where: { versionId: row1.draftRowVersionId },
       data: {},
-      dataDraft: {},
-      schema: testSchema,
     });
 
-    await prismaService.row.update({
-      where: {
-        versionId: draftRowVersionId,
-      },
-      data: {
-        id: 'A',
-      },
-    });
-
-    await prismaService.row.update({
-      where: {
-        versionId: anotherRow.draftRowVersionId,
-      },
-      data: {
-        id: 'B',
-      },
-    });
-
-    const resultAsc = await runTransaction(
-      new GetRowsByTableQuery({
-        revisionId: draftRevisionId,
-        tableId: tableId,
-        tableVersionId: draftTableVersionId,
-        first: 100,
-        orderBy: [
-          {
-            id: 'asc',
-          },
-        ],
-      }),
-    );
-
-    expect(resultAsc.totalCount).toBe(2);
-    expect(resultAsc.edges[0].node.id).toBe('A');
-    expect(resultAsc.edges[1].node.id).toBe('B');
-
-    const resultDesc = await runTransaction(
-      new GetRowsByTableQuery({
-        revisionId: draftRevisionId,
-        tableId: tableId,
-        tableVersionId: draftTableVersionId,
-        first: 100,
-        orderBy: [
-          {
-            id: 'desc',
-          },
-        ],
-      }),
-    );
-
-    expect(resultDesc.totalCount).toBe(2);
-    expect(resultDesc.edges[0].node.id).toBe('B');
-    expect(resultDesc.edges[1].node.id).toBe('A');
+    const result = await querySortedRows(ctx, [{ updatedAt: 'desc' }]);
+    expect(result.edges[0].node.id).toBe(row1.rowId);
   });
 
   it('should compute rows', async () => {
@@ -113,15 +81,78 @@ describe('getRowsByTable', () => {
       }),
     );
 
-    const resultData = result.edges[0].node.data as typeof data;
-
-    expect(resultData.file.url).toBeTruthy();
+    expect((result.edges[0].node.data as typeof data).file.url).toBeTruthy();
   });
+
+  async function prepareContext() {
+    const ctx = await prepareProject(prismaService);
+
+    await prismaService.row.deleteMany({
+      where: {
+        versionId: ctx.draftRowVersionId,
+      },
+    });
+
+    return {
+      ...ctx,
+      async baseQuery(orderBy: Prisma.RowOrderByWithRelationInput[]) {
+        return runTransaction(
+          new GetRowsByTableQuery({
+            revisionId: ctx.draftRevisionId,
+            tableId: ctx.tableId,
+            tableVersionId: ctx.draftTableVersionId,
+            first: 100,
+            orderBy,
+          }),
+        );
+      },
+    };
+  }
+
+  async function setRowIds(
+    ctx: Awaited<ReturnType<typeof prepareContext>>,
+    ids: string[],
+  ) {
+    const row1 = await createRow(ctx);
+    const row2 = await createRow(ctx);
+
+    await prismaService.row.update({
+      where: { versionId: row1.draftRowVersionId },
+      data: { id: ids[0] },
+    });
+
+    await prismaService.row.update({
+      where: { versionId: row2.draftRowVersionId },
+      data: { id: ids[1] },
+    });
+  }
+
+  async function createRow(ctx: Awaited<ReturnType<typeof prepareContext>>) {
+    return prepareRow({
+      prismaService,
+      draftTableVersionId: ctx.draftTableVersionId,
+      headTableVersionId: ctx.headTableVersionId,
+      data: {},
+      dataDraft: {},
+      schema: testSchema,
+    });
+  }
+
+  async function querySortedRows(
+    ctx: Awaited<ReturnType<typeof prepareContext>>,
+    orderBy: Prisma.RowOrderByWithRelationInput[],
+  ) {
+    return ctx.baseQuery(orderBy);
+  }
+
+  async function delay(ms = 10) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
 
   function runTransaction(
     query: GetRowsByTableQuery,
   ): Promise<GetTableRowsReturnType> {
-    return transactionService.run(async () => queryBus.execute(query));
+    return transactionService.run(() => queryBus.execute(query));
   }
 
   let prismaService: PrismaService;
