@@ -41,6 +41,7 @@ function initSwagger(app: INestApplication<any>) {
   const document = SwaggerModule.createDocument(app, documentBuilder);
   SwaggerModule.setup('/api', app, document, {
     swaggerOptions: {
+      persistAuthorization: true,
       tryItOutEnabled: true,
       filter: true,
       ignoreGlobalPrefix: true,

@@ -19,6 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Table } from '@prisma/client';
+import { mapToPrismaOrderBy } from 'src/api/rest-api/share/utils/mapToPrismaOrderBy';
 import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
@@ -125,6 +126,10 @@ export class TableByIdController {
   ) {
     const table = await this.resolveTable(revisionId, tableId);
 
+    const prismaOrderBy = mapToPrismaOrderBy(orderBy);
+
+    console.log(prismaOrderBy);
+
     return transformFromPaginatedPrismaToRowModel(
       await this.queryBus.execute(
         new GetRowsByTableQuery({
@@ -132,7 +137,7 @@ export class TableByIdController {
           tableId,
           tableVersionId: table.versionId,
           ...data,
-          orderBy,
+          orderBy: prismaOrderBy,
         }),
       ),
     );
@@ -143,7 +148,7 @@ export class TableByIdController {
     action: PermissionAction.create,
     subject: PermissionSubject.Row,
   })
-  @Post('createRow')
+  @Post('create-row')
   @ApiOperation({ operationId: 'createRow' })
   @ApiBody({ type: CreateRowDto })
   @ApiOkResponse({ type: CreateRowResponse })

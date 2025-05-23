@@ -1,26 +1,15 @@
+import { BadRequestException } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
-import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
-import { Prisma } from '@prisma/client';
-
-export enum SortDirection {
-  asc = 'asc',
-  desc = 'desc',
-}
-
-export enum SortField {
-  createdAt = 'createdAt',
-  updatedAt = 'updatedAt',
-  id = 'id',
-}
-
-export class OrderByItemDto {
-  @IsEnum(SortField)
-  field: SortField;
-
-  @IsEnum(SortDirection)
-  direction: SortDirection;
-}
+import { Transform, Type } from 'class-transformer';
+import {
+  ArrayNotEmpty,
+  IsInt,
+  IsOptional,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { OrderByDto } from 'src/api/rest-api/share/model/order-by.model';
+import { IsUniqueOrderByFields } from 'src/api/rest-api/share/validators/is-unique-order-by-fields.validator';
 
 export class GetTableRowsDto {
   @ApiProperty({ default: 100 })
@@ -29,54 +18,28 @@ export class GetTableRowsDto {
   @Min(0)
   first: number;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ required: false, example: '' })
   after?: string;
 
   @ApiPropertyOptional({
     description: 'Array of sorting criteria',
-    example: [
-      { field: SortField.createdAt, direction: SortDirection.asc },
-      { field: SortField.updatedAt, direction: SortDirection.desc },
-    ],
-    type: [OrderByItemDto],
+    type: [OrderByDto],
+    example: [{ field: 'id', direction: 'asc' }],
   })
   @Transform(({ value }) => {
-    try {
-      const parsed: unknown =
-        typeof value === 'string' ? JSON.parse(value) : value;
-
-      if (!Array.isArray(parsed)) {
-        throw new Error('orderBy must be an array');
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        throw new BadRequestException('`orderBy` must be valid JSON array');
       }
-
-      return parsed.map((item) => {
-        if (
-          typeof item !== 'object' ||
-          Array.isArray(item) ||
-          !item.field ||
-          !item.direction
-        ) {
-          throw new Error('Each orderBy item must have field and direction');
-        }
-
-        if (!(item.field in SortField)) {
-          throw new Error(`Invalid sort field: ${item.field}`);
-        }
-
-        if (
-          !(Object.values(SortDirection) as string[]).includes(item.direction)
-        ) {
-          throw new Error(`Invalid sort direction: ${item.direction}`);
-        }
-
-        return {
-          [item.field]: item.direction,
-        } as Prisma.RowOrderByWithRelationInput;
-      });
-    } catch (e) {
-      throw new Error('Invalid orderBy format: ' + e.message);
     }
+    return value;
   })
   @IsOptional()
-  orderBy?: Prisma.RowOrderByWithRelationInput[];
+  @ArrayNotEmpty({ message: '`orderBy` should not be an empty array' })
+  @ValidateNested({ each: true })
+  @Type(() => OrderByDto)
+  @IsUniqueOrderByFields({ message: 'Each orderBy.field must be unique' })
+  orderBy?: OrderByDto[];
 }
