@@ -47,11 +47,9 @@ export class GetRowsByTableHandler
       .findUniqueOrThrow({ where: { versionId: data.tableVersionId } })
       .rows({
         ...args,
-        orderBy: data.orderBy
-          ? data.orderBy
-          : {
-              createdAt: Prisma.SortOrder.desc,
-            },
+        orderBy: data.orderBy ?? {
+          createdAt: Prisma.SortOrder.desc,
+        },
       });
   }
 
