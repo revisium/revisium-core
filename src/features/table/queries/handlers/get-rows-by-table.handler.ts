@@ -53,12 +53,11 @@ export class GetRowsByTableHandler
       });
   }
 
-  private getRowsCount(tableId: string) {
-    return this.prisma.table
-      .findUniqueOrThrow({
-        where: { versionId: tableId },
-        include: { _count: { select: { rows: true } } },
-      })
-      .then((result) => result._count.rows);
+  private async getRowsCount(tableId: string) {
+    const result = await this.prisma.table.findUniqueOrThrow({
+      where: { versionId: tableId },
+      include: { _count: { select: { rows: true } } },
+    });
+    return result._count.rows;
   }
 }
