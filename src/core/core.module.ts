@@ -1,9 +1,11 @@
-import { Module } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
-import { AuthModule } from 'src/features/auth/auth.module';
+import { AppOptions } from 'src/app-mode';
+import { AppOptionsModule } from 'src/core/app-options.module';
 
+import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
 import { CleanModule } from 'src/infrastructure/clean/clean.module';
 import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
@@ -23,35 +25,41 @@ import { RowModule } from 'src/features/row/row.module';
 import { TableModule } from 'src/features/table/table.module';
 import { UserModule } from 'src/features/user/user.module';
 
-@Module({
-  imports: [
-    AuthModule,
-    ConfigModule.forRoot(),
-    DatabaseModule,
-    GraphqlApiModule,
-    RestApiModule,
-    RouterModule.register([
-      {
-        path: '/api',
-        module: RestApiModule,
-      },
-    ]),
-    ScheduleModule.forRoot(),
-    ConfigurationModule,
-    CleanModule,
-    NotificationModule,
-    HealthModule,
-    EmailModule,
-    UserModule,
-    OrganizationModule,
-    ProjectModule,
-    BranchModule,
-    RevisionModule,
-    TableModule,
-    RowModule,
-    DraftModule,
-    EndpointModule,
-    MetricsModule,
-  ],
-})
-export class CoreModule {}
+@Module({})
+export class CoreModule {
+  static forRoot(options: AppOptions): DynamicModule {
+    return {
+      module: CoreModule,
+      imports: [
+        AppOptionsModule.forRoot(options),
+        AuthModule,
+        ConfigModule.forRoot(),
+        DatabaseModule,
+        GraphqlApiModule,
+        RestApiModule,
+        RouterModule.register([
+          {
+            path: '/api',
+            module: RestApiModule,
+          },
+        ]),
+        ScheduleModule.forRoot(),
+        ConfigurationModule,
+        CleanModule,
+        NotificationModule,
+        HealthModule,
+        EmailModule,
+        UserModule,
+        OrganizationModule,
+        ProjectModule,
+        BranchModule,
+        RevisionModule,
+        TableModule,
+        RowModule,
+        DraftModule,
+        EndpointModule,
+        MetricsModule,
+      ],
+    };
+  }
+}

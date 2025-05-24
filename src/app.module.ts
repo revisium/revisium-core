@@ -9,7 +9,7 @@ import { MetricsApiModule } from 'src/infrastructure/metrics-api/metrics-api.mod
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    CoreModule,
+    CoreModule.forRoot({ mode: 'microservice' }),
     MetricsApiModule,
     GracefulShutdownModule,
   ],
