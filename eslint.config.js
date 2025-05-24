@@ -9,12 +9,6 @@ module.exports = [
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {
-    files: ['eslint.config.js'],
-    rules: {
-      '@typescript-eslint/no-require-imports': 'off',
-    },
-  },
-  {
     languageOptions: {
       globals: {
         ...globals.node,
@@ -42,12 +36,6 @@ module.exports = [
     },
   },
   {
-    files: ['**/*.spec.ts'],
-    rules: {
-      '@typescript-eslint/ban-ts-comment': 'off',
-    },
-  },
-  {
     plugins: {
       prettier: prettierPlugin,
     },
@@ -63,6 +51,12 @@ module.exports = [
     rules: {
       '@typescript-eslint/ban-ts-comment': 'off',
       'no-magic-numbers': 'off',
+    },
+  },
+  {
+    files: ['eslint.config.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
     },
   },
 ];
