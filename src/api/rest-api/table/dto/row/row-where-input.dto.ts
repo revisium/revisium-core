@@ -1,4 +1,3 @@
-// dto/row-where-input.dto.ts
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { ValidateNested, IsOptional } from 'class-validator';

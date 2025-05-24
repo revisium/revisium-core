@@ -1,9 +1,4 @@
-// filters/bool-filter.dto.ts
-import {
-  ApiExtraModels,
-  ApiPropertyOptional,
-  getSchemaPath,
-} from '@nestjs/swagger';
+import { ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsOptional, IsBoolean, ValidateNested } from 'class-validator';
 
