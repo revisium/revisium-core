@@ -2,6 +2,7 @@ import { CommandBus, CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { AsyncLocalStorage } from 'async_hooks';
 import { nanoid } from 'nanoid';
+import { AppOptionsModule } from 'src/core/app-options.module';
 import { PROJECT_HANDLERS } from 'src/features/project/commands/handlers/index';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
@@ -15,7 +16,13 @@ import { NotificationModule } from 'src/infrastructure/notification/notification
 
 export const createTestingModule = async () => {
   const module: TestingModule = await Test.createTestingModule({
-    imports: [DatabaseModule, CqrsModule, ShareModule, NotificationModule],
+    imports: [
+      DatabaseModule,
+      CqrsModule,
+      ShareModule,
+      AppOptionsModule.forRoot({ mode: 'monolith' }),
+      NotificationModule,
+    ],
     providers: [
       {
         provide: AsyncLocalStorage,

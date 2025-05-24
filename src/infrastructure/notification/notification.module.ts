@@ -1,47 +1,40 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
+import { APP_OPTIONS_TOKEN, AppOptions } from 'src/app-mode';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
-import { InMemoryClient } from 'src/infrastructure/notification/in-memory-client';
-import { notificationEventEmitter } from 'src/infrastructure/notification/notification-event-emitter';
+import { InMemoryNotificationClient } from 'src/infrastructure/notification/in-memory-notification-client';
+import { RedisNotificationClient } from 'src/infrastructure/notification/redis-notification-client';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, EventEmitterModule.forRoot()],
   providers: [
     {
       provide: 'ENDPOINT_MICROSERVICE',
-      useFactory: async (configService: ConfigService) => {
-        const isBuild = configService.get<string>('IS_BUILD') === 'true';
-
-        if (isBuild) {
-          return new InMemoryClient(notificationEventEmitter);
+      useFactory: async (
+        configService: ConfigService,
+        emitter: EventEmitter2,
+        appOptions: AppOptions,
+      ) => {
+        if (appOptions.mode === 'monolith') {
+          return new InMemoryNotificationClient(emitter);
         }
 
-        const portPath = 'ENDPOINT_PORT';
-        const hostPath = 'ENDPOINT_HOST';
+        const host = configService.getOrThrow('ENDPOINT_HOST');
+        const port = parseInt(configService.getOrThrow('ENDPOINT_PORT'), 10);
 
-        const envPort = configService.get<string>(portPath);
-
-        if (!envPort) {
-          throw new Error(`Environment variable not found: ${portPath}`);
-        }
-        const port = parseInt(envPort);
-
-        const host = configService.get<string>(hostPath);
-
-        if (!host) {
-          throw new Error(`Environment variable not found: ${hostPath}`);
-        }
-
-        return ClientProxyFactory.create({
+        const client = ClientProxyFactory.create({
           transport: Transport.REDIS,
           options: {
             port,
             host,
           },
         });
+
+        return new RedisNotificationClient(client);
       },
-      inject: [ConfigService],
+      inject: [ConfigService, EventEmitter2, APP_OPTIONS_TOKEN],
     },
     EndpointNotificationService,
   ],
