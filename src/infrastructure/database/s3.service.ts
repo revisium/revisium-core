@@ -67,7 +67,7 @@ export class S3Service {
       );
 
       throw new InternalServerErrorException(
-        'Error uploading file to S3: ' + err.message + '',
+        String('Error uploading file to S3: ' + err.message),
       );
     }
   }

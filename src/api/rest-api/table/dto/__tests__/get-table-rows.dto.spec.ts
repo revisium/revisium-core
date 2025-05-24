@@ -85,8 +85,8 @@ describe('GetTableRowsDto', () => {
     for (let i = 1; i < parts.length && node; i++) {
       const part = parts[i];
       if (node.children) {
-        node = !isNaN(+part)
-          ? node.children[+part]
+        node = !isNaN(Number(part))
+          ? node.children[Number(part)]
           : node.children.find((c) => c.property === part);
       }
     }
