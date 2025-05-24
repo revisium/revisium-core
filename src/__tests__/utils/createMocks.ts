@@ -1,6 +1,3 @@
-// TODO fix "revisium" repository
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-nocheck
 import { CommandBus } from '@nestjs/cqrs';
 import { AsyncLocalStorage } from 'async_hooks';
 import { DeepMockProxy, mockDeep } from 'jest-mock-extended';
