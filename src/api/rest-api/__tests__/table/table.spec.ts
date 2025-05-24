@@ -15,7 +15,7 @@ describe('restapi - table', () => {
     registerGraphqlEnums();
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule],
+      imports: [CoreModule.forRoot({ mode: 'monolith' })],
     }).compile();
 
     app = moduleFixture.createNestApplication();

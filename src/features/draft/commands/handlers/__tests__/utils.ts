@@ -37,6 +37,7 @@ import { S3Service } from 'src/infrastructure/database/s3.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
+import { AppOptionsModule } from 'src/core/app-options.module';
 
 export const testSchema: JsonObjectSchema = getObjectSchema({
   ver: getNumberSchema(),
@@ -106,6 +107,7 @@ export const createTestingModule = async () => {
       CqrsModule,
       ShareModule,
       PluginModule,
+      AppOptionsModule.forRoot({ mode: 'monolith' }),
       NotificationModule,
       CacheModule.register(),
     ],

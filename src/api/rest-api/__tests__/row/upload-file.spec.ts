@@ -62,7 +62,7 @@ describe('restapi - row - upload file', () => {
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule],
+      imports: [CoreModule.forRoot({ mode: 'monolith' })],
     })
       .overrideProvider(S3Service)
       .useValue(mockS3)
