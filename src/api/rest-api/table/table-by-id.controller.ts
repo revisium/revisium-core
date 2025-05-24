@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -75,6 +77,13 @@ import {
 import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
 import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
 
+@UsePipes(
+  new ValidationPipe({
+    whitelist: true,
+    forbidNonWhitelisted: true,
+    transform: true,
+  }),
+)
 @UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
@@ -125,11 +134,13 @@ export class TableByIdController {
   async rows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-    @Body() { orderBy, ...data }: GetTableRowsDto,
+    @Body() { orderBy, where, ...data }: GetTableRowsDto,
   ) {
     const table = await this.resolveTable(revisionId, tableId);
 
     const prismaOrderBy = mapToPrismaOrderBy(orderBy);
+
+    console.log({ where });
 
     return transformFromPaginatedPrismaToRowModel(
       await this.queryBus.execute(
@@ -139,6 +150,7 @@ export class TableByIdController {
           tableVersionId: table.versionId,
           ...data,
           orderBy: prismaOrderBy,
+          where,
         }),
       ),
     );
