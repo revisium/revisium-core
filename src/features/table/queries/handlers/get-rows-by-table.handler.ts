@@ -50,6 +50,7 @@ export class GetRowsByTableHandler
         orderBy: data.orderBy ?? {
           createdAt: Prisma.SortOrder.desc,
         },
+        where: data.where,
       });
   }
 

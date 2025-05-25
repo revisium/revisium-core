@@ -14,10 +14,10 @@ export enum SortDirection {
 
 export class OrderByDto {
   @ApiProperty({ enum: SortField })
-  @IsEnum(SortField)
+  @IsEnum(SortField, { message: 'field must be a valid SortField' })
   field: SortField;
 
   @ApiProperty({ enum: SortDirection })
-  @IsEnum(SortDirection)
+  @IsEnum(SortDirection, { message: 'direction must be a valid SortDirection' })
   direction: SortDirection;
 }

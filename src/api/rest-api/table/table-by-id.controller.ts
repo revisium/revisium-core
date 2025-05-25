@@ -11,6 +11,8 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
@@ -117,6 +119,13 @@ export class TableByIdController {
     );
   }
 
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Post('rows')
   @ApiOperation({ operationId: 'rows' })
@@ -125,7 +134,7 @@ export class TableByIdController {
   async rows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-    @Body() { orderBy, ...data }: GetTableRowsDto,
+    @Body() { orderBy, where, ...data }: GetTableRowsDto,
   ) {
     const table = await this.resolveTable(revisionId, tableId);
 
@@ -139,6 +148,7 @@ export class TableByIdController {
           tableVersionId: table.versionId,
           ...data,
           orderBy: prismaOrderBy,
+          where,
         }),
       ),
     );

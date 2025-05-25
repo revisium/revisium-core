@@ -9,6 +9,7 @@ export class GetRowsByTableQuery {
       readonly first: number;
       readonly after?: string;
       readonly orderBy?: Prisma.RowOrderByWithRelationInput[];
+      readonly where?: Prisma.RowWhereInput;
     },
   ) {}
 }

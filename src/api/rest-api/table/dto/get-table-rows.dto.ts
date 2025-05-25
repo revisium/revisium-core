@@ -4,12 +4,15 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsInt,
+  IsObject,
   IsOptional,
+  IsString,
   Min,
   ValidateNested,
 } from 'class-validator';
 import { OrderByDto } from 'src/api/rest-api/share/model/order-by.model';
 import { IsUniqueOrderByFields } from 'src/api/rest-api/share/validators/is-unique-order-by-fields.validator';
+import { RowWhereInputDto } from 'src/api/rest-api/table/dto/row/row-where-input.dto';
 
 export class GetTableRowsDto {
   @ApiProperty({ default: 100 })
@@ -19,6 +22,8 @@ export class GetTableRowsDto {
   first: number;
 
   @ApiProperty({ required: false, example: '' })
+  @IsOptional()
+  @IsString()
   after?: string;
 
   @ApiPropertyOptional({
@@ -42,4 +47,14 @@ export class GetTableRowsDto {
   @Type(() => OrderByDto)
   @IsUniqueOrderByFields({ message: 'Each orderBy.field must be unique' })
   orderBy?: OrderByDto[];
+
+  @ApiPropertyOptional({
+    description: 'Row filtering conditions',
+    type: RowWhereInputDto,
+  })
+  @IsOptional()
+  @IsObject({ message: 'where must be an object' })
+  @ValidateNested()
+  @Type(() => RowWhereInputDto)
+  where?: RowWhereInputDto;
 }
