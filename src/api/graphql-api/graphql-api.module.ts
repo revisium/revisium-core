@@ -4,7 +4,6 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GraphQLModule } from '@nestjs/graphql';
 import GraphQLJSON from 'graphql-type-json';
-import { join } from 'path';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { AuthResolver } from 'src/api/graphql-api/auth/auth.resolver';
 import { BranchResolver } from 'src/api/graphql-api/branch/branch.resolver';
@@ -35,7 +34,7 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
         path: '/graphql',
         resolvers: { JSON: GraphQLJSON },
         playground: false,
-        autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
+        autoSchemaFile: true,
         sortSchema: true,
         introspection: true,
         formatError: (error) => {
