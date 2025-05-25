@@ -25,6 +25,26 @@ describe('restapi - table rows', () => {
       expect(response.totalCount).toEqual(1);
     });
 
+    it('should return 400 for invalid where filter', async () => {
+      const invalidProp = 'nonExistentField';
+      const errorResponse = await request(app.getHttpServer())
+        .post(getUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          first: 10,
+          orderBy: [{ field: 'id', direction: 'asc' }],
+          where: { [invalidProp]: { equals: 'value' } },
+        })
+        .expect(400)
+        .then((res) => res.body);
+
+      expect(errorResponse.statusCode).toBe(400);
+      expect(errorResponse.message).toEqual(
+        expect.arrayContaining([expect.stringMatching(invalidProp)]),
+      );
+      expect(errorResponse.error).toBe('Bad Request');
+    });
+
     function getUrl() {
       return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows`;
     }
