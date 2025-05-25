@@ -1,12 +1,9 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
   IsOptional,
   IsString,
   IsArray,
   ArrayNotEmpty,
-  ValidateNested,
-  IsNumber,
   IsIn,
 } from 'class-validator';
 
@@ -14,15 +11,6 @@ export class JsonFilterDto {
   @ApiPropertyOptional({ description: 'Exact JSON match' })
   @IsOptional()
   equals?: any;
-
-  @ApiPropertyOptional({
-    type: () => JsonFilterDto,
-    description: 'Negated JSON filter (not)',
-  })
-  @ValidateNested()
-  @Type(() => JsonFilterDto)
-  @IsOptional()
-  not?: JsonFilterDto | any;
 
   @ApiPropertyOptional({
     type: [String],
@@ -34,6 +22,15 @@ export class JsonFilterDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   path?: string[];
+
+  @ApiPropertyOptional({
+    enum: ['default', 'insensitive'],
+    description:
+      'Case sensitivity mode for string filters within JSON ("insensitive" uses ILIKE on PostgreSQL)',
+  })
+  @IsOptional()
+  @IsIn(['default', 'insensitive'])
+  mode?: 'default' | 'insensitive';
 
   @ApiPropertyOptional({ description: 'Substring match in JSON string value' })
   @IsOptional()
@@ -51,18 +48,9 @@ export class JsonFilterDto {
   string_ends_with?: string;
 
   @ApiPropertyOptional({
-    enum: ['default', 'insensitive'],
-    description:
-      'Case sensitivity mode for string filters within JSON ("insensitive" uses ILIKE on PostgreSQL)',
-  })
-  @IsOptional()
-  @IsIn(['default', 'insensitive'])
-  mode?: 'default' | 'insensitive';
-
-  @ApiPropertyOptional({
     type: [Object],
     description:
-      'Filter on arrays: JSON array must contain *all* of these values',
+      'Filter on arrays: target JSON array must contain *all* of these values',
   })
   @IsOptional()
   @IsArray()
@@ -70,47 +58,44 @@ export class JsonFilterDto {
   array_contains?: any[];
 
   @ApiPropertyOptional({
-    type: [Object],
     description:
-      'Filter on arrays: JSON array must start with *exactly* these values',
+      'JSON value that the target JSON array must start with (could be object, array, primitive)',
   })
   @IsOptional()
-  @IsArray()
-  @ArrayNotEmpty()
-  array_starts_with?: any[];
+  array_starts_with?: any;
 
   @ApiPropertyOptional({
-    type: [Object],
     description:
-      'Filter on arrays: JSON array must end with *exactly* these values',
+      'JSON value that the target JSON array must end with (could be object, array, primitive)',
   })
   @IsOptional()
-  @IsArray()
-  @ArrayNotEmpty()
-  array_ends_with?: any[];
-  // :contentReference[oaicite:2]{index=2}
-
-  @ApiPropertyOptional({ description: 'Numeric comparison: less than (<)' })
-  @IsOptional()
-  @IsNumber()
-  lt?: number;
+  array_ends_with?: any;
 
   @ApiPropertyOptional({
-    description: 'Numeric comparison: less than or equal (≤)',
+    description:
+      'Less-than comparison. Can be any JSON value or a Prisma JSON field ref',
   })
   @IsOptional()
-  @IsNumber()
-  lte?: number;
-
-  @ApiPropertyOptional({ description: 'Numeric comparison: greater than (>)' })
-  @IsOptional()
-  @IsNumber()
-  gt?: number;
+  lt?: any;
 
   @ApiPropertyOptional({
-    description: 'Numeric comparison: greater than or equal (≥)',
+    description:
+      'Less-than-or-equal comparison. Can be any JSON value or a Prisma JSON field ref',
   })
   @IsOptional()
-  @IsNumber()
-  gte?: number;
+  lte?: any;
+
+  @ApiPropertyOptional({
+    description:
+      'Greater-than comparison. Can be any JSON value or a Prisma JSON field ref',
+  })
+  @IsOptional()
+  gt?: any;
+
+  @ApiPropertyOptional({
+    description:
+      'Greater-than-or-equal comparison. Can be any JSON value or a Prisma JSON field ref',
+  })
+  @IsOptional()
+  gte?: any;
 }

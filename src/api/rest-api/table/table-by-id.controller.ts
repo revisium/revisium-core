@@ -140,8 +140,6 @@ export class TableByIdController {
 
     const prismaOrderBy = mapToPrismaOrderBy(orderBy);
 
-    console.log({ where });
-
     return transformFromPaginatedPrismaToRowModel(
       await this.queryBus.execute(
         new GetRowsByTableQuery({
