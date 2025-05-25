@@ -1,0 +1,4594 @@
+{
+  "components": {
+    "schemas": {
+      "AddUserToOrganizationDto": {
+        "properties": {
+          "roleId": {
+            "enum": [
+              "organizationOwner",
+              "organizationAdmin",
+              "developer",
+              "editor",
+              "reader"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "roleId"
+        ],
+        "type": "object"
+      },
+      "AddUserToProjectDto": {
+        "properties": {
+          "roleId": {
+            "enum": [
+              "developer",
+              "editor",
+              "reader"
+            ],
+            "type": "string"
+          },
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId",
+          "roleId"
+        ],
+        "type": "object"
+      },
+      "BoolFilterDto": {
+        "properties": {
+          "equals": {
+            "type": "boolean"
+          },
+          "not": {
+            "description": "Filter negation (not).",
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilterDto"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "BranchModel": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isRoot": {
+            "type": "boolean"
+          },
+          "name": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "projectId",
+          "createdAt",
+          "isRoot",
+          "name"
+        ],
+        "type": "object"
+      },
+      "BranchModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/BranchModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      },
+      "BranchesConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/BranchModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "ChildBranchResponse": {
+        "properties": {
+          "branch": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Id"
+          }
+        },
+        "required": [
+          "branch",
+          "revision"
+        ],
+        "type": "object"
+      },
+      "ConfigurationResponse": {
+        "properties": {
+          "availableEmailSignUp": {
+            "type": "boolean"
+          },
+          "github": {
+            "$ref": "#/components/schemas/GithubOauth"
+          },
+          "google": {
+            "$ref": "#/components/schemas/GoogleOauth"
+          }
+        },
+        "required": [
+          "availableEmailSignUp",
+          "google",
+          "github"
+        ],
+        "type": "object"
+      },
+      "CreateBranchByRevisionDto": {
+        "properties": {
+          "branchName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "branchName"
+        ],
+        "type": "object"
+      },
+      "CreateEndpointDto": {
+        "properties": {
+          "type": {
+            "enum": [
+              "GRAPHQL",
+              "REST_API"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "type": "object"
+      },
+      "CreateProjectDto": {
+        "properties": {
+          "branchName": {
+            "default": "master",
+            "type": "string"
+          },
+          "projectName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "projectName"
+        ],
+        "type": "object"
+      },
+      "CreateRevisionDto": {
+        "properties": {
+          "comment": {
+            "default": "",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "CreateRowDto": {
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "rowId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "rowId",
+          "data"
+        ],
+        "type": "object"
+      },
+      "CreateRowResponse": {
+        "properties": {
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "row": {
+            "$ref": "#/components/schemas/RowModel"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "required": [
+          "table",
+          "previousVersionTableId",
+          "row"
+        ],
+        "type": "object"
+      },
+      "CreateTableDto": {
+        "properties": {
+          "schema": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "tableId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "tableId",
+          "schema"
+        ],
+        "type": "object"
+      },
+      "CreateTableResponse": {
+        "properties": {
+          "branch": {
+            "$ref": "#/components/schemas/BranchModel"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "required": [
+          "branch",
+          "table"
+        ],
+        "type": "object"
+      },
+      "CreateUserDto": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "roleId": {
+            "enum": [
+              "systemAdmin",
+              "systemFullApiRead",
+              "systemUser"
+            ],
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "username",
+          "roleId",
+          "password"
+        ],
+        "type": "object"
+      },
+      "DateTimeFilterDto": {
+        "properties": {
+          "equals": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "gte": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "in": {
+            "items": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "lte": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "notIn": {
+            "items": {
+              "format": "date-time",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "EndpointModel": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "GRAPHQL",
+              "REST_API"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "type"
+        ],
+        "type": "object"
+      },
+      "ErrorModel": {
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "statusCode": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ],
+        "type": "object"
+      },
+      "GetTableRowsDto": {
+        "properties": {
+          "after": {
+            "example": "",
+            "type": "string"
+          },
+          "first": {
+            "default": 100,
+            "type": "number"
+          },
+          "orderBy": {
+            "description": "Array of sorting criteria",
+            "example": [
+              {
+                "direction": "asc",
+                "field": "id"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/OrderByDto"
+            },
+            "type": "array"
+          },
+          "where": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RowWhereInputDto"
+              }
+            ],
+            "description": "Row filtering conditions"
+          }
+        },
+        "required": [
+          "first"
+        ],
+        "type": "object"
+      },
+      "GithubOauth": {
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "type": "object"
+      },
+      "GoogleOauth": {
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "clientId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "available"
+        ],
+        "type": "object"
+      },
+      "Id": {
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "JsonFilterDto": {
+        "properties": {
+          "array_contains": {
+            "description": "Filter on arrays: target JSON array must contain *all* of these values",
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "array_ends_with": {
+            "description": "JSON value that the target JSON array must end with (could be object, array, primitive)",
+            "type": "object"
+          },
+          "array_starts_with": {
+            "description": "JSON value that the target JSON array must start with (could be object, array, primitive)",
+            "type": "object"
+          },
+          "equals": {
+            "description": "Exact JSON match",
+            "type": "object"
+          },
+          "gt": {
+            "description": "Greater-than comparison. Must be a number or numeric JSON value",
+            "type": "object"
+          },
+          "gte": {
+            "description": "Greater-than-or-equal comparison. Must be a number or numeric JSON value",
+            "type": "object"
+          },
+          "lt": {
+            "description": "Less-than comparison. Must be a number or numeric JSON value",
+            "type": "object"
+          },
+          "lte": {
+            "description": "Less-than-or-equal comparison. Must be a number or numeric JSON value",
+            "type": "object"
+          },
+          "mode": {
+            "description": "Case sensitivity mode for string filters within JSON (\"insensitive\" uses ILIKE on PostgreSQL)",
+            "enum": [
+              "default",
+              "insensitive"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "description": "Path in JSON (PostgreSQL: array of keys/indexes, e.g. [\"pet1\",\"petName\"])",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "string_contains": {
+            "description": "Substring match in JSON string value",
+            "type": "string"
+          },
+          "string_ends_with": {
+            "description": "Suffix match in JSON string value",
+            "type": "string"
+          },
+          "string_starts_with": {
+            "description": "Prefix match in JSON string value",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "LoginDto": {
+        "properties": {
+          "emailOrUsername": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "emailOrUsername",
+          "password"
+        ],
+        "type": "object"
+      },
+      "LoginResponse": {
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessToken"
+        ],
+        "type": "object"
+      },
+      "OrderByDto": {
+        "properties": {
+          "direction": {
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "field": {
+            "enum": [
+              "createdAt",
+              "updatedAt",
+              "id"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "direction"
+        ],
+        "type": "object"
+      },
+      "PageInfo": {
+        "properties": {
+          "endCursor": {
+            "type": "string"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "hasPreviousPage": {
+            "type": "boolean"
+          },
+          "startCursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "hasNextPage",
+          "hasPreviousPage"
+        ],
+        "type": "object"
+      },
+      "ParentBranchResponse": {
+        "properties": {
+          "branch": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/Id"
+          }
+        },
+        "required": [
+          "branch",
+          "revision"
+        ],
+        "type": "object"
+      },
+      "ProjectModel": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "organizationId",
+          "createdAt",
+          "name"
+        ],
+        "type": "object"
+      },
+      "ProjectModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/ProjectModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      },
+      "ProjectsConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "RemoveRowResponse": {
+        "properties": {
+          "branch": {
+            "$ref": "#/components/schemas/BranchModel"
+          },
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "required": [
+          "branch"
+        ],
+        "type": "object"
+      },
+      "RemoveUserFromOrganizationDto": {
+        "properties": {
+          "userId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "userId"
+        ],
+        "type": "object"
+      },
+      "RenameRowDto": {
+        "properties": {
+          "nextRowId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nextRowId"
+        ],
+        "type": "object"
+      },
+      "RenameRowResponse": {
+        "properties": {
+          "previousVersionRowId": {
+            "type": "string"
+          },
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "row": {
+            "$ref": "#/components/schemas/RowModel"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "type": "object"
+      },
+      "RevisionModel": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "isDraft": {
+            "type": "boolean"
+          },
+          "isHead": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt",
+          "isDraft",
+          "isHead"
+        ],
+        "type": "object"
+      },
+      "RevisionModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/RevisionModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      },
+      "RevisionsConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/RevisionModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "RoleModel": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "RowModel": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdId": {
+            "type": "string"
+          },
+          "data": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "id": {
+            "type": "string"
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdId",
+          "id",
+          "versionId",
+          "createdAt",
+          "updatedAt",
+          "readonly",
+          "data"
+        ],
+        "type": "object"
+      },
+      "RowModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/RowModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      },
+      "RowWhereInputDto": {
+        "properties": {
+          "AND": {
+            "description": "AND conditions",
+            "items": {
+              "$ref": "#/components/schemas/RowWhereInputDto"
+            },
+            "type": "array"
+          },
+          "NOT": {
+            "description": "NOT conditions",
+            "items": {
+              "$ref": "#/components/schemas/RowWhereInputDto"
+            },
+            "type": "array"
+          },
+          "OR": {
+            "description": "OR conditions",
+            "items": {
+              "$ref": "#/components/schemas/RowWhereInputDto"
+            },
+            "type": "array"
+          },
+          "createdAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilterDto"
+              }
+            ],
+            "description": "Filter by createdAt"
+          },
+          "createdId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringFilterDto"
+              }
+            ],
+            "description": "Filter by createdId"
+          },
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JsonFilterDto"
+              }
+            ],
+            "description": "Filter by data"
+          },
+          "hash": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringFilterDto"
+              }
+            ],
+            "description": "Filter by hash"
+          },
+          "id": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringFilterDto"
+              }
+            ],
+            "description": "Filter by id"
+          },
+          "meta": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JsonFilterDto"
+              }
+            ],
+            "description": "Filter by meta"
+          },
+          "readonly": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/BoolFilterDto"
+              }
+            ],
+            "description": "Filter by readonly"
+          },
+          "schemaHash": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringFilterDto"
+              }
+            ],
+            "description": "Filter by schemaHash"
+          },
+          "updatedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilterDto"
+              }
+            ],
+            "description": "Filter by updatedAt"
+          },
+          "versionId": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StringFilterDto"
+              }
+            ],
+            "description": "Filter by versionId"
+          }
+        },
+        "type": "object"
+      },
+      "RowsConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/RowModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "StringFilterDto": {
+        "properties": {
+          "contains": {
+            "type": "string"
+          },
+          "endsWith": {
+            "type": "string"
+          },
+          "equals": {
+            "type": "string"
+          },
+          "gt": {
+            "type": "string"
+          },
+          "gte": {
+            "type": "string"
+          },
+          "in": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "lt": {
+            "type": "string"
+          },
+          "lte": {
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "default",
+              "insensitive"
+            ],
+            "type": "string"
+          },
+          "not": {
+            "description": "Negation filter (not): a simple string",
+            "type": "string"
+          },
+          "notIn": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "startsWith": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "TableModel": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "createdId",
+          "id",
+          "versionId",
+          "createdAt",
+          "updatedAt",
+          "readonly"
+        ],
+        "type": "object"
+      },
+      "TableModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      },
+      "TablesConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/TableModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "UpdatePasswordDto": {
+        "properties": {
+          "newPassword": {
+            "type": "string"
+          },
+          "oldPassword": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ],
+        "type": "object"
+      },
+      "UpdateProjectDto": {
+        "properties": {
+          "isPublic": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "isPublic"
+        ],
+        "type": "object"
+      },
+      "UpdateRowDto": {
+        "properties": {
+          "data": {
+            "additionalProperties": true,
+            "type": "object"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "UpdateRowResponse": {
+        "properties": {
+          "previousVersionRowId": {
+            "type": "string"
+          },
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "row": {
+            "$ref": "#/components/schemas/RowModel"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateTableDto": {
+        "properties": {
+          "patches": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "patches"
+        ],
+        "type": "object"
+      },
+      "UpdateTableResponse": {
+        "properties": {
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "required": [
+          "previousVersionTableId"
+        ],
+        "type": "object"
+      },
+      "UploadFileResponse": {
+        "properties": {
+          "previousVersionRowId": {
+            "type": "string"
+          },
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "row": {
+            "$ref": "#/components/schemas/RowModel"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "type": "object"
+      },
+      "UserModel": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ],
+        "type": "object"
+      },
+      "UsersOrganizationConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/UsersOrganizationModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "UsersOrganizationModel": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/RoleModel"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserModel"
+          }
+        },
+        "required": [
+          "id",
+          "user",
+          "role"
+        ],
+        "type": "object"
+      },
+      "UsersOrganizationModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/UsersOrganizationModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      },
+      "UsersProjectConnection": {
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/UsersProjectModelEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "$ref": "#/components/schemas/PageInfo"
+          },
+          "totalCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
+        "type": "object"
+      },
+      "UsersProjectModel": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/RoleModel"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserModel"
+          }
+        },
+        "required": [
+          "id",
+          "user",
+          "role"
+        ],
+        "type": "object"
+      },
+      "UsersProjectModelEdgeType": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/UsersProjectModel"
+          }
+        },
+        "required": [
+          "cursor",
+          "node"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "access-token": {
+        "bearerFormat": "JWT",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {},
+    "description": "",
+    "title": "Revisium API",
+    "version": "1.2.0"
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "operationId": "login",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/password": {
+      "put": {
+        "operationId": "updatePassword",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePasswordDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/user": {
+      "post": {
+        "operationId": "createUser",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/configuration": {
+      "get": {
+        "operationId": "getConfiguration",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigurationResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "summary": "",
+        "tags": [
+          "Configuration"
+        ]
+      }
+    },
+    "/api/endpoints/{endpointId}": {
+      "delete": {
+        "operationId": "deleteEndpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpointId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Endpoint"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects": {
+      "get": {
+        "operationId": "projects",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectsConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "post": {
+        "operationId": "createProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fromRevisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateProjectDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}": {
+      "delete": {
+        "operationId": "deleteProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      },
+      "get": {
+        "operationId": "project",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      },
+      "put": {
+        "operationId": "updateProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateProjectDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches": {
+      "get": {
+        "operationId": "branches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchesConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}": {
+      "get": {
+        "operationId": "branch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/create-revision": {
+      "post": {
+        "operationId": "createRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRevisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/draft-revision": {
+      "get": {
+        "operationId": "draftRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/head-revision": {
+      "get": {
+        "operationId": "headRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/parent-branch": {
+      "get": {
+        "operationId": "parentBranch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParentBranchResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/revert-changes": {
+      "post": {
+        "operationId": "revertChanges",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/revisions": {
+      "get": {
+        "operationId": "revisions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "before",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionsConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/start-revision": {
+      "get": {
+        "operationId": "startRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/touched": {
+      "get": {
+        "operationId": "branchTouched",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "branchName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Branch"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/root-branch": {
+      "get": {
+        "operationId": "rootBranch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/users": {
+      "get": {
+        "operationId": "usersProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersProjectConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      },
+      "post": {
+        "operationId": "addUserToProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserToProjectDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/projects/{projectName}/users/{userId}": {
+      "delete": {
+        "operationId": "removeUserFromProject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "projectName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "userId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Project"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/users": {
+      "delete": {
+        "operationId": "removeUserFromOrganization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RemoveUserFromOrganizationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "get": {
+        "operationId": "usersOrganization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsersOrganizationConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Organization"
+        ]
+      },
+      "post": {
+        "operationId": "addUserToOrganization",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "organizationId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserToOrganizationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Organization"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}": {
+      "get": {
+        "operationId": "revision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/child-branches": {
+      "get": {
+        "operationId": "childBranches",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ChildBranchResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      },
+      "post": {
+        "operationId": "createBranch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBranchByRevisionDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/child-revision": {
+      "get": {
+        "operationId": "childRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/endpoints": {
+      "get": {
+        "operationId": "endpoints",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/EndpointModel"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      },
+      "post": {
+        "operationId": "createEndpoint",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEndpointDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndpointModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/parent-revision": {
+      "get": {
+        "operationId": "parentRevision",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables": {
+      "get": {
+        "operationId": "tables",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TablesConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      },
+      "post": {
+        "operationId": "createTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateTableResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Revision"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}": {
+      "delete": {
+        "operationId": "deleteTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      },
+      "get": {
+        "operationId": "table",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      },
+      "patch": {
+        "operationId": "updateTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTableResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/count-foreign-keys-by": {
+      "get": {
+        "operationId": "tableCountForeignKeysBy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/count-foreign-keys-to": {
+      "get": {
+        "operationId": "tableCountForeignKeysTo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/count-rows": {
+      "get": {
+        "operationId": "tableCountRows",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/create-row": {
+      "post": {
+        "operationId": "createRow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRowDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateRowResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/foreign-keys-by": {
+      "get": {
+        "operationId": "tableForeignKeysBy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TablesConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/foreign-keys-to": {
+      "get": {
+        "operationId": "tableForeignKeysTo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TablesConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rename": {
+      "patch": {
+        "operationId": "renameTable",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTableDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateTableResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows": {
+      "post": {
+        "operationId": "rows",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetTableRowsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowsConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}": {
+      "delete": {
+        "operationId": "deleteRow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RemoveRowResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      },
+      "get": {
+        "operationId": "row",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowModel"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      },
+      "put": {
+        "operationId": "updateRow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRowDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateRowResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/count-foreign-keys-by": {
+      "get": {
+        "operationId": "rowCountForeignKeysBy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/count-foreign-keys-to": {
+      "get": {
+        "operationId": "rowCountForeignKeysTo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "number"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/foreign-keys-by": {
+      "get": {
+        "operationId": "rowForeignKeysBy",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "foreignKeyByTableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowsConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/foreign-keys-to": {
+      "get": {
+        "operationId": "rowForeignKeysTo",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "foreignKeyToTableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowsConnection"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/rename": {
+      "patch": {
+        "operationId": "renameRow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameRowDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenameRowResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/upload/{fileId}": {
+      "post": {
+        "operationId": "uploadFile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UploadFileResponse"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      }
+    },
+    "/api/revision/{revisionId}/tables/{tableId}/schema": {
+      "get": {
+        "operationId": "tableSchema",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Table"
+        ]
+      }
+    },
+    "/api/user/me": {
+      "get": {
+        "operationId": "me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "User"
+        ]
+      }
+    },
+    "/health/liveness": {
+      "get": {
+        "operationId": "liveness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "details": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "error": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {},
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "info": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "ok",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The Health Check is successful"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "details": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "message": "Could not connect",
+                          "status": "down"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "error": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "redis": {
+                          "message": "Could not connect",
+                          "status": "down"
+                        }
+                      },
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "info": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The Health Check is not successful"
+          }
+        },
+        "summary": "",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/readiness": {
+      "get": {
+        "operationId": "readiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "details": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "error": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {},
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "info": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "ok",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The Health Check is successful"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "details": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        },
+                        "redis": {
+                          "message": "Could not connect",
+                          "status": "down"
+                        }
+                      },
+                      "type": "object"
+                    },
+                    "error": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "redis": {
+                          "message": "Could not connect",
+                          "status": "down"
+                        }
+                      },
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "info": {
+                      "additionalProperties": {
+                        "additionalProperties": true,
+                        "properties": {
+                          "status": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "status"
+                        ],
+                        "type": "object"
+                      },
+                      "example": {
+                        "database": {
+                          "status": "up"
+                        }
+                      },
+                      "nullable": true,
+                      "type": "object"
+                    },
+                    "status": {
+                      "example": "error",
+                      "type": "string"
+                    }
+                  },
+                  "type": "object"
+                }
+              }
+            },
+            "description": "The Health Check is not successful"
+          }
+        },
+        "summary": "",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "servers": [],
+  "tags": []
+}

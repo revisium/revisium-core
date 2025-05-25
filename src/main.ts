@@ -1,13 +1,8 @@
-import {
-  ConsoleLogger,
-  INestApplication,
-  ValidationPipe,
-} from '@nestjs/common';
+import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { initSwagger } from 'src/api/rest-api/init-swagger';
 import { AppModule } from 'src/app.module';
-import * as packageJson from '../package.json';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -32,32 +27,6 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
   await app.listen(port);
-}
-
-function initSwagger(app: INestApplication<any>) {
-  const documentBuilder = new DocumentBuilder()
-    .setTitle('Revisium API')
-    .setVersion(packageJson.version)
-    .addBearerAuth(
-      {
-        type: 'http',
-        scheme: 'bearer',
-        bearerFormat: 'JWT',
-      },
-      'access-token',
-    )
-    .build();
-
-  const document = SwaggerModule.createDocument(app, documentBuilder);
-  SwaggerModule.setup('/api', app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-      tryItOutEnabled: true,
-      filter: true,
-      ignoreGlobalPrefix: true,
-      docExpansion: 'none',
-    },
-  });
 }
 
 bootstrap();
