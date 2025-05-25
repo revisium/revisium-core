@@ -24,7 +24,6 @@ describe('Swagger OpenAPI JSON (e2e)', () => {
   });
 
   it('GET /api-json should match the local openapi.json', async () => {
-    // читаем ожидаемую спецификацию из файла
     const specPath = path.resolve(__dirname, '../openapi.json');
     const expectedSpec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
 
@@ -33,7 +32,6 @@ describe('Swagger OpenAPI JSON (e2e)', () => {
       .expect('Content-Type', /json/)
       .expect(200);
 
-    // глубокое сравнение
     expect(res.body).toEqual(expectedSpec);
   });
 });
