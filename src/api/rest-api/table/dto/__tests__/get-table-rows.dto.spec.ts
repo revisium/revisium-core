@@ -1,9 +1,10 @@
-import { validate, ValidationError } from 'class-validator';
+import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import {
   SortDirection,
   SortField,
 } from 'src/api/rest-api/share/model/order-by.model';
+import { findConstraint } from 'src/api/rest-api/table/dto/__tests__/utils';
 import { GetTableRowsDto } from '../get-table-rows.dto';
 
 describe('GetTableRowsDto', () => {
@@ -53,8 +54,8 @@ describe('GetTableRowsDto', () => {
       orderBy: [{ field: 'invalidField', direction: SortDirection.asc } as any],
     });
 
-    expect(findConstraint(errors, 'orderBy.0.field', 'isEnum')).toMatch(
-      /must be one of the following values/i,
+    expect(findConstraint(errors, 'field', 'isEnum')).toMatch(
+      /field must be a valid SortField/i,
     );
   });
 
@@ -66,31 +67,28 @@ describe('GetTableRowsDto', () => {
       }),
     ).toThrow('`orderBy` must be valid JSON array');
   });
+
+  it('should pass with valid where filter', async () => {
+    const errors = await getErrors({
+      first: 100,
+      where: { id: { equals: 'row1' } },
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('should fail when where is an array', async () => {
+    const errors = await getErrors({
+      first: 1,
+      where: [] as any,
+    });
+    const msg = findConstraint(errors, 'where', 'isObject');
+    expect(msg).toBeDefined();
+    expect(msg).toMatch(/where must be an object/);
+  });
+
   const make = (input: Partial<GetTableRowsDto>) =>
     plainToInstance(GetTableRowsDto, input);
 
   const getErrors = async (input: Partial<GetTableRowsDto>) =>
     validate(make(input));
-
-  const findConstraint = (
-    errors: ValidationError[],
-    path: string,
-    constraintKey: string,
-  ): string | undefined => {
-    const parts = path.split('.');
-    let node: ValidationError | undefined = errors.find(
-      (e) => e.property === parts[0],
-    );
-
-    for (let i = 1; i < parts.length && node; i++) {
-      const part = parts[i];
-      if (node.children) {
-        node = !isNaN(Number(part))
-          ? node.children[Number(part)]
-          : node.children.find((c) => c.property === part);
-      }
-    }
-
-    return node?.constraints?.[constraintKey];
-  };
 });

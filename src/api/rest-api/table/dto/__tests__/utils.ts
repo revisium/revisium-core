@@ -2,9 +2,23 @@ import { ValidationError } from 'class-validator';
 
 export function findConstraint(
   errors: ValidationError[],
-  prop: string,
-  key: string,
+  property: string,
+  constraintKey: string,
 ): string | undefined {
-  const e = errors.find((e) => e.property === prop);
-  return e?.constraints?.[key];
+  // Recursive search for a ValidationError with given property
+  const stack: ValidationError[] = [...errors];
+  while (stack.length) {
+    const e = stack.pop()!;
+    if (
+      e.property === property &&
+      e.constraints &&
+      e.constraints[constraintKey]
+    ) {
+      return e.constraints[constraintKey];
+    }
+    if (e.children && e.children.length) {
+      stack.push(...e.children);
+    }
+  }
+  return undefined;
 }

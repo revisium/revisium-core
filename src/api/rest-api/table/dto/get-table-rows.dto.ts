@@ -4,6 +4,7 @@ import { Transform, Type } from 'class-transformer';
 import {
   ArrayNotEmpty,
   IsInt,
+  IsObject,
   IsOptional,
   IsString,
   Min,
@@ -51,8 +52,9 @@ export class GetTableRowsDto {
     description: 'Row filtering conditions',
     type: RowWhereInputDto,
   })
+  @IsOptional()
+  @IsObject({ message: 'where must be an object' })
   @ValidateNested()
   @Type(() => RowWhereInputDto)
-  @IsOptional()
   where?: RowWhereInputDto;
 }

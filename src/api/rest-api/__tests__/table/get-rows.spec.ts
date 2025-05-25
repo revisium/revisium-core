@@ -17,6 +17,7 @@ describe('restapi - table rows', () => {
         .send({
           first: 10,
           orderBy: [{ field: 'id', direction: 'asc' }],
+          where: { id: { equals: preparedData.project.rowId } },
         })
         .expect(200)
         .then((res) => res.body);
