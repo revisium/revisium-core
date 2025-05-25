@@ -77,7 +77,7 @@ export class JsonFilterDto {
   })
   @IsOptional()
   @IsNumber()
-  lt?: any;
+  lt?: number;
 
   @ApiPropertyOptional({
     description:
@@ -85,7 +85,7 @@ export class JsonFilterDto {
   })
   @IsOptional()
   @IsNumber()
-  lte?: any;
+  lte?: number;
 
   @ApiPropertyOptional({
     description:
@@ -93,7 +93,7 @@ export class JsonFilterDto {
   })
   @IsOptional()
   @IsNumber()
-  gt?: any;
+  gt?: number;
 
   @ApiPropertyOptional({
     description:
@@ -101,5 +101,5 @@ export class JsonFilterDto {
   })
   @IsOptional()
   @IsNumber()
-  gte?: any;
+  gte?: number;
 }
