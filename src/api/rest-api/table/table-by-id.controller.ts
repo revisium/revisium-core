@@ -77,13 +77,6 @@ import {
 import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
 import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
 
-@UsePipes(
-  new ValidationPipe({
-    whitelist: true,
-    forbidNonWhitelisted: true,
-    transform: true,
-  }),
-)
 @UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
   action: PermissionAction.read,
@@ -126,6 +119,13 @@ export class TableByIdController {
     );
   }
 
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Post('rows')
   @ApiOperation({ operationId: 'rows' })
