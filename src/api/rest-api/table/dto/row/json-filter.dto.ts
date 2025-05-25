@@ -5,6 +5,7 @@ import {
   IsArray,
   ArrayNotEmpty,
   IsIn,
+  IsNumber,
 } from 'class-validator';
 
 export class JsonFilterDto {
@@ -72,30 +73,33 @@ export class JsonFilterDto {
   array_ends_with?: any;
 
   @ApiPropertyOptional({
-    description:
-      'Less-than comparison. Can be any JSON value or a Prisma JSON field ref',
+    description: 'Less-than comparison. Must be a number or numeric JSON value',
   })
   @IsOptional()
+  @IsNumber()
   lt?: any;
 
   @ApiPropertyOptional({
     description:
-      'Less-than-or-equal comparison. Can be any JSON value or a Prisma JSON field ref',
+      'Less-than-or-equal comparison. Must be a number or numeric JSON value',
   })
   @IsOptional()
+  @IsNumber()
   lte?: any;
 
   @ApiPropertyOptional({
     description:
-      'Greater-than comparison. Can be any JSON value or a Prisma JSON field ref',
+      'Greater-than comparison. Must be a number or numeric JSON value',
   })
   @IsOptional()
+  @IsNumber()
   gt?: any;
 
   @ApiPropertyOptional({
     description:
-      'Greater-than-or-equal comparison. Can be any JSON value or a Prisma JSON field ref',
+      'Greater-than-or-equal comparison. Must be a number or numeric JSON value',
   })
   @IsOptional()
+  @IsNumber()
   gte?: any;
 }

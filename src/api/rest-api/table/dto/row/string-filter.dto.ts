@@ -1,11 +1,9 @@
-import { ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsOptional,
   IsString,
   IsArray,
   ArrayNotEmpty,
-  ValidateNested,
   IsIn,
 } from 'class-validator';
 
@@ -70,11 +68,9 @@ export class StringFilterDto {
   mode?: 'default' | 'insensitive';
 
   @ApiPropertyOptional({
-    oneOf: [{ $ref: getSchemaPath(StringFilterDto) }, { type: 'string' }],
-    description: 'Filter negation (not).',
+    description: 'Negation filter (not): a simple string',
   })
-  @ValidateNested()
-  @Type(() => StringFilterDto)
   @IsOptional()
-  not?: StringFilterDto | string;
+  @IsString()
+  not?: string;
 }

@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ValidateNested, IsOptional } from 'class-validator';
+import { ValidateNested, IsOptional, IsArray } from 'class-validator';
 import { StringFilterDto } from './string-filter.dto';
 import { BoolFilterDto } from './bool-filter.dto';
 import { DateTimeFilterDto } from './datetime-filter.dto';
@@ -11,27 +11,30 @@ export class RowWhereInputDto {
     type: () => [RowWhereInputDto],
     description: 'AND conditions',
   })
+  @IsOptional()
+  @IsArray({ message: 'AND must be an array of filters' })
   @ValidateNested({ each: true })
   @Type(() => RowWhereInputDto)
-  @IsOptional()
   AND?: RowWhereInputDto[];
 
   @ApiPropertyOptional({
     type: () => [RowWhereInputDto],
     description: 'OR conditions',
   })
+  @IsOptional()
+  @IsArray({ message: 'OR must be an array of filters' })
   @ValidateNested({ each: true })
   @Type(() => RowWhereInputDto)
-  @IsOptional()
   OR?: RowWhereInputDto[];
 
   @ApiPropertyOptional({
     type: () => [RowWhereInputDto],
     description: 'NOT conditions',
   })
+  @IsOptional()
+  @IsArray({ message: 'NOT must be an array of filters' })
   @ValidateNested({ each: true })
   @Type(() => RowWhereInputDto)
-  @IsOptional()
   NOT?: RowWhereInputDto[];
 
   @ApiPropertyOptional({

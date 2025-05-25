@@ -1,11 +1,9 @@
-import { ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
-  IsOptional,
-  IsDateString,
-  IsArray,
   ArrayNotEmpty,
-  ValidateNested,
+  IsArray,
+  IsDateString,
+  IsOptional,
 } from 'class-validator';
 
 export class DateTimeFilterDto {
@@ -14,14 +12,22 @@ export class DateTimeFilterDto {
   @IsDateString()
   equals?: string;
 
-  @ApiPropertyOptional({ isArray: true, type: String, format: 'date-time' })
+  @ApiPropertyOptional({
+    isArray: true,
+    type: String,
+    format: 'date-time',
+  })
   @IsOptional()
   @IsArray()
   @ArrayNotEmpty()
   @IsDateString(undefined, { each: true })
   in?: string[];
 
-  @ApiPropertyOptional({ isArray: true, type: String, format: 'date-time' })
+  @ApiPropertyOptional({
+    isArray: true,
+    type: String,
+    format: 'date-time',
+  })
   @IsOptional()
   @IsArray()
   @ArrayNotEmpty()
@@ -47,16 +53,4 @@ export class DateTimeFilterDto {
   @IsOptional()
   @IsDateString()
   gte?: string;
-
-  @ApiPropertyOptional({
-    oneOf: [
-      { $ref: getSchemaPath(DateTimeFilterDto) },
-      { type: 'string', format: 'date-time' },
-    ],
-    description: 'Filter negation (not).',
-  })
-  @ValidateNested()
-  @Type(() => DateTimeFilterDto)
-  @IsOptional()
-  not?: DateTimeFilterDto | string;
 }
