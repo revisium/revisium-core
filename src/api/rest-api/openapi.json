@@ -485,19 +485,19 @@
           },
           "gt": {
             "description": "Greater-than comparison. Must be a number or numeric JSON value",
-            "type": "object"
+            "type": "number"
           },
           "gte": {
             "description": "Greater-than-or-equal comparison. Must be a number or numeric JSON value",
-            "type": "object"
+            "type": "number"
           },
           "lt": {
             "description": "Less-than comparison. Must be a number or numeric JSON value",
-            "type": "object"
+            "type": "number"
           },
           "lte": {
             "description": "Less-than-or-equal comparison. Must be a number or numeric JSON value",
-            "type": "object"
+            "type": "number"
           },
           "mode": {
             "description": "Case sensitivity mode for string filters within JSON (\"insensitive\" uses ILIKE on PostgreSQL)",
