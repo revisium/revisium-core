@@ -616,4 +616,51 @@ describe('restapi - table-by-id', () => {
       return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rename`;
     }
   });
+
+  describe('POST /revision/:revisionId/tables/:tableId/rows - orderBy and filtering', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('should return rows with orderBy and where filters', async () => {
+      const response = await request(app.getHttpServer())
+        .post(getRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          first: 10,
+          orderBy: [{ field: 'id', direction: 'asc' }],
+          where: { id: { equals: preparedData.project.rowId } },
+        })
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(response.totalCount).toEqual(1);
+    });
+
+    it('should return 400 for invalid where filter', async () => {
+      const invalidProp = 'nonExistentField';
+      const errorResponse = await request(app.getHttpServer())
+        .post(getRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          first: 10,
+          orderBy: [{ field: 'id', direction: 'asc' }],
+          where: { [invalidProp]: { equals: 'value' } },
+        })
+        .expect(400)
+        .then((res) => res.body);
+
+      expect(errorResponse.statusCode).toBe(400);
+      expect(errorResponse.message).toEqual(
+        expect.arrayContaining([expect.stringMatching(invalidProp)]),
+      );
+      expect(errorResponse.error).toBe('Bad Request');
+    });
+
+    function getRowsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows`;
+    }
+  });
 });
