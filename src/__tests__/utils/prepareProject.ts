@@ -105,7 +105,6 @@ async function prepareBranch(prismaService: PrismaService) {
         create: {
           id: projectId,
           name: projectName,
-          isPublic: true,
           organization: {
             create: {
               id: organizationId,

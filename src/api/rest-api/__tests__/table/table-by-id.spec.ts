@@ -6,10 +6,12 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import * as request from 'supertest';
 
 describe('restapi - table-by-id', () => {
   let app: INestApplication;
+  let prismaService: PrismaService;
 
   beforeAll(async () => {
     registerGraphqlEnums();
@@ -19,12 +21,20 @@ describe('restapi - table-by-id', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    prismaService = app.get(PrismaService);
     await app.init();
   });
 
   afterAll(async () => {
     await app.close();
   });
+
+  const makeProjectPublic = async (projectId: string) => {
+    await prismaService.project.update({
+      where: { id: projectId },
+      data: { isPublic: true },
+    });
+  };
 
   describe('GET /revision/:revisionId/tables/:tableId', () => {
     let preparedData: PrepareDataReturnType;
@@ -44,23 +54,15 @@ describe('restapi - table-by-id', () => {
       expect(result.versionId).toBe(preparedData.project.draftTableVersionId);
     });
 
-    it('another owner can get table (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get table (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getTableUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result.id).toBe(preparedData.project.tableId);
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get table without authentication (public access)', async () => {
-      const result = await request(app.getHttpServer())
-        .get(getTableUrl())
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result.id).toBe(preparedData.project.tableId);
+    it('cannot get table without authentication (private project)', async () => {
+      return request(app.getHttpServer()).get(getTableUrl()).expect(403);
     });
 
     function getTableUrl() {
@@ -87,27 +89,15 @@ describe('restapi - table-by-id', () => {
       );
     });
 
-    it('another owner can get row count (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get row count (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getCountRowsUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get row count without authentication', async () => {
-      const result = await request(app.getHttpServer())
-        .get(getCountRowsUrl())
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+    it('cannot get row count without authentication (private project)', async () => {
+      return request(app.getHttpServer()).get(getCountRowsUrl()).expect(403);
     });
 
     function getCountRowsUrl() {
@@ -136,31 +126,23 @@ describe('restapi - table-by-id', () => {
       expect(result).toHaveProperty('totalCount');
     });
 
-    it('another owner can get rows (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get rows (private project)', async () => {
+      return request(app.getHttpServer())
         .post(getRowsUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .send({
           first: 10,
         })
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result).toHaveProperty('edges');
-      expect(result).toHaveProperty('totalCount');
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get rows without authentication', async () => {
-      const result = await request(app.getHttpServer())
+    it('cannot get rows without authentication (private project)', async () => {
+      return request(app.getHttpServer())
         .post(getRowsUrl())
         .send({
           first: 10,
         })
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result).toHaveProperty('edges');
-      expect(result).toHaveProperty('totalCount');
+        .expect(403);
     });
 
     function getRowsUrl() {
@@ -194,7 +176,7 @@ describe('restapi - table-by-id', () => {
       expect(result.row.data.ver).toBe(3);
     });
 
-    it('another owner cannot create row (no write permission)', async () => {
+    it('another owner cannot create row (private project)', async () => {
       return request(app.getHttpServer())
         .post(getCreateRowUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
@@ -204,7 +186,7 @@ describe('restapi - table-by-id', () => {
             ver: 3,
           },
         })
-        .expect(/You are not allowed to create on Row/);
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot create row without authentication', async () => {
@@ -241,23 +223,15 @@ describe('restapi - table-by-id', () => {
       expect(typeof result).toBe('object');
     });
 
-    it('another owner can get schema (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get schema (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getSchemaUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result).toBe('object');
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get schema without authentication', async () => {
-      const result = await request(app.getHttpServer())
-        .get(getSchemaUrl())
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result).toBe('object');
+    it('cannot get schema without authentication (private project)', async () => {
+      return request(app.getHttpServer()).get(getSchemaUrl()).expect(403);
     });
 
     function getSchemaUrl() {
@@ -284,27 +258,17 @@ describe('restapi - table-by-id', () => {
       );
     });
 
-    it('another owner can get foreign keys by count (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get foreign keys by count (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getCountForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get foreign keys by count without authentication', async () => {
-      const result = await request(app.getHttpServer())
+    it('cannot get foreign keys by count without authentication (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getCountForeignKeysByUrl())
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+        .expect(403);
     });
 
     function getCountForeignKeysByUrl() {
@@ -331,27 +295,19 @@ describe('restapi - table-by-id', () => {
       expect(result).toHaveProperty('totalCount');
     });
 
-    it('another owner can get foreign keys by (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get foreign keys by (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .query({ limit: 10, offset: 0 })
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result).toHaveProperty('edges');
-      expect(result).toHaveProperty('totalCount');
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get foreign keys by without authentication', async () => {
-      const result = await request(app.getHttpServer())
+    it('cannot get foreign keys by without authentication (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getForeignKeysByUrl())
         .query({ limit: 10, offset: 0 })
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result).toHaveProperty('edges');
-      expect(result).toHaveProperty('totalCount');
+        .expect(403);
     });
 
     function getForeignKeysByUrl() {
@@ -378,27 +334,17 @@ describe('restapi - table-by-id', () => {
       );
     });
 
-    it('another owner can get foreign keys to count (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get foreign keys to count (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getCountForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get foreign keys to count without authentication', async () => {
-      const result = await request(app.getHttpServer())
+    it('cannot get foreign keys to count without authentication (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getCountForeignKeysToUrl())
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+        .expect(403);
     });
 
     function getCountForeignKeysToUrl() {
@@ -425,27 +371,19 @@ describe('restapi - table-by-id', () => {
       expect(result).toHaveProperty('totalCount');
     });
 
-    it('another owner can get foreign keys to (public project)', async () => {
-      const result = await request(app.getHttpServer())
+    it('another owner cannot get foreign keys to (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .query({ limit: 10, offset: 0 })
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result).toHaveProperty('edges');
-      expect(result).toHaveProperty('totalCount');
+        .expect(/You are not allowed to read on Project/);
     });
 
-    it('can get foreign keys to without authentication', async () => {
-      const result = await request(app.getHttpServer())
+    it('cannot get foreign keys to without authentication (private project)', async () => {
+      return request(app.getHttpServer())
         .get(getForeignKeysToUrl())
         .query({ limit: 10, offset: 0 })
-        .expect(200)
-        .then((res) => res.body);
-
-      expect(result).toHaveProperty('edges');
-      expect(result).toHaveProperty('totalCount');
+        .expect(403);
     });
 
     function getForeignKeysToUrl() {
@@ -471,11 +409,11 @@ describe('restapi - table-by-id', () => {
       expect(result).toHaveProperty('projectId');
     });
 
-    it('another owner cannot delete table (no delete permission)', async () => {
+    it('another owner cannot delete table (private project)', async () => {
       return request(app.getHttpServer())
         .delete(getDeleteUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect(/You are not allowed to delete on Table/);
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot delete table without authentication', async () => {
@@ -517,7 +455,7 @@ describe('restapi - table-by-id', () => {
       expect(result).toHaveProperty('previousVersionTableId');
     });
 
-    it('another owner cannot update table (no update permission)', async () => {
+    it('another owner cannot update table (private project)', async () => {
       return request(app.getHttpServer())
         .patch(getUpdateUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
@@ -533,7 +471,7 @@ describe('restapi - table-by-id', () => {
             },
           ],
         })
-        .expect(/You are not allowed to update on Table/);
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot update table without authentication', async () => {
@@ -583,14 +521,14 @@ describe('restapi - table-by-id', () => {
       expect(result.table.id).toBe(nextTableId);
     });
 
-    it('another owner cannot rename table (no update permission)', async () => {
+    it('another owner cannot rename table (private project)', async () => {
       return request(app.getHttpServer())
         .patch(getRenameUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .send({
           nextTableId,
         })
-        .expect(/You are not allowed to update on Table/);
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot rename table without authentication', async () => {
@@ -662,5 +600,97 @@ describe('restapi - table-by-id', () => {
     function getRowsUrl() {
       return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows`;
     }
+  });
+
+  describe('Public Project Access Tests', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+      await makeProjectPublic(preparedData.project.projectId);
+    });
+
+    it('another owner can get table (public project)', async () => {
+      const result = await request(app.getHttpServer())
+        .get(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.id).toBe(preparedData.project.tableId);
+    });
+
+    it('can get table without authentication (public project)', async () => {
+      const result = await request(app.getHttpServer())
+        .get(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}`,
+        )
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.id).toBe(preparedData.project.tableId);
+    });
+
+    it('can get rows without authentication (public project)', async () => {
+      const result = await request(app.getHttpServer())
+        .post(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows`,
+        )
+        .send({
+          first: 10,
+        })
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('edges');
+      expect(result).toHaveProperty('totalCount');
+    });
+
+    it('another owner cannot create row (no write permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .post(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/create-row`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rowId: 'test-row-id',
+          data: {
+            ver: 3,
+          },
+        })
+        .expect(/You are not allowed to create on Row/);
+    });
+
+    it('another owner cannot delete table (no delete permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .delete(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(/You are not allowed to delete on Table/);
+    });
+
+    it('another owner cannot update table (no update permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .patch(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          patches: [
+            {
+              op: 'replace',
+              path: '/properties/ver',
+              value: {
+                type: 'string',
+                default: 'updated',
+              },
+            },
+          ],
+        })
+        .expect(/You are not allowed to update on Table/);
+    });
   });
 });
