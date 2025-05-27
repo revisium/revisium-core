@@ -17,6 +17,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -123,14 +124,18 @@ export class ProjectController {
   })
   @Delete(':projectName')
   @ApiOperation({ operationId: 'deleteProject' })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   async deleteProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
-  ): Promise<boolean> {
-    return this.commandBus.execute<DeleteProjectCommand, boolean>(
+  ): Promise<SuccessModelDto> {
+    const result = await this.commandBus.execute<DeleteProjectCommand, boolean>(
       new DeleteProjectCommand({ organizationId, projectName }),
     );
+
+    return {
+      success: result,
+    };
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
@@ -140,15 +145,19 @@ export class ProjectController {
   })
   @Put(':projectName')
   @ApiOperation({ operationId: 'updateProject' })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   async updateProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
     @Body() data: UpdateProjectDto,
-  ): Promise<boolean> {
-    return this.commandBus.execute<UpdateProjectCommand, boolean>(
+  ): Promise<SuccessModelDto> {
+    const result = await this.commandBus.execute<UpdateProjectCommand, boolean>(
       new UpdateProjectCommand({ organizationId, projectName, ...data }),
     );
+
+    return {
+      success: result,
+    };
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
@@ -179,15 +188,20 @@ export class ProjectController {
   })
   @Post(':projectName/users')
   @ApiOperation({ operationId: 'addUserToProject' })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   async addUserToProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
     @Body() data: AddUserToProjectDto,
-  ): Promise<boolean> {
-    return this.commandBus.execute<AddUserToProjectCommand, boolean>(
-      new AddUserToProjectCommand({ organizationId, projectName, ...data }),
-    );
+  ): Promise<SuccessModelDto> {
+    const result = await this.commandBus.execute<
+      AddUserToProjectCommand,
+      boolean
+    >(new AddUserToProjectCommand({ organizationId, projectName, ...data }));
+
+    return {
+      success: result,
+    };
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
@@ -197,18 +211,25 @@ export class ProjectController {
   })
   @Delete(':projectName/users/:userId')
   @ApiOperation({ operationId: 'removeUserFromProject' })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   async removeUserFromProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
     @Param('userId') userId: string,
-  ): Promise<boolean> {
-    return this.commandBus.execute<RemoveUserFromProjectCommand, boolean>(
+  ): Promise<SuccessModelDto> {
+    const result = await this.commandBus.execute<
+      RemoveUserFromProjectCommand,
+      boolean
+    >(
       new RemoveUserFromProjectCommand({
         organizationId,
         projectName,
         userId,
       }),
     );
+
+    return {
+      success: result,
+    };
   }
 }

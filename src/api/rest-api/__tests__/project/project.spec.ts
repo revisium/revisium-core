@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   prepareData,
@@ -23,6 +23,11 @@ describe('restapi - project', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+      }),
+    );
     prismaService = app.get(PrismaService);
     await app.init();
   });
@@ -84,13 +89,13 @@ describe('restapi - project', () => {
     });
 
     it('owner can attempt to get root branch', async () => {
-      // Note: This endpoint may fail if no root branch exists in test data
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(getRootBranchUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect((res) => {
-          expect([200, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.id).toBe(preparedData.project.branchId);
     });
 
     it('another owner cannot get root branch (private project)', async () => {
@@ -117,13 +122,14 @@ describe('restapi - project', () => {
     });
 
     it('owner can get branches', async () => {
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(getBranchesUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .query({ first: 10 })
-        .expect((res) => {
-          expect([200, 400, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBe(1);
     });
 
     it('another owner cannot get branches (private project)', async () => {
@@ -131,18 +137,16 @@ describe('restapi - project', () => {
         .get(getBranchesUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .query({ first: 10 })
-        .expect((res) => {
-          expect([403, 400, 500].includes(res.status)).toBe(true);
-        });
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get branches without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getBranchesUrl())
         .query({ first: 10 })
-        .expect((res) => {
-          expect([403, 400, 500].includes(res.status)).toBe(true);
-        });
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getBranchesUrl() {
@@ -164,7 +168,7 @@ describe('restapi - project', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'boolean' || typeof result === 'object').toBe(true);
+      expect(result).toStrictEqual({ success: true });
     });
 
     it('another owner cannot delete project (private project)', async () => {
@@ -200,7 +204,7 @@ describe('restapi - project', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'boolean' || typeof result === 'object').toBe(true);
+      expect(result).toStrictEqual({ success: true });
     });
 
     it('another owner cannot update project (private project)', async () => {
@@ -235,14 +239,14 @@ describe('restapi - project', () => {
     });
 
     it('owner can attempt to get project users', async () => {
-      // Note: This endpoint has issues with query parameter transformation in tests
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(getUsersUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .query({ first: 10 })
-        .expect((res) => {
-          expect([200, 400, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBe(0);
     });
 
     it('another owner cannot get project users (private project)', async () => {
@@ -297,7 +301,7 @@ describe('restapi - project', () => {
         .expect(201)
         .then((res) => res.body);
 
-      expect(typeof result === 'boolean' || typeof result === 'object').toBe(true);
+      expect(result).toStrictEqual({ success: true });
 
       // Verify user was added
       const userProject = await prismaService.userProject.findFirst({
@@ -373,7 +377,7 @@ describe('restapi - project', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'boolean' || typeof result === 'object').toBe(true);
+      expect(result).toStrictEqual({ success: true });
 
       // Verify user was removed
       const userProject = await prismaService.userProject.findFirst({
@@ -437,14 +441,14 @@ describe('restapi - project', () => {
     });
 
     it('can attempt to get root branch without authentication (public project)', async () => {
-      // Note: This endpoint may have issues with test data
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(
           `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/root-branch`,
         )
-        .expect((res) => {
-          expect([200, 400, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.id).toBe(preparedData.project.branchId);
     });
 
     it('another owner cannot delete project (no delete permission on public project)', async () => {
@@ -571,7 +575,7 @@ describe('restapi - project', () => {
         .expect(201)
         .then((res) => res.body);
 
-      expect(typeof addResult === 'boolean' || typeof addResult === 'object').toBe(true);
+      expect(addResult).toStrictEqual({ success: true });
 
       // Verify user was added
       const userProject = await prismaService.userProject.findFirst({
@@ -589,7 +593,7 @@ describe('restapi - project', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof removeResult === 'boolean' || typeof removeResult === 'object').toBe(true);
+      expect(removeResult).toStrictEqual({ success: true });
 
       // Verify user was removed
       const removedUserProject = await prismaService.userProject.findFirst({
@@ -643,9 +647,7 @@ describe('restapi - project', () => {
           userId: 'non-existent-user',
           roleId: UserProjectRoles.reader,
         })
-        .expect((res) => {
-          expect([400, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(500);
     });
 
     it('should handle removing non-existent user from project', async () => {
@@ -654,9 +656,7 @@ describe('restapi - project', () => {
           `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/users/non-existent-user`,
         )
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect((res) => {
-          expect([200, 400, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(400);
     });
   });
 });
