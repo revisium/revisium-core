@@ -36,6 +36,7 @@ import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-met
 import {
   CreateRevisionDto,
   GetBranchRevisionsDto,
+  TouchedModelDto,
 } from 'src/api/rest-api/branch/dto';
 import {
   BranchModel,
@@ -82,19 +83,23 @@ export class BranchByNameController {
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('touched')
   @ApiOperation({ operationId: 'branchTouched' })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: TouchedModelDto })
   async getTouched(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
-  ) {
+  ): Promise<TouchedModelDto> {
     const branch: BranchModel = await this.resolveBranch(
       organizationId,
       projectName,
       branchName,
     );
 
-    return this.queryBus.execute(new GetTouchedByBranchIdQuery(branch.id));
+    return {
+      touched: await this.queryBus.execute(
+        new GetTouchedByBranchIdQuery(branch.id),
+      ),
+    };
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)

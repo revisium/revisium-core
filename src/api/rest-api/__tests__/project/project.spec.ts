@@ -647,7 +647,7 @@ describe('restapi - project', () => {
           userId: 'non-existent-user',
           roleId: UserProjectRoles.reader,
         })
-        .expect(500);
+        .expect(400);
     });
 
     it('should handle removing non-existent user from project', async () => {

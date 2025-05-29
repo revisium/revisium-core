@@ -1,5 +1,6 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { nanoid } from 'nanoid';
 import {
   prepareData,
   PrepareDataReturnType,
@@ -22,6 +23,11 @@ describe('restapi - branch-by-name', () => {
 
     app = moduleFixture.createNestApplication();
     prismaService = app.get(PrismaService);
+    app.useGlobalPipes(
+      new ValidationPipe({
+        transform: true,
+      }),
+    );
     await app.init();
   });
 
@@ -50,21 +56,22 @@ describe('restapi - branch-by-name', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('name');
-      expect(result).toHaveProperty('projectId');
-      expect(result.projectId).toBe(preparedData.project.projectId);
+      expect(result.id).toBe(preparedData.project.branchId);
     });
 
     it('another owner cannot get branch (private project)', async () => {
       return request(app.getHttpServer())
         .get(getBranchUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get branch without authentication (private project)', async () => {
-      return request(app.getHttpServer()).get(getBranchUrl()).expect(403);
+      return request(app.getHttpServer())
+        .get(getBranchUrl())
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getBranchUrl() {
@@ -86,18 +93,22 @@ describe('restapi - branch-by-name', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'boolean' || typeof result === 'object').toBe(true);
+      expect(result.touched).toBe(true);
     });
 
     it('another owner cannot get touched status (private project)', async () => {
       return request(app.getHttpServer())
         .get(getTouchedUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get touched status without authentication (private project)', async () => {
-      return request(app.getHttpServer()).get(getTouchedUrl()).expect(403);
+      return request(app.getHttpServer())
+        .get(getTouchedUrl())
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getTouchedUrl() {
@@ -107,40 +118,61 @@ describe('restapi - branch-by-name', () => {
 
   describe('GET /organization/:organizationId/projects/:projectName/branches/:branchName/parent-branch', () => {
     let preparedData: PrepareDataReturnType;
+    let childBranchName: string;
 
     beforeEach(async () => {
       preparedData = await prepareData(app);
+
+      const childBranch = await prismaService.branch.create({
+        data: {
+          id: nanoid(),
+          name: nanoid(),
+          projectId: preparedData.project.projectId,
+          revisions: {
+            create: {
+              isStart: true,
+              id: nanoid(),
+              parent: {
+                connect: {
+                  id: preparedData.project.headRevisionId,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      childBranchName = childBranch.name;
     });
 
     it('owner can attempt to get parent branch', async () => {
-      // Note: This may return 404/500 if no parent branch exists in test data
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(getParentBranchUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect((res) => {
-          expect([200, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.branch.id).toBe(preparedData.project.branchId);
+      expect(result.revision.id).toBe(preparedData.project.headRevisionId);
     });
 
     it('another owner cannot get parent branch (private project)', async () => {
       return request(app.getHttpServer())
         .get(getParentBranchUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect((res) => {
-          expect([403, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get parent branch without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getParentBranchUrl())
-        .expect((res) => {
-          expect([403, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getParentBranchUrl() {
-      return `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/branches/${preparedData.project.branchName}/parent-branch`;
+      return `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/branches/${childBranchName}/parent-branch`;
     }
   });
 
@@ -152,30 +184,28 @@ describe('restapi - branch-by-name', () => {
     });
 
     it('owner can attempt to get start revision', async () => {
-      // Note: This may return 404 if no start revision exists in test data
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(getStartRevisionUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect((res) => {
-          expect([200, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.id).toBe(preparedData.project.headRevisionId);
     });
 
     it('another owner cannot get start revision (private project)', async () => {
       return request(app.getHttpServer())
         .get(getStartRevisionUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .expect((res) => {
-          expect([403, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get start revision without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getStartRevisionUrl())
-        .expect((res) => {
-          expect([403, 404, 500].includes(res.status)).toBe(true);
-        });
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getStartRevisionUrl() {
@@ -197,22 +227,22 @@ describe('restapi - branch-by-name', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('createdAt');
-      expect(result).toHaveProperty('isHead');
+      expect(result.id).toBe(preparedData.project.headRevisionId);
     });
 
     it('another owner cannot get head revision (private project)', async () => {
       return request(app.getHttpServer())
         .get(getHeadRevisionUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get head revision without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getHeadRevisionUrl())
-        .expect(403);
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getHeadRevisionUrl() {
@@ -234,22 +264,22 @@ describe('restapi - branch-by-name', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('createdAt');
-      expect(result).toHaveProperty('isDraft');
+      expect(result.id).toBe(preparedData.project.draftRevisionId);
     });
 
     it('another owner cannot get draft revision (private project)', async () => {
       return request(app.getHttpServer())
         .get(getDraftRevisionUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get draft revision without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getDraftRevisionUrl())
-        .expect(403);
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getDraftRevisionUrl() {
@@ -265,14 +295,14 @@ describe('restapi - branch-by-name', () => {
     });
 
     it('owner can attempt to get revisions', async () => {
-      // Note: This endpoint has issues with query parameter transformation in tests
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(getRevisionsUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .query({ first: 10 })
-        .expect((res) => {
-          expect([200, 400, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBe(2);
     });
 
     it('another owner cannot get revisions (private project)', async () => {
@@ -280,6 +310,7 @@ describe('restapi - branch-by-name', () => {
         .get(getRevisionsUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .query({ first: 10 })
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -287,7 +318,8 @@ describe('restapi - branch-by-name', () => {
       return request(app.getHttpServer())
         .get(getRevisionsUrl())
         .query({ first: 10 })
-        .expect(403);
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
     });
 
     function getRevisionsUrl() {
@@ -313,9 +345,6 @@ describe('restapi - branch-by-name', () => {
         .then((res) => res.body);
 
       expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('createdAt');
-      expect(result).toHaveProperty('isDraft');
-      expect(result).toHaveProperty('isHead');
     });
 
     it('another owner cannot create revision (private project)', async () => {
@@ -325,6 +354,7 @@ describe('restapi - branch-by-name', () => {
         .send({
           comment: 'Test revision',
         })
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -356,9 +386,8 @@ describe('restapi - branch-by-name', () => {
         .expect(201)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('name');
-      expect(result).toHaveProperty('projectId');
+      expect(result.id).toBe(preparedData.project.branchId);
+      expect(result.projectId).toBe(preparedData.project.projectId);
     });
 
     it('another owner cannot revert changes (private project)', async () => {
@@ -396,7 +425,7 @@ describe('restapi - branch-by-name', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
+      expect(result.id).toBe(preparedData.project.branchId);
       expect(result.projectId).toBe(preparedData.project.projectId);
     });
 
@@ -408,20 +437,20 @@ describe('restapi - branch-by-name', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
+      expect(result.id).toBe(preparedData.project.branchId);
       expect(result.projectId).toBe(preparedData.project.projectId);
     });
 
     it('can attempt to get revisions without authentication (public project)', async () => {
-      // Note: This endpoint has issues with query parameter transformation in tests
-      await request(app.getHttpServer())
+      const result = await request(app.getHttpServer())
         .get(
           `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/branches/${preparedData.project.branchName}/revisions`,
         )
         .query({ first: 10 })
-        .expect((res) => {
-          expect([200, 400, 403, 500].includes(res.status)).toBe(true);
-        });
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBe(2);
     });
 
     it('another owner cannot create revision (no write permission on public project)', async () => {
@@ -433,6 +462,7 @@ describe('restapi - branch-by-name', () => {
         .send({
           comment: 'Test revision',
         })
+        .expect(403)
         .expect(/You are not allowed to create on Revision/);
     });
 
@@ -442,6 +472,7 @@ describe('restapi - branch-by-name', () => {
           `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/branches/${preparedData.project.branchName}/revert-changes`,
         )
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to revert on Revision/);
     });
   });
