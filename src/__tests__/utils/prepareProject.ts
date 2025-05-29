@@ -101,6 +101,7 @@ async function prepareBranch(prismaService: PrismaService) {
     data: {
       id: branchId,
       name: branchName,
+      isRoot: true,
       project: {
         create: {
           id: projectId,
@@ -118,6 +119,7 @@ async function prepareBranch(prismaService: PrismaService) {
           data: [
             {
               id: headRevisionId,
+              isStart: true,
               isHead: true,
               hasChanges: false,
             },

@@ -1041,6 +1041,18 @@
         },
         "type": "object"
       },
+      "SuccessModelDto": {
+        "properties": {
+          "success": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "success"
+        ],
+        "type": "object"
+      },
       "TableModel": {
         "properties": {
           "createdAt": {
@@ -1108,6 +1120,18 @@
           "edges",
           "totalCount",
           "pageInfo"
+        ],
+        "type": "object"
+      },
+      "TouchedModelDto": {
+        "properties": {
+          "touched": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "touched"
         ],
         "type": "object"
       },
@@ -1657,7 +1681,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -1751,7 +1775,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -2315,7 +2339,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/TouchedModelDto"
                 }
               }
             },
@@ -2472,7 +2496,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -2524,7 +2548,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
