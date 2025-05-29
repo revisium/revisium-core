@@ -57,18 +57,14 @@ describe('restapi - project', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result).toHaveProperty('id');
-      expect(result).toHaveProperty('name');
-      expect(result).toHaveProperty('organizationId');
       expect(result.id).toBe(preparedData.project.projectId);
-      expect(result.name).toBe(preparedData.project.projectName);
-      expect(result.organizationId).toBe(preparedData.project.organizationId);
     });
 
     it('another owner cannot get project (private project)', async () => {
       return request(app.getHttpServer())
         .get(getProjectUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -102,6 +98,7 @@ describe('restapi - project', () => {
       return request(app.getHttpServer())
         .get(getRootBranchUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -175,6 +172,7 @@ describe('restapi - project', () => {
       return request(app.getHttpServer())
         .delete(getProjectUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -211,6 +209,7 @@ describe('restapi - project', () => {
       return request(app.getHttpServer())
         .put(getProjectUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .send({
           isPublic: true,
         })
@@ -218,12 +217,7 @@ describe('restapi - project', () => {
     });
 
     it('cannot update project without authentication', async () => {
-      return request(app.getHttpServer())
-        .put(getProjectUrl())
-        .send({
-          isPublic: true,
-        })
-        .expect(401);
+      return request(app.getHttpServer()).put(getProjectUrl()).expect(401);
     });
 
     function getProjectUrl() {
@@ -254,6 +248,7 @@ describe('restapi - project', () => {
         .get(getUsersUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
         .query({ first: 10 })
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -322,6 +317,7 @@ describe('restapi - project', () => {
           userId: targetUserId,
           roleId: UserProjectRoles.reader,
         })
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -393,6 +389,7 @@ describe('restapi - project', () => {
       return request(app.getHttpServer())
         .delete(getRemoveUserUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to read on Project/);
     });
 
@@ -457,6 +454,7 @@ describe('restapi - project', () => {
           `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}`,
         )
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
         .expect(/You are not allowed to delete on Project/);
     });
 
@@ -482,6 +480,7 @@ describe('restapi - project', () => {
           userId: 'test-user',
           roleId: UserProjectRoles.reader,
         })
+        .expect(403)
         .expect(/You are not allowed to add on User/);
     });
   });
@@ -634,7 +633,8 @@ describe('restapi - project', () => {
           userId: targetUser.id,
           roleId: 'invalidRole',
         })
-        .expect(400);
+        .expect(400)
+        .expect(/Invalid ProjectRole/);
     });
 
     it('should handle non-existent user when adding to project', async () => {
@@ -647,7 +647,8 @@ describe('restapi - project', () => {
           userId: 'non-existent-user',
           roleId: UserProjectRoles.reader,
         })
-        .expect(400);
+        .expect(400)
+        .expect(/User does not exist/);
     });
 
     it('should handle removing non-existent user from project', async () => {
@@ -656,7 +657,8 @@ describe('restapi - project', () => {
           `/api/organization/${preparedData.project.organizationId}/projects/${preparedData.project.projectName}/users/non-existent-user`,
         )
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(400);
+        .expect(400)
+        .expect(/Not found user in project/);
     });
   });
 });

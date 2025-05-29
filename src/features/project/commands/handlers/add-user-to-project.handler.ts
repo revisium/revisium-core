@@ -29,6 +29,10 @@ export class AddUserToProjectHandler
       throw new BadRequestException('Project not found');
     }
 
+    if (!(await this.existUser(data.userId))) {
+      throw new BadRequestException('User does not exist');
+    }
+
     const userProjectId = await this.getOrCreateUserProjectId(
       data.userId,
       project.id,
@@ -75,6 +79,17 @@ export class AddUserToProjectHandler
       },
       select: { id: true },
     });
+  }
+
+  private async existUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: { id: true },
+    });
+
+    return Boolean(user);
   }
 
   private async getOrCreateUserProjectId(userId: string, projectId: string) {
