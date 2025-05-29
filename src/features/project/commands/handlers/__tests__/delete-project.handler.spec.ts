@@ -1,4 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { nanoid } from 'nanoid';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/project/commands/handlers/__tests__/utils';
 import {
@@ -11,6 +12,9 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('DeleteProjectHandler', () => {
   it('should delete project', async () => {
     const { organizationId, projectName, draftEndpointId, headEndpointId } =
+      await prepareProject(prismaService);
+
+    const { headEndpointId: anotherEndpointId } =
       await prepareProject(prismaService);
 
     const command = new DeleteProjectCommand({
@@ -45,6 +49,27 @@ describe('DeleteProjectHandler', () => {
     expect(result).toBe(true);
     expect(project.isDeleted).toBe(true);
     expect(project.branches.length).toBe(1);
+
+    const restApiEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: {
+        id: headEndpointId,
+      },
+    });
+    expect(restApiEndpoint.isDeleted).toBe(true);
+
+    const graphqlEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: {
+        id: draftEndpointId,
+      },
+    });
+    expect(graphqlEndpoint.isDeleted).toBe(true);
+
+    const anotherEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: {
+        id: anotherEndpointId,
+      },
+    });
+    expect(anotherEndpoint.isDeleted).toBe(false);
   });
 
   let prismaService: PrismaService;
