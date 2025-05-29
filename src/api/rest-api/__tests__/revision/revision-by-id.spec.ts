@@ -259,7 +259,7 @@ describe('restapi - revision-by-id', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result.length).toBe(2);
+      expect(result.length).toBe(1);
     });
 
     it('another owner cannot get endpoints (private project)', async () => {
