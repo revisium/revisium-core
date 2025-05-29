@@ -1,5 +1,4 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { nanoid } from 'nanoid';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/project/commands/handlers/__tests__/utils';
 import {
