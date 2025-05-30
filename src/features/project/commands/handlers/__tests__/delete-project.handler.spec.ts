@@ -13,6 +13,9 @@ describe('DeleteProjectHandler', () => {
     const { organizationId, projectName, draftEndpointId, headEndpointId } =
       await prepareProject(prismaService);
 
+    const { headEndpointId: anotherEndpointId } =
+      await prepareProject(prismaService);
+
     const command = new DeleteProjectCommand({
       organizationId,
       projectName,
@@ -45,6 +48,27 @@ describe('DeleteProjectHandler', () => {
     expect(result).toBe(true);
     expect(project.isDeleted).toBe(true);
     expect(project.branches.length).toBe(1);
+
+    const restApiEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: {
+        id: headEndpointId,
+      },
+    });
+    expect(restApiEndpoint.isDeleted).toBe(true);
+
+    const graphqlEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: {
+        id: draftEndpointId,
+      },
+    });
+    expect(graphqlEndpoint.isDeleted).toBe(true);
+
+    const anotherEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: {
+        id: anotherEndpointId,
+      },
+    });
+    expect(anotherEndpoint.isDeleted).toBe(false);
   });
 
   let prismaService: PrismaService;

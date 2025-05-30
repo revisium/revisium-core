@@ -47,6 +47,9 @@ export class DeleteProjectHandler
     const endpoints = await this.getEndpoints(projectId);
     await this.deleteProject(projectId);
 
+    const endpointIds = endpoints.map((endpoints) => endpoints.id);
+    await this.deleteEndpoint(endpointIds);
+
     return endpoints;
   }
 
@@ -77,5 +80,16 @@ export class DeleteProjectHandler
     for (const endpoint of endpoints) {
       this.endpointNotification.delete(endpoint.id, endpoint.type);
     }
+  }
+
+  private async deleteEndpoint(endpointIds: string[]) {
+    return this.transaction.endpoint.updateMany({
+      where: {
+        OR: endpointIds.map((endpointId) => ({ id: endpointId })),
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
   }
 }
