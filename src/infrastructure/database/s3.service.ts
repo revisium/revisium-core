@@ -54,6 +54,7 @@ export class S3Service {
           Body: file.buffer,
           ContentType: file.mimetype,
           ContentLength: file.size,
+          CacheControl: 'public, max-age=31536000, immutable',
           ACL: 'public-read',
         }),
       );
