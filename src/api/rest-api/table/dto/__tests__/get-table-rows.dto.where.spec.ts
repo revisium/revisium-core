@@ -31,11 +31,12 @@ describe('GetTableRowsDto where', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('should allow filtering by createdAt and updatedAt', async () => {
+  it('should allow filtering by createdAt, updatedAt and publishedAt', async () => {
     const errors = await getErrors({
       where: {
         createdAt: { equals: '2025-05-25T12:00:00Z' },
         updatedAt: { equals: '2025-05-25T13:00:00Z' },
+        publishedAt: { equals: '2025-05-25T13:00:00Z' },
       },
     });
     expect(errors).toHaveLength(0);

@@ -9,6 +9,7 @@ export const transformFromPrismaToRowModel = (data: Row): RowModel => {
     versionId: data.versionId,
     createdAt: data.createdAt,
     updatedAt: data.updatedAt,
+    publishedAt: data.publishedAt,
     readonly: data.readonly,
     data: data.data,
   };

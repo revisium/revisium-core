@@ -18,6 +18,9 @@ export class RowModel {
   @ApiProperty({ type: Date })
   updatedAt: Date;
 
+  @ApiProperty({ type: Date })
+  publishedAt: Date;
+
   @ApiProperty()
   readonly: boolean;
 
