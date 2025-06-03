@@ -568,6 +568,7 @@
             "enum": [
               "createdAt",
               "updatedAt",
+              "publishedAt",
               "id"
             ],
             "type": "string"
@@ -824,6 +825,10 @@
           "id": {
             "type": "string"
           },
+         "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
           "readonly": {
             "type": "boolean"
           },
@@ -841,6 +846,7 @@
           "versionId",
           "createdAt",
           "updatedAt",
+          "publishedAt",
           "readonly",
           "data"
         ],
@@ -955,6 +961,14 @@
               }
             ],
             "description": "Filter by updatedAt"
+          },
+          "publishedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilterDto"
+              }
+            ],
+            "description": "Filter by publishedAt"
           },
           "versionId": {
             "allOf": [
