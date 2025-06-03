@@ -25,6 +25,9 @@ export class RowModel {
   @Field(() => Date)
   updatedAt: Date;
 
+  @Field(() => Date)
+  publishedAt: Date;
+
   @Field(() => Boolean)
   readonly: boolean;
 
