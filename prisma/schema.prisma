@@ -206,6 +206,7 @@ model Row {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now())
+  publishedAt DateTime @default(now()) 
 
   data       Json
   meta       Json   @default("{}")
@@ -218,4 +219,5 @@ model Row {
   @@index([id])
   @@index([hash])
   @@index([schemaHash])
+  @@index([publishedAt])
 }

@@ -64,6 +64,7 @@ export class GetOrCreateDraftRowHandler
         createdId: this.rowRequestDto.createdId,
         id: this.rowRequestDto.id,
         createdAt: previousRow.createdAt,
+        publishedAt: previousRow.publishedAt,
         data: previousRow.data as Prisma.InputJsonValue,
         meta: previousRow.meta as Prisma.InputJsonValue,
         hash: previousRow.hash,

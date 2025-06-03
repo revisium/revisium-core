@@ -284,6 +284,58 @@ describe('RenameRowHandler', () => {
     expect(prismaLinkedRow.data).toStrictEqual({ link: nextRowId });
   });
 
+  it('should not modify publishedAt when renaming row', async () => {
+    const { draftRevisionId, tableId, rowId, linkedTable, linkedRow } =
+      await prepareProject(prismaService, { createLinkedTable: true });
+
+    const originalRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: linkedRow?.rowId,
+        tables: {
+          some: {
+            id: linkedTable?.tableId,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const originalPublishedAt = originalRow.publishedAt;
+
+    expect(originalPublishedAt).toBeTruthy();
+
+    const command = new RenameRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      nextRowId,
+    });
+
+    await runTransaction(command);
+
+    const updatedRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: linkedRow?.rowId,
+        tables: {
+          some: {
+            id: linkedTable?.tableId,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(updatedRow.publishedAt).toStrictEqual(originalPublishedAt);
+  });
+
   async function checkRevision(ids: PrepareProjectReturnType) {
     const { draftRevisionId } = ids;
 

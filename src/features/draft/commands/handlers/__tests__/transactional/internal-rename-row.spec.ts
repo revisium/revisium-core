@@ -123,6 +123,8 @@ describe('InternalRenameRowHandler', () => {
     expect(previousRow.versionId).toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
 
     expect(result.previousTableVersionId).toStrictEqual(result.tableVersionId);
   });
@@ -190,6 +192,8 @@ describe('InternalRenameRowHandler', () => {
     expect(previousRow.versionId).not.toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
 
     expect(result.previousTableVersionId).not.toStrictEqual(
       result.tableVersionId,
@@ -244,10 +248,13 @@ describe('InternalRenameRowHandler', () => {
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.versionId).not.toBe(draftRowVersionId);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
 
     expect(previousRow.versionId).not.toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update foreign keys in linked rows when renaming a row', async () => {

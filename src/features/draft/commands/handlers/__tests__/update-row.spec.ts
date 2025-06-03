@@ -250,6 +250,33 @@ describe('UpdateRowHandler', () => {
     await runTransaction(command);
   });
 
+  it('should not modify publishedAt when updating row', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, rowId } = ids;
+
+    const originalRow = await prismaService.row.findFirstOrThrow({
+      where: { id: rowId },
+    });
+    const originalPublishedAt = originalRow.publishedAt;
+
+    expect(originalPublishedAt).toBeTruthy();
+
+    const command = new UpdateRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      data: { ver: 4 },
+    });
+
+    await runTransaction(command);
+
+    const updatedRow = await prismaService.row.findFirstOrThrow({
+      where: { id: rowId },
+    });
+
+    expect(updatedRow.publishedAt).toStrictEqual(originalPublishedAt);
+  });
+
   async function revisionCheck(ids: PrepareProjectReturnType) {
     const { draftRevisionId } = ids;
 

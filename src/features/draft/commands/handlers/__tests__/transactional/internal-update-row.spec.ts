@@ -95,6 +95,8 @@ describe('InternalUpdateRowHandler', () => {
     expect(previousRow.versionId).toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update the meta field', async () => {
@@ -201,8 +203,10 @@ describe('InternalUpdateRowHandler', () => {
 
     expect(previousRow.versionId).not.toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
+    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
     expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
 
     expect(result.previousTableVersionId).not.toStrictEqual(
       result.tableVersionId,
@@ -255,8 +259,10 @@ describe('InternalUpdateRowHandler', () => {
     });
     expect(previousRow.versionId).not.toStrictEqual(row.versionId);
     expect(previousRow.createdAt).toStrictEqual(row.createdAt);
+    expect(previousRow.publishedAt).toStrictEqual(row.createdAt);
     expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
   });
 
   function runTransaction(

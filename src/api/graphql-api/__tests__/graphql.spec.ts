@@ -22,10 +22,14 @@ describe('GraphQL Schema Introspection (e2e)', () => {
     const introspection = (res.body as any).data as IntrospectionQuery;
 
     const clientSchema = buildClientSchema(introspection);
-    const sdlFromServer = printSchema(clientSchema).trim();
+
+    const normalizeLineEndings = (str: string) =>
+      str.replace(/\r\n|\r/g, '\n').trim();
+
+    const sdlFromServer = normalizeLineEndings(printSchema(clientSchema));
 
     const localPath = path.resolve(__dirname, '../schema.graphql');
-    const localSDL = fs.readFileSync(localPath, 'utf-8').trim();
+    const localSDL = normalizeLineEndings(fs.readFileSync(localPath, 'utf-8'));
 
     expect(sdlFromServer).toBe(localSDL);
   });

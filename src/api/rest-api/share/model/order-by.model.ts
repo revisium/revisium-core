@@ -4,6 +4,7 @@ import { IsEnum } from 'class-validator';
 export enum SortField {
   createdAt = 'createdAt',
   updatedAt = 'updatedAt',
+  publishedAt = 'publishedAt',
   id = 'id',
 }
 

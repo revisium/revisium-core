@@ -92,6 +92,15 @@ export class RowWhereInputDto {
   updatedAt?: DateTimeFilterDto;
 
   @ApiPropertyOptional({
+    type: () => DateTimeFilterDto,
+    description: 'Filter by publishedAt',
+  })
+  @ValidateNested()
+  @Type(() => DateTimeFilterDto)
+  @IsOptional()
+  publishedAt?: DateTimeFilterDto;
+
+  @ApiPropertyOptional({
     type: () => JsonFilterDto,
     description: 'Filter by data',
   })
