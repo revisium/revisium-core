@@ -334,6 +334,7 @@ export async function prepareRow({
     data: {
       createdAt: new Date(),
       updatedAt: new Date(),
+      publishedAt: new Date(),
       id: rowId,
       versionId: headRowVersionId,
       createdId: rowCreatedId,
@@ -352,6 +353,7 @@ export async function prepareRow({
     data: {
       createdAt: row.createdAt,
       updatedAt: new Date(),
+      publishedAt: row.publishedAt,
       id: rowId,
       versionId: draftRowVersionId,
       createdId: rowCreatedId,

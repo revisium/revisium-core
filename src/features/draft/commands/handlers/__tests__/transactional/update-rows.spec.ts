@@ -159,6 +159,7 @@ describe('UpdateRowsHandler', () => {
     expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(row.createdId).toBe(rowCreatedId);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update the rows in a new created table if conditions are met', async () => {
@@ -226,6 +227,7 @@ describe('UpdateRowsHandler', () => {
     expect(row.createdId).toBe(rowCreatedId);
     expect(table.versionId).not.toBe(draftTableVersionId);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
   });
 
   it('should update a new created row in the table if conditions are met', async () => {
@@ -293,6 +295,7 @@ describe('UpdateRowsHandler', () => {
     expect(row.schemaHash).toBe(objectHash(testSchema));
     expect(table.versionId).toBe(draftTableVersionId);
     expect(row.createdAt).not.toStrictEqual(row.updatedAt);
+    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
   });
 
   function runTransaction(command: InternalUpdateRowsCommand): Promise<void> {

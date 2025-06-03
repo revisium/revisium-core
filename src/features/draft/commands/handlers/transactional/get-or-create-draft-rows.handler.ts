@@ -57,6 +57,7 @@ export class GetOrCreateDraftRowsHandler
       where: { OR: readonlyRows.map((row) => ({ versionId: row.versionId })) },
       select: {
         createdAt: true,
+        publishedAt: true,
         data: true,
         meta: true,
         hash: true,
@@ -73,6 +74,7 @@ export class GetOrCreateDraftRowsHandler
 
     const generatedRows = rows.map((row) => ({
       createdAt: row.createdAt,
+      publishedAt: row.publishedAt,
       data: row.data,
       meta: row.meta,
       hash: row.hash,
