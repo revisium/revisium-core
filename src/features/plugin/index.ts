@@ -6,6 +6,7 @@ import { RowIdPlugin } from 'src/features/plugin/row-id/row-id.plugin';
 import { RowSchemaHashPlugin } from 'src/features/plugin/row-schema-hash/row-schema-hash.plugin';
 import { RowUpdatedAtPlugin } from 'src/features/plugin/row-updated-at/row-updated-at.plugin';
 import { RowVersionIdPlugin } from 'src/features/plugin/row-version-id/row-version-id.plugin';
+import { RowPublishedAtPlugin } from './row-published-at/row-published-at.plugin';
 
 export const PLUGINS = [
   FilePlugin,
@@ -13,6 +14,7 @@ export const PLUGINS = [
   RowCreatedIdPlugin,
   RowVersionIdPlugin,
   RowCreatedAtPlugin,
+  RowPublishedAtPlugin,
   RowUpdatedAtPlugin,
   RowHashPlugin,
   RowSchemaHashPlugin,

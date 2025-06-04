@@ -13,6 +13,7 @@ import {
   ajvRowCreatedIdSchema,
   ajvRowHashSchema,
   ajvRowIdSchema,
+  ajvRowPublishedAtSchema,
   ajvRowSchemaHashSchema,
   ajvRowUpdatedAtSchema,
   ajvRowVersionIdSchema,
@@ -125,6 +126,7 @@ export class JsonSchemaValidatorService {
     this.ajv.compile(ajvRowCreatedIdSchema);
     this.ajv.compile(ajvRowVersionIdSchema);
     this.ajv.compile(ajvRowCreatedAtSchema);
+    this.ajv.compile(ajvRowPublishedAtSchema);
     this.ajv.compile(ajvRowUpdatedAtSchema);
     this.ajv.compile(ajvRowHashSchema);
     this.ajv.compile(ajvRowSchemaHashSchema);
