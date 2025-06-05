@@ -8,6 +8,7 @@ import { RowSchemaHashPlugin } from 'src/features/plugin/row-schema-hash/row-sch
 import { RowUpdatedAtPlugin } from 'src/features/plugin/row-updated-at/row-updated-at.plugin';
 import { RowVersionIdPlugin } from 'src/features/plugin/row-version-id/row-version-id.plugin';
 import { IPluginService } from 'src/features/plugin/types';
+import { RowPublishedAtPlugin } from './row-published-at/row-published-at.plugin';
 
 @Injectable()
 export class PluginListService {
@@ -19,6 +20,7 @@ export class PluginListService {
     rowCreatedIdPlugin: RowCreatedIdPlugin,
     rowVersionIdPlugin: RowVersionIdPlugin,
     rowCreatedAtPlugin: RowCreatedAtPlugin,
+    rowPublishedAtPlugin: RowPublishedAtPlugin,
     rowUpdatedAtPlugin: RowUpdatedAtPlugin,
     rowHashPlugin: RowHashPlugin,
     rowSchemaHashPlugin: RowSchemaHashPlugin,
@@ -27,6 +29,7 @@ export class PluginListService {
     this.orderedPlugins.push(rowCreatedIdPlugin);
     this.orderedPlugins.push(rowVersionIdPlugin);
     this.orderedPlugins.push(rowCreatedAtPlugin);
+    this.orderedPlugins.push(rowPublishedAtPlugin);
     this.orderedPlugins.push(rowUpdatedAtPlugin);
     this.orderedPlugins.push(rowHashPlugin);
     this.orderedPlugins.push(rowSchemaHashPlugin);
