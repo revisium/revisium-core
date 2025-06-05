@@ -55,7 +55,6 @@ export class RowPublishedAtPlugin implements IPluginService {
     }
   }
 
-  // TODO: add tests
   public getPublishedAt(valueStore: JsonValueStore): string | undefined {
     const publishedAtList: string[] = [];
 
