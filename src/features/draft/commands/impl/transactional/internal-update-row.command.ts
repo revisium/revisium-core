@@ -10,7 +10,6 @@ export class InternalUpdateRowCommand {
       schemaHash: string;
       meta?: Prisma.InputJsonValue;
       publishedAt?: string;
-      // TODO: update tests
     },
   ) {}
 }
