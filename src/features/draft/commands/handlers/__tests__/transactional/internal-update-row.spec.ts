@@ -142,6 +142,51 @@ describe('InternalUpdateRowHandler', () => {
     expect(row.createdId).toBe(rowCreatedId);
   });
 
+  it('should update the publishedAt field', async () => {
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      draftTableVersionId,
+      draftRowVersionId,
+      rowCreatedId,
+    } = await prepareProject(prismaService);
+
+    const newPublishedAt = '2025-09-22T05:59:51.079Z';
+
+    const command = new InternalUpdateRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      data: { ver: 3 },
+      publishedAt: newPublishedAt,
+      schemaHash: objectHash(testSchema),
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+    expect(result.previousRowVersionId).toBe(draftRowVersionId);
+    expect(result.rowVersionId).toBe(draftRowVersionId);
+
+    const row = await prismaService.row.findFirstOrThrow({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            versionId: draftTableVersionId,
+          },
+        },
+      },
+    });
+    expect(row.data).toStrictEqual({ ver: 3 });
+    expect(row.publishedAt).toStrictEqual(new Date(newPublishedAt));
+    expect(row.hash).toBe(objectHash({ ver: 3 }));
+    expect(row.schemaHash).toBe(objectHash(testSchema));
+    expect(row.createdId).toBe(rowCreatedId);
+  });
+
   it('should update the row in a new created table if conditions are met', async () => {
     const {
       draftRevisionId,
