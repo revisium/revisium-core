@@ -56,15 +56,15 @@ export class RowPublishedAtPlugin implements IPluginService {
   }
 
   public getPublishedAt(valueStore: JsonValueStore): string | undefined {
-    const publishedAtList: string[] = [];
+    let result: string | undefined;
 
     this.forEachRow(valueStore, (item) => {
-      if (item.value !== null) {
-        publishedAtList.push(item.value);
+      if (result === undefined && item.value !== null) {
+        result = item.value;
       }
     });
 
-    return publishedAtList[0] ?? undefined;
+    return result;
   }
 
   private forEachRow(
