@@ -14,6 +14,7 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
+import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
@@ -136,6 +137,7 @@ export const createTestingModule = async () => {
   await module.init();
 
   const prismaService = module.get(PrismaService);
+  const pluginListService = module.get(PluginListService);
 
   const commandBus = module.get(CommandBus);
   const queryBus = module.get(QueryBus);
@@ -148,6 +150,7 @@ export const createTestingModule = async () => {
   return {
     module,
     prismaService,
+    pluginListService,
     commandBus,
     queryBus,
     transactionService,
