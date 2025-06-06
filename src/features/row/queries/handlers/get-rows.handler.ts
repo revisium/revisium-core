@@ -37,7 +37,7 @@ export class GetRowsHandler
     return getOffsetPagination({
       pageData: data,
       findMany: async (args) => {
-        const rows = await this.getRows(args, tableId);
+        const rows = await this.getRows(args, tableId, data);
 
         await this.pluginService.computeRows({
           revisionId: data.revisionId,
@@ -60,14 +60,16 @@ export class GetRowsHandler
   private getRows(
     args: { take: number; skip: number },
     tableId: string,
+    data: GetRowsQuery['data'],
   ): Promise<Row[]> {
     return this.transaction.table
       .findUniqueOrThrow({ where: { versionId: tableId } })
       .rows({
         ...args,
-        orderBy: {
+        orderBy: data.orderBy ?? {
           createdAt: Prisma.SortOrder.desc,
         },
+        where: data.where,
       });
   }
 

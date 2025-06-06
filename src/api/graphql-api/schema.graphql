@@ -11,6 +11,11 @@ input AddUserToProjectInput {
   userId: String!
 }
 
+input BooleanFilter {
+  equals: Boolean
+  not: Boolean
+}
+
 type BranchModel {
   createdAt: DateTime!
   draft: RevisionModel!
@@ -113,6 +118,16 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+input DateTimeFilter {
+  equals: String
+  gt: String
+  gte: String
+  in: [String!]
+  lt: String
+  lte: String
+  notIn: [String!]
+}
+
 input DeleteEndpointInput {
   endpointId: String!
 }
@@ -205,8 +220,10 @@ input GetRowInput {
 input GetRowsInput {
   after: String
   first: Int!
+  orderBy: [OrderBy!]
   revisionId: String!
   tableId: String!
+  where: WhereInput
 }
 
 input GetTableForeignKeysInput {
@@ -258,6 +275,22 @@ The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://
 """
 scalar JSON
 
+input JsonFilter {
+  array_contains: [JSON!]
+  array_ends_with: JSON
+  array_starts_with: JSON
+  equals: JSON
+  gt: Float
+  gte: Float
+  lt: Float
+  lte: Float
+  mode: QueryMode
+  path: [String!]
+  string_contains: String
+  string_ends_with: String
+  string_starts_with: String
+}
+
 input LoginGithubInput {
   code: String!
 }
@@ -305,6 +338,17 @@ type Mutation {
   updateProject(data: UpdateProjectInput!): Boolean!
   updateRow(data: UpdateRowInput!): UpdateRowResultModel!
   updateTable(data: UpdateTableInput!): UpdateTableResultModel!
+}
+
+input OrderBy {
+  direction: SortOrder!
+  field: OrderByField!
+}
+
+enum OrderByField {
+  createdAt
+  id
+  updatedAt
 }
 
 type PageInfo {
@@ -360,6 +404,11 @@ type Query {
   tables(data: GetTablesInput!): TablesConnection!
   usersOrganization(data: GetUsersOrganizationInput!): UsersOrganizationConnection!
   usersProject(data: GetUsersProjectInput!): UsersProjectConnection!
+}
+
+enum QueryMode {
+  default
+  insensitive
 }
 
 input RemoveRowInput {
@@ -493,6 +542,24 @@ input SignUpInput {
   username: String!
 }
 
+enum SortOrder {
+  asc
+  desc
+}
+
+input StringFilter {
+  contains: String
+  endsWith: String
+  gt: String
+  gte: String
+  lt: String
+  lte: String
+  mode: QueryMode
+  not: String
+  notIn: [String!]
+  startsWith: String
+}
+
 type TableModel {
   count: Int!
   countForeignKeysBy: Int!
@@ -615,4 +682,18 @@ type UsersProjectModel {
 type UsersProjectModelEdge {
   cursor: String!
   node: UsersProjectModel!
+}
+
+input WhereInput {
+  AND: [WhereInput!]
+  NOT: [WhereInput!]
+  OR: [WhereInput!]
+  createdAt: DateTimeFilter
+  createdId: StringFilter
+  data: JsonFilter
+  id: StringFilter
+  publishedAt: DateTimeFilter
+  readonly: BooleanFilter
+  updatedAt: DateTimeFilter
+  versionId: StringFilter
 }

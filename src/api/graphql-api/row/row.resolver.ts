@@ -8,6 +8,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { mapToPrismaOrderBy } from 'src/api/graphql-api/share/mapToPrismaOrderBy';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
@@ -55,9 +56,14 @@ export class RowResolver {
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RowsConnection)
-  rows(@Args('data') data: GetRowsInput) {
+  rows(@Args('data') { orderBy, ...data }: GetRowsInput) {
+    const prismaOrderBy = mapToPrismaOrderBy(orderBy);
+
     return this.queryBus.execute<GetRowsQuery, GetRowsReturnType>(
-      new GetRowsQuery(data),
+      new GetRowsQuery({
+        ...data,
+        orderBy: prismaOrderBy,
+      }),
     );
   }
 
