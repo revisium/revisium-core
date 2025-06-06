@@ -11,6 +11,7 @@ import { EndpointType } from 'src/api/graphql-api/endpoint/model';
 export const registerGraphqlEnums = () => {
   registerEnumType(OrderByField, { name: 'OrderByField' });
   registerEnumType(Prisma.SortOrder, { name: 'SortOrder' });
+  registerEnumType(Prisma.QueryMode, { name: 'QueryMode' });
   registerEnumType(UserSystemRoles, { name: 'UserSystemRole' });
   registerEnumType(UserOrganizationRoles, { name: 'UserOrganizationRoles' });
   registerEnumType(UserProjectRoles, { name: 'UserProjectRoles' });
