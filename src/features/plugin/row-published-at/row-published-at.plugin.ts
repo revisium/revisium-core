@@ -55,6 +55,18 @@ export class RowPublishedAtPlugin implements IPluginService {
     }
   }
 
+  public getPublishedAt(valueStore: JsonValueStore): string | undefined {
+    let result: string | undefined;
+
+    this.forEachRow(valueStore, (item) => {
+      if (result === undefined && item.value !== null) {
+        result = item.value;
+      }
+    });
+
+    return result;
+  }
+
   private forEachRow(
     valueStore: JsonValueStore,
     callback: (store: JsonStringValueStore) => void,

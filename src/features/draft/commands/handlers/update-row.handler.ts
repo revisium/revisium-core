@@ -11,6 +11,10 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { RowPublishedAtPlugin } from 'src/features/plugin/row-published-at/row-published-at.plugin';
+import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 
 @CommandHandler(UpdateRowCommand)
 export class UpdateRowHandler extends DraftHandler<
@@ -24,6 +28,8 @@ export class UpdateRowHandler extends DraftHandler<
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly pluginService: PluginService,
+    protected readonly rowPublishedAtPlugin: RowPublishedAtPlugin,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -54,6 +60,22 @@ export class UpdateRowHandler extends DraftHandler<
     });
   }
 
+  private async getFirstPublishedAtFromDataOrUndefined(
+    data: UpdateRowCommand['data'],
+  ): Promise<string | undefined> {
+    const { schemaStore } = await this.pluginService.prepareSchemaContext({
+      revisionId: data.revisionId,
+      tableId: data.tableId,
+    });
+
+    const valueStore = createJsonValueStore(
+      schemaStore,
+      data.rowId,
+      data.data as JsonValue,
+    );
+    return this.rowPublishedAtPlugin.getPublishedAt(valueStore);
+  }
+
   private async updateRow(data: UpdateRowCommand['data'], schemaHash: string) {
     return this.commandBus.execute<
       InternalUpdateRowCommand,
@@ -65,6 +87,7 @@ export class UpdateRowHandler extends DraftHandler<
         rowId: data.rowId,
         data: await this.pluginService.afterUpdateRow(data),
         schemaHash,
+        publishedAt: await this.getFirstPublishedAtFromDataOrUndefined(data),
       }),
     );
   }
