@@ -60,7 +60,9 @@ export class UpdateRowHandler extends DraftHandler<
     });
   }
 
-  private async updateRow(data: UpdateRowCommand['data'], schemaHash: string) {
+  private async getFirstPublishedAtFromDataOrUndefined(
+    data: UpdateRowCommand['data'],
+  ): Promise<string | undefined> {
     const { schemaStore } = await this.pluginService.prepareSchemaContext({
       revisionId: data.revisionId,
       tableId: data.tableId,
@@ -71,9 +73,10 @@ export class UpdateRowHandler extends DraftHandler<
       data.rowId,
       data.data as JsonValue,
     );
+    return this.rowPublishedAtPlugin.getPublishedAt(valueStore);
+  }
 
-    const publishedAt = this.rowPublishedAtPlugin.getPublishedAt(valueStore);
-
+  private async updateRow(data: UpdateRowCommand['data'], schemaHash: string) {
     return this.commandBus.execute<
       InternalUpdateRowCommand,
       InternalUpdateRowCommandReturnType
@@ -84,7 +87,7 @@ export class UpdateRowHandler extends DraftHandler<
         rowId: data.rowId,
         data: await this.pluginService.afterUpdateRow(data),
         schemaHash,
-        publishedAt,
+        publishedAt: await this.getFirstPublishedAtFromDataOrUndefined(data),
       }),
     );
   }
