@@ -29,11 +29,14 @@ export type PrepareProjectReturnType = Awaited<
 export const hashedPassword =
   '$2a$10$Uj1aVmkVJh4ZV9Ij54bFLexeFcYz71QtySoosQ5V.txpETjOgG0bW';
 
-export const prepareData = async (app: INestApplication) => {
+export const prepareData = async (
+  app: INestApplication,
+  options?: { createLinkedTable?: boolean },
+) => {
   const prismaService = app.get(PrismaService);
 
-  const project = await prepareProject(prismaService);
-  const anotherProject = await prepareProject(prismaService);
+  const project = await prepareProject(prismaService, options);
+  const anotherProject = await prepareProject(prismaService, options);
 
   return {
     project,
@@ -67,6 +70,7 @@ const prepareOrganizationUser = async (
       username: `username-${userId}`,
       roleId: UserRole.systemUser,
       password: hashedPassword,
+      isEmailConfirmed: true,
       userOrganizations: {
         create: {
           id: nanoid(),
