@@ -25,6 +25,7 @@ import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/up
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
+import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 describe('UpdateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
@@ -272,6 +273,84 @@ describe('UpdateRowHandler', () => {
 
     const updatedRow = await prismaService.row.findFirstOrThrow({
       where: { id: rowId },
+    });
+
+    expect(updatedRow.publishedAt).toStrictEqual(originalPublishedAt);
+  });
+
+  it('should update publishedAt when valueStore contains publishedAt', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, headRevisionId, schemaTableVersionId } = ids;
+
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      schema: getObjectSchema({
+        ver: {
+          type: JsonSchemaTypeName.Number,
+          default: 1,
+        },
+        myPublishedAtField: getRefSchema(SystemSchemaIds.RowPublishedAt),
+      }),
+    });
+
+    const initialData = { ver: 0, myPublishedAtField: new Date() };
+
+    const { rowDraft } = await prepareRow({
+      prismaService,
+      headTableVersionId: table.headTableVersionId,
+      draftTableVersionId: table.draftTableVersionId,
+      schema: table.schema,
+      data: initialData,
+      dataDraft: initialData,
+    });
+
+    const originalRow = await prismaService.row.findFirstOrThrow({
+      where: { versionId: rowDraft.versionId },
+    });
+
+    const testDate = new Date('2027-01-01T00:00:00.000Z');
+    const command = new UpdateRowCommand({
+      revisionId: draftRevisionId,
+      tableId: table.tableId,
+      rowId: rowDraft.id,
+      data: { ver: 5, myPublishedAtField: testDate.toISOString() },
+    });
+
+    await runTransaction(command);
+
+    const updatedRow = await prismaService.row.findFirstOrThrow({
+      where: { versionId: rowDraft.versionId },
+    });
+
+    expect(updatedRow.publishedAt).not.toStrictEqual(originalRow.publishedAt);
+    expect(updatedRow.publishedAt).toStrictEqual(testDate);
+  });
+
+  it('should not update publishedAt when valueStore does not contain publishedAt', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, rowId, draftRowVersionId } = ids;
+
+    const originalRow = await prismaService.row.findFirstOrThrow({
+      where: { versionId: draftRowVersionId },
+    });
+    const originalPublishedAt = originalRow.publishedAt;
+
+    expect(originalPublishedAt).toBeTruthy();
+
+    const command = new UpdateRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
+      data: { ver: 6 },
+    });
+
+    await runTransaction(command);
+
+    const updatedRow = await prismaService.row.findFirstOrThrow({
+      where: { versionId: draftRowVersionId },
     });
 
     expect(updatedRow.publishedAt).toStrictEqual(originalPublishedAt);
