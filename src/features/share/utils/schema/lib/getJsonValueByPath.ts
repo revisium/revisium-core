@@ -12,7 +12,7 @@ export const getJsonValueStoreByPath = (
 
   const segments = getSegments(path);
 
-  let current: JsonValueStore | undefined = root;
+  let current: JsonValueStore = root;
 
   for (const seg of segments) {
     if (current instanceof JsonObjectValueStore) {
@@ -29,10 +29,6 @@ export const getJsonValueStoreByPath = (
     if (!current) {
       throw new Error(`Path not found at segment "${seg}"`);
     }
-  }
-
-  if (!current) {
-    throw new Error('Unknown value for path');
   }
 
   return current;

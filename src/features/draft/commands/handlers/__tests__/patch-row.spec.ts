@@ -106,6 +106,10 @@ describe('PatchRowHandler', () => {
               nestedList: [10],
               nestedField: true,
             },
+            {
+              nestedList: [],
+              nestedField: false,
+            },
           ],
         },
       },
@@ -144,6 +148,11 @@ describe('PatchRowHandler', () => {
             nestedField: true,
           },
         },
+        {
+          op: 'replace',
+          path: 'list[2].nestedList',
+          value: [50, 51],
+        },
       ],
     });
 
@@ -174,6 +183,10 @@ describe('PatchRowHandler', () => {
         {
           nestedField: true,
           nestedList: [100, 101],
+        },
+        {
+          nestedField: false,
+          nestedList: [50, 51],
         },
       ],
       num: 2,
