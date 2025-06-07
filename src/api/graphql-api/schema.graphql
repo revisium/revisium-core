@@ -325,6 +325,7 @@ type Mutation {
   login(data: LoginInput!): LoginModel!
   loginGithub(data: LoginGithubInput!): LoginModel!
   loginGoogle(data: LoginGoogleInput!): LoginModel!
+  patchRow(data: PatchRowInput!): PatchRowResultModel!
   removeRow(data: RemoveRowInput!): RemoveRowResultModel!
   removeTable(data: RemoveTableInput!): RemoveTableResultModel!
   removeUserFromOrganization(data: RemoveUserFromOrganizationInput!): Boolean!
@@ -361,6 +362,30 @@ type PageInfo {
 type ParentBranchModel {
   branch: BranchModel!
   revision: RevisionModel!
+}
+
+input PatchRow {
+  op: PatchRowOp!
+  path: String!
+  value: JSON!
+}
+
+input PatchRowInput {
+  patches: [PatchRow!]!
+  revisionId: String!
+  rowId: String!
+  tableId: String!
+}
+
+enum PatchRowOp {
+  replace
+}
+
+type PatchRowResultModel {
+  previousVersionRowId: String!
+  previousVersionTableId: String!
+  row: RowModel!
+  table: TableModel!
 }
 
 type PluginsModel {

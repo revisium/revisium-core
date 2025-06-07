@@ -40,7 +40,16 @@ export const createJsonObjectValueStore = (
   rowId: string,
   rawValue: JsonObject,
 ): JsonObjectValueStore => {
-  const value = Object.entries(rawValue).reduce<Record<string, JsonValueStore>>(
+  const value = createJsonObjectRecord(schema, rowId, rawValue);
+  return new JsonObjectValueStore(schema, rowId, value);
+};
+
+export const createJsonObjectRecord = (
+  schema: JsonObjectStore,
+  rowId: string,
+  rawValue: JsonObject,
+) => {
+  return Object.entries(rawValue).reduce<Record<string, JsonValueStore>>(
     (reduceValue, [key, itemValue]) => {
       const itemSchema = schema.getProperty(key);
 
@@ -54,8 +63,6 @@ export const createJsonObjectValueStore = (
     },
     {},
   );
-
-  return new JsonObjectValueStore(schema, rowId, value);
 };
 
 export const createJsonArrayValueStore = (
@@ -63,11 +70,18 @@ export const createJsonArrayValueStore = (
   rowId: string,
   rawValue: JsonArray,
 ): JsonArrayValueStore => {
-  const value = rawValue.map((value) =>
+  const value = createJsonArrayValueItems(schema, rowId, rawValue);
+  return new JsonArrayValueStore(schema, rowId, value);
+};
+
+export const createJsonArrayValueItems = (
+  schema: JsonArrayStore,
+  rowId: string,
+  rawValue: JsonArray,
+): JsonValueStore[] => {
+  return rawValue.map((value) =>
     createJsonValueStore(schema.items, rowId, value),
   );
-
-  return new JsonArrayValueStore(schema, rowId, value);
 };
 
 export const createPrimitiveValueStore = (

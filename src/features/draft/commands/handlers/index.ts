@@ -1,6 +1,7 @@
 import { ApiCreateRevisionHandler } from 'src/features/draft/commands/handlers/api-create-revision.handler';
 import { ApiCreateRowHandler } from 'src/features/draft/commands/handlers/api-create-row.handler';
 import { ApiCreateTableHandler } from 'src/features/draft/commands/handlers/api-create-table.handler';
+import { ApiPatchRowHandler } from 'src/features/draft/commands/handlers/api-patch-row.handler';
 import { ApiRemoveRowHandler } from 'src/features/draft/commands/handlers/api-remove-row.handler';
 import { ApiRemoveTableHandler } from 'src/features/draft/commands/handlers/api-remove-table.handler';
 import { ApiRenameRowHandler } from 'src/features/draft/commands/handlers/api-rename-row.handler';
@@ -11,6 +12,7 @@ import { ApiUpdateTableHandler } from 'src/features/draft/commands/handlers/api-
 import { ApiUploadFileHandler } from 'src/features/draft/commands/handlers/api-upload-file.handler';
 import { CreateRevisionHandler } from 'src/features/draft/commands/handlers/create-revision.handler';
 import { CreateRowHandler } from 'src/features/draft/commands/handlers/create-row.handler';
+import { PatchRowHandler } from 'src/features/draft/commands/handlers/patch-row.handler';
 import { RenameRowHandler } from 'src/features/draft/commands/handlers/rename-row.handler';
 import { RenameTableHandler } from 'src/features/draft/commands/handlers/rename-table.handler';
 import { CreateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/create-schema.handler';
@@ -72,4 +74,6 @@ export const DRAFT_COMMANDS_HANDLERS = [
   RenameSchemaHandler,
   UploadFileHandler,
   ApiUploadFileHandler,
+  PatchRowHandler,
+  ApiPatchRowHandler,
 ];
