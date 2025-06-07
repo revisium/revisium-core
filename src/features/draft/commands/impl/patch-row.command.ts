@@ -1,9 +1,9 @@
-import { Prisma } from '@prisma/client';
+import { JsonValuePatchReplace } from 'src/features/share/utils/schema/types/json-value-patch.types';
 
 export class PatchRowCommand {
   constructor(
     public readonly data: {
-      patches: { path: string; value: Prisma.InputJsonValue }[];
+      patches: JsonValuePatchReplace[];
       revisionId: string;
       tableId: string;
       rowId: string;

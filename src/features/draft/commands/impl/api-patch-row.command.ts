@@ -1,11 +1,11 @@
-import { Prisma } from '@prisma/client';
 import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import { JsonValuePatchReplace } from 'src/features/share/utils/schema/types/json-value-patch.types';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 export class ApiPatchRowCommand {
   constructor(
     public readonly data: {
-      patches: { path: string; value: Prisma.InputJsonValue }[];
+      patches: JsonValuePatchReplace[];
       revisionId: string;
       tableId: string;
       rowId: string;

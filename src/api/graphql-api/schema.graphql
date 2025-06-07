@@ -365,6 +365,7 @@ type ParentBranchModel {
 }
 
 input PatchRow {
+  op: PatchRowOp!
   path: String!
   value: JSON!
 }
@@ -374,6 +375,10 @@ input PatchRowInput {
   revisionId: String!
   rowId: String!
   tableId: String!
+}
+
+enum PatchRowOp {
+  replace
 }
 
 type PatchRowResultModel {

@@ -26,6 +26,7 @@ describe('PatchRowHandler', () => {
       rowId,
       patches: [
         {
+          op: 'replace',
           path: 'ver',
           value: true,
         },
@@ -45,6 +46,7 @@ describe('PatchRowHandler', () => {
       rowId,
       patches: [
         {
+          op: 'replace',
           path: 'test',
           value: true,
         },
@@ -115,22 +117,27 @@ describe('PatchRowHandler', () => {
       rowId,
       patches: [
         {
+          op: 'replace',
           path: 'str',
           value: 'strNext',
         },
         {
+          op: 'replace',
           path: 'num',
           value: 2,
         },
         {
+          op: 'replace',
           path: 'bool',
           value: true,
         },
         {
+          op: 'replace',
           path: 'list[0].nestedList[2]',
           value: 10,
         },
         {
+          op: 'replace',
           path: 'list[1]',
           value: {
             nestedList: [100, 101],

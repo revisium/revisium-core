@@ -23,6 +23,7 @@ describe('ApiPatchRowHandler', () => {
       rowId,
       patches: [
         {
+          op: 'replace',
           path: 'ver',
           value: 100,
         },
@@ -79,6 +80,7 @@ describe('ApiPatchRowHandler', () => {
       rowId,
       patches: [
         {
+          op: 'replace',
           path: 'ver',
           value: 100,
         },
