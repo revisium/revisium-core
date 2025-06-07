@@ -1,6 +1,8 @@
 import { UseGuards } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { PatchRowInput } from 'src/api/graphql-api/draft/input/patch-row.input';
+import { PatchRowResultModel } from 'src/api/graphql-api/draft/model/patch-row-result.model';
 import { RenameRowResultModel } from 'src/api/graphql-api/draft/model/rename-row-result.model';
 import { RenameTableResultModel } from 'src/api/graphql-api/draft/model/rename-table-result.model';
 import { UpdateTableResultModel } from 'src/api/graphql-api/draft/model/update-table-result.model';
@@ -10,6 +12,7 @@ import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
 import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-create-table.command';
+import { ApiPatchRowCommand } from 'src/features/draft/commands/impl/api-patch-row.command';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
 import { ApiRenameRowCommand } from 'src/features/draft/commands/impl/api-rename-row.command';
@@ -98,6 +101,16 @@ export class DraftResolver {
   @Mutation(() => UpdateRowResultModel)
   async updateRow(@Args('data') data: UpdateRowInput) {
     return this.commandBus.execute(new ApiUpdateRowCommand(data));
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @Mutation(() => PatchRowResultModel)
+  async patchRow(@Args('data') data: PatchRowInput) {
+    return this.commandBus.execute(new ApiPatchRowCommand(data));
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
