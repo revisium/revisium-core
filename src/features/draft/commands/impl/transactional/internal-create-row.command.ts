@@ -9,6 +9,7 @@ export class InternalCreateRowCommand {
       rowId: string;
       schemaHash: string;
       meta?: Prisma.InputJsonValue;
+      publishedAt?: string;
     },
   ) {}
 }
