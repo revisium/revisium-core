@@ -128,6 +128,38 @@ describe('InternalCreateRowHandler', () => {
     );
   });
 
+  it('should save the optional publishedAt field', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+
+    const publishedAtDate = new Date('2027-01-01T00:00:00.000Z');
+
+    const command = new InternalCreateRowCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      rowId: 'newRowId',
+      data: { ver: 3 },
+      schemaHash: objectHash(testSchema),
+      meta: { meta: 1 },
+      publishedAt: publishedAtDate.toISOString(),
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.tableVersionId).toBe(draftTableVersionId);
+    expect(result.previousTableVersionId).toBe(draftTableVersionId);
+    expect(result.rowVersionId).toBeTruthy();
+
+    await rowCheck(
+      ids,
+      command.data.rowId,
+      result.rowVersionId,
+      command.data.data,
+      { meta: 1 },
+      publishedAtDate,
+    );
+  });
+
   it('should create a new row in a new created table if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId, draftTableVersionId } = ids;
@@ -161,6 +193,7 @@ describe('InternalCreateRowHandler', () => {
     createdRowVersionId: string,
     data: Prisma.InputJsonValue,
     meta: Prisma.InputJsonValue,
+    publishedAt?: Date,
   ) {
     const { draftRevisionId, tableId } = ids;
 
@@ -190,7 +223,9 @@ describe('InternalCreateRowHandler', () => {
     expect(row.createdId).not.toBe(row.id);
     expect(row.createdId).not.toBe(row.versionId);
     expect(row.createdAt).toStrictEqual(row.updatedAt);
-    expect(row.publishedAt).toStrictEqual(row.updatedAt);
+
+    const expectedPublishedAt = publishedAt ?? row.createdAt;
+    expect(row.publishedAt).toStrictEqual(expectedPublishedAt);
   }
 
   function runTransaction(

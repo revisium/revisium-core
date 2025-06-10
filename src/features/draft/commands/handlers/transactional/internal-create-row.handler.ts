@@ -99,6 +99,7 @@ export class InternalCreateRowHandler extends DraftHandler<
         meta: input.meta,
         hash: await this.hashService.hashObject(input.data),
         schemaHash: input.schemaHash,
+        publishedAt: input.publishedAt,
       },
       select: {
         versionId: true,

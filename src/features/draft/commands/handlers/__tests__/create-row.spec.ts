@@ -4,6 +4,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import {
   prepareProject,
   PrepareProjectReturnType,
+  prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
 import {
   getArraySchema,
@@ -23,6 +24,7 @@ import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/cr
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
+import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 
 describe('CreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
@@ -191,6 +193,76 @@ describe('CreateRowHandler', () => {
     });
 
     await runTransaction(command);
+  });
+
+  it('should save provided publishedAt value when creating a row', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, headRevisionId, schemaTableVersionId } = ids;
+
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      schema: getObjectSchema({
+        ver: {
+          type: JsonSchemaTypeName.Number,
+          default: 1,
+        },
+        myPublishedAtField: getRefSchema(SystemSchemaIds.RowPublishedAt),
+      }),
+    });
+
+    const publishedAtDate = new Date('2027-01-01T00:00:00.000Z');
+    const command = new CreateRowCommand({
+      revisionId: draftRevisionId,
+      tableId: table.tableId,
+      rowId: 'NewRowId',
+      data: { ver: 5, myPublishedAtField: publishedAtDate.toISOString() },
+    });
+
+    const result = await runTransaction(command);
+
+    const createdRow = await prismaService.row.findFirstOrThrow({
+      where: { versionId: result.rowVersionId },
+    });
+
+    expect(createdRow.publishedAt).not.toStrictEqual(createdRow.createdAt);
+    expect(createdRow.publishedAt).toStrictEqual(publishedAtDate);
+  });
+
+  it('should use default date (now) as publishedAt when publishedAt is empty', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, headRevisionId, schemaTableVersionId } = ids;
+
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      schema: getObjectSchema({
+        ver: {
+          type: JsonSchemaTypeName.Number,
+          default: 1,
+        },
+        myPublishedAtField: getRefSchema(SystemSchemaIds.RowPublishedAt),
+      }),
+    });
+
+    const command = new CreateRowCommand({
+      revisionId: draftRevisionId,
+      tableId: table.tableId,
+      rowId: 'NewRowId',
+      data: { ver: 5, myPublishedAtField: '' },
+    });
+
+    const result = await runTransaction(command);
+
+    const createdRow = await prismaService.row.findFirstOrThrow({
+      where: { versionId: result.rowVersionId },
+    });
+
+    expect(createdRow.publishedAt).toStrictEqual(createdRow.createdAt);
   });
 
   async function revisionCheck(ids: PrepareProjectReturnType) {
