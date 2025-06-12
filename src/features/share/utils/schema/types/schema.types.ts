@@ -69,6 +69,9 @@ export type JsonArraySchema = {
 
 export type JsonRefSchema = {
   $ref: string;
+  title?: string;
+  description?: string;
+  deprecated?: boolean;
 };
 
 export type JsonSchema =

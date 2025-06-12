@@ -6,6 +6,7 @@ import { sharedFields } from 'src/features/share/schema/shared-fields';
 export const refMetaSchema: Schema = {
   type: 'object',
   properties: {
+    ...sharedFields,
     $ref: {
       type: 'string',
     },

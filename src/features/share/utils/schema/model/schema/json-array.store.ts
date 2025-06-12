@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { addSharedFieldsFromState } from 'src/features/share/utils/schema/lib/addSharedFieldsFromStore';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonArrayValueStore } from 'src/features/share/utils/schema/model/value/json-array-value.store';
 import { JsonArray } from 'src/features/share/utils/schema/types/json.types';
@@ -86,16 +87,16 @@ export class JsonArrayStore implements JsonArraySchema {
 
   public getPlainSchema(): JsonArraySchema | JsonRefSchema {
     if (this.$ref) {
-      return { $ref: this.$ref };
+      return addSharedFieldsFromState({ $ref: this.$ref }, this);
     }
 
-    return {
-      type: this.type,
-      items: this.items.getPlainSchema(),
-      ...(this.title ? { title: this.title } : {}),
-      ...(this.description ? { description: this.description } : {}),
-      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
-    };
+    return addSharedFieldsFromState(
+      {
+        type: this.type,
+        items: this.items.getPlainSchema(),
+      },
+      this,
+    );
   }
 
   private getOrCreateValues(rowId: string): JsonArrayValueStore[] {

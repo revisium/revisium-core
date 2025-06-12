@@ -461,7 +461,10 @@ describe('meta-schema', () => {
   });
 
   it('object', () => {
-    expect(ajv.validate(metaSchema, { $ref: 'ref-schema.json' })).toBe(true);
+    const refData = { $ref: 'ref-schema.json' };
+    expect(ajv.validate(metaSchema, refData)).toBe(true);
+    checkBaseFields(refData, { skipReadOnly: true });
+
     expect(ajv.validate(metaSchema, { $ref2: 'ref-schema.json' })).toBe(false);
     expect(
       ajv.validate(metaSchema, {

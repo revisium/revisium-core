@@ -12,7 +12,6 @@ import {
   JsonSchema,
   JsonSchemaPrimitives,
   JsonSchemaTypeName,
-  JsonSchemaWithoutRef,
 } from 'src/features/share/utils/schema/types/schema.types';
 
 export type RefsType = Record<string, JsonSchema>;
@@ -29,6 +28,7 @@ export const createJsonSchemaStore = (
     }
 
     const refStore = createJsonSchemaStore(refSchema, refs);
+    saveSharedFields(refStore, schema);
     refStore.$ref = schema.$ref;
     return refStore;
   } else if (schema.type === JsonSchemaTypeName.Object) {
@@ -94,7 +94,7 @@ export const createPrimitiveStoreBySchema = (
 
 export const saveSharedFields = (
   store: JsonSchemaStore,
-  schema: JsonSchemaWithoutRef,
+  schema: JsonSchema,
 ) => {
   store.title = schema.title;
   store.description = schema.description;
