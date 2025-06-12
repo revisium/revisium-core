@@ -88,6 +88,7 @@ export class GetOrCreateDraftRowsHandler
     const inputs: Prisma.RowCreateManyInput[] =
       generatedRows.map<Prisma.RowCreateManyInput>((row) => ({
         createdAt: row.createdAt,
+        publishedAt: row.publishedAt,
         versionId: row.versionId,
         createdId: row.createdId,
         id: row.id,
