@@ -461,7 +461,28 @@ describe('meta-schema', () => {
   });
 
   it('object', () => {
-    expect(ajv.validate(metaSchema, { $ref: 'ref-schema.json' })).toBe(true);
+    const refData = { $ref: 'ref-schema.json' };
+    expect(ajv.validate(metaSchema, refData)).toBe(true);
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...refData,
+        description: 'description',
+      }),
+    ).toBe(true);
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...refData,
+        description: 0,
+      }),
+    ).toBe(false);
+
+    expect(
+      ajv.validate(notForeignKeyMetaSchema, {
+        ...refData,
+        deprecated: true,
+      }),
+    ).toBe(true);
+
     expect(ajv.validate(metaSchema, { $ref2: 'ref-schema.json' })).toBe(false);
     expect(
       ajv.validate(metaSchema, {
