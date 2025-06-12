@@ -464,20 +464,20 @@ describe('meta-schema', () => {
     const refData = { $ref: 'ref-schema.json' };
     expect(ajv.validate(metaSchema, refData)).toBe(true);
     expect(
-      ajv.validate(notForeignKeyMetaSchema, {
+      ajv.validate(metaSchema, {
         ...refData,
         description: 'description',
       }),
     ).toBe(true);
     expect(
-      ajv.validate(notForeignKeyMetaSchema, {
+      ajv.validate(metaSchema, {
         ...refData,
         description: 0,
       }),
     ).toBe(false);
 
     expect(
-      ajv.validate(notForeignKeyMetaSchema, {
+      ajv.validate(metaSchema, {
         ...refData,
         deprecated: true,
       }),
