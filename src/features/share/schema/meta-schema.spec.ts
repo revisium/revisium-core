@@ -463,25 +463,7 @@ describe('meta-schema', () => {
   it('object', () => {
     const refData = { $ref: 'ref-schema.json' };
     expect(ajv.validate(metaSchema, refData)).toBe(true);
-    expect(
-      ajv.validate(metaSchema, {
-        ...refData,
-        description: 'description',
-      }),
-    ).toBe(true);
-    expect(
-      ajv.validate(metaSchema, {
-        ...refData,
-        description: 0,
-      }),
-    ).toBe(false);
-
-    expect(
-      ajv.validate(metaSchema, {
-        ...refData,
-        deprecated: true,
-      }),
-    ).toBe(true);
+    checkBaseFields(refData, { skipReadOnly: true });
 
     expect(ajv.validate(metaSchema, { $ref2: 'ref-schema.json' })).toBe(false);
     expect(
