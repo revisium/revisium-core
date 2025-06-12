@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { EventEmitter } from 'node:events';
+import { addSharedFieldsFromState } from 'src/features/share/utils/schema/lib/addSharedFieldsFromStore';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
 import {
@@ -49,24 +50,24 @@ export class JsonStringStore extends EventEmitter implements JsonStringSchema {
 
   public getPlainSchema(): JsonStringSchema | JsonRefSchema {
     if (this.$ref) {
-      return { $ref: this.$ref };
+      return addSharedFieldsFromState({ $ref: this.$ref }, this);
     }
 
-    return {
-      type: this.type,
-      default: this.default,
-      ...(this.foreignKey ? { foreignKey: this.foreignKey } : {}),
-      ...(this.readOnly ? { readOnly: this.readOnly } : {}),
-      ...(this.title ? { title: this.title } : {}),
-      ...(this.description ? { description: this.description } : {}),
-      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
-      ...(this.pattern ? { pattern: this.pattern } : {}),
-      ...(this.enum ? { enum: this.enum } : {}),
-      ...(this.format ? { format: this.format } : {}),
-      ...(this.contentMediaType
-        ? { contentMediaType: this.contentMediaType }
-        : {}),
-    };
+    return addSharedFieldsFromState(
+      {
+        type: this.type,
+        default: this.default,
+        ...(this.foreignKey ? { foreignKey: this.foreignKey } : {}),
+        ...(this.readOnly ? { readOnly: this.readOnly } : {}),
+        ...(this.pattern ? { pattern: this.pattern } : {}),
+        ...(this.enum ? { enum: this.enum } : {}),
+        ...(this.format ? { format: this.format } : {}),
+        ...(this.contentMediaType
+          ? { contentMediaType: this.contentMediaType }
+          : {}),
+      },
+      this,
+    );
   }
 
   private getOrCreateValues(rowId: string): JsonStringValueStore[] {

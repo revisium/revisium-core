@@ -106,6 +106,16 @@ describe('JsonObjectStore', () => {
     expect(store.getPlainSchema()).toStrictEqual({
       $ref: 'ref.json',
     });
+
+    store.deprecated = true;
+    store.title = 'title';
+    store.description = 'description';
+    expect(store.getPlainSchema()).toStrictEqual({
+      $ref: 'ref.json',
+      deprecated: true,
+      description: 'description',
+      title: 'title',
+    });
   });
 
   it('title', () => {

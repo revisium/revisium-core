@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid';
 import { EventEmitter } from 'node:events';
+import { addSharedFieldsFromState } from 'src/features/share/utils/schema/lib/addSharedFieldsFromStore';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonBooleanValueStore } from 'src/features/share/utils/schema/model/value/json-boolean-value.store';
 import {
@@ -47,17 +48,17 @@ export class JsonBooleanStore
 
   public getPlainSchema(): JsonBooleanSchema | JsonRefSchema {
     if (this.$ref) {
-      return { $ref: this.$ref };
+      return addSharedFieldsFromState({ $ref: this.$ref }, this);
     }
 
-    return {
-      type: this.type,
-      default: this.default,
-      ...(this.readOnly ? { readOnly: this.readOnly } : {}),
-      ...(this.title ? { title: this.title } : {}),
-      ...(this.description ? { description: this.description } : {}),
-      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
-    };
+    return addSharedFieldsFromState(
+      {
+        type: this.type,
+        default: this.default,
+        ...(this.readOnly ? { readOnly: this.readOnly } : {}),
+      },
+      this,
+    );
   }
 
   private getOrCreateValues(rowId: string): JsonBooleanValueStore[] {

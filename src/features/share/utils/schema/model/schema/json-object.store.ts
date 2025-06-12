@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
+import { addSharedFieldsFromState } from 'src/features/share/utils/schema/lib/addSharedFieldsFromStore';
 import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
 import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
 import { JsonObject } from 'src/features/share/utils/schema/types/json.types';
@@ -188,23 +189,23 @@ export class JsonObjectStore implements JsonObjectSchema {
 
   public getPlainSchema(): JsonObjectSchema | JsonRefSchema {
     if (this.$ref) {
-      return { $ref: this.$ref };
+      return addSharedFieldsFromState({ $ref: this.$ref }, this);
     }
 
-    return {
-      type: this.type,
-      additionalProperties: this.additionalProperties,
-      required: this.required,
-      properties: Object.entries<JsonSchemaStore>(this.properties).reduce<
-        Record<string, JsonSchema>
-      >((result, [name, store]) => {
-        result[name] = store.getPlainSchema();
-        return result;
-      }, {}),
-      ...(this.title ? { title: this.title } : {}),
-      ...(this.description ? { description: this.description } : {}),
-      ...(this.deprecated ? { deprecated: this.deprecated } : {}),
-    };
+    return addSharedFieldsFromState(
+      {
+        type: this.type,
+        additionalProperties: this.additionalProperties,
+        required: this.required,
+        properties: Object.entries<JsonSchemaStore>(this.properties).reduce<
+          Record<string, JsonSchema>
+        >((result, [name, store]) => {
+          result[name] = store.getPlainSchema();
+          return result;
+        }, {}),
+      },
+      this,
+    );
   }
 
   private getOrCreateValues(rowId: string): JsonObjectValueStore[] {
