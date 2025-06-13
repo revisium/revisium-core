@@ -19,6 +19,8 @@ import { PluginModule } from 'src/features/plugin/plugin.module';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
+import { ResolveRowForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-by.handler';
+import { ResolveRowForeignKeysToHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-to.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
@@ -128,6 +130,8 @@ export const createTestingModule = async () => {
       GetRowsHandler,
       GetRowHandler,
       GetRowsByTableHandler,
+      ResolveRowForeignKeysByHandler,
+      ResolveRowForeignKeysToHandler,
     ],
   })
     .overrideProvider(S3Service)
