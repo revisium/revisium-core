@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
+import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ResolveRowForeignKeysToQuery } from 'src/features/row/queries/impl';
@@ -26,6 +27,7 @@ export class ResolveRowForeignKeysToHandler
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly jsonSchemaStore: JsonSchemaStoreService,
+    private readonly pluginService: PluginService,
   ) {}
 
   private get transaction() {
@@ -88,17 +90,27 @@ export class ResolveRowForeignKeysToHandler
 
     return getOffsetPagination({
       pageData: { first: data.first, after: data.after },
-      findMany: (args) =>
-        this.getRows(args, foundForeignKey, foreignKeyTable.versionId).then(
-          (rows) =>
-            rows.map((row) => ({
-              ...row,
-              context: {
-                revisionId: data.revisionId,
-                tableId: data.tableId,
-              },
-            })),
-        ),
+      findMany: async (args) => {
+        const rows = await this.getRows(
+          args,
+          foundForeignKey,
+          foreignKeyTable.versionId,
+        );
+
+        await this.pluginService.computeRows({
+          revisionId: data.revisionId,
+          tableId: data.foreignKeyToTableId,
+          rows,
+        });
+
+        return rows.map((row) => ({
+          ...row,
+          context: {
+            revisionId: data.revisionId,
+            tableId: data.tableId,
+          },
+        }));
+      },
       count: () => this.getCount(foundForeignKey),
     });
   }

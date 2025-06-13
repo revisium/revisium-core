@@ -90,7 +90,7 @@ const prepareOrganizationUser = async (
   };
 };
 
-async function prepareBranch(prismaService: PrismaService) {
+export async function prepareBranch(prismaService: PrismaService) {
   // branch / project / organization / revisions
 
   const organizationId = `org-${nanoid()}`;
