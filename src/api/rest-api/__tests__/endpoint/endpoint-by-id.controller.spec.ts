@@ -86,7 +86,7 @@ describe('restapi - EndpointByIdController', () => {
       await makeProjectPublic(preparedData.project.projectId);
     });
 
-    it('unauthenticated user cannot get endpoint relatives (requires auth)', async () => {
+    it('unauthenticated user can get endpoint relatives (public project)', async () => {
       const result = await request(app.getHttpServer())
         .get(getEndpointRelativesUrl(preparedData.project.headEndpointId))
         .expect(200)
@@ -95,7 +95,7 @@ describe('restapi - EndpointByIdController', () => {
       expect(result.endpoint.id).toBe(preparedData.project.headEndpointId);
     });
 
-    it('another owner cannot get endpoint relatives (public project, endpoint permission required)', async () => {
+    it('another owner can get endpoint relatives (public project)', async () => {
       const result = await request(app.getHttpServer())
         .get(getEndpointRelativesUrl(preparedData.project.headEndpointId))
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
