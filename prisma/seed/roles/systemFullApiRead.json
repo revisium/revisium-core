@@ -3,7 +3,6 @@
   "level": "System",
   "permissions": [
     "read-organization",
-    "read-endpoint",
     "read-project-private",
     "read-project-public"
   ]

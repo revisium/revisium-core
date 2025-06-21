@@ -15,7 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { GetEndpointResultDto } from 'src/api/rest-api/endpoint/dto';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
+import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { DeleteEndpointCommand } from 'src/features/endpoint/commands/impl';
@@ -23,7 +23,6 @@ import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.s
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 
 @UseInterceptors(RestMetricsInterceptor)
-@UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,
@@ -37,11 +36,8 @@ export class EndpointByIdController {
     private readonly endpointApi: EndpointApiService,
   ) {}
 
+  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('relatives')
-  @PermissionParams({
-    action: PermissionAction.read,
-    subject: PermissionSubject.Endpoint,
-  })
   @ApiOperation({ operationId: 'endpointRelatives' })
   @ApiOkResponse({ type: GetEndpointResultDto })
   async endpointRelatives(
@@ -50,6 +46,7 @@ export class EndpointByIdController {
     return this.endpointApi.getEndpointRelatives({ endpointId });
   }
 
+  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Delete()
   @PermissionParams({
     action: PermissionAction.delete,

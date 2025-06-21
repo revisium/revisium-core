@@ -17,7 +17,6 @@
     "create-row",
     "update-row",
     "delete-row",
-    "read-endpoint",
     "create-endpoint",
     "delete-endpoint",
     "add-user",
