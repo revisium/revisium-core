@@ -386,6 +386,29 @@
         ],
         "type": "object"
       },
+      "GetEndpointResultDto": {
+        "properties": {
+          "branch": {
+            "$ref": "#/components/schemas/BranchModel"
+          },
+          "endpoint": {
+            "$ref": "#/components/schemas/EndpointModel"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectModel"
+          },
+          "revision": {
+            "$ref": "#/components/schemas/RevisionModel"
+          }
+        },
+        "required": [
+          "endpoint",
+          "revision",
+          "branch",
+          "project"
+        ],
+        "type": "object"
+      },
       "GetTableRowsDto": {
         "properties": {
           "after": {
@@ -825,7 +848,7 @@
           "id": {
             "type": "string"
           },
-         "publishedAt": {
+          "publishedAt": {
             "format": "date-time",
             "type": "string"
           },
@@ -938,6 +961,14 @@
             ],
             "description": "Filter by meta"
           },
+          "publishedAt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DateTimeFilterDto"
+              }
+            ],
+            "description": "Filter by publishedAt"
+          },
           "readonly": {
             "allOf": [
               {
@@ -961,14 +992,6 @@
               }
             ],
             "description": "Filter by updatedAt"
-          },
-          "publishedAt": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/DateTimeFilterDto"
-              }
-            ],
-            "description": "Filter by publishedAt"
           },
           "versionId": {
             "allOf": [
@@ -1547,6 +1570,42 @@
               "application/json": {
                 "schema": {
                   "type": "boolean"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Endpoint"
+        ]
+      }
+    },
+    "/api/endpoints/{endpointId}/relatives": {
+      "get": {
+        "operationId": "endpointRelatives",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "endpointId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetEndpointResultDto"
                 }
               }
             },
