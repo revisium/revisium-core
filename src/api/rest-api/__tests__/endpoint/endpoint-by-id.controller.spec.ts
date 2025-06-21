@@ -143,7 +143,7 @@ describe('restapi - EndpointByIdController', () => {
     it('cannot delete endpoint without authentication', async () => {
       return request(app.getHttpServer())
         .delete(getDeleteEndpointUrl(preparedData.project.draftEndpointId))
-        .expect(403);
+        .expect(401);
     });
 
     it('should return 403 when deleting non-existent endpoint (due to project guard)', async () => {
@@ -171,7 +171,7 @@ describe('restapi - EndpointByIdController', () => {
     it('unauthenticated user cannot delete endpoint (public project)', async () => {
       return request(app.getHttpServer())
         .delete(getDeleteEndpointUrl(preparedData.project.draftEndpointId))
-        .expect(403);
+        .expect(401);
     });
 
     it('another owner cannot delete endpoint (no delete permission on public project)', async () => {

@@ -1617,7 +1617,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Retrieve all related entities for a given endpoint",
         "tags": [
           "Endpoint"
         ]

@@ -15,6 +15,7 @@ import {
 } from '@nestjs/swagger';
 import { GetEndpointResultDto } from 'src/api/rest-api/endpoint/dto';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
@@ -38,7 +39,10 @@ export class EndpointByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('relatives')
-  @ApiOperation({ operationId: 'endpointRelatives' })
+  @ApiOperation({
+    operationId: 'endpointRelatives',
+    summary: 'Retrieve all related entities for a given endpoint',
+  })
   @ApiOkResponse({ type: GetEndpointResultDto })
   async endpointRelatives(
     @Param('endpointId') endpointId: string,
@@ -46,7 +50,7 @@ export class EndpointByIdController {
     return this.endpointApi.getEndpointRelatives({ endpointId });
   }
 
-  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
   @Delete()
   @PermissionParams({
     action: PermissionAction.delete,
