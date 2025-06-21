@@ -188,7 +188,6 @@ describe('restapi - EndpointByIdController', () => {
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200);
 
-      // NestJS returns empty object {} for boolean true responses
       expect(response.body).toEqual({});
     });
 
