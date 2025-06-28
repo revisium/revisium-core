@@ -45,6 +45,7 @@
     "version:patch": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.55.0",
     "@apollo/server": "^4.12.1",
     "@aws-sdk/client-s3": "^3.816.0",
     "@aws-sdk/s3-request-presigner": "^3.816.0",
