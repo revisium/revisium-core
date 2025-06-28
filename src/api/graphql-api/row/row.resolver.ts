@@ -8,6 +8,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { RowSuggestionResultModel } from 'src/api/graphql-api/row/model';
 import { mapToPrismaOrderBy } from 'src/api/graphql-api/share/mapToPrismaOrderBy';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
@@ -17,10 +18,12 @@ import {
   GetRowCountForeignKeysByInput,
   GetRowInput,
   GetRowsInput,
+  GetRowSuggestionInput,
 } from 'src/api/graphql-api/row/inputs';
 import { GetRowForeignKeysInput } from 'src/api/graphql-api/row/inputs/get-row-foreign-keys.input';
 import { RowModel } from 'src/api/graphql-api/row/model/row.model';
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
+import { AiApiService } from 'src/features/enterprise/ai/ai.service';
 import {
   GetRowQuery,
   GetRowsQuery,
@@ -38,7 +41,10 @@ import { GetRowsReturnType } from 'src/features/row/queries/types/get-rows.types
 })
 @Resolver(() => RowModel)
 export class RowResolver {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly aiApiService: AiApiService,
+  ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RowModel, { nullable: true })
@@ -65,6 +71,12 @@ export class RowResolver {
         orderBy: prismaOrderBy,
       }),
     );
+  }
+
+  @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
+  @Query(() => RowSuggestionResultModel)
+  public rowSuggestion(@Args('data') data: GetRowSuggestionInput) {
+    return this.aiApiService.getRowSuggestion(data);
   }
 
   @ResolveField(() => RowsConnection)

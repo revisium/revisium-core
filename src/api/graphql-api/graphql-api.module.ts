@@ -19,6 +19,7 @@ import { RevisionResolver } from 'src/api/graphql-api/revision/revision.resolver
 import { RowResolver } from 'src/api/graphql-api/row/row.resolver';
 import { TableResolver } from 'src/api/graphql-api/table/table.resolver';
 import { UserResolver } from 'src/api/graphql-api/user/user.resolver';
+import { AiModule } from 'src/features/enterprise/ai/ai.module';
 import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql-metrics.plugin';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 
@@ -51,6 +52,7 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
     }),
     CqrsModule,
     AuthModule,
+    AiModule,
   ],
   providers: [
     ConfigurationResolver,
