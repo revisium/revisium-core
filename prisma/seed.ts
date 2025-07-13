@@ -187,7 +187,9 @@ async function addSystemFullApiRead() {
         },
       },
     },
-    update: {},
+    update: {
+      password: await bcrypt.hash(password, 10),
+    },
   });
 }
 
