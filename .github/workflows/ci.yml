@@ -24,11 +24,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
@@ -50,6 +45,11 @@ jobs:
 
       - run: npm run docker:test-container-up
       - run: npm run test:cov
+
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload results to Codecov
         uses: codecov/codecov-action@v5
