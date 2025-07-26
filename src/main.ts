@@ -30,3 +30,5 @@ async function bootstrap() {
 }
 
 bootstrap();
+
+console.log(process.hrtime());

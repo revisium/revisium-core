@@ -80,6 +80,7 @@ export class CreateSchemaHandler extends DraftHandler<
           },
         ],
         hash: await this.hashService.hashObject(data),
+        date: new Date(),
       },
     ] as Prisma.InputJsonValue;
   }

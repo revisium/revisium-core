@@ -26,6 +26,7 @@ import { ApiCreateBranchByRevisionIdCommand } from 'src/features/branch/commands
 import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-create-table.command';
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { ApiCreateEndpointCommand } from 'src/features/endpoint/commands/impl';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto';
 import { BranchModel } from 'src/api/rest-api/branch/model';
@@ -37,6 +38,7 @@ import {
 import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint.dto';
 import {
   CreateTableResponse,
+  MigrationsModel,
   RevisionModel,
 } from 'src/api/rest-api/revision/model';
 import { ChildBranchResponse } from 'src/api/rest-api/revision/model/child-branches.response';
@@ -72,6 +74,7 @@ export class RevisionByIdController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly revisionApi: RevisionsApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -144,6 +147,16 @@ export class RevisionByIdController {
         new GetEndpointsByRevisionIdQuery(revisionId),
       ),
     );
+  }
+
+  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
+  @Get('migrations')
+  @ApiOperation({ operationId: 'migrations' })
+  @ApiOkResponse({ type: [MigrationsModel] })
+  async getMigrations(
+    @Param('revisionId') revisionId: string,
+  ): Promise<MigrationsModel[]> {
+    return this.revisionApi.migrations({ revisionId });
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)

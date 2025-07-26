@@ -1,3 +1,4 @@
+import { GetMigrationsHandler } from 'src/features/revision/queries/commands/get-migrations.handler';
 import { ResolveBranchByRevisionHandler } from 'src/features/revision/queries/commands/resolve-branch-by-revision.handler';
 import { GetChildrenByRevisionHandler } from 'src/features/revision/queries/commands/get-children-by-revision.handler';
 import { GetEndpointsByRevisionIdHandler } from 'src/features/revision/queries/commands/get-endpoints-by-revision-id.handler';
@@ -16,4 +17,5 @@ export const REVISION_QUERIES_HANDLERS = [
   ResolveBranchByRevisionHandler,
   GetEndpointsByRevisionIdHandler,
   ResolveChildBranchesByRevisionHandler,
+  GetMigrationsHandler,
 ];
