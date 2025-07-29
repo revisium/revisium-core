@@ -176,6 +176,7 @@ describe('CreateTableHandler', () => {
       {
         patches: [{ op: 'add', path: '', value: schema } as JsonPatchAdd],
         hash: objectHash(schema),
+        date: expect.any(String),
       },
     ]);
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));

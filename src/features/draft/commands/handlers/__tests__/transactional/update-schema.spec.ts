@@ -151,6 +151,7 @@ describe('UpdateSchemaHandler', () => {
           } as JsonPatchAdd,
         ],
         hash: hash(testSchema),
+        date: expect.any(String),
       },
       {
         patches: [
@@ -171,6 +172,7 @@ describe('UpdateSchemaHandler', () => {
           } as JsonPatchReplace,
         ],
         hash: hash(testSchemaString),
+        date: expect.any(String),
       },
     ]);
     expect(schemaRow.hash).toBe(objectHash(testSchemaString));

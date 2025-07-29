@@ -337,6 +337,7 @@ describe('UpdateTableHandler', () => {
       {
         patches: [{ op: 'add', path: '', value: testSchema }],
         hash: objectHash(testSchema),
+        date: expect.any(String),
       },
       {
         patches: [
@@ -350,6 +351,7 @@ describe('UpdateTableHandler', () => {
           },
         ],
         hash: objectHash(schema),
+        date: expect.any(String),
       },
     ];
     await schemaCheck(ids, schema, meta);
@@ -394,6 +396,7 @@ describe('UpdateTableHandler', () => {
       {
         patches: [{ op: 'add', path: '', value: testSchema }],
         hash: objectHash(testSchema),
+        date: expect.any(String),
       },
       {
         patches: [
@@ -409,6 +412,7 @@ describe('UpdateTableHandler', () => {
           },
         ],
         hash: objectHash(schema),
+        date: expect.any(String),
       },
     ];
     await schemaCheck(ids, schema, meta);
