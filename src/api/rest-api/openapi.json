@@ -486,6 +486,28 @@
         "required": ["accessToken"],
         "type": "object"
       },
+      "MigrationsModel": {
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "patches": {
+            "description": "Array of JSON patch operations",
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "tableId": {
+            "type": "string"
+          }
+        },
+        "required": ["tableId", "hash", "date", "patches"],
+        "type": "object"
+      },
       "OrderByDto": {
         "properties": {
           "direction": {
@@ -2737,6 +2759,43 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EndpointModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": ["Revision"]
+      }
+    },
+    "/api/revision/{revisionId}/migrations": {
+      "get": {
+        "operationId": "migrations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/MigrationsModel"
+                  },
+                  "type": "array"
                 }
               }
             },
