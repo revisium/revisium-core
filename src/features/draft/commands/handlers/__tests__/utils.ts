@@ -17,6 +17,7 @@ import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
+import { REVISION_QUERIES_HANDLERS } from 'src/features/revision/queries/commands';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { ResolveRowForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-by.handler';
@@ -123,6 +124,7 @@ export const createTestingModule = async () => {
       ...ORGANIZATIONS_QUERIES,
       ...PROJECT_QUERIES,
       ...BRANCH_QUERIES_HANDLERS,
+      ...REVISION_QUERIES_HANDLERS,
       GetRevisionHandler,
       GetBranchByIdHandler,
       GetTableByIdHandler,
