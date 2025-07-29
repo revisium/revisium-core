@@ -79,6 +79,7 @@ describe('CreateSchemaHandler', () => {
       {
         patches: [{ op: 'add', path: '', value: testSchema } as JsonPatchAdd],
         hash: objectHash(testSchema),
+        date: expect.any(String),
       },
     ]);
     expect(schemaRow.hash).toBe(objectHash(testSchema));

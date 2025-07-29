@@ -295,6 +295,7 @@ export async function prepareTableWithSchema({
             } as JsonPatchAdd,
           ],
           hash: hash(schema),
+          date: new Date(),
         },
       ],
       hash: hash(schema),

@@ -10,7 +10,11 @@ export class GetTableSchemaQuery {
   ) {}
 }
 
-export type HistoryPatches = { patches: JsonPatch[]; hash: string };
+export type HistoryPatches = {
+  patches: JsonPatch[];
+  hash: string;
+  date: string;
+};
 
 export type GetTableSchemaQueryReturnType = {
   schema: JsonSchema;

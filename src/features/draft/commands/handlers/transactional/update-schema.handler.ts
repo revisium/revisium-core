@@ -52,6 +52,7 @@ export class UpdateSchemaHandler extends DraftHandler<
       {
         patches,
         hash: await this.hashService.hashObject(schema),
+        date: new Date(),
       },
     ];
     this.validateHistoryPatches(nextHistoryPatches);
