@@ -17,6 +17,7 @@ import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
+import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -285,19 +286,17 @@ export async function prepareTableWithSchema({
         },
       },
       data: schema,
-      meta: [
-        {
-          patches: [
-            {
-              op: 'add',
-              path: '',
-              value: schema,
-            } as JsonPatchAdd,
-          ],
+      meta: {
+        createdId: tableCreatedId,
+        initMigration: {
+          changeType: 'init',
+          tableId,
+          schema: schema,
           hash: hash(schema),
-          date: new Date(),
+          date: new Date().toISOString(),
         },
-      ],
+        migrations: [],
+      } as TableMigrations,
       hash: hash(schema),
       schemaHash: hash(metaSchema),
     },
