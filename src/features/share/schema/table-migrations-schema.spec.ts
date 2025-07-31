@@ -1,7 +1,7 @@
 import Ajv from 'ajv/dist/2020';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
-import { tableSchema } from 'src/features/share/schema/table-schema';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 
 describe('table-schema', () => {
   const ajv = new Ajv();
@@ -23,7 +23,7 @@ describe('table-schema', () => {
   });
 
   it('no errors', () => {
-    const result = ajv.validate(tableSchema, {
+    const result = ajv.validate(tableMigrationsSchema, {
       createdId: 'id',
       initMigration: {
         changeType: 'init',

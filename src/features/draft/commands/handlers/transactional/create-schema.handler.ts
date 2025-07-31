@@ -14,6 +14,7 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
@@ -51,9 +52,9 @@ export class CreateSchemaHandler extends DraftHandler<
       );
     }
 
-    const historyPatches = await this.getHistoryPatchesByData(data);
+    const tableMigrations = await this.getTableMigrations(input);
 
-    await this.createRowInSchemaTable(input, historyPatches);
+    await this.createRowInSchemaTable(input, tableMigrations);
 
     return true;
   }
@@ -69,20 +70,26 @@ export class CreateSchemaHandler extends DraftHandler<
     }
   }
 
-  private async getHistoryPatchesByData(data: Prisma.InputJsonValue) {
-    return [
-      {
-        patches: [
-          {
-            op: 'add',
-            path: '',
-            value: data as JsonSchema,
-          },
-        ],
+  private async getTableMigrations({
+    createdId,
+    tableId,
+    data,
+  }: CreateSchemaCommand['data']) {
+    const tableMigrations: TableMigrations = {
+      createdId,
+      initMigration: {
+        changeType: 'init',
+        tableId,
         hash: await this.hashService.hashObject(data),
-        date: new Date(),
+        date: new Date().toISOString(),
+        schema: data as JsonSchema,
       },
-    ] as Prisma.InputJsonValue;
+      migrations: [],
+    };
+
+    this.jsonSchemaValidator.validateTableMigrationsSchema(tableMigrations);
+
+    return tableMigrations as Prisma.InputJsonValue;
   }
 
   private createRowInSchemaTable(

@@ -1,7 +1,7 @@
 import { Schema } from 'ajv/dist/2020';
 
-export const tableSchema: Schema = {
-  $id: 'table-schema.json',
+export const tableMigrationsSchema: Schema = {
+  $id: 'table-migrations-schema.json',
   type: 'object',
   additionalProperties: false,
   required: ['createdId', 'initMigration', 'migrations'],

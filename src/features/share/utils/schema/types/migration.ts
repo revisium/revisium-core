@@ -24,7 +24,7 @@ export type InitMigration = {
   schema: JsonSchema;
 };
 
-export type Table = {
+export type TableMigrations = {
   createdId: string;
   initMigration: InitMigration;
   migrations: Migration[];
