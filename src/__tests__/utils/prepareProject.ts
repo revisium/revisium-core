@@ -16,7 +16,6 @@ import { FileStatus } from 'src/features/plugin/file/file.plugin';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
 import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
