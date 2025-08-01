@@ -12,9 +12,11 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  getSchemaPath,
 } from '@nestjs/swagger';
 import { Endpoint } from '@prisma/client';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
@@ -27,6 +29,7 @@ import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-crea
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { ApiCreateEndpointCommand } from 'src/features/endpoint/commands/impl';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
+import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto';
 import { BranchModel } from 'src/api/rest-api/branch/model';
@@ -38,8 +41,8 @@ import {
 import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint.dto';
 import {
   CreateTableResponse,
-  MigrationsModel,
   RevisionModel,
+  TableMigrationsDto,
 } from 'src/api/rest-api/revision/model';
 import { ChildBranchResponse } from 'src/api/rest-api/revision/model/child-branches.response';
 import { transformFromPrismaToBranchModel } from 'src/api/rest-api/share/utils/transformFromPrismaToBranchModel';
@@ -70,6 +73,7 @@ import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/
 @Controller('revision/:revisionId')
 @ApiBearerAuth('access-token')
 @ApiTags('Revision')
+@ApiExtraModels(TableMigrationsDto)
 export class RevisionByIdController {
   constructor(
     private readonly queryBus: QueryBus,
@@ -152,10 +156,16 @@ export class RevisionByIdController {
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('migrations')
   @ApiOperation({ operationId: 'migrations' })
-  @ApiOkResponse({ type: [MigrationsModel] })
+  @ApiOkResponse({
+    description: 'Retrieves all table migrations',
+    schema: {
+      type: 'array',
+      items: { $ref: getSchemaPath(TableMigrationsDto) },
+    },
+  })
   async getMigrations(
     @Param('revisionId') revisionId: string,
-  ): Promise<MigrationsModel[]> {
+  ): Promise<TableMigrations[]> {
     return this.revisionApi.migrations({ revisionId });
   }
 

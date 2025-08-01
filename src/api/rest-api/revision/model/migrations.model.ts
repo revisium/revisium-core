@@ -1,19 +1,94 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
-export class MigrationsModel {
-  @ApiProperty()
+export class InitMigrationDto {
+  @ApiProperty({
+    enum: ['init'],
+    example: 'init',
+    description: 'Indicates an initialization migration',
+  })
+  changeType: 'init';
+
+  @ApiProperty({ description: 'Identifier of the newly created table' })
   tableId: string;
 
-  @ApiProperty()
+  @ApiProperty({ description: 'Checksum of the initial schema' })
   hash: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    description: 'Timestamp when the table was created (ISO 8601)',
+    example: '2025-07-31T12:34:56Z',
+  })
   date: string;
 
   @ApiProperty({
+    description: 'JSON Schema definition of the table',
+    type: Object,
+  })
+  schema: JsonSchema;
+}
+
+export class UpdateMigrationDto {
+  @ApiProperty({
+    enum: ['update'],
+    example: 'update',
+    description: 'Indicates an update migration',
+  })
+  changeType: 'update';
+
+  @ApiProperty({ description: 'Checksum of the patch set' })
+  hash: string;
+
+  @ApiProperty({
+    description: 'Timestamp when the update was applied (ISO 8601)',
+  })
+  date: string;
+
+  @ApiProperty({
+    description: 'Array of JSON Patch operations',
     type: [Object],
-    description: 'Array of JSON patch operations',
   })
   patches: JsonPatch[];
+}
+
+export class RenameMigrationDto {
+  @ApiProperty({
+    enum: ['rename'],
+    example: 'rename',
+    description: 'Indicates a rename migration',
+  })
+  changeType: 'rename';
+
+  @ApiProperty({
+    description: 'Timestamp when the table was renamed (ISO 8601)',
+  })
+  date: string;
+
+  @ApiProperty({ description: 'New table identifier after renaming' })
+  tableId: string;
+}
+
+@ApiExtraModels(InitMigrationDto, UpdateMigrationDto, RenameMigrationDto)
+export class TableMigrationsDto {
+  @ApiProperty({ description: 'ID assigned when the table was first created' })
+  createdId: string;
+
+  @ApiProperty({
+    description: 'Initial migration details',
+    type: () => InitMigrationDto,
+  })
+  initMigration: InitMigrationDto;
+
+  @ApiProperty({
+    description: 'List of subsequent migrations (update or rename)',
+    type: 'array',
+    items: {
+      oneOf: [
+        { $ref: getSchemaPath(UpdateMigrationDto) },
+        { $ref: getSchemaPath(RenameMigrationDto) },
+      ],
+    },
+  })
+  migrations: Array<UpdateMigrationDto | RenameMigrationDto>;
 }

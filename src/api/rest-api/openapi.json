@@ -401,6 +401,35 @@
         "required": ["id"],
         "type": "object"
       },
+      "InitMigrationDto": {
+        "properties": {
+          "changeType": {
+            "description": "Indicates an initialization migration",
+            "enum": ["init"],
+            "example": "init",
+            "type": "string"
+          },
+          "date": {
+            "description": "Timestamp when the table was created (ISO 8601)",
+            "example": "2025-07-31T12:34:56Z",
+            "type": "string"
+          },
+          "hash": {
+            "description": "Checksum of the initial schema",
+            "type": "string"
+          },
+          "schema": {
+            "description": "JSON Schema definition of the table",
+            "type": "object"
+          },
+          "tableId": {
+            "description": "Identifier of the newly created table",
+            "type": "string"
+          }
+        },
+        "required": ["changeType", "tableId", "hash", "date", "schema"],
+        "type": "object"
+      },
       "JsonFilterDto": {
         "properties": {
           "array_contains": {
@@ -484,28 +513,6 @@
           }
         },
         "required": ["accessToken"],
-        "type": "object"
-      },
-      "MigrationsModel": {
-        "properties": {
-          "date": {
-            "type": "string"
-          },
-          "hash": {
-            "type": "string"
-          },
-          "patches": {
-            "description": "Array of JSON patch operations",
-            "items": {
-              "type": "object"
-            },
-            "type": "array"
-          },
-          "tableId": {
-            "type": "string"
-          }
-        },
-        "required": ["tableId", "hash", "date", "patches"],
         "type": "object"
       },
       "OrderByDto": {
@@ -623,6 +630,26 @@
           }
         },
         "required": ["userId"],
+        "type": "object"
+      },
+      "RenameMigrationDto": {
+        "properties": {
+          "changeType": {
+            "description": "Indicates a rename migration",
+            "enum": ["rename"],
+            "example": "rename",
+            "type": "string"
+          },
+          "date": {
+            "description": "Timestamp when the table was renamed (ISO 8601)",
+            "type": "string"
+          },
+          "tableId": {
+            "description": "New table identifier after renaming",
+            "type": "string"
+          }
+        },
+        "required": ["changeType", "date", "tableId"],
         "type": "object"
       },
       "RenameRowDto": {
@@ -958,6 +985,38 @@
         "required": ["success"],
         "type": "object"
       },
+      "TableMigrationsDto": {
+        "properties": {
+          "createdId": {
+            "description": "ID assigned when the table was first created",
+            "type": "string"
+          },
+          "initMigration": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/InitMigrationDto"
+              }
+            ],
+            "description": "Initial migration details"
+          },
+          "migrations": {
+            "description": "List of subsequent migrations (update or rename)",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/UpdateMigrationDto"
+                },
+                {
+                  "$ref": "#/components/schemas/RenameMigrationDto"
+                }
+              ]
+            },
+            "type": "array"
+          }
+        },
+        "required": ["createdId", "initMigration", "migrations"],
+        "type": "object"
+      },
       "TableModel": {
         "properties": {
           "createdAt": {
@@ -1029,6 +1088,33 @@
           }
         },
         "required": ["touched"],
+        "type": "object"
+      },
+      "UpdateMigrationDto": {
+        "properties": {
+          "changeType": {
+            "description": "Indicates an update migration",
+            "enum": ["update"],
+            "example": "update",
+            "type": "string"
+          },
+          "date": {
+            "description": "Timestamp when the update was applied (ISO 8601)",
+            "type": "string"
+          },
+          "hash": {
+            "description": "Checksum of the patch set",
+            "type": "string"
+          },
+          "patches": {
+            "description": "Array of JSON Patch operations",
+            "items": {
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["changeType", "hash", "date", "patches"],
         "type": "object"
       },
       "UpdatePasswordDto": {
@@ -2793,13 +2879,13 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/MigrationsModel"
+                    "$ref": "#/components/schemas/TableMigrationsDto"
                   },
                   "type": "array"
                 }
               }
             },
-            "description": ""
+            "description": "Retrieves all table migrations"
           }
         },
         "security": [

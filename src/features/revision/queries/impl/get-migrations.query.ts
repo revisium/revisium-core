@@ -1,4 +1,4 @@
-import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
+import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 
 export class GetMigrationsQuery {
   constructor(
@@ -10,9 +10,4 @@ export class GetMigrationsQuery {
 
 export type GetMigrationsQueryData = GetMigrationsQuery['data'];
 
-export type GetMigrationsQueryReturnType = {
-  patches: JsonPatch[];
-  hash: string;
-  tableId: string;
-  date: string;
-}[];
+export type GetMigrationsQueryReturnType = TableMigrations[];
