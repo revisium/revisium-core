@@ -31,6 +31,6 @@ export class GetMigrationsHandler implements IQueryHandler<GetMigrationsQuery> {
       },
     });
 
-    return rows.map((row) => row.meta as TableMigrations[]);
+    return rows.map((row) => row.meta as TableMigrations);
   }
 }
