@@ -60,7 +60,7 @@ describe('UpdateSchemaHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'patches is not valid',
+      'tableMigrations are not valid',
     );
   });
 
@@ -97,7 +97,7 @@ describe('UpdateSchemaHandler', () => {
 
   it('should update the schema if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId } = ids;
+    const { draftRevisionId, tableId, tableCreatedId } = ids;
 
     const command = new UpdateSchemaCommand({
       revisionId: draftRevisionId,
@@ -141,40 +141,40 @@ describe('UpdateSchemaHandler', () => {
     });
     expect(result).toBe(true);
     expect(schemaRow.data).toStrictEqual(testSchemaString);
-    expect(schemaRow.meta).toStrictEqual([
-      {
-        patches: [
-          {
-            op: 'add',
-            path: '',
-            value: testSchema,
-          } as JsonPatchAdd,
-        ],
+    expect(schemaRow.meta).toStrictEqual({
+      createdId: tableCreatedId,
+      initMigration: {
+        changeType: 'init',
+        date: expect.any(String),
         hash: hash(testSchema),
-        date: expect.any(String),
+        schema: testSchema,
+        tableId,
       },
-      {
-        patches: [
-          {
-            op: 'replace',
-            path: '',
-            value: testSchemaString,
-          } as JsonPatchReplace,
-          {
-            op: 'replace',
-            path: '',
-            value: testSchema,
-          } as JsonPatchReplace,
-          {
-            op: 'replace',
-            path: '',
-            value: testSchemaString,
-          } as JsonPatchReplace,
-        ],
-        hash: hash(testSchemaString),
-        date: expect.any(String),
-      },
-    ]);
+      migrations: [
+        {
+          changeType: 'update',
+          date: expect.any(String),
+          hash: hash(testSchemaString),
+          patches: [
+            {
+              op: 'replace',
+              path: '',
+              value: testSchemaString,
+            } as JsonPatchReplace,
+            {
+              op: 'replace',
+              path: '',
+              value: testSchema,
+            } as JsonPatchReplace,
+            {
+              op: 'replace',
+              path: '',
+              value: testSchemaString,
+            } as JsonPatchReplace,
+          ],
+        },
+      ],
+    });
     expect(schemaRow.hash).toBe(objectHash(testSchemaString));
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });

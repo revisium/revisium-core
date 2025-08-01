@@ -18,6 +18,9 @@ import {
   ajvRowUpdatedAtSchema,
   ajvRowVersionIdSchema,
 } from 'src/features/share/schema/plugins';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
+import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 
@@ -27,9 +30,10 @@ export class JsonSchemaValidatorService {
 
   private readonly ajv = new Ajv();
 
-  private readonly metaSchemaValidateFunction: ValidateFunction;
-  private readonly jsonPatchSchemaValidateFunction: ValidateFunction;
-  private readonly historyPatchesSchemaValidate: ValidateFunction;
+  public readonly metaSchemaValidateFunction: ValidateFunction<JsonSchema>;
+  public readonly jsonPatchSchemaValidateFunction: ValidateFunction;
+  public readonly historyPatchesSchemaValidate: ValidateFunction;
+  public readonly tableMigrationsSchemaValidate: ValidateFunction<TableMigrations>;
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.ajv.addKeyword({
@@ -52,6 +56,9 @@ export class JsonSchemaValidatorService {
     this.metaSchemaValidateFunction = this.ajv.compile(metaSchema);
     this.jsonPatchSchemaValidateFunction = this.ajv.compile(jsonPatchSchema);
     this.historyPatchesSchemaValidate = this.ajv.compile(historyPatchesSchema);
+    this.tableMigrationsSchemaValidate = this.ajv.compile(
+      tableMigrationsSchema,
+    );
     this.metaSchemaHash = this.getSchemaHash(metaSchema);
   }
 
@@ -79,6 +86,15 @@ export class JsonSchemaValidatorService {
     return {
       result,
       errors: this.historyPatchesSchemaValidate.errors,
+    };
+  }
+
+  public validateTableMigrationsSchema(data: unknown) {
+    const result = this.tableMigrationsSchemaValidate(data);
+
+    return {
+      result,
+      errors: this.tableMigrationsSchemaValidate.errors,
     };
   }
 

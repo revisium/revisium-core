@@ -44,26 +44,25 @@ export class UpdateSchemaHandler extends DraftHandler<
 
     await this.validateSchema(schema);
 
-    const { historyPatches } = await this.getCurrentHistoryPatches(input);
-    this.validateHistoryPatches(historyPatches);
+    const { tableMigrations } = await this.getCurrentTableMigrations(input);
+    this.validateTableMigrations(tableMigrations);
 
-    const nextHistoryPatches = [
-      ...historyPatches,
-      {
-        patches,
-        hash: await this.hashService.hashObject(schema),
-        date: new Date(),
-      },
-    ];
-    this.validateHistoryPatches(nextHistoryPatches);
+    tableMigrations.migrations.push({
+      changeType: 'update',
+      patches,
+      date: new Date().toISOString(),
+      hash: await this.hashService.hashObject(schema),
+    });
+
+    this.validateTableMigrations(tableMigrations);
     this.validateFieldNamesInSchema(patches);
 
-    await this.updateRowInSchemaTable(input, nextHistoryPatches);
+    await this.updateRowInSchemaTable(input, tableMigrations);
 
     return true;
   }
 
-  private getCurrentHistoryPatches(data: UpdateSchemaCommand['data']) {
+  private getCurrentTableMigrations(data: UpdateSchemaCommand['data']) {
     return this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
@@ -81,12 +80,12 @@ export class UpdateSchemaHandler extends DraftHandler<
     }
   }
 
-  private validateHistoryPatches(data: Prisma.InputJsonValue) {
+  private validateTableMigrations(data: Prisma.InputJsonValue) {
     const { result, errors } =
-      this.jsonSchemaValidator.validateHistoryPatchesSchema(data);
+      this.jsonSchemaValidator.validateTableMigrationsSchema(data);
 
     if (!result) {
-      throw new BadRequestException('patches is not valid', {
+      throw new BadRequestException('tableMigrations are not valid', {
         cause: errors,
       });
     }

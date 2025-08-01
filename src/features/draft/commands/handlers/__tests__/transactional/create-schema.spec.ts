@@ -12,7 +12,6 @@ import {
 } from 'src/features/draft/commands/impl/transactional/create-schema.command';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -21,9 +20,11 @@ describe('CreateSchemaHandler', () => {
     const { draftRevisionId } = await prepareProject(prismaService);
 
     const tableId = 'newTableId';
+    const createdId = 'createdId';
     const command = new CreateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
+      createdId,
       data: {},
     });
 
@@ -34,9 +35,11 @@ describe('CreateSchemaHandler', () => {
     const { draftRevisionId } = await prepareProject(prismaService);
 
     const tableId = 'newTableId';
+    const createdId = 'createdId';
     const command = new CreateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
+      createdId,
       data: invalidTestSchema,
     });
 
@@ -49,10 +52,12 @@ describe('CreateSchemaHandler', () => {
     const ids = await prepareProject(prismaService);
     const { draftRevisionId } = ids;
     const tableId = 'newTableId';
+    const createdId = 'createdId';
 
     const command = new CreateSchemaCommand({
       revisionId: draftRevisionId,
       tableId,
+      createdId,
       data: testSchema,
     });
 
@@ -75,13 +80,17 @@ describe('CreateSchemaHandler', () => {
     });
     expect(result).toBe(true);
     expect(schemaRow.data).toStrictEqual(testSchema);
-    expect(schemaRow.meta).toStrictEqual([
-      {
-        patches: [{ op: 'add', path: '', value: testSchema } as JsonPatchAdd],
-        hash: objectHash(testSchema),
+    expect(schemaRow.meta).toStrictEqual({
+      createdId: 'createdId',
+      initMigration: {
+        changeType: 'init',
         date: expect.any(String),
+        hash: objectHash(testSchema),
+        schema: testSchema,
+        tableId: 'newTableId',
       },
-    ]);
+      migrations: [],
+    });
     expect(schemaRow.hash).toBe(objectHash(testSchema));
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });

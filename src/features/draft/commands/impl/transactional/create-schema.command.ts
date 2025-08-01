@@ -6,6 +6,7 @@ export class CreateSchemaCommand {
       data: Prisma.InputJsonValue;
       revisionId: string;
       tableId: string;
+      createdId: string;
     },
   ) {}
 }

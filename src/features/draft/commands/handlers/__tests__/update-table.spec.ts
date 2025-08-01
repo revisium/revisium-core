@@ -303,7 +303,7 @@ describe('UpdateTableHandler', () => {
 
   it('should save the schema correctly', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId } = ids;
+    const { draftRevisionId, tableId, tableCreatedId } = ids;
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -333,33 +333,40 @@ describe('UpdateTableHandler', () => {
       },
       additionalProperties: false,
     };
-    const meta = [
-      {
-        patches: [{ op: 'add', path: '', value: testSchema }],
+    const meta = {
+      createdId: tableCreatedId,
+      initMigration: {
+        changeType: 'init',
+        date: expect.any(String),
         hash: objectHash(testSchema),
-        date: expect.any(String),
+        schema: testSchema,
+        tableId,
       },
-      {
-        patches: [
-          {
-            op: 'replace',
-            path: '/properties/ver',
-            value: {
-              type: JsonSchemaTypeName.String,
-              default: '',
+      migrations: [
+        {
+          changeType: 'update',
+          date: expect.any(String),
+          hash: objectHash(schema),
+          patches: [
+            {
+              op: 'replace',
+              path: '/properties/ver',
+              value: {
+                type: JsonSchemaTypeName.String,
+                default: '',
+              },
             },
-          },
-        ],
-        hash: objectHash(schema),
-        date: expect.any(String),
-      },
-    ];
+          ],
+        },
+      ],
+    };
+
     await schemaCheck(ids, schema, meta);
   });
 
   it('should save the schema correctly with ref', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId } = ids;
+    const { draftRevisionId, tableId, tableCreatedId } = ids;
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -392,29 +399,37 @@ describe('UpdateTableHandler', () => {
       },
       additionalProperties: false,
     };
-    const meta = [
-      {
-        patches: [{ op: 'add', path: '', value: testSchema }],
+
+    const meta = {
+      createdId: tableCreatedId,
+      initMigration: {
+        changeType: 'init',
+        date: expect.any(String),
         hash: objectHash(testSchema),
-        date: expect.any(String),
+        schema: testSchema,
+        tableId,
       },
-      {
-        patches: [
-          {
-            op: 'add',
-            path: '/properties/files',
-            value: {
-              items: {
-                $ref: SystemSchemaIds.File,
+      migrations: [
+        {
+          changeType: 'update',
+          date: expect.any(String),
+          hash: objectHash(schema),
+          patches: [
+            {
+              op: 'add',
+              path: '/properties/files',
+              value: {
+                items: {
+                  $ref: SystemSchemaIds.File,
+                },
+                type: 'array',
               },
-              type: 'array',
             },
-          },
-        ],
-        hash: objectHash(schema),
-        date: expect.any(String),
-      },
-    ];
+          ],
+        },
+      ],
+    };
+
     await schemaCheck(ids, schema, meta);
   });
 
