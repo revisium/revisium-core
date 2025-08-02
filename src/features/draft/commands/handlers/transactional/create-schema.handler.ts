@@ -17,8 +17,8 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { HistoryPatches } from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
@@ -56,9 +56,9 @@ export class CreateSchemaHandler extends DraftHandler<
       );
     }
 
-    const tableMigrations = await this.getTableMigrations(input);
+    const historyPatches = await this.getHistoryPatchesByData(data);
 
-    await this.createRowInSchemaTable(input, tableMigrations);
+    await this.createRowInSchemaTable(input, historyPatches);
     await this.createInitMigration(input);
 
     return true;
@@ -75,27 +75,22 @@ export class CreateSchemaHandler extends DraftHandler<
     }
   }
 
-  private async getTableMigrations({
-    createdId,
-    tableId,
-    data,
-  }: CreateSchemaCommand['data']) {
-    const tableMigrations: TableMigrations = {
-      createdId,
-      initMigration: {
-        changeType: 'init',
-        tableId,
-        createdId,
+  private async getHistoryPatchesByData(
+    data: JsonSchema,
+  ): Promise<HistoryPatches[]> {
+    return [
+      {
+        patches: [
+          {
+            op: 'add',
+            path: '',
+            value: data as JsonSchema,
+          },
+        ],
         hash: await this.hashService.hashObject(data),
         date: new Date().toISOString(),
-        schema: data as JsonSchema,
       },
-      migrations: [],
-    };
-
-    this.jsonSchemaValidator.validateTableMigrationsSchema(tableMigrations);
-
-    return tableMigrations as Prisma.InputJsonValue;
+    ];
   }
 
   private createRowInSchemaTable(
@@ -124,9 +119,8 @@ export class CreateSchemaHandler extends DraftHandler<
     >(
       new CreateInitMigrationCommand({
         revisionId: data.revisionId,
-        tableId: SystemTables.Schema,
+        tableId: data.tableId,
         schema: data.data,
-        createdId: data.createdId,
       }),
     );
   }

@@ -1,9 +1,9 @@
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { BaseMigrationHandler } from 'src/features/draft/commands/handlers/migration/base-migration.handler';
 import {
-  CreateInitMigrationCommand,
-  CreateInitMigrationCommandData,
-  CreateInitMigrationCommandReturnType,
+  CreateUpdateMigrationCommand,
+  CreateUpdateMigrationCommandData,
+  CreateUpdateMigrationCommandReturnType,
 } from 'src/features/draft/commands/impl/migration';
 import {
   InternalCreateRowCommand,
@@ -12,17 +12,17 @@ import {
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 
-import { InitMigration } from 'src/features/share/utils/schema/types/migration';
+import { UpdateMigration } from 'src/features/share/utils/schema/types/migration';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
-@CommandHandler(CreateInitMigrationCommand)
-export class CreateInitMigrationHandler
-  extends BaseMigrationHandler<CreateInitMigrationCommand>
+@CommandHandler(CreateUpdateMigrationCommand)
+export class CreateUpdateMigrationHandler
+  extends BaseMigrationHandler<CreateUpdateMigrationCommand>
   implements
     ICommandHandler<
-      CreateInitMigrationCommand,
-      CreateInitMigrationCommandReturnType
+      CreateUpdateMigrationCommand,
+      CreateUpdateMigrationCommandReturnType
     >
 {
   constructor(
@@ -34,7 +34,7 @@ export class CreateInitMigrationHandler
     super(transactionService);
   }
 
-  async handler({ data }: CreateInitMigrationCommand) {
+  async handler({ data }: CreateUpdateMigrationCommand) {
     const migration = await this.getMigration(data);
     await this.createRowInMigrationTable(data, migration);
 
@@ -42,20 +42,20 @@ export class CreateInitMigrationHandler
   }
 
   private async getMigration(
-    data: CreateInitMigrationCommandData,
-  ): Promise<InitMigration> {
+    data: CreateUpdateMigrationCommandData,
+  ): Promise<UpdateMigration> {
     return {
-      changeType: 'init',
+      changeType: 'update',
       tableId: data.tableId,
       date: new Date().toISOString(),
       hash: await this.hashService.hashObject(data.schema),
-      schema: data.schema,
+      patches: data.patches,
     };
   }
 
   private createRowInMigrationTable(
-    data: CreateInitMigrationCommandData,
-    migration: InitMigration,
+    data: CreateUpdateMigrationCommandData,
+    migration: UpdateMigration,
   ) {
     return this.commandBus.execute<
       InternalCreateRowCommand,

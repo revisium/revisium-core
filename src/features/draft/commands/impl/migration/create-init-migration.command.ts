@@ -4,7 +4,6 @@ export class CreateInitMigrationCommand {
   constructor(
     public readonly data: {
       readonly revisionId: string;
-      readonly createdId: string;
       readonly tableId: string;
       readonly schema: JsonSchema;
     },

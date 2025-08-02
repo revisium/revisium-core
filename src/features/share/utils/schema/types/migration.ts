@@ -3,6 +3,7 @@ import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 export type UpdateMigration = {
   changeType: 'update';
+  tableId: string;
   hash: string;
   date: string;
   patches: JsonPatch[];
@@ -18,7 +19,6 @@ export type Migration = UpdateMigration | RenameMigration;
 
 export type InitMigration = {
   changeType: 'init';
-  createdId: string;
   tableId: string;
   hash: string;
   date: string;

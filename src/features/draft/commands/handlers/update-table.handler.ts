@@ -176,7 +176,7 @@ export class UpdateTableHandler extends DraftHandler<
       new UpdateSchemaCommand({
         revisionId: data.revisionId,
         tableId: data.tableId,
-        schema,
+        schema: schema as JsonSchema,
         patches: data.patches,
       }),
     );
