@@ -47,9 +47,8 @@ export class CreateSchemaHandler extends DraftHandler<
 
     await this.validateSchema(data);
 
-    const invalidFields = this.jsonSchemaStore.getInvalidFieldNamesInSchema(
-      data as JsonSchema,
-    );
+    const invalidFields =
+      this.jsonSchemaStore.getInvalidFieldNamesInSchema(data);
     if (invalidFields.length > 0) {
       throw new BadRequestException(
         `Invalid field names: ${invalidFields.map((item) => item.name).join(', ')}. ${VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE}`,
@@ -84,7 +83,7 @@ export class CreateSchemaHandler extends DraftHandler<
           {
             op: 'add',
             path: '',
-            value: data as JsonSchema,
+            value: data,
           },
         ],
         hash: await this.hashService.hashObject(data),
