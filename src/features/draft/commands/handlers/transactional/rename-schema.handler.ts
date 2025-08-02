@@ -1,5 +1,9 @@
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import {
+  CreateRenameMigrationCommand,
+  CreateRenameMigrationCommandReturnType,
+} from 'src/features/draft/commands/impl/migration';
+import {
   InternalRenameRowCommand,
   InternalRenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-rename-row.command';
@@ -44,6 +48,7 @@ export class RenameSchemaHandler extends DraftHandler<
   }: RenameSchemaCommand): Promise<RenameSchemaCommandReturnType> {
     await this.renameRowInSchemaTable(data);
     await this.updateLinkedSchemas(data);
+    await this.createRenameMigration(data);
 
     return true;
   }
@@ -76,6 +81,7 @@ export class RenameSchemaHandler extends DraftHandler<
           tableId: schemaRow.id,
           patches,
           schema,
+          skipCreatingMigration: true,
         }),
       );
     }
@@ -113,6 +119,19 @@ export class RenameSchemaHandler extends DraftHandler<
         tableId: SystemTables.Schema,
         rowId: data.tableId,
         nextRowId: data.nextTableId,
+      }),
+    );
+  }
+
+  private createRenameMigration(data: RenameSchemaCommand['data']) {
+    return this.commandBus.execute<
+      CreateRenameMigrationCommand,
+      CreateRenameMigrationCommandReturnType
+    >(
+      new CreateRenameMigrationCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        nextTableId: data.nextTableId,
       }),
     );
   }

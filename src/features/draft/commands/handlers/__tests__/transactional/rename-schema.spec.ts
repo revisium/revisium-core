@@ -1,4 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
@@ -61,6 +62,30 @@ describe('RenameSchemaHandler', () => {
     expect(schemaRow.versionId).not.toBe(previousSchemaRow.versionId);
     expect(schemaRow.createdId).toBe(previousSchemaRow.createdId);
     expect(schemaRow.id).not.toBe(previousSchemaRow.id);
+
+    const migration = await prismaService.row.findFirstOrThrow({
+      where: {
+        data: {
+          path: ['nextTableId'],
+          equals: nextTableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(migration).toBeTruthy();
   });
 
   it('should updated the linked table', async () => {
@@ -113,6 +138,30 @@ describe('RenameSchemaHandler', () => {
     expect(previousSchemaRow.data).toStrictEqual(getTestLinkedSchema(tableId));
     expect(schemaRow.data).toStrictEqual(getTestLinkedSchema(nextTableId));
     expect(previousSchemaRow.versionId).not.toBe(schemaRow.versionId);
+
+    const linkedMigrations = await prismaService.row.findMany({
+      where: {
+        data: {
+          path: ['tableId'],
+          equals: linkedTable?.tableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(linkedMigrations).toHaveLength(1);
   });
 
   function runTransaction(

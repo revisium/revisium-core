@@ -632,6 +632,30 @@
         "required": ["userId"],
         "type": "object"
       },
+      "RenameMigrationDto": {
+        "properties": {
+          "changeType": {
+            "description": "Indicates a rename migration",
+            "enum": ["rename"],
+            "example": "rename",
+            "type": "string"
+          },
+          "id": {
+            "description": "Timestamp when the table was renamed (ISO 8601)",
+            "type": "string"
+          },
+          "nextTableId": {
+            "description": "New table identifier after renaming",
+            "type": "string"
+          },
+          "tableId": {
+            "description": "Current table identifier",
+            "type": "string"
+          }
+        },
+        "required": ["changeType", "id", "tableId", "nextTableId"],
+        "type": "object"
+      },
       "RenameRowDto": {
         "properties": {
           "nextRowId": {
@@ -2837,6 +2861,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/UpdateMigrationDto"
+                      },
+                      {
+                        "$ref": "#/components/schemas/RenameMigrationDto"
                       }
                     ]
                   },

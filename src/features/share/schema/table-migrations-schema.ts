@@ -35,11 +35,12 @@ export const tableMigrationsSchema: Schema = {
     RenameMigration: {
       type: 'object',
       additionalProperties: false,
-      required: ['changeType', 'id', 'tableId'],
+      required: ['changeType', 'id', 'tableId', 'nextTableId'],
       properties: {
         changeType: { type: 'string', const: 'rename' },
         id: { type: 'string' },
         tableId: { type: 'string' },
+        nextTableId: { type: 'string' },
       },
     },
   },

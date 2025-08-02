@@ -68,6 +68,9 @@ export class RenameMigrationDto {
   })
   id: string;
 
-  @ApiProperty({ description: 'New table identifier after renaming' })
+  @ApiProperty({ description: 'Current table identifier' })
   tableId: string;
+
+  @ApiProperty({ description: 'New table identifier after renaming' })
+  nextTableId: string;
 }

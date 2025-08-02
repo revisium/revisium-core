@@ -8,6 +8,7 @@ export class UpdateSchemaCommand {
       tableId: string;
       schema: JsonSchema;
       patches: JsonPatch[];
+      skipCreatingMigration?: boolean;
     },
   ) {}
 }
