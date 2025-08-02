@@ -39,18 +39,33 @@ describe('CreateProjectHandler', () => {
         projectId: project.id,
       },
     });
-    const tables = await prismaService.table.findMany({
+
+    expect(result).toBe(project.id);
+    expect(branch.name).toBe(DEFAULT_BRANCH_NAME);
+
+    const headTables = await prismaService.table.findMany({
       where: {
         revisions: {
           some: {
+            isDraft: false,
             branchId: branch.id,
           },
         },
       },
     });
-    expect(result).toBe(project.id);
-    expect(branch.name).toBe(DEFAULT_BRANCH_NAME);
-    expect(tables.length).toBe(3); // schema table, migration and shared schemas table
+    expect(headTables.length).toBe(3); // schema table, migration and shared schemas table
+
+    const draftTables = await prismaService.table.findMany({
+      where: {
+        revisions: {
+          some: {
+            isDraft: true,
+            branchId: branch.id,
+          },
+        },
+      },
+    });
+    expect(draftTables.length).toBe(3);
   });
 
   it('should create a new project with specified branch name', async () => {
@@ -114,7 +129,7 @@ describe('CreateProjectHandler', () => {
         },
       },
     });
-    expect(tables.length).toBe(2);
+    expect(tables.length).toBe(4);
     expect(tables.some((table) => table.versionId === headTableVersionId)).toBe(
       true,
     );

@@ -288,6 +288,7 @@ export async function prepareTableWithSchema({
       meta: {
         createdId: tableCreatedId,
         initMigration: {
+          createdId: tableCreatedId,
           changeType: 'init',
           tableId,
           schema: schema,

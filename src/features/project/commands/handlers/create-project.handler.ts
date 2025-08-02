@@ -244,6 +244,9 @@ export class CreateProjectHandler
                   {
                     versionId: this.context.sharedSchemasTableVersionId,
                   },
+                  {
+                    versionId: this.context.migrationTableVersionId,
+                  },
                 ],
               }),
         },
