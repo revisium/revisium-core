@@ -20,7 +20,7 @@ export class InitMigrationDto {
     description: 'Timestamp when the table was created (ISO 8601)',
     example: '2025-07-31T12:34:56Z',
   })
-  date: string;
+  id: string;
 
   @ApiProperty({
     description: 'JSON Schema definition of the table',
@@ -46,7 +46,7 @@ export class UpdateMigrationDto {
   @ApiProperty({
     description: 'Timestamp when the update was applied (ISO 8601)',
   })
-  date: string;
+  id: string;
 
   @ApiProperty({
     description: 'Array of JSON Patch operations',
@@ -66,7 +66,7 @@ export class RenameMigrationDto {
   @ApiProperty({
     description: 'Timestamp when the table was renamed (ISO 8601)',
   })
-  date: string;
+  id: string;
 
   @ApiProperty({ description: 'New table identifier after renaming' })
   tableId: string;
