@@ -1,4 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import {
   GetMigrationsQuery,
   GetMigrationsQueryData,
@@ -25,12 +26,15 @@ export class GetMigrationsHandler implements IQueryHandler<GetMigrationsQuery> {
                 id: data.revisionId,
               },
             },
-            id: SystemTables.Schema,
+            id: SystemTables.Migration,
           },
         },
       },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
     });
 
-    return rows.map((row) => row.meta as TableMigrations);
+    return rows.map((row) => row.data as TableMigrations);
   }
 }
