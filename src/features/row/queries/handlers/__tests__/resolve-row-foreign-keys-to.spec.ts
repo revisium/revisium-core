@@ -20,14 +20,19 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 describe('ResolveRowForeignKeysToHandler', () => {
   it('should compute rows', async () => {
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-      await prepareBranch(prismaService);
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = await prepareBranch(prismaService);
 
     const toTable = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         file: getRefSchema(SystemSchemaIds.File),
         title: getStringSchema(),
@@ -39,6 +44,7 @@ describe('ResolveRowForeignKeysToHandler', () => {
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         link: getStringSchema({
           foreignKey: toTable.tableId,

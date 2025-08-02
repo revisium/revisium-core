@@ -156,8 +156,12 @@ describe('row-id.plugin', () => {
   let jsonSchemaStore: JsonSchemaStoreService;
 
   const setupProjectWithFileSchema = async () => {
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-      await prepareProject(prismaService);
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = await prepareProject(prismaService);
 
     const schema = getObjectSchema({
       customId: getRefSchema(SystemSchemaIds.RowId),
@@ -170,6 +174,7 @@ describe('row-id.plugin', () => {
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema,
     });
 

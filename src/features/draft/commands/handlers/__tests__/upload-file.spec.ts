@@ -25,13 +25,19 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 describe('UploadFileHandler', () => {
   it('should upload file', async () => {
     const ids = await prepareProject(prismaService);
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } = ids;
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         file: getRefSchema(SystemSchemaIds.File),
         files: getArraySchema(getRefSchema(SystemSchemaIds.File)),

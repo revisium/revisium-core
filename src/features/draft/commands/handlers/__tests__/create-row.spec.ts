@@ -197,13 +197,19 @@ describe('CreateRowHandler', () => {
 
   it('should save provided publishedAt value when creating a row', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, headRevisionId, schemaTableVersionId } = ids;
+    const {
+      draftRevisionId,
+      headRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         ver: {
           type: JsonSchemaTypeName.Number,
@@ -233,13 +239,19 @@ describe('CreateRowHandler', () => {
 
   it('should use default date (now) as publishedAt when publishedAt is empty', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, headRevisionId, schemaTableVersionId } = ids;
+    const {
+      draftRevisionId,
+      headRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         ver: {
           type: JsonSchemaTypeName.Number,
