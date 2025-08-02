@@ -31,7 +31,7 @@ export class GetMigrationsHandler implements IQueryHandler<GetMigrationsQuery> {
         },
       },
       orderBy: {
-        id: Prisma.SortOrder.desc,
+        id: Prisma.SortOrder.asc,
       },
     });
 
