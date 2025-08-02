@@ -6,7 +6,6 @@ export class CreateSchemaCommand {
       data: JsonSchema;
       revisionId: string;
       tableId: string;
-      createdId: string;
     },
   ) {}
 }

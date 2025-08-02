@@ -25,8 +25,6 @@ export abstract class BaseMigrationHandler<
         `No table ${SystemTables.Migration} found in draft revision ${command.data.revisionId}`,
       );
 
-      throw new Error();
-
       return false;
     }
   }

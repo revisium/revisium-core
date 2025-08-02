@@ -107,7 +107,6 @@ export class CreateTableHandler extends DraftHandler<
       new CreateSchemaCommand({
         revisionId,
         tableId,
-        createdId: this.tableRequestDto.createdId,
         data: schema as JsonSchema,
       }),
     );

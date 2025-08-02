@@ -2,10 +2,6 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import {
-  CreateUpdateMigrationCommand,
-  CreateUpdateMigrationCommandReturnType,
-} from 'src/features/draft/commands/impl/migration';
-import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
@@ -17,11 +13,9 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
-import { HistoryPatches } from 'src/features/share/queries/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -53,19 +47,18 @@ export class UpdateSchemaHandler extends DraftHandler<
     const { historyPatches } = await this.getCurrentHistoryPatches(input);
     this.validateHistoryPatches(historyPatches);
 
-    const nextHistoryPatches: HistoryPatches[] = [
+    const nextHistoryPatches = [
       ...historyPatches,
       {
         patches,
         hash: await this.hashService.hashObject(schema),
-        date: new Date().toISOString(),
+        date: new Date(),
       },
     ];
     this.validateHistoryPatches(nextHistoryPatches);
     this.validateFieldNamesInSchema(patches);
 
     await this.updateRowInSchemaTable(input, nextHistoryPatches);
-    await this.createUpdateMigration(input);
 
     return true;
   }
@@ -77,7 +70,7 @@ export class UpdateSchemaHandler extends DraftHandler<
     );
   }
 
-  private async validateSchema(data: JsonSchema) {
+  private async validateSchema(data: Prisma.InputJsonValue) {
     const { result, errors } =
       this.jsonSchemaValidator.validateMetaSchema(data);
 
@@ -88,7 +81,7 @@ export class UpdateSchemaHandler extends DraftHandler<
     }
   }
 
-  private validateHistoryPatches(data: HistoryPatches[]) {
+  private validateHistoryPatches(data: Prisma.InputJsonValue) {
     const { result, errors } =
       this.jsonSchemaValidator.validateHistoryPatchesSchema(data);
 
@@ -130,20 +123,6 @@ export class UpdateSchemaHandler extends DraftHandler<
         data: data.schema,
         meta,
         schemaHash: this.jsonSchemaValidator.metaSchemaHash,
-      }),
-    );
-  }
-
-  private createUpdateMigration(data: UpdateSchemaCommand['data']) {
-    return this.commandBus.execute<
-      CreateUpdateMigrationCommand,
-      CreateUpdateMigrationCommandReturnType
-    >(
-      new CreateUpdateMigrationCommand({
-        revisionId: data.revisionId,
-        tableId: data.tableId,
-        patches: data.patches,
-        schema: data.schema,
       }),
     );
   }
