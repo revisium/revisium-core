@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { ICommand } from '@nestjs/cqrs/dist/interfaces/commands/command.interface';
 import { Prisma } from '@prisma/client';
 import * as objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
@@ -10,12 +11,14 @@ import {
 import {
   CreateInitMigrationCommand,
   CreateInitMigrationCommandReturnType,
+  CreateRenameMigrationCommand,
   CreateUpdateMigrationCommand,
 } from 'src/features/draft/commands/impl/migration';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
   InitMigration,
+  RenameMigration,
   UpdateMigration,
 } from 'src/features/share/utils/schema/types/migration';
 import {
@@ -211,8 +214,53 @@ describe('Migrations', () => {
     });
   });
 
+  it('should create a new rename migration', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = ids;
+
+    const nextTableId = 'nextTableId';
+
+    const command = new CreateRenameMigrationCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      nextTableId,
+    });
+
+    const result = await runTransaction(command);
+    expect(result).toBe(true);
+
+    const migrationRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        data: {
+          path: ['tableId'],
+          equals: tableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(migrationRow.data as RenameMigration).toStrictEqual({
+      changeType: 'rename',
+      id: expect.any(String),
+      tableId,
+      nextTableId,
+    });
+  });
+
   function runTransaction(
-    command: CreateInitMigrationCommand,
+    command: ICommand,
   ): Promise<CreateInitMigrationCommandReturnType> {
     return transactionService.run(async () => commandBus.execute(command));
   }

@@ -13,6 +13,7 @@ export type RenameMigration = {
   changeType: 'rename';
   id: string;
   tableId: string;
+  nextTableId: string;
 };
 
 export type InitMigration = {

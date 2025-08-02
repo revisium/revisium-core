@@ -71,6 +71,7 @@ describe('table-migrations-schema', () => {
       changeType: 'rename',
       id: 'ren1',
       tableId: 'newName',
+      nextTableId: 'nextTableId',
     };
 
     const valid = ajv.validate(tableMigrationsSchema, validRename);
