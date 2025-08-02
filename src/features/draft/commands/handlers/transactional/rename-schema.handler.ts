@@ -81,6 +81,7 @@ export class RenameSchemaHandler extends DraftHandler<
           tableId: schemaRow.id,
           patches,
           schema,
+          skipCreatingMigration: true,
         }),
       );
     }
