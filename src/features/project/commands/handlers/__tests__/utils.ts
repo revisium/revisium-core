@@ -168,7 +168,6 @@ export const prepareProject = async (
     },
   });
 
-
   // table
   await prismaService.table.create({
     data: {
