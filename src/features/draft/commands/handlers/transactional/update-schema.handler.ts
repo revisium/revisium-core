@@ -2,6 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import {
+  CreateUpdateMigrationCommand,
+  CreateUpdateMigrationCommandReturnType,
+} from 'src/features/draft/commands/impl/migration';
+import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
@@ -59,6 +63,7 @@ export class UpdateSchemaHandler extends DraftHandler<
     this.validateFieldNamesInSchema(patches);
 
     await this.updateRowInSchemaTable(input, nextHistoryPatches);
+    await this.createUpdateMigration(input);
 
     return true;
   }
@@ -123,6 +128,20 @@ export class UpdateSchemaHandler extends DraftHandler<
         data: data.schema,
         meta,
         schemaHash: this.jsonSchemaValidator.metaSchemaHash,
+      }),
+    );
+  }
+
+  private createUpdateMigration(data: UpdateSchemaCommand['data']) {
+    return this.commandBus.execute<
+      CreateUpdateMigrationCommand,
+      CreateUpdateMigrationCommandReturnType
+    >(
+      new CreateUpdateMigrationCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        schema: data.schema,
+        patches: data.patches,
       }),
     );
   }

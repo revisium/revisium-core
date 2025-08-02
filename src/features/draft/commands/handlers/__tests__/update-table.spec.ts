@@ -11,6 +11,11 @@ import {
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
+import {
+  InitMigration,
+  UpdateMigration,
+} from 'src/features/share/utils/schema/types/migration';
 import {
   JsonSchemaTypeName,
   JsonStringSchema,
@@ -222,6 +227,7 @@ describe('UpdateTableHandler', () => {
 
     await rowAndTableCheck(ids, {}, row);
     await revisionCheck(ids);
+    await migrationCheck({ revisionId: draftRevisionId, tableId });
   });
 
   it('should apply patches to a new created row in the table', async () => {
@@ -425,6 +431,75 @@ describe('UpdateTableHandler', () => {
       where: { id: draftRevisionId },
     });
     expect(revision.hasChanges).toBe(true);
+  }
+
+  async function migrationCheck({
+    revisionId,
+    tableId,
+  }: {
+    revisionId: string;
+    tableId: string;
+  }) {
+    const rows = await prismaService.row.findMany({
+      where: {
+        data: {
+          path: ['tableId'],
+          equals: tableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: revisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(rows.length).toBe(2);
+
+    const rowInit = rows[1];
+    const dataInit = rowInit.data as InitMigration;
+    expect(dataInit.changeType).toBe('init');
+
+    const rowUpdate = rows[0];
+
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      required: ['ver'],
+      properties: {
+        ver: {
+          type: 'string',
+          default: '',
+        },
+      },
+    };
+
+    const data = rowUpdate.data as UpdateMigration;
+    expect(rowUpdate.id).toBe(data.date);
+    expect(rowUpdate.meta).toStrictEqual({});
+    expect(rowUpdate.hash).toBe(objectHash(data));
+    expect(rowUpdate.schemaHash).toBe(objectHash(tableMigrationsSchema));
+    expect(data.hash).toBe(objectHash(schema));
+    expect(data.changeType).toBe('update');
+    expect(data.tableId).toBe(tableId);
+    expect(data.patches).toStrictEqual([
+      {
+        op: 'replace',
+        path: '/properties/ver',
+        value: {
+          type: 'string',
+          default: '',
+        },
+      },
+    ]);
   }
 
   async function rowAndTableCheck(
