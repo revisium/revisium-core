@@ -232,8 +232,12 @@ describe('row-published-at.plugin', () => {
   let jsonSchemaStore: JsonSchemaStoreService;
 
   const setupProjectWithFileSchema = async () => {
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-      await prepareProject(prismaService);
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = await prepareProject(prismaService);
 
     const schema = getObjectSchema({
       customPublishedAt: getRefSchema(SystemSchemaIds.RowPublishedAt),
@@ -246,6 +250,7 @@ describe('row-published-at.plugin', () => {
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema,
     });
 

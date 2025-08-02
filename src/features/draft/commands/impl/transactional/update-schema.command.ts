@@ -1,13 +1,13 @@
-import { Prisma } from '@prisma/client';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 export class UpdateSchemaCommand {
   constructor(
     public readonly data: {
-      schema: Prisma.InputJsonValue;
-      patches: JsonPatch[];
       revisionId: string;
       tableId: string;
+      schema: JsonSchema;
+      patches: JsonPatch[];
     },
   ) {}
 }

@@ -19,7 +19,7 @@ import {
   ajvRowVersionIdSchema,
 } from 'src/features/share/schema/plugins';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
@@ -27,13 +27,14 @@ const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 @Injectable()
 export class JsonSchemaValidatorService {
   public readonly metaSchemaHash: string;
+  public readonly tableSchemaHash: string;
 
   private readonly ajv = new Ajv();
 
   public readonly metaSchemaValidateFunction: ValidateFunction<JsonSchema>;
   public readonly jsonPatchSchemaValidateFunction: ValidateFunction;
   public readonly historyPatchesSchemaValidate: ValidateFunction;
-  public readonly tableMigrationsSchemaValidate: ValidateFunction<TableMigrations>;
+  public readonly tableMigrationsSchemaValidate: ValidateFunction<Migration>;
 
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.ajv.addKeyword({
@@ -60,6 +61,7 @@ export class JsonSchemaValidatorService {
       tableMigrationsSchema,
     );
     this.metaSchemaHash = this.getSchemaHash(metaSchema);
+    this.tableSchemaHash = this.getSchemaHash(tableMigrationsSchema);
   }
 
   public validateMetaSchema(data: unknown) {

@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { CreateSchemaCommand } from 'src/features/draft/commands/impl/transactional/create-schema.command';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -106,8 +107,7 @@ export class CreateTableHandler extends DraftHandler<
       new CreateSchemaCommand({
         revisionId,
         tableId,
-        createdId: this.tableRequestDto.createdId,
-        data: schema,
+        data: schema as JsonSchema,
       }),
     );
     await this.jsonSchemaValidator.getOrAddValidateFunction(

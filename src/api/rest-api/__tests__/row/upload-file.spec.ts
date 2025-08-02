@@ -82,14 +82,19 @@ describe('restapi - row - upload file', () => {
   async function prepare() {
     preparedData = await prepareData(app);
 
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-      preparedData.project;
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = preparedData.project;
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         file: getRefSchema(SystemSchemaIds.File),
         files: getArraySchema(getRefSchema(SystemSchemaIds.File)),

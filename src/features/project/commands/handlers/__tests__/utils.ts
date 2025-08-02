@@ -86,6 +86,10 @@ export const prepareProject = async (
 
   const schemaTableVersionId = nanoid();
   const schemaTableCreatedId = nanoid();
+  const sharedSchemasTableVersionId = nanoid();
+  const sharedSchemasTableCreatedId = nanoid();
+  const migrationTableVersionId = nanoid();
+  const migrationTableCreatedId = nanoid();
   const tableId = nanoid();
   const tableCreatedId = nanoid();
   const headTableVersionId = nanoid();
@@ -132,6 +136,30 @@ export const prepareProject = async (
       id: SystemTables.Schema,
       createdId: schemaTableCreatedId,
       versionId: schemaTableVersionId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
+    },
+  });
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.SharedSchemas,
+      createdId: sharedSchemasTableCreatedId,
+      versionId: sharedSchemasTableVersionId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
+    },
+  });
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.Migration,
+      createdId: migrationTableCreatedId,
+      versionId: migrationTableVersionId,
       readonly: true,
       system: true,
       revisions: {

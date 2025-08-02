@@ -2,60 +2,46 @@ import { Schema } from 'ajv/dist/2020';
 
 export const tableMigrationsSchema: Schema = {
   $id: 'table-migrations-schema.json',
-  type: 'object',
-  additionalProperties: false,
-  required: ['createdId', 'initMigration', 'migrations'],
-  properties: {
-    createdId: { type: 'string' },
-    initMigration: { $ref: '#/definitions/InitMigration' },
-    migrations: {
-      type: 'array',
-      minItems: 0,
-      items: { $ref: '#/definitions/Migration' },
-    },
-  },
+  oneOf: [
+    { $ref: '#/definitions/InitMigration' },
+    { $ref: '#/definitions/UpdateMigration' },
+    { $ref: '#/definitions/RenameMigration' },
+  ],
   definitions: {
     InitMigration: {
       type: 'object',
       additionalProperties: false,
-      required: ['changeType', 'tableId', 'hash', 'date', 'schema'],
+      required: ['changeType', 'tableId', 'hash', 'id', 'schema'],
       properties: {
         changeType: { type: 'string', const: 'init' },
         tableId: { type: 'string' },
         hash: { type: 'string' },
-        date: { type: 'string' },
+        id: { type: 'string' },
         schema: { $ref: 'meta-schema.json' },
       },
     },
     UpdateMigration: {
       type: 'object',
       additionalProperties: false,
-      required: ['changeType', 'hash', 'date', 'patches'],
+      required: ['changeType', 'tableId', 'hash', 'id', 'patches'],
       properties: {
         changeType: { type: 'string', const: 'update' },
+        tableId: { type: 'string' },
         hash: { type: 'string' },
-        date: { type: 'string' },
-        patches: {
-          $ref: 'json-patch-schema.json',
-        },
+        id: { type: 'string' },
+        patches: { $ref: 'json-patch-schema.json' },
       },
     },
     RenameMigration: {
       type: 'object',
       additionalProperties: false,
-      required: ['changeType', 'date', 'tableId'],
+      required: ['changeType', 'id', 'tableId'],
       properties: {
         changeType: { type: 'string', const: 'rename' },
-        date: { type: 'string' },
+        id: { type: 'string' },
         tableId: { type: 'string' },
       },
     },
-    Migration: {
-      oneOf: [
-        { $ref: '#/definitions/UpdateMigration' },
-        { $ref: '#/definitions/RenameMigration' },
-      ],
-    },
   },
-  title: 'JSON Schema for Table with Migrations',
+  title: 'JSON Schema for a Single Migration',
 };

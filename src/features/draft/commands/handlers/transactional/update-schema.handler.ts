@@ -2,6 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import {
+  CreateUpdateMigrationCommand,
+  CreateUpdateMigrationCommandReturnType,
+} from 'src/features/draft/commands/impl/migration';
+import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
@@ -44,25 +48,27 @@ export class UpdateSchemaHandler extends DraftHandler<
 
     await this.validateSchema(schema);
 
-    const { tableMigrations } = await this.getCurrentTableMigrations(input);
-    this.validateTableMigrations(tableMigrations);
+    const { historyPatches } = await this.getCurrentHistoryPatches(input);
+    this.validateHistoryPatches(historyPatches);
 
-    tableMigrations.migrations.push({
-      changeType: 'update',
-      patches,
-      date: new Date().toISOString(),
-      hash: await this.hashService.hashObject(schema),
-    });
-
-    this.validateTableMigrations(tableMigrations);
+    const nextHistoryPatches = [
+      ...historyPatches,
+      {
+        patches,
+        hash: await this.hashService.hashObject(schema),
+        date: new Date(),
+      },
+    ];
+    this.validateHistoryPatches(nextHistoryPatches);
     this.validateFieldNamesInSchema(patches);
 
-    await this.updateRowInSchemaTable(input, tableMigrations);
+    await this.updateRowInSchemaTable(input, nextHistoryPatches);
+    await this.createUpdateMigration(input);
 
     return true;
   }
 
-  private getCurrentTableMigrations(data: UpdateSchemaCommand['data']) {
+  private getCurrentHistoryPatches(data: UpdateSchemaCommand['data']) {
     return this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
@@ -80,12 +86,12 @@ export class UpdateSchemaHandler extends DraftHandler<
     }
   }
 
-  private validateTableMigrations(data: Prisma.InputJsonValue) {
+  private validateHistoryPatches(data: Prisma.InputJsonValue) {
     const { result, errors } =
-      this.jsonSchemaValidator.validateTableMigrationsSchema(data);
+      this.jsonSchemaValidator.validateHistoryPatchesSchema(data);
 
     if (!result) {
-      throw new BadRequestException('tableMigrations are not valid', {
+      throw new BadRequestException('patches is not valid', {
         cause: errors,
       });
     }
@@ -122,6 +128,20 @@ export class UpdateSchemaHandler extends DraftHandler<
         data: data.schema,
         meta,
         schemaHash: this.jsonSchemaValidator.metaSchemaHash,
+      }),
+    );
+  }
+
+  private createUpdateMigration(data: UpdateSchemaCommand['data']) {
+    return this.commandBus.execute<
+      CreateUpdateMigrationCommand,
+      CreateUpdateMigrationCommandReturnType
+    >(
+      new CreateUpdateMigrationCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        schema: data.schema,
+        patches: data.patches,
       }),
     );
   }

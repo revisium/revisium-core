@@ -409,13 +409,13 @@
             "example": "init",
             "type": "string"
           },
-          "date": {
-            "description": "Timestamp when the table was created (ISO 8601)",
-            "example": "2025-07-31T12:34:56Z",
-            "type": "string"
-          },
           "hash": {
             "description": "Checksum of the initial schema",
+            "type": "string"
+          },
+          "id": {
+            "description": "Timestamp when the table was created (ISO 8601)",
+            "example": "2025-07-31T12:34:56Z",
             "type": "string"
           },
           "schema": {
@@ -427,7 +427,7 @@
             "type": "string"
           }
         },
-        "required": ["changeType", "tableId", "hash", "date", "schema"],
+        "required": ["changeType", "tableId", "hash", "id", "schema"],
         "type": "object"
       },
       "JsonFilterDto": {
@@ -630,26 +630,6 @@
           }
         },
         "required": ["userId"],
-        "type": "object"
-      },
-      "RenameMigrationDto": {
-        "properties": {
-          "changeType": {
-            "description": "Indicates a rename migration",
-            "enum": ["rename"],
-            "example": "rename",
-            "type": "string"
-          },
-          "date": {
-            "description": "Timestamp when the table was renamed (ISO 8601)",
-            "type": "string"
-          },
-          "tableId": {
-            "description": "New table identifier after renaming",
-            "type": "string"
-          }
-        },
-        "required": ["changeType", "date", "tableId"],
         "type": "object"
       },
       "RenameRowDto": {
@@ -985,38 +965,6 @@
         "required": ["success"],
         "type": "object"
       },
-      "TableMigrationsDto": {
-        "properties": {
-          "createdId": {
-            "description": "ID assigned when the table was first created",
-            "type": "string"
-          },
-          "initMigration": {
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/InitMigrationDto"
-              }
-            ],
-            "description": "Initial migration details"
-          },
-          "migrations": {
-            "description": "List of subsequent migrations (update or rename)",
-            "items": {
-              "oneOf": [
-                {
-                  "$ref": "#/components/schemas/UpdateMigrationDto"
-                },
-                {
-                  "$ref": "#/components/schemas/RenameMigrationDto"
-                }
-              ]
-            },
-            "type": "array"
-          }
-        },
-        "required": ["createdId", "initMigration", "migrations"],
-        "type": "object"
-      },
       "TableModel": {
         "properties": {
           "createdAt": {
@@ -1098,12 +1046,12 @@
             "example": "update",
             "type": "string"
           },
-          "date": {
-            "description": "Timestamp when the update was applied (ISO 8601)",
-            "type": "string"
-          },
           "hash": {
             "description": "Checksum of the patch set",
+            "type": "string"
+          },
+          "id": {
+            "description": "Timestamp when the update was applied (ISO 8601)",
             "type": "string"
           },
           "patches": {
@@ -1112,9 +1060,13 @@
               "type": "object"
             },
             "type": "array"
+          },
+          "tableId": {
+            "description": "Identifier of the table",
+            "type": "string"
           }
         },
-        "required": ["changeType", "hash", "date", "patches"],
+        "required": ["changeType", "tableId", "hash", "id", "patches"],
         "type": "object"
       },
       "UpdatePasswordDto": {
@@ -2879,7 +2831,14 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/TableMigrationsDto"
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/InitMigrationDto"
+                      },
+                      {
+                        "$ref": "#/components/schemas/UpdateMigrationDto"
+                      }
+                    ]
                   },
                   "type": "array"
                 }

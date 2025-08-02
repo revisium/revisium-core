@@ -15,8 +15,10 @@ import {
 import { FileStatus } from 'src/features/plugin/file/file.plugin';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
+import { InitMigration } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -157,6 +159,24 @@ export async function prepareBranch(prismaService: PrismaService) {
     },
   });
 
+  // migration table
+
+  const migrationTableVersionId = nanoid();
+  const migrationTableCreatedId = nanoid();
+
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.Migration,
+      versionId: migrationTableVersionId,
+      createdId: migrationTableCreatedId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
+    },
+  });
+
   return {
     organizationId,
     projectId,
@@ -167,6 +187,8 @@ export async function prepareBranch(prismaService: PrismaService) {
     draftRevisionId,
     schemaTableVersionId,
     schemaTableCreatedId,
+    migrationTableVersionId,
+    migrationTableCreatedId,
   };
 }
 
@@ -233,15 +255,18 @@ export async function prepareTableWithSchema({
   headRevisionId,
   draftRevisionId,
   schemaTableVersionId,
+  migrationTableVersionId,
   schema,
 }: {
   prismaService: PrismaService;
   headRevisionId: string;
   draftRevisionId: string;
   schemaTableVersionId: string;
+  migrationTableVersionId: string;
   schema: JsonSchema;
 }) {
   const schemaRowVersionId = nanoid();
+  const migrationRowVersionId = nanoid();
   const tableId = `table-${nanoid()}`;
   const createdIdForTableInSchemaTable = `table-${nanoid()}`;
   const tableCreatedId = nanoid();
@@ -285,19 +310,48 @@ export async function prepareTableWithSchema({
         },
       },
       data: schema,
-      meta: {
-        createdId: tableCreatedId,
-        initMigration: {
-          changeType: 'init',
-          tableId,
-          schema: schema,
+      meta: [
+        {
+          patches: [
+            {
+              op: 'add',
+              path: '',
+              value: schema,
+            } as JsonPatchAdd,
+          ],
           hash: hash(schema),
-          date: new Date().toISOString(),
+          date: new Date(),
         },
-        migrations: [],
-      } as TableMigrations,
+      ],
       hash: hash(schema),
       schemaHash: hash(metaSchema),
+    },
+  });
+
+  // migration
+
+  const migration: InitMigration = {
+    changeType: 'init',
+    id: new Date().toISOString(),
+    tableId,
+    hash: hash(schema),
+    schema,
+  };
+
+  await prismaService.row.create({
+    data: {
+      id: migration.id,
+      versionId: migrationRowVersionId,
+      createdId: nanoid(),
+      readonly: true,
+      tables: {
+        connect: {
+          versionId: migrationTableVersionId,
+        },
+      },
+      data: migration,
+      hash: hash(migration),
+      schemaHash: hash(tableMigrationsSchema),
     },
   });
 
@@ -387,13 +441,18 @@ export const prepareProject = async (
   options?: { createLinkedTable?: boolean },
 ) => {
   const prepareBranchResult = await prepareBranch(prismaService);
-  const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-    prepareBranchResult;
+  const {
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    migrationTableVersionId,
+  } = prepareBranchResult;
   const resultPrepareTableWithSchema = await prepareTableWithSchema({
     prismaService,
     headRevisionId,
     draftRevisionId,
     schemaTableVersionId,
+    migrationTableVersionId,
     schema: testSchema,
   });
   const { headTableVersionId, draftTableVersionId, tableId } =
@@ -421,6 +480,7 @@ export const prepareProject = async (
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getTestLinkedSchema(tableId),
     });
 
@@ -454,14 +514,19 @@ export const prepareTableAndRowWithFile = async (
   prismaService: PrismaService,
   data: object,
 ) => {
-  const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-    await prepareProject(prismaService);
+  const {
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    migrationTableVersionId,
+  } = await prepareProject(prismaService);
 
   const table = await prepareTableWithSchema({
     prismaService,
     headRevisionId,
     draftRevisionId,
     schemaTableVersionId,
+    migrationTableVersionId,
     schema: getObjectSchema({
       file: getRefSchema(SystemSchemaIds.File),
       files: getArraySchema(getRefSchema(SystemSchemaIds.File)),

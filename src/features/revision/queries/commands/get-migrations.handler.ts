@@ -1,10 +1,11 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import {
   GetMigrationsQuery,
   GetMigrationsQueryData,
 } from 'src/features/revision/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from 'src/features/share/utils/schema/types/migration';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @QueryHandler(GetMigrationsQuery)
@@ -25,12 +26,15 @@ export class GetMigrationsHandler implements IQueryHandler<GetMigrationsQuery> {
                 id: data.revisionId,
               },
             },
-            id: SystemTables.Schema,
+            id: SystemTables.Migration,
           },
         },
       },
+      orderBy: {
+        id: Prisma.SortOrder.asc,
+      },
     });
 
-    return rows.map((row) => row.meta as TableMigrations);
+    return rows.map((row) => row.data as Migration);
   }
 }

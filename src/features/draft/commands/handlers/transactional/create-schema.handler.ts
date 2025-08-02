@@ -2,6 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import {
+  CreateInitMigrationCommand,
+  CreateInitMigrationCommandReturnType,
+} from 'src/features/draft/commands/impl/migration';
+import {
   CreateSchemaCommand,
   CreateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/create-schema.command';
@@ -13,8 +17,8 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { HistoryPatches } from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
@@ -43,18 +47,18 @@ export class CreateSchemaHandler extends DraftHandler<
 
     await this.validateSchema(data);
 
-    const invalidFields = this.jsonSchemaStore.getInvalidFieldNamesInSchema(
-      data as JsonSchema,
-    );
+    const invalidFields =
+      this.jsonSchemaStore.getInvalidFieldNamesInSchema(data);
     if (invalidFields.length > 0) {
       throw new BadRequestException(
         `Invalid field names: ${invalidFields.map((item) => item.name).join(', ')}. ${VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE}`,
       );
     }
 
-    const tableMigrations = await this.getTableMigrations(input);
+    const historyPatches = await this.getHistoryPatchesByData(data);
 
-    await this.createRowInSchemaTable(input, tableMigrations);
+    await this.createRowInSchemaTable(input, historyPatches);
+    await this.createInitMigration(input);
 
     return true;
   }
@@ -70,26 +74,22 @@ export class CreateSchemaHandler extends DraftHandler<
     }
   }
 
-  private async getTableMigrations({
-    createdId,
-    tableId,
-    data,
-  }: CreateSchemaCommand['data']) {
-    const tableMigrations: TableMigrations = {
-      createdId,
-      initMigration: {
-        changeType: 'init',
-        tableId,
+  private async getHistoryPatchesByData(
+    data: JsonSchema,
+  ): Promise<HistoryPatches[]> {
+    return [
+      {
+        patches: [
+          {
+            op: 'add',
+            path: '',
+            value: data,
+          },
+        ],
         hash: await this.hashService.hashObject(data),
         date: new Date().toISOString(),
-        schema: data as JsonSchema,
       },
-      migrations: [],
-    };
-
-    this.jsonSchemaValidator.validateTableMigrationsSchema(tableMigrations);
-
-    return tableMigrations as Prisma.InputJsonValue;
+    ];
   }
 
   private createRowInSchemaTable(
@@ -107,6 +107,19 @@ export class CreateSchemaHandler extends DraftHandler<
         data: data.data,
         meta: historyPatches,
         schemaHash: this.jsonSchemaValidator.metaSchemaHash,
+      }),
+    );
+  }
+
+  private createInitMigration(data: CreateSchemaCommand['data']) {
+    return this.commandBus.execute<
+      CreateInitMigrationCommand,
+      CreateInitMigrationCommandReturnType
+    >(
+      new CreateInitMigrationCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        schema: data.data,
       }),
     );
   }

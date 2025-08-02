@@ -14,8 +14,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 describe('GetMigrationsHandler', () => {
   it('should get migrations', async () => {
-    const { draftRevisionId, tableId, tableCreatedId } =
-      await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const result = await runTransaction(
       new GetMigrationsQuery({
@@ -25,15 +24,11 @@ describe('GetMigrationsHandler', () => {
 
     expect(result).toStrictEqual([
       {
-        createdId: tableCreatedId,
-        initMigration: {
-          changeType: 'init',
-          date: expect.any(String),
-          hash: objectHash(testSchema),
-          schema: testSchema,
-          tableId,
-        },
-        migrations: [],
+        changeType: 'init',
+        id: expect.any(String),
+        hash: objectHash(testSchema),
+        schema: testSchema,
+        tableId,
       },
     ]);
   });

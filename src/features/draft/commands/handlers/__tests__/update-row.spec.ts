@@ -202,13 +202,19 @@ describe('UpdateRowHandler', () => {
 
   it('should update row with refs', async () => {
     const ids = await prepareProject(prismaService);
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } = ids;
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         file: getRefSchema(SystemSchemaIds.File),
         files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
@@ -280,13 +286,19 @@ describe('UpdateRowHandler', () => {
 
   it('should update publishedAt when valueStore contains publishedAt', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, headRevisionId, schemaTableVersionId } = ids;
+    const {
+      draftRevisionId,
+      headRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
 
     const table = await prepareTableWithSchema({
       prismaService,
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         ver: {
           type: JsonSchemaTypeName.Number,

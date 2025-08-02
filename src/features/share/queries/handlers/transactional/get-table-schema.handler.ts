@@ -1,11 +1,11 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetTableSchemaQuery,
   GetTableSchemaQueryReturnType,
+  HistoryPatches,
 } from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
@@ -58,7 +58,7 @@ export class GetTableSchemaHandler
     return {
       schema: result.data as JsonSchema,
       hash: result.hash,
-      tableMigrations: result.meta as TableMigrations,
+      historyPatches: result.meta as HistoryPatches[],
     };
   }
 }

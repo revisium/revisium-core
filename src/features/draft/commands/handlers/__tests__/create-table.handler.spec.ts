@@ -7,6 +7,9 @@ import {
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
+import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
+import { InitMigration } from 'src/features/share/utils/schema/types/migration';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -98,6 +101,7 @@ describe('CreateTableHandler', () => {
     await tableCheck(ids, command.data.tableId, result.tableVersionId);
     await schemaCheck(ids, command.data.tableId, command.data.schema);
     await revisionCheck(ids);
+    await migrationCheck({ revisionId: draftRevisionId, tableId: 'config' });
   });
 
   it('should create table with ref', async () => {
@@ -171,17 +175,13 @@ describe('CreateTableHandler', () => {
     });
     expect(schemaRow.id).toBe(tableId);
     expect(schemaRow.data).toStrictEqual(schema);
-    expect(schemaRow.meta).toStrictEqual({
-      createdId: expect.any(String),
-      initMigration: {
-        changeType: 'init',
-        date: expect.any(String),
+    expect(schemaRow.meta).toStrictEqual([
+      {
+        patches: [{ op: 'add', path: '', value: schema } as JsonPatchAdd],
         hash: objectHash(schema),
-        schema: schema,
-        tableId,
+        date: expect.any(String),
       },
-      migrations: [],
-    });
+    ]);
     expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   }
 
@@ -192,6 +192,46 @@ describe('CreateTableHandler', () => {
       where: { id: draftRevisionId },
     });
     expect(revision.hasChanges).toBe(true);
+  }
+
+  async function migrationCheck({
+    revisionId,
+    tableId,
+  }: {
+    revisionId: string;
+    tableId: string;
+  }) {
+    const rows = await prismaService.row.findMany({
+      where: {
+        data: {
+          path: ['tableId'],
+          equals: tableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: revisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    expect(rows.length).toBe(1);
+
+    const row = rows[0];
+    const data = row.data as InitMigration;
+    expect(row.id).toBe(data.id);
+    expect(row.meta).toStrictEqual({});
+    expect(row.hash).toBe(objectHash(data));
+    expect(row.schemaHash).toBe(objectHash(tableMigrationsSchema));
+    expect(data.schema).toStrictEqual({ type: 'string', default: '' });
+    expect(data.hash).toBe(objectHash({ type: 'string', default: '' }));
+    expect(data.changeType).toBe('init');
+    expect(data.tableId).toBe(tableId);
   }
 
   function runTransaction(

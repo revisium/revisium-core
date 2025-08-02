@@ -156,8 +156,12 @@ describe('row-schema-hash.plugin', () => {
   let jsonSchemaStore: JsonSchemaStoreService;
 
   const setupProjectWithFileSchema = async () => {
-    const { headRevisionId, draftRevisionId, schemaTableVersionId } =
-      await prepareProject(prismaService);
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = await prepareProject(prismaService);
 
     const schema = getObjectSchema({
       customSchemaHash: getRefSchema(SystemSchemaIds.RowSchemaHash),
@@ -170,6 +174,7 @@ describe('row-schema-hash.plugin', () => {
       headRevisionId,
       draftRevisionId,
       schemaTableVersionId,
+      migrationTableVersionId,
       schema,
     });
 

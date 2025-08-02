@@ -1,4 +1,4 @@
-import { ApiProperty, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
@@ -20,7 +20,7 @@ export class InitMigrationDto {
     description: 'Timestamp when the table was created (ISO 8601)',
     example: '2025-07-31T12:34:56Z',
   })
-  date: string;
+  id: string;
 
   @ApiProperty({
     description: 'JSON Schema definition of the table',
@@ -37,13 +37,16 @@ export class UpdateMigrationDto {
   })
   changeType: 'update';
 
+  @ApiProperty({ description: 'Identifier of the table' })
+  tableId: string;
+
   @ApiProperty({ description: 'Checksum of the patch set' })
   hash: string;
 
   @ApiProperty({
     description: 'Timestamp when the update was applied (ISO 8601)',
   })
-  date: string;
+  id: string;
 
   @ApiProperty({
     description: 'Array of JSON Patch operations',
@@ -63,32 +66,8 @@ export class RenameMigrationDto {
   @ApiProperty({
     description: 'Timestamp when the table was renamed (ISO 8601)',
   })
-  date: string;
+  id: string;
 
   @ApiProperty({ description: 'New table identifier after renaming' })
   tableId: string;
-}
-
-@ApiExtraModels(InitMigrationDto, UpdateMigrationDto, RenameMigrationDto)
-export class TableMigrationsDto {
-  @ApiProperty({ description: 'ID assigned when the table was first created' })
-  createdId: string;
-
-  @ApiProperty({
-    description: 'Initial migration details',
-    type: () => InitMigrationDto,
-  })
-  initMigration: InitMigrationDto;
-
-  @ApiProperty({
-    description: 'List of subsequent migrations (update or rename)',
-    type: 'array',
-    items: {
-      oneOf: [
-        { $ref: getSchemaPath(UpdateMigrationDto) },
-        { $ref: getSchemaPath(RenameMigrationDto) },
-      ],
-    },
-  })
-  migrations: Array<UpdateMigrationDto | RenameMigrationDto>;
 }
