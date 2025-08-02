@@ -15,7 +15,7 @@ export type RenameMigration = {
   tableId: string;
 };
 
-export type Migration = UpdateMigration | RenameMigration;
+export type Migration = InitMigration | UpdateMigration | RenameMigration;
 
 export type InitMigration = {
   changeType: 'init';

@@ -1,12 +1,21 @@
 import { BadRequestException, Logger } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import {
+  InternalCreateRowCommand,
+  InternalCreateRowCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { Migration } from 'src/features/share/utils/schema/types/migration';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 export abstract class BaseMigrationHandler<
   T extends { data: { revisionId: string } },
 > {
   protected constructor(
-    protected transactionService: TransactionPrismaService,
+    protected readonly transactionService: TransactionPrismaService,
+    protected readonly commandBus: CommandBus,
+    protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
   ) {}
 
   protected readonly logger = new Logger(BaseMigrationHandler.name);
@@ -19,7 +28,9 @@ export abstract class BaseMigrationHandler<
     await this.checkIsDraftRevision(command.data.revisionId);
 
     if (await this.checkTableExisting(command)) {
-      return this.handler(command);
+      const migration = await this.getMigration(command.data);
+      await this.createRowInMigrationTable(command.data.revisionId, migration);
+      return true;
     } else {
       this.logger.error(
         `No table ${SystemTables.Migration} found in draft revision ${command.data.revisionId}`,
@@ -29,7 +40,9 @@ export abstract class BaseMigrationHandler<
     }
   }
 
-  protected abstract handler(command: T): Promise<boolean>;
+  protected abstract getMigration(data: {
+    revisionId: string;
+  }): Promise<Migration>;
 
   protected async checkTableExisting(command: T): Promise<boolean> {
     const table = await this.transaction.table.findFirst({
@@ -59,5 +72,23 @@ export abstract class BaseMigrationHandler<
     if (!revision.isDraft) {
       throw new BadRequestException('Revision is not draft revision');
     }
+  }
+
+  protected createRowInMigrationTable(
+    revisionId: string,
+    migration: Migration,
+  ) {
+    return this.commandBus.execute<
+      InternalCreateRowCommand,
+      InternalCreateRowCommandReturnType
+    >(
+      new InternalCreateRowCommand({
+        revisionId,
+        tableId: SystemTables.Migration,
+        rowId: migration.date,
+        data: migration,
+        schemaHash: this.jsonSchemaValidator.tableSchemaHash,
+      }),
+    );
   }
 }
