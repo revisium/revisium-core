@@ -12,6 +12,7 @@ import { ApiUpdateTableHandler } from 'src/features/draft/commands/handlers/api-
 import { ApiUploadFileHandler } from 'src/features/draft/commands/handlers/api-upload-file.handler';
 import { CreateRevisionHandler } from 'src/features/draft/commands/handlers/create-revision.handler';
 import { CreateRowHandler } from 'src/features/draft/commands/handlers/create-row.handler';
+import { MIGRATION_COMMANDS } from 'src/features/draft/commands/handlers/migration';
 import { PatchRowHandler } from 'src/features/draft/commands/handlers/patch-row.handler';
 import { RenameRowHandler } from 'src/features/draft/commands/handlers/rename-row.handler';
 import { RenameTableHandler } from 'src/features/draft/commands/handlers/rename-table.handler';
@@ -38,6 +39,7 @@ import { UpdateTableHandler } from 'src/features/draft/commands/handlers/update-
 import { UploadFileHandler } from 'src/features/draft/commands/handlers/upload-file.handler';
 
 export const DRAFT_COMMANDS_HANDLERS = [
+  ...MIGRATION_COMMANDS,
   CreateTableHandler,
   ApiCreateTableHandler,
   RemoveTableHandler,

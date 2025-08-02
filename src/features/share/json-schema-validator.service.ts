@@ -27,6 +27,7 @@ const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 @Injectable()
 export class JsonSchemaValidatorService {
   public readonly metaSchemaHash: string;
+  public readonly tableSchemaHash: string;
 
   private readonly ajv = new Ajv();
 
@@ -60,6 +61,7 @@ export class JsonSchemaValidatorService {
       tableMigrationsSchema,
     );
     this.metaSchemaHash = this.getSchemaHash(metaSchema);
+    this.tableSchemaHash = this.getSchemaHash(tableMigrationsSchema);
   }
 
   public validateMetaSchema(data: unknown) {

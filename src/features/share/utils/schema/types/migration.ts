@@ -18,6 +18,7 @@ export type Migration = UpdateMigration | RenameMigration;
 
 export type InitMigration = {
   changeType: 'init';
+  createdId: string;
   tableId: string;
   hash: string;
   date: string;

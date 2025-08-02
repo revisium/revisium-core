@@ -1,9 +1,9 @@
-import { Prisma } from '@prisma/client';
+import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 export class CreateSchemaCommand {
   constructor(
     public readonly data: {
-      data: Prisma.InputJsonValue;
+      data: JsonSchema;
       revisionId: string;
       tableId: string;
       createdId: string;

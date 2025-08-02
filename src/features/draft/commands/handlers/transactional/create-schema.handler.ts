@@ -2,6 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import {
+  CreateInitMigrationCommand,
+  CreateInitMigrationCommandReturnType,
+} from 'src/features/draft/commands/impl/migration';
+import {
   CreateSchemaCommand,
   CreateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/create-schema.command';
@@ -55,6 +59,7 @@ export class CreateSchemaHandler extends DraftHandler<
     const tableMigrations = await this.getTableMigrations(input);
 
     await this.createRowInSchemaTable(input, tableMigrations);
+    await this.createInitMigration(input);
 
     return true;
   }
@@ -80,6 +85,7 @@ export class CreateSchemaHandler extends DraftHandler<
       initMigration: {
         changeType: 'init',
         tableId,
+        createdId,
         hash: await this.hashService.hashObject(data),
         date: new Date().toISOString(),
         schema: data as JsonSchema,
@@ -107,6 +113,20 @@ export class CreateSchemaHandler extends DraftHandler<
         data: data.data,
         meta: historyPatches,
         schemaHash: this.jsonSchemaValidator.metaSchemaHash,
+      }),
+    );
+  }
+
+  private createInitMigration(data: CreateSchemaCommand['data']) {
+    return this.commandBus.execute<
+      CreateInitMigrationCommand,
+      CreateInitMigrationCommandReturnType
+    >(
+      new CreateInitMigrationCommand({
+        revisionId: data.revisionId,
+        tableId: SystemTables.Schema,
+        schema: data.data,
+        createdId: data.createdId,
       }),
     );
   }
