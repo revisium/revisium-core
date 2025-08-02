@@ -26,6 +26,8 @@ export type CreateProjectHandlerContext = {
   draftRevisionId: string;
   schemaTableVersionId: string;
   schemaTableCreatedId: string;
+  migrationTableVersionId: string;
+  migrationTableCreatedId: string;
   sharedSchemasTableVersionId: string;
   sharedSchemasTableCreatedId: string;
 };
@@ -85,6 +87,8 @@ export class CreateProjectHandler
       draftRevisionId: this.idService.generate(),
       schemaTableVersionId: this.idService.generate(),
       schemaTableCreatedId: this.idService.generate(),
+      migrationTableVersionId: this.idService.generate(),
+      migrationTableCreatedId: this.idService.generate(),
       sharedSchemasTableVersionId: this.idService.generate(),
       sharedSchemasTableCreatedId: this.idService.generate(),
     };
@@ -196,6 +200,13 @@ export class CreateProjectHandler
                     createdId: this.context.sharedSchemasTableCreatedId,
                     versionId: this.context.sharedSchemasTableVersionId,
                     id: SystemTables.SharedSchemas,
+                    readonly: true,
+                    system: true,
+                  },
+                  {
+                    createdId: this.context.migrationTableCreatedId,
+                    versionId: this.context.migrationTableVersionId,
+                    id: SystemTables.Migration,
                     readonly: true,
                     system: true,
                   },
