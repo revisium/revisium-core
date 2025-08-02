@@ -1,4 +1,8 @@
-import { BadRequestException, Logger } from '@nestjs/common';
+import {
+  BadRequestException,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
   InternalCreateRowCommand,
@@ -18,7 +22,7 @@ export abstract class BaseMigrationHandler<
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
   ) {}
 
-  protected readonly logger = new Logger(BaseMigrationHandler.name);
+  protected abstract readonly logger: Logger;
 
   protected get transaction() {
     return this.transactionService.getTransaction();
@@ -29,6 +33,15 @@ export abstract class BaseMigrationHandler<
 
     if (await this.checkTableExisting(command)) {
       const migration = await this.getMigration(command.data);
+
+      const { result, errors } =
+        this.jsonSchemaValidator.validateTableMigrationsSchema(migration);
+
+      if (!result) {
+        console.log(errors);
+        throw new InternalServerErrorException(errors);
+      }
+
       await this.createRowInMigrationTable(command.data.revisionId, migration);
       return true;
     } else {

@@ -28,7 +28,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 describe('Migrations', () => {
   const newTableId = 'newTable';
 
-  it('should throw an error if the tableId is shorter than 1 character', async () => {
+  it('should throw an error if revision is not a draft revision', async () => {
     const { headRevisionId } = await prepareProject(prismaService);
 
     const command = new CreateInitMigrationCommand({

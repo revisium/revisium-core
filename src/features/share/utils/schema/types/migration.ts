@@ -24,9 +24,3 @@ export type InitMigration = {
 };
 
 export type Migration = InitMigration | UpdateMigration | RenameMigration;
-
-export type TableMigrations = {
-  createdId: string;
-  initMigration: InitMigration;
-  migrations: Migration[];
-};

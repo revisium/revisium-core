@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { BaseMigrationHandler } from 'src/features/draft/commands/handlers/migration/base-migration.handler';
 import {
@@ -12,6 +13,8 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 
 @CommandHandler(CreateUpdateMigrationCommand)
 export class CreateUpdateMigrationHandler extends BaseMigrationHandler<CreateUpdateMigrationCommand> {
+  protected readonly logger = new Logger(CreateUpdateMigrationHandler.name);
+
   constructor(
     protected readonly transactionService: TransactionPrismaService,
     protected readonly hashService: HashService,
