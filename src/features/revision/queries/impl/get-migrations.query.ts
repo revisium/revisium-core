@@ -1,4 +1,4 @@
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from 'src/features/share/utils/schema/types/migration';
 
 export class GetMigrationsQuery {
   constructor(
@@ -10,4 +10,4 @@ export class GetMigrationsQuery {
 
 export type GetMigrationsQueryData = GetMigrationsQuery['data'];
 
-export type GetMigrationsQueryReturnType = TableMigrations[];
+export type GetMigrationsQueryReturnType = Migration[];

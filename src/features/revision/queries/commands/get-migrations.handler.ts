@@ -5,7 +5,7 @@ import {
   GetMigrationsQueryData,
 } from 'src/features/revision/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from 'src/features/share/utils/schema/types/migration';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @QueryHandler(GetMigrationsQuery)
@@ -35,6 +35,6 @@ export class GetMigrationsHandler implements IQueryHandler<GetMigrationsQuery> {
       },
     });
 
-    return rows.map((row) => row.data as TableMigrations);
+    return rows.map((row) => row.data as Migration);
   }
 }

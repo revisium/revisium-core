@@ -29,7 +29,7 @@ import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-crea
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { ApiCreateEndpointCommand } from 'src/features/endpoint/commands/impl';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { TableMigrations } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from 'src/features/share/utils/schema/types/migration';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto';
 import { BranchModel } from 'src/api/rest-api/branch/model';
@@ -41,8 +41,9 @@ import {
 import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint.dto';
 import {
   CreateTableResponse,
+  InitMigrationDto,
   RevisionModel,
-  TableMigrationsDto,
+  UpdateMigrationDto,
 } from 'src/api/rest-api/revision/model';
 import { ChildBranchResponse } from 'src/api/rest-api/revision/model/child-branches.response';
 import { transformFromPrismaToBranchModel } from 'src/api/rest-api/share/utils/transformFromPrismaToBranchModel';
@@ -73,7 +74,8 @@ import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/
 @Controller('revision/:revisionId')
 @ApiBearerAuth('access-token')
 @ApiTags('Revision')
-@ApiExtraModels(TableMigrationsDto)
+@ApiExtraModels(InitMigrationDto)
+@ApiExtraModels(UpdateMigrationDto)
 export class RevisionByIdController {
   constructor(
     private readonly queryBus: QueryBus,
@@ -160,12 +162,17 @@ export class RevisionByIdController {
     description: 'Retrieves all table migrations',
     schema: {
       type: 'array',
-      items: { $ref: getSchemaPath(TableMigrationsDto) },
+      items: {
+        oneOf: [
+          { $ref: getSchemaPath(InitMigrationDto) },
+          { $ref: getSchemaPath(UpdateMigrationDto) },
+        ],
+      },
     },
   })
   async getMigrations(
     @Param('revisionId') revisionId: string,
-  ): Promise<TableMigrations[]> {
+  ): Promise<Migration[]> {
     return this.revisionApi.migrations({ revisionId });
   }
 

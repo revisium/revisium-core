@@ -1,4 +1,4 @@
-import { ApiProperty, ApiExtraModels, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
 import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
@@ -37,6 +37,9 @@ export class UpdateMigrationDto {
   })
   changeType: 'update';
 
+  @ApiProperty({ description: 'Identifier of the table' })
+  tableId: string;
+
   @ApiProperty({ description: 'Checksum of the patch set' })
   hash: string;
 
@@ -67,28 +70,4 @@ export class RenameMigrationDto {
 
   @ApiProperty({ description: 'New table identifier after renaming' })
   tableId: string;
-}
-
-@ApiExtraModels(InitMigrationDto, UpdateMigrationDto, RenameMigrationDto)
-export class TableMigrationsDto {
-  @ApiProperty({ description: 'ID assigned when the table was first created' })
-  createdId: string;
-
-  @ApiProperty({
-    description: 'Initial migration details',
-    type: () => InitMigrationDto,
-  })
-  initMigration: InitMigrationDto;
-
-  @ApiProperty({
-    description: 'List of subsequent migrations (update or rename)',
-    type: 'array',
-    items: {
-      oneOf: [
-        { $ref: getSchemaPath(UpdateMigrationDto) },
-        { $ref: getSchemaPath(RenameMigrationDto) },
-      ],
-    },
-  })
-  migrations: Array<UpdateMigrationDto | RenameMigrationDto>;
 }

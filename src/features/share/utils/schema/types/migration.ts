@@ -15,8 +15,6 @@ export type RenameMigration = {
   tableId: string;
 };
 
-export type Migration = InitMigration | UpdateMigration | RenameMigration;
-
 export type InitMigration = {
   changeType: 'init';
   tableId: string;
@@ -24,6 +22,8 @@ export type InitMigration = {
   date: string;
   schema: JsonSchema;
 };
+
+export type Migration = InitMigration | UpdateMigration | RenameMigration;
 
 export type TableMigrations = {
   createdId: string;
