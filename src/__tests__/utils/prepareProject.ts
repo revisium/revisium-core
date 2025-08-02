@@ -332,7 +332,7 @@ export async function prepareTableWithSchema({
 
   const migration: InitMigration = {
     changeType: 'init',
-    date: new Date().toISOString(),
+    id: new Date().toISOString(),
     tableId,
     hash: hash(schema),
     schema,
@@ -340,7 +340,7 @@ export async function prepareTableWithSchema({
 
   await prismaService.row.create({
     data: {
-      id: migration.date,
+      id: migration.id,
       versionId: migrationRowVersionId,
       createdId: nanoid(),
       readonly: true,

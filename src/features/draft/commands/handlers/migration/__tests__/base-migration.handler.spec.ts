@@ -119,7 +119,7 @@ describe('Migrations', () => {
 
     expect(migrationRow.data as InitMigration).toStrictEqual({
       changeType: 'init',
-      date: expect.any(String),
+      id: expect.any(String),
       hash: objectHash(testSchema),
       schema: testSchema,
       tableId: newTableId,
@@ -193,7 +193,7 @@ describe('Migrations', () => {
 
     expect(migrationRow.data as UpdateMigration).toStrictEqual({
       changeType: 'update',
-      date: expect.any(String),
+      id: expect.any(String),
       hash: objectHash(schema),
       patches: [
         {

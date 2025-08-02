@@ -27,7 +27,7 @@ export class CreateInitMigrationHandler extends BaseMigrationHandler<CreateInitM
     return {
       changeType: 'init',
       tableId: data.tableId,
-      date: new Date().toISOString(),
+      id: new Date().toISOString(),
       hash: await this.hashService.hashObject(data.schema),
       schema: data.schema,
     };

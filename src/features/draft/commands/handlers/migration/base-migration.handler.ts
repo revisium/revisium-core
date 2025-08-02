@@ -85,7 +85,7 @@ export abstract class BaseMigrationHandler<
       new InternalCreateRowCommand({
         revisionId,
         tableId: SystemTables.Migration,
-        rowId: migration.date,
+        rowId: migration.id,
         data: migration,
         schemaHash: this.jsonSchemaValidator.tableSchemaHash,
       }),

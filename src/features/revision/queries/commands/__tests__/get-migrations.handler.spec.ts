@@ -25,7 +25,7 @@ describe('GetMigrationsHandler', () => {
     expect(result).toStrictEqual([
       {
         changeType: 'init',
-        date: expect.any(String),
+        id: expect.any(String),
         hash: objectHash(testSchema),
         schema: testSchema,
         tableId,

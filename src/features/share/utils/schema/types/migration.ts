@@ -5,13 +5,13 @@ export type UpdateMigration = {
   changeType: 'update';
   tableId: string;
   hash: string;
-  date: string;
+  id: string;
   patches: JsonPatch[];
 };
 
 export type RenameMigration = {
   changeType: 'rename';
-  date: string;
+  id: string;
   tableId: string;
 };
 
@@ -19,7 +19,7 @@ export type InitMigration = {
   changeType: 'init';
   tableId: string;
   hash: string;
-  date: string;
+  id: string;
   schema: JsonSchema;
 };
 

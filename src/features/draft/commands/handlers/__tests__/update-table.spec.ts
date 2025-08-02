@@ -483,7 +483,7 @@ describe('UpdateTableHandler', () => {
     };
 
     const data = rowUpdate.data as UpdateMigration;
-    expect(rowUpdate.id).toBe(data.date);
+    expect(rowUpdate.id).toBe(data.id);
     expect(rowUpdate.meta).toStrictEqual({});
     expect(rowUpdate.hash).toBe(objectHash(data));
     expect(rowUpdate.schemaHash).toBe(objectHash(tableMigrationsSchema));

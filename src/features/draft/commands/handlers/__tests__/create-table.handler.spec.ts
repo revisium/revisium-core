@@ -224,7 +224,7 @@ describe('CreateTableHandler', () => {
 
     const row = rows[0];
     const data = row.data as InitMigration;
-    expect(row.id).toBe(data.date);
+    expect(row.id).toBe(data.id);
     expect(row.meta).toStrictEqual({});
     expect(row.hash).toBe(objectHash(data));
     expect(row.schemaHash).toBe(objectHash(tableMigrationsSchema));
