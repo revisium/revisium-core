@@ -332,7 +332,7 @@ export async function prepareTableWithSchema({
 
   const migration: InitMigration = {
     changeType: 'init',
-    id: new Date().toISOString(),
+    id: '2025-01-01T00:00:00Z',
     tableId,
     hash: hash(schema),
     schema,

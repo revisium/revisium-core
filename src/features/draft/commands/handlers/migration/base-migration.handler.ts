@@ -38,7 +38,8 @@ export abstract class BaseMigrationHandler<
         this.jsonSchemaValidator.validateTableMigrationsSchema(migration);
 
       if (!result) {
-        console.log(errors);
+        this.logger.error(migration);
+
         throw new InternalServerErrorException(errors);
       }
 
