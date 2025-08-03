@@ -2664,6 +2664,66 @@
         "tags": ["Revision"]
       }
     },
+    "/api/revision/{revisionId}/apply-migrations": {
+      "post": {
+        "operationId": "applyMigrations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InitMigrationDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UpdateMigrationDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RenameMigrationDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemoveMigrationDto"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BranchModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": ["Revision"]
+      }
+    },
     "/api/revision/{revisionId}/child-branches": {
       "get": {
         "operationId": "childBranches",
