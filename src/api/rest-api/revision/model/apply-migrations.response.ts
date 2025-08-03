@@ -2,7 +2,7 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class ApplyMigrationsResponseDto {
   @ApiProperty({
-    description: 'The ID of the entity to which the migration was applied',
+    description: 'The ID of the migration',
   })
   id: string;
 

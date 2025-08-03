@@ -33,9 +33,10 @@ export class ApplyMigrationsHandler
     const response: ApplyMigrationResult[] = [];
 
     for (const migration of data.migrations) {
-      const result = (await this.migrationContextService.run(migration.id, () =>
-        this.applyMigration(data.revisionId, migration),
-      )) as ApplyMigrationResult;
+      const result: ApplyMigrationResult =
+        await this.migrationContextService.run(migration.id, () =>
+          this.applyMigration(data.revisionId, migration),
+        );
 
       response.push(result);
 
