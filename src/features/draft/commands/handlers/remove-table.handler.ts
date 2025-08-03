@@ -3,10 +3,7 @@ import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import {
   CreateRemoveMigrationCommand,
   CreateRemoveMigrationCommandReturnType,
-  CreateRenameMigrationCommand,
-  CreateRenameMigrationCommandReturnType,
 } from 'src/features/draft/commands/impl/migration';
-import { RenameSchemaCommand } from 'src/features/draft/commands/impl/transactional/rename-schema.command';
 import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
