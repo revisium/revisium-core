@@ -10,9 +10,11 @@ import {
 import { BRANCH_QUERIES_HANDLERS } from 'src/features/branch/quieries/handlers';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { DRAFT_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/index';
+import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
@@ -117,7 +119,9 @@ export const createTestingModule = async () => {
     ],
     providers: [
       DraftTransactionalCommands,
+      DraftApiService,
       DraftContextService,
+      MigrationContextService,
       JsonSchemaValidatorService,
       ...DRAFT_REQUEST_DTO,
       ...DRAFT_COMMANDS_HANDLERS,
@@ -153,6 +157,7 @@ export const createTestingModule = async () => {
   const shareTransactionalCommands = module.get(ShareTransactionalCommands);
   const draftTransactionalCommands = module.get(DraftTransactionalCommands);
   const endpointNotificationService = module.get(EndpointNotificationService);
+  const migrationContextService = module.get(MigrationContextService);
   return {
     module,
     prismaService,
@@ -164,6 +169,7 @@ export const createTestingModule = async () => {
     shareTransactionalCommands,
     draftTransactionalCommands,
     endpointNotificationService,
+    migrationContextService,
   };
 };
 

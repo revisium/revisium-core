@@ -27,8 +27,6 @@ export class CreateRemoveMigrationHandler extends BaseMigrationHandler<CreateRem
   protected async getMigration(
     data: CreateRemoveMigrationCommandData,
   ): Promise<RemoveMigration> {
-    console.log({ data });
-
     return {
       changeType: 'remove',
       id: this.migrationContextService.migrationId ?? new Date().toISOString(),
