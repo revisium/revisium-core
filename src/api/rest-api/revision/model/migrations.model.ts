@@ -74,3 +74,20 @@ export class RenameMigrationDto {
   @ApiProperty({ description: 'New table identifier after renaming' })
   nextTableId: string;
 }
+
+export class RemoveMigrationDto {
+  @ApiProperty({
+    enum: ['remove'],
+    example: 'remove',
+    description: 'Indicates a remove migration',
+  })
+  changeType: 'remove';
+
+  @ApiProperty({
+    description: 'Timestamp when the table was removed (ISO 8601)',
+  })
+  id: string;
+
+  @ApiProperty({ description: 'Current table identifier' })
+  tableId: string;
+}

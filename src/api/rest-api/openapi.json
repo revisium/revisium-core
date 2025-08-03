@@ -608,6 +608,26 @@
         "required": ["edges", "totalCount", "pageInfo"],
         "type": "object"
       },
+      "RemoveMigrationDto": {
+        "properties": {
+          "changeType": {
+            "description": "Indicates a remove migration",
+            "enum": ["remove"],
+            "example": "remove",
+            "type": "string"
+          },
+          "id": {
+            "description": "Timestamp when the table was removed (ISO 8601)",
+            "type": "string"
+          },
+          "tableId": {
+            "description": "Current table identifier",
+            "type": "string"
+          }
+        },
+        "required": ["changeType", "id", "tableId"],
+        "type": "object"
+      },
       "RemoveRowResponse": {
         "properties": {
           "branch": {
@@ -2864,6 +2884,9 @@
                       },
                       {
                         "$ref": "#/components/schemas/RenameMigrationDto"
+                      },
+                      {
+                        "$ref": "#/components/schemas/RemoveMigrationDto"
                       }
                     ]
                   },
