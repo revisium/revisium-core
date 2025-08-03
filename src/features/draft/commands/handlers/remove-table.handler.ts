@@ -65,7 +65,7 @@ export class RemoveTableHandler extends DraftHandler<
     this.tableRequestDto.id = tableId;
     this.tableRequestDto.versionId = table.versionId;
 
-    await this.removeSchema({ revisionId, tableId });
+    await this.removeSchema(data);
 
     await this.validateRevisionHasChanges();
 
@@ -101,19 +101,16 @@ export class RemoveTableHandler extends DraftHandler<
     });
   }
 
-  private async removeSchema({
-    revisionId,
-    tableId,
-  }: RemoveTableCommand['data']) {
+  private async removeSchema(data: RemoveTableCommand['data']) {
     await this.commandBus.execute(
       new RemoveRowCommand({
-        revisionId,
+        revisionId: data.revisionId,
         tableId: SystemTables.Schema,
-        rowId: tableId,
+        rowId: data.tableId,
         avoidCheckingSystemTable: true,
       }),
     );
-    await this.createRemoveMigration({ revisionId, tableId });
+    await this.createRemoveMigration(data);
   }
 
   private async validateForeignKeys(data: RemoveTableCommand['data']) {

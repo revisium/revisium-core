@@ -38,7 +38,8 @@ export abstract class BaseMigrationHandler<
         this.jsonSchemaValidator.validateTableMigrationsSchema(migration);
 
       if (!result) {
-        console.log(errors);
+        this.logger.error(migration);
+
         throw new InternalServerErrorException(errors);
       }
 
@@ -101,6 +102,7 @@ export abstract class BaseMigrationHandler<
         rowId: migration.id,
         data: migration,
         schemaHash: this.jsonSchemaValidator.tableSchemaHash,
+        publishedAt: migration.id,
       }),
     );
   }

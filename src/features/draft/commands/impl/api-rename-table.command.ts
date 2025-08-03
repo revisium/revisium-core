@@ -10,6 +10,8 @@ export class ApiRenameTableCommand {
   ) {}
 }
 
+export type ApiRenameTableCommandData = ApiRenameTableCommand['data'];
+
 export type ApiRenameTableCommandReturnType = {
   table: GetTableByIdReturnType;
   previousVersionTableId: string;

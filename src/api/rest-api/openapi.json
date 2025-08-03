@@ -33,6 +33,25 @@
         "required": ["userId", "roleId"],
         "type": "object"
       },
+      "ApplyMigrationsResponseDto": {
+        "properties": {
+          "error": {
+            "description": "Error message if the migration failed",
+            "type": "string"
+          },
+          "id": {
+            "description": "The ID of the migration",
+            "type": "string"
+          },
+          "status": {
+            "description": "The migration application status",
+            "enum": ["applied", "failed", "skipped"],
+            "type": "string"
+          }
+        },
+        "required": ["id", "status"],
+        "type": "object"
+      },
       "BoolFilterDto": {
         "properties": {
           "equals": {
@@ -2649,6 +2668,69 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RevisionModel"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": ["Revision"]
+      }
+    },
+    "/api/revision/{revisionId}/apply-migrations": {
+      "post": {
+        "operationId": "applyMigrations",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/InitMigrationDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/UpdateMigrationDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RenameMigrationDto"
+                    },
+                    {
+                      "$ref": "#/components/schemas/RemoveMigrationDto"
+                    }
+                  ]
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApplyMigrationsResponseDto"
+                  },
+                  "type": "array"
                 }
               }
             },

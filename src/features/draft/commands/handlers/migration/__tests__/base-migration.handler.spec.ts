@@ -15,6 +15,7 @@ import {
   CreateRenameMigrationCommand,
   CreateUpdateMigrationCommand,
 } from 'src/features/draft/commands/impl/migration';
+import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
@@ -129,6 +130,7 @@ describe('Migrations', () => {
       schema: testSchema,
       tableId: newTableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   it('should create a new update migration', async () => {
@@ -214,6 +216,7 @@ describe('Migrations', () => {
       ],
       tableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   it('should create a new rename migration', async () => {
@@ -259,6 +262,7 @@ describe('Migrations', () => {
       tableId,
       nextTableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   it('should create a new remove migration', async () => {
@@ -300,6 +304,53 @@ describe('Migrations', () => {
       id: expect.any(String),
       tableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
+  });
+
+  it('should create a new migration with custom id', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = ids;
+
+    const migrationId = '1990-01-01T00:00:00Z';
+
+    const command = new CreateRemoveMigrationCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    const result: boolean = await migrationContextService.run(migrationId, () =>
+      runTransaction(command),
+    );
+    expect(result).toBe(true);
+
+    const migrationRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        data: {
+          path: ['id'],
+          equals: migrationId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(migrationRow.data as RemoveMigration).toStrictEqual({
+      changeType: 'remove',
+      id: migrationId,
+      tableId,
+    });
+    expect(migrationRow.id).toBe(migrationId);
   });
 
   function runTransaction(
@@ -311,12 +362,14 @@ describe('Migrations', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let migrationContextService: MigrationContextService;
 
   beforeEach(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    migrationContextService = result.migrationContextService;
   });
 
   afterEach(async () => {

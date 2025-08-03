@@ -9,3 +9,5 @@ export class ApiCreateTableCommand {
     },
   ) {}
 }
+
+export type ApiCreateTableCommandData = ApiCreateTableCommand['data'];

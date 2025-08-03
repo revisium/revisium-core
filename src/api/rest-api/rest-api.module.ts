@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from 'src/features/auth/auth.module';
+import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { RevisionModule } from 'src/features/revision/revision.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
@@ -22,6 +23,7 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
     MetricsModule,
     EndpointModule,
     RevisionModule,
+    DraftModule,
   ],
   controllers: [
     AuthController,
