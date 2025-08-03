@@ -11,6 +11,7 @@ import {
 import {
   CreateInitMigrationCommand,
   CreateInitMigrationCommandReturnType,
+  CreateRemoveMigrationCommand,
   CreateRenameMigrationCommand,
   CreateUpdateMigrationCommand,
 } from 'src/features/draft/commands/impl/migration';
@@ -18,6 +19,7 @@ import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
   InitMigration,
+  RemoveMigration,
   RenameMigration,
   UpdateMigration,
 } from 'src/features/share/utils/schema/types/migration';
@@ -256,6 +258,47 @@ describe('Migrations', () => {
       id: expect.any(String),
       tableId,
       nextTableId,
+    });
+  });
+
+  it('should create a new remove migration', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = ids;
+
+    const command = new CreateRemoveMigrationCommand({
+      revisionId: draftRevisionId,
+      tableId,
+    });
+
+    const result = await runTransaction(command);
+    expect(result).toBe(true);
+
+    const migrationRow = await prismaService.row.findFirstOrThrow({
+      where: {
+        data: {
+          path: ['tableId'],
+          equals: tableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: draftRevisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(migrationRow.data as RemoveMigration).toStrictEqual({
+      changeType: 'remove',
+      id: expect.any(String),
+      tableId,
     });
   });
 

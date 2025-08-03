@@ -6,6 +6,7 @@ export const tableMigrationsSchema: Schema = {
     { $ref: '#/definitions/InitMigration' },
     { $ref: '#/definitions/UpdateMigration' },
     { $ref: '#/definitions/RenameMigration' },
+    { $ref: '#/definitions/RemoveMigration' },
   ],
   definitions: {
     InitMigration: {
@@ -41,6 +42,16 @@ export const tableMigrationsSchema: Schema = {
         id: { type: 'string' },
         tableId: { type: 'string' },
         nextTableId: { type: 'string' },
+      },
+    },
+    RemoveMigration: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['changeType', 'id', 'tableId'],
+      properties: {
+        changeType: { type: 'string', const: 'remove' },
+        id: { type: 'string' },
+        tableId: { type: 'string' },
       },
     },
   },

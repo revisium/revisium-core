@@ -16,6 +16,12 @@ export type RenameMigration = {
   nextTableId: string;
 };
 
+export type RemoveMigration = {
+  changeType: 'remove';
+  tableId: string;
+  id: string;
+};
+
 export type InitMigration = {
   changeType: 'init';
   tableId: string;
@@ -24,4 +30,8 @@ export type InitMigration = {
   schema: JsonSchema;
 };
 
-export type Migration = InitMigration | UpdateMigration | RenameMigration;
+export type Migration =
+  | InitMigration
+  | UpdateMigration
+  | RenameMigration
+  | RemoveMigration;

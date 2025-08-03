@@ -79,6 +79,18 @@ describe('table-migrations-schema', () => {
     expect(ajv.errors).toBeNull();
   });
 
+  it('validates a remove migration', () => {
+    const validRemove = {
+      changeType: 'remove',
+      id: 'ren1',
+      tableId: 'newName',
+    };
+
+    const valid = ajv.validate(tableMigrationsSchema, validRemove);
+    expect(valid).toBe(true);
+    expect(ajv.errors).toBeNull();
+  });
+
   it('rejects invalid migration missing required fields', () => {
     const invalid = { changeType: 'update', hash: 'invalid' };
     const valid = ajv.validate(tableMigrationsSchema, invalid);
