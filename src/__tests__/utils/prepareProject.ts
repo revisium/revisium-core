@@ -352,6 +352,7 @@ export async function prepareTableWithSchema({
       data: migration,
       hash: hash(migration),
       schemaHash: hash(tableMigrationsSchema),
+      publishedAt: migration.id,
     },
   });
 
