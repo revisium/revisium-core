@@ -42,6 +42,7 @@ import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint
 import {
   CreateTableResponse,
   InitMigrationDto,
+  RemoveMigrationDto,
   RenameMigrationDto,
   RevisionModel,
   UpdateMigrationDto,
@@ -78,6 +79,7 @@ import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/
 @ApiExtraModels(InitMigrationDto)
 @ApiExtraModels(UpdateMigrationDto)
 @ApiExtraModels(RenameMigrationDto)
+@ApiExtraModels(RemoveMigrationDto)
 export class RevisionByIdController {
   constructor(
     private readonly queryBus: QueryBus,
@@ -169,6 +171,7 @@ export class RevisionByIdController {
           { $ref: getSchemaPath(InitMigrationDto) },
           { $ref: getSchemaPath(UpdateMigrationDto) },
           { $ref: getSchemaPath(RenameMigrationDto) },
+          { $ref: getSchemaPath(RemoveMigrationDto) },
         ],
       },
     },
