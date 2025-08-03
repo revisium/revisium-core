@@ -5,6 +5,7 @@ import {
   CreateRenameMigrationCommand,
   CreateRenameMigrationCommandData,
 } from 'src/features/draft/commands/impl/migration';
+import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 
 import { RenameMigration } from 'src/features/share/utils/schema/types/migration';
@@ -18,6 +19,7 @@ export class CreateRenameMigrationHandler extends BaseMigrationHandler<CreateRen
     protected readonly transactionService: TransactionPrismaService,
     protected readonly commandBus: CommandBus,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly migrationContextService: MigrationContextService,
   ) {
     super(transactionService, commandBus, jsonSchemaValidator);
   }
@@ -27,7 +29,7 @@ export class CreateRenameMigrationHandler extends BaseMigrationHandler<CreateRen
   ): Promise<RenameMigration> {
     return {
       changeType: 'rename',
-      id: new Date().toISOString(),
+      id: this.migrationContextService.migrationId ?? new Date().toISOString(),
       tableId: data.tableId,
       nextTableId: data.nextTableId,
     };

@@ -6,6 +6,7 @@ import {
   ApplyMigrationsCommand,
 } from 'src/features/draft/commands/impl/migration';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
+import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { Migration } from 'src/features/share/utils/schema/types/migration';
@@ -22,6 +23,7 @@ export class ApplyMigrationsHandler
     protected readonly prisma: PrismaService,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
     protected readonly draftApiService: DraftApiService,
+    protected readonly migrationContextService: MigrationContextService,
   ) {}
 
   async execute({ data }: ApplyMigrationsCommand) {
@@ -31,7 +33,10 @@ export class ApplyMigrationsHandler
     const response: ApplyMigrationResult[] = [];
 
     for (const migration of data.migrations) {
-      const result = await this.applyMigration(data.revisionId, migration);
+      const result = (await this.migrationContextService.run(migration.id, () =>
+        this.applyMigration(data.revisionId, migration),
+      )) as ApplyMigrationResult;
+
       response.push(result);
 
       if (result.status === 'failed') {

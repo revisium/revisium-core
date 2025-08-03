@@ -5,6 +5,7 @@ import {
   CreateInitMigrationCommand,
   CreateInitMigrationCommandData,
 } from 'src/features/draft/commands/impl/migration';
+import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 
 import { InitMigration } from 'src/features/share/utils/schema/types/migration';
@@ -20,6 +21,7 @@ export class CreateInitMigrationHandler extends BaseMigrationHandler<CreateInitM
     protected readonly hashService: HashService,
     protected readonly commandBus: CommandBus,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly migrationContextService: MigrationContextService,
   ) {
     super(transactionService, commandBus, jsonSchemaValidator);
   }
@@ -30,7 +32,7 @@ export class CreateInitMigrationHandler extends BaseMigrationHandler<CreateInitM
     return {
       changeType: 'init',
       tableId: data.tableId,
-      id: new Date().toISOString(),
+      id: this.migrationContextService.migrationId ?? new Date().toISOString(),
       hash: await this.hashService.hashObject(data.schema),
       schema: data.schema,
     };

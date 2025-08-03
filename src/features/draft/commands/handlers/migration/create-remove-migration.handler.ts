@@ -5,6 +5,7 @@ import {
   CreateRemoveMigrationCommand,
   CreateRemoveMigrationCommandData,
 } from 'src/features/draft/commands/impl/migration';
+import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 
 import { RemoveMigration } from 'src/features/share/utils/schema/types/migration';
@@ -18,6 +19,7 @@ export class CreateRemoveMigrationHandler extends BaseMigrationHandler<CreateRem
     protected readonly transactionService: TransactionPrismaService,
     protected readonly commandBus: CommandBus,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly migrationContextService: MigrationContextService,
   ) {
     super(transactionService, commandBus, jsonSchemaValidator);
   }
@@ -25,9 +27,11 @@ export class CreateRemoveMigrationHandler extends BaseMigrationHandler<CreateRem
   protected async getMigration(
     data: CreateRemoveMigrationCommandData,
   ): Promise<RemoveMigration> {
+    console.log({ data });
+
     return {
       changeType: 'remove',
-      id: new Date().toISOString(),
+      id: this.migrationContextService.migrationId ?? new Date().toISOString(),
       tableId: data.tableId,
     };
   }
