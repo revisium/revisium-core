@@ -41,6 +41,7 @@ import {
 } from 'src/api/rest-api/revision/dto';
 import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint.dto';
 import {
+  ApplyMigrationsResponseDto,
   CreateTableResponse,
   InitMigrationDto,
   MigrationDto,
@@ -280,7 +281,7 @@ export class RevisionByIdController {
       },
     },
   })
-  @ApiOkResponse({ type: BranchModel })
+  @ApiOkResponse({ type: ApplyMigrationsResponseDto, isArray: true })
   async applyMigrations(
     @Param('revisionId') revisionId: string,
     @Body() migrations: MigrationDto[],

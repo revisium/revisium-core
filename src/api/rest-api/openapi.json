@@ -33,6 +33,25 @@
         "required": ["userId", "roleId"],
         "type": "object"
       },
+      "ApplyMigrationsResponseDto": {
+        "properties": {
+          "error": {
+            "description": "Error message if the migration failed",
+            "type": "string"
+          },
+          "id": {
+            "description": "The ID of the entity to which the migration was applied",
+            "type": "string"
+          },
+          "status": {
+            "description": "The migration application status",
+            "enum": ["applied", "failed", "skipped"],
+            "type": "string"
+          }
+        },
+        "required": ["id", "status"],
+        "type": "object"
+      },
       "BoolFilterDto": {
         "properties": {
           "equals": {
@@ -2708,7 +2727,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BranchModel"
+                  "items": {
+                    "$ref": "#/components/schemas/ApplyMigrationsResponseDto"
+                  },
+                  "type": "array"
                 }
               }
             },
