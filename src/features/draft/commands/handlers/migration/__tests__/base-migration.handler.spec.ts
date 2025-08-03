@@ -129,6 +129,7 @@ describe('Migrations', () => {
       schema: testSchema,
       tableId: newTableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   it('should create a new update migration', async () => {
@@ -214,6 +215,7 @@ describe('Migrations', () => {
       ],
       tableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   it('should create a new rename migration', async () => {
@@ -259,6 +261,7 @@ describe('Migrations', () => {
       tableId,
       nextTableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   it('should create a new remove migration', async () => {
@@ -300,6 +303,7 @@ describe('Migrations', () => {
       id: expect.any(String),
       tableId,
     });
+    expect(migrationRow.publishedAt.toISOString()).toBe(migrationRow.id);
   });
 
   function runTransaction(
