@@ -48,6 +48,33 @@ describe('ApplyMigration', () => {
     await expect(runTransaction(command)).rejects.toThrow('Invalid migration');
   });
 
+  it('should throw an error if id (date) is less than previous', async () => {
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+    const removeMigrationId = '1970-01-01T00:00:00Z';
+
+    const command = new ApplyMigrationsCommand({
+      revisionId: draftRevisionId,
+      migrations: [
+        {
+          changeType: 'remove',
+          tableId,
+          id: removeMigrationId,
+        },
+      ],
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result).toStrictEqual([
+      {
+        error: `Provided id (${removeMigrationId}) must be after last migration date (2025-01-01T00:00:00.000Z).`,
+        id: removeMigrationId,
+        status: 'failed',
+      },
+    ]);
+  });
+
   it('should apply migrations', async () => {
     const { draftRevisionId, tableId } = await prepareProject(prismaService);
 

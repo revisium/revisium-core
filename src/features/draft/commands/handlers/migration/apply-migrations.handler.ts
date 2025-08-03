@@ -86,6 +86,18 @@ export class ApplyMigrationsHandler
     }
 
     try {
+      await this.checkId(revisionId, migration.id);
+    } catch (error) {
+      this.logger.error(error);
+
+      return {
+        id: migration.id,
+        status: 'failed',
+        error: (error as Error).message,
+      };
+    }
+
+    try {
       if (migration.changeType === 'init') {
         await this.draftApiService.apiCreateTable({
           revisionId,
@@ -147,5 +159,31 @@ export class ApplyMigrationsHandler
     });
 
     return Boolean(migration);
+  }
+
+  private async checkId(revisionId: string, id: string) {
+    const lastMigration = await this.prisma.row.findFirst({
+      where: {
+        publishedAt: {
+          gte: id,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: revisionId,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (lastMigration) {
+      throw new BadRequestException(
+        `Provided id (${id}) must be after last migration date (${lastMigration.publishedAt.toISOString()}).`,
+      );
+    }
   }
 }
