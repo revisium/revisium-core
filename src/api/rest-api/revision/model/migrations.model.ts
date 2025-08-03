@@ -91,3 +91,9 @@ export class RemoveMigrationDto {
   @ApiProperty({ description: 'Current table identifier' })
   tableId: string;
 }
+
+export type MigrationDto =
+  | InitMigrationDto
+  | UpdateMigrationDto
+  | RenameMigrationDto
+  | RemoveMigrationDto;

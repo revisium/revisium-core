@@ -27,6 +27,7 @@ import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ApiCreateBranchByRevisionIdCommand } from 'src/features/branch/commands/impl';
 import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-create-table.command';
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
+import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { ApiCreateEndpointCommand } from 'src/features/endpoint/commands/impl';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { Migration } from 'src/features/share/utils/schema/types/migration';
@@ -42,6 +43,7 @@ import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint
 import {
   CreateTableResponse,
   InitMigrationDto,
+  MigrationDto,
   RemoveMigrationDto,
   RenameMigrationDto,
   RevisionModel,
@@ -85,6 +87,7 @@ export class RevisionByIdController {
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
     private readonly revisionApi: RevisionsApiService,
+    private readonly draftApiService: DraftApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -255,5 +258,36 @@ export class RevisionByIdController {
       branch: transformFromPrismaToBranchModel(result.branch),
       table: transformFromPrismaToTableModel(result.table),
     };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.create,
+    subject: PermissionSubject.Table,
+  })
+  @Post('apply-migrations')
+  @ApiOperation({ operationId: 'applyMigrations' })
+  @ApiBody({
+    schema: {
+      type: 'array',
+      items: {
+        oneOf: [
+          { $ref: getSchemaPath(InitMigrationDto) },
+          { $ref: getSchemaPath(UpdateMigrationDto) },
+          { $ref: getSchemaPath(RenameMigrationDto) },
+          { $ref: getSchemaPath(RemoveMigrationDto) },
+        ],
+      },
+    },
+  })
+  @ApiOkResponse({ type: BranchModel })
+  async applyMigrations(
+    @Param('revisionId') revisionId: string,
+    @Body() migrations: MigrationDto[],
+  ) {
+    return this.draftApiService.applyMigrations({
+      revisionId,
+      migrations,
+    });
   }
 }

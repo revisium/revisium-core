@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { DRAFT_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers';
@@ -20,8 +21,10 @@ import { ShareModule } from 'src/features/share/share.module';
   providers: [
     DraftTransactionalCommands,
     DraftContextService,
+    DraftApiService,
     ...DRAFT_REQUEST_DTO,
     ...DRAFT_COMMANDS_HANDLERS,
   ],
+  exports: [DraftApiService],
 })
 export class DraftModule {}

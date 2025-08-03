@@ -9,3 +9,5 @@ export class ApiUpdateTableCommand {
     },
   ) {}
 }
+
+export type ApiUpdateTableCommandData = ApiUpdateTableCommand['data'];

@@ -9,3 +9,5 @@ export class CreateTableCommand {
     },
   ) {}
 }
+
+export type CreateTableCommandData = CreateTableCommand['data'];
