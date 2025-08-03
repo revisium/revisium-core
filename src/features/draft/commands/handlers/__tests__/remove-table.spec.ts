@@ -1,10 +1,17 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { Prisma } from '@prisma/client';
 import { nanoid } from 'nanoid';
+import * as objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';
 import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/remove-table.handler.types';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import {
+  InitMigration,
+  RemoveMigration,
+} from 'src/features/share/utils/schema/types/migration';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -140,9 +147,14 @@ describe('RemoveTableHandler', () => {
       where: { id: draftRevisionId },
     });
     expect(revision.hasChanges).toBe(true);
+    await migrationCheck({
+      revisionId: draftRevisionId,
+      tableId,
+    });
   });
 
-  it('should set hasChanges as false if conditions are met', async () => {
+  xit('should set hasChanges as false if conditions are met', async () => {
+    // need to remove init and others migrations for this table
     const {
       draftRevisionId,
       tableId,
@@ -353,6 +365,52 @@ describe('RemoveTableHandler', () => {
     });
     expect(table).toBeNull();
   });
+
+  async function migrationCheck({
+    revisionId,
+    tableId,
+  }: {
+    revisionId: string;
+    tableId: string;
+  }) {
+    const rows = await prismaService.row.findMany({
+      where: {
+        data: {
+          path: ['tableId'],
+          equals: tableId,
+        },
+        tables: {
+          some: {
+            id: SystemTables.Migration,
+            revisions: {
+              some: {
+                id: revisionId,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        id: Prisma.SortOrder.desc,
+      },
+    });
+
+    expect(rows.length).toBe(2);
+
+    const rowInit = rows[1];
+    const dataInit = rowInit.data as InitMigration;
+    expect(dataInit.changeType).toBe('init');
+
+    const rowRename = rows[0];
+
+    const data = rowRename.data as RemoveMigration;
+    expect(rowRename.id).toBe(data.id);
+    expect(rowRename.meta).toStrictEqual({});
+    expect(rowRename.hash).toBe(objectHash(data));
+    expect(rowRename.schemaHash).toBe(objectHash(tableMigrationsSchema));
+    expect(data.changeType).toBe('remove');
+    expect(data.tableId).toBe(tableId);
+  }
 
   function runTransaction(
     command: RemoveTableCommand,

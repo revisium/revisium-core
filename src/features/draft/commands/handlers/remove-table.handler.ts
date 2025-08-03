@@ -1,5 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import {
+  CreateRemoveMigrationCommand,
+  CreateRemoveMigrationCommandReturnType,
+  CreateRenameMigrationCommand,
+  CreateRenameMigrationCommandReturnType,
+} from 'src/features/draft/commands/impl/migration';
+import { RenameSchemaCommand } from 'src/features/draft/commands/impl/transactional/rename-schema.command';
 import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
@@ -109,6 +116,7 @@ export class RemoveTableHandler extends DraftHandler<
         avoidCheckingSystemTable: true,
       }),
     );
+    await this.createRemoveMigration({ revisionId, tableId });
   }
 
   private async validateForeignKeys(data: RemoveTableCommand['data']) {
@@ -129,5 +137,17 @@ export class RemoveTableHandler extends DraftHandler<
         `There are foreign keys between ${data.tableId} and [${rows.map((row) => row.id).join(', ')}]`,
       );
     }
+  }
+
+  private createRemoveMigration(data: RemoveTableCommand['data']) {
+    return this.commandBus.execute<
+      CreateRemoveMigrationCommand,
+      CreateRemoveMigrationCommandReturnType
+    >(
+      new CreateRemoveMigrationCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+      }),
+    );
   }
 }
