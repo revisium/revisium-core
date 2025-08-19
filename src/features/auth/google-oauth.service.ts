@@ -45,11 +45,7 @@ export class GoogleOauthService {
       body: params.toString(),
     });
 
-    const { email } = this.jwtService.decode(
-      (await response.json()).id_token,
-    ) as {
-      email: string;
-    };
+    const { email } = this.jwtService.decode((await response.json()).id_token);
 
     return {
       email,

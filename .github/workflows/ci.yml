@@ -30,7 +30,7 @@ jobs:
           cache: 'npm'
 
       - name: Create test .env
-        uses: canastro/copy-file-action@master
+        uses: canastro/copy-file-action@ae66602ce7d214dbd2e298c1db67a81388755a0a #canastro/copy-file-action@master
         with:
           source: '.env.example'
           target: '.env'
@@ -47,11 +47,11 @@ jobs:
       - run: npm run test:cov
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9 #SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload results to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 #codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
