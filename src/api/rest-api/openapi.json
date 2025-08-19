@@ -197,6 +197,9 @@
             "additionalProperties": true,
             "type": "object"
           },
+          "isRestore": {
+            "type": "boolean"
+          },
           "rowId": {
             "type": "string"
           }
@@ -1158,6 +1161,9 @@
           "data": {
             "additionalProperties": true,
             "type": "object"
+          },
+          "isRestore": {
+            "type": "boolean"
           }
         },
         "required": ["data"],

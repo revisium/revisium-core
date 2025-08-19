@@ -7,6 +7,7 @@ export type AfterCreateRowOptions = {
   tableId: string;
   rowId: string;
   data: Prisma.InputJsonValue;
+  isRestore?: boolean;
 };
 
 export type AfterUpdateRowOptions = {
@@ -14,6 +15,7 @@ export type AfterUpdateRowOptions = {
   tableId: string;
   rowId: string;
   data: Prisma.InputJsonValue;
+  isRestore?: boolean;
 };
 
 export type ComputeRowsOptions = {

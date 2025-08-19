@@ -16,7 +16,8 @@ import {
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FilePlugin, FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/consts';
+import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';

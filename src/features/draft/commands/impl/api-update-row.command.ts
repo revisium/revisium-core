@@ -8,6 +8,7 @@ export class ApiUpdateRowCommand {
       tableId: string;
       rowId: string;
       skipCheckingNotSystemTable?: boolean;
+      isRestore?: boolean;
     },
   ) {}
 }

@@ -7,6 +7,7 @@ export class ApiCreateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
+      isRestore?: boolean;
     },
   ) {}
 }
