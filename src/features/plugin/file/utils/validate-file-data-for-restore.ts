@@ -37,9 +37,9 @@ const validateFileStatus = (status: unknown): void => {
 /**
  * Validates hash format if present (MD5, SHA-1, SHA-256, SHA-512)
  */
-const validateHashFormat = (hash: string | undefined): void => {
+const validateHashFormat = (hash: string): void => {
   if (hash) {
-    if (!hash || hash.trim() === '') {
+    if (hash.trim() === '') {
       throw new Error('hash must be a non-empty string');
     }
     if (
@@ -55,9 +55,9 @@ const validateHashFormat = (hash: string | undefined): void => {
 /**
  * Validates MIME type format if present (RFC 2046 specification)
  */
-const validateMimeTypeFormat = (mimeType: string | undefined): void => {
+const validateMimeTypeFormat = (mimeType: string): void => {
   if (mimeType) {
-    if (!mimeType || mimeType.trim() === '') {
+    if (mimeType.trim() === '') {
       throw new Error('mimeType must be a non-empty string');
     }
     if (mimeType.length > 100) {
@@ -114,7 +114,7 @@ const validateImageHeight = (height: number): void => {
 /**
  * Validates file extension format if present
  */
-const validateFileExtension = (extension: string | undefined): void => {
+const validateFileExtension = (extension: string): void => {
   if (extension) {
     if (extension.length === 0 || extension.length > 10) {
       throw new Error('extension length must be between 1 and 10 characters');
@@ -130,8 +130,8 @@ const validateFileExtension = (extension: string | undefined): void => {
 /**
  * Validates file name format if present (checks for invalid characters and length)
  */
-const validateFileName = (fileName: string | undefined): void => {
-  if (fileName !== undefined && fileName !== '') {
+const validateFileName = (fileName: string): void => {
+  if (fileName) {
     if (fileName.length > 255) {
       throw new Error('fileName too long - maximum 255 characters');
     }
@@ -153,8 +153,8 @@ const validateFileName = (fileName: string | undefined): void => {
 /**
  * Validates URL format if present
  */
-const validateUrlFormat = (url: string | undefined): void => {
-  if (url !== undefined && url !== '') {
+const validateUrlFormat = (url: string): void => {
+  if (url !== '') {
     if (url.length > 2048) {
       throw new Error('url too long - maximum 2048 characters');
     }
@@ -188,7 +188,7 @@ const validateUploadedFileConsistency = (store: FileValueStore): void => {
  * Validates image dimensions consistency
  */
 const validateImageDimensionsConsistency = (store: FileValueStore): void => {
-  if (store.mimeType && store.mimeType.startsWith('image/')) {
+  if (store.mimeType.startsWith('image/')) {
     if (
       store.width === 0 &&
       store.height === 0 &&
@@ -196,10 +196,8 @@ const validateImageDimensionsConsistency = (store: FileValueStore): void => {
     ) {
       throw new Error('Image dimensions must be set for uploaded images');
     }
-  } else {
-    if (store.width !== 0 || store.height !== 0) {
-      throw new Error('width and height must be 0 for non-image files');
-    }
+  } else if (store.width !== 0 || store.height !== 0) {
+    throw new Error('width and height must be 0 for non-image files');
   }
 };
 
@@ -211,8 +209,8 @@ export const validateFileDataForRestore = (
   valueStore: JsonValueStore,
 ): void => {
   validateRequiredFileId(store.fileId);
-  validateFileIdFormat(store.fileId!);
-  validateFileIdUniqueness(store.fileId!, valueStore);
+  validateFileIdFormat(store.fileId);
+  validateFileIdUniqueness(store.fileId, valueStore);
   validateFileStatus(store.status);
   validateHashFormat(store.hash);
   validateMimeTypeFormat(store.mimeType);
