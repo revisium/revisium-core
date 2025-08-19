@@ -7,6 +7,7 @@ export class CreateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
+      isRestore?: boolean;
     },
   ) {}
 }

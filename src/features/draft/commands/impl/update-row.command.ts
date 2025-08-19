@@ -7,6 +7,7 @@ export class UpdateRowCommand {
       revisionId: string;
       tableId: string;
       rowId: string;
+      isRestore?: boolean;
     },
   ) {}
 }

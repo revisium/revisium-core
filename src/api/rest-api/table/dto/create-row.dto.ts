@@ -7,4 +7,7 @@ export class CreateRowDto {
 
   @ApiProperty({ type: 'object', additionalProperties: true })
   data: Prisma.InputJsonValue;
+
+  @ApiProperty({ required: false })
+  isRestore?: boolean;
 }
