@@ -38,8 +38,8 @@ export class FilePlugin implements IPluginService {
   ): Promise<void> {
     if (options.isRestore) {
       forEachFile(options.valueStore, (item) => {
-        item.url = '';
         validateFileDataForRestore(item, options.valueStore);
+        item.url = '';
       });
     } else {
       forEachFile(options.valueStore, (item) => {
@@ -54,8 +54,8 @@ export class FilePlugin implements IPluginService {
   ): Promise<void> {
     if (options.isRestore) {
       forEachFile(options.valueStore, (item) => {
-        item.url = '';
         validateFileDataForRestore(item, options.valueStore);
+        item.url = '';
       });
     } else {
       const previousFiles: Map<string, FileValueStore> = new Map();

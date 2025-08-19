@@ -446,7 +446,7 @@ describe('file.plugin', () => {
 
         const validFileData = {
           status: FileStatus.uploaded,
-          fileId: nanoid(), // 21 chars nanoid format
+          fileId: nanoid(),
           url: 'https://example.com/file.jpg',
           fileName: 'test-image.jpg',
           hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', // 64 chars SHA-256
@@ -753,6 +753,688 @@ describe('file.plugin', () => {
         expect(result.file.status).toBe(FileStatus.uploaded);
         expect(result.file.fileId).toBe(validFileData.fileId);
         expect(result.file.url).toBe('');
+      });
+    });
+
+    describe('validation edge cases', () => {
+      it('should throw error for missing fileId', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: '',
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('fileId is required for restore mode');
+      });
+
+      it('should throw error for invalid file status', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: 'invalid_status' as any,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('Invalid file status: invalid_status');
+      });
+
+      it('should throw error for empty hash when hash is provided', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '   ',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('hash must be a non-empty string');
+      });
+
+      it('should throw error for empty mimeType when provided', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '   ',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('mimeType must be a non-empty string');
+      });
+
+      it('should throw error for mimeType too long', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: 'a'.repeat(101),
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('mimeType too long - maximum 100 characters');
+      });
+
+      it('should throw error for invalid mimeType format', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: 'invalid/mime/type/format',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          'Invalid mimeType format - must follow RFC 2046 specification',
+        );
+      });
+
+      it('should throw error for negative size', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: -1,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('size must be a non-negative integer');
+      });
+
+      it('should throw error for size too large', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: Number.MAX_SAFE_INTEGER + 1,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('size too large - maximum value exceeded');
+      });
+
+      it('should throw error for negative height', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: -1,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('height must be a non-negative integer');
+      });
+
+      it('should throw error for height too large', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 50001,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('height too large - maximum 50000 pixels');
+      });
+
+      it('should throw error for width too large', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 50001,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('width too large - maximum 50000 pixels');
+      });
+
+      it('should throw error for invalid extension length', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: 'toolongextension',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          'extension length must be between 1 and 10 characters',
+        );
+      });
+
+      it('should throw error for invalid extension format', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: 'jp-g!',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          'Invalid file extension - must be alphanumeric, 1-10 characters',
+        );
+      });
+
+      it('should throw error for fileName too long', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: 'a'.repeat(256),
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('fileName too long - maximum 255 characters');
+      });
+
+      it('should throw error for fileName with invalid characters', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: 'file<>name.txt',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('fileName contains invalid characters');
+      });
+
+      it('should throw error for fileName with control characters', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: 'file\x00name.txt',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('fileName contains control characters');
+      });
+
+      it('should throw error for url too long', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: 'https://example.com/' + 'a'.repeat(2048),
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('url too long - maximum 2048 characters');
+      });
+
+      it('should throw error for invalid url format', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: 'invalid-url-format',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('Invalid url format');
+      });
+
+      it('should throw error when uploaded file has zero size', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/file.jpg',
+          fileName: 'test.jpg',
+          hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          size: 0,
+          width: 100,
+          height: 100,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          'size must be greater than 0 when status is uploaded',
+        );
+      });
+
+      it('should throw error when uploaded file has empty mimeType', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/file.jpg',
+          fileName: 'test.jpg',
+          hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+          extension: 'jpg',
+          mimeType: '',
+          size: 1024,
+          width: 100,
+          height: 100,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('mimeType is required when status is uploaded');
+      });
+
+      it('should throw error for uploaded image with zero dimensions', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/file.jpg',
+          fileName: 'test.jpg',
+          hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('Image dimensions must be set for uploaded images');
       });
     });
   });
