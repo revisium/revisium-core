@@ -14,8 +14,8 @@ export class HealthController {
     private readonly notifications: NotificationCheck,
   ) {}
 
-  @Get('liveness')
-  @ApiOperation({ operationId: 'liveness' })
+  @Get('readiness')
+  @ApiOperation({ operationId: 'readiness' })
   @HealthCheck()
   liveness() {
     const indicators: HealthIndicatorFunction[] = [
@@ -29,8 +29,8 @@ export class HealthController {
     return this.health.check(indicators);
   }
 
-  @Get('readiness')
-  @ApiOperation({ operationId: 'readiness' })
+  @Get('liveness')
+  @ApiOperation({ operationId: 'liveness' })
   @HealthCheck()
   readiness() {
     return this.health.check([]);
