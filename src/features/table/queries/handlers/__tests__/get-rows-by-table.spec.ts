@@ -10,7 +10,7 @@ import {
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/consts';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
 import { GetTableRowsReturnType } from 'src/features/table/queries/types';

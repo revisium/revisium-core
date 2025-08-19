@@ -17,7 +17,7 @@ import {
   UploadFileCommand,
   UploadFileCommandReturnType,
 } from 'src/features/draft/commands/impl/update-file.command';
-import { FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';

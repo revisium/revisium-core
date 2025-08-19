@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { nanoid } from 'nanoid';
+import { FileStatus, ID_LENGTH } from 'src/features/plugin/file/consts';
 import { FileValueStore } from 'src/features/plugin/file/file-value.store';
+import { forEachFile } from 'src/features/plugin/file/utils/fore-each-file';
+import { validateFileDataForRestore } from 'src/features/plugin/file/utils/validate-file-data-for-restore';
 import {
   InternalAfterCreateRowOptions,
   InternalAfterMigrateRowsOptions,
@@ -9,18 +12,9 @@ import {
   InternalComputeRowsOptions,
   IPluginService,
 } from 'src/features/plugin/types';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
 import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 import { S3Service } from 'src/infrastructure/database/s3.service';
-
-export enum FileStatus {
-  ready = 'ready',
-  error = 'error',
-  uploaded = 'uploaded',
-}
 
 @Injectable()
 export class FilePlugin implements IPluginService {
@@ -42,36 +36,50 @@ export class FilePlugin implements IPluginService {
   public async afterCreateRow(
     options: InternalAfterCreateRowOptions,
   ): Promise<void> {
-    this.forEachFile(options.valueStore, (item) => {
-      item.ensureDefaults();
-      this.prepareReadyFile(item);
-    });
+    if (options.isRestore) {
+      forEachFile(options.valueStore, (item) => {
+        item.url = '';
+        validateFileDataForRestore(item, options.valueStore);
+      });
+    } else {
+      forEachFile(options.valueStore, (item) => {
+        item.ensureDefaults();
+        this.prepareReadyFile(item);
+      });
+    }
   }
 
   public async afterUpdateRow(
     options: InternalAfterUpdateRowOptions,
   ): Promise<void> {
-    const previousFiles: Map<string, FileValueStore> = new Map();
-
-    this.forEachFile(options.previousValueStore, (item) => {
-      previousFiles.set(item.fileId, item);
-    });
-
-    this.forEachFile(options.valueStore, (item) => {
-      const previousFile = previousFiles.get(item.fileId);
-
-      if (item.fileId) {
-        if (!previousFile) {
-          throw new Error(`File ${item.fileId} does not exist`);
-        }
-
-        item.checkImmutable(previousFile);
+    if (options.isRestore) {
+      forEachFile(options.valueStore, (item) => {
         item.url = '';
-      } else {
-        item.ensureDefaults();
-        this.prepareReadyFile(item);
-      }
-    });
+        validateFileDataForRestore(item, options.valueStore);
+      });
+    } else {
+      const previousFiles: Map<string, FileValueStore> = new Map();
+
+      forEachFile(options.previousValueStore, (item) => {
+        previousFiles.set(item.fileId, item);
+      });
+
+      forEachFile(options.valueStore, (item) => {
+        const previousFile = previousFiles.get(item.fileId);
+
+        if (item.fileId) {
+          if (!previousFile) {
+            throw new Error(`File ${item.fileId} does not exist`);
+          }
+
+          item.checkImmutable(previousFile);
+          item.url = '';
+        } else {
+          item.ensureDefaults();
+          this.prepareReadyFile(item);
+        }
+      });
+    }
   }
 
   public async computeRows(options: InternalComputeRowsOptions): Promise<void> {
@@ -82,7 +90,7 @@ export class FilePlugin implements IPluginService {
         row.data,
       );
 
-      this.forEachFile(valueStore, (item) => {
+      forEachFile(valueStore, (item) => {
         if (item.status === FileStatus.uploaded) {
           item.url = this.getUrl(item.hash);
         }
@@ -102,7 +110,7 @@ export class FilePlugin implements IPluginService {
         row.data,
       );
 
-      this.forEachFile(valueStore, (item) => {
+      forEachFile(valueStore, (item) => {
         if (!item.fileId) {
           item.ensureDefaults();
           this.prepareReadyFile(item);
@@ -124,7 +132,7 @@ export class FilePlugin implements IPluginService {
   }): Promise<FileValueStore> {
     const files: FileValueStore[] = [];
 
-    this.forEachFile(valueStore, (item) => {
+    forEachFile(valueStore, (item) => {
       if (item.fileId === fileId) {
         files.push(item);
       }
@@ -147,22 +155,8 @@ export class FilePlugin implements IPluginService {
     return encodeURI(`${hash}`);
   }
 
-  private forEachFile(
-    valueStore: JsonValueStore,
-    callback: (store: FileValueStore) => void,
-  ) {
-    traverseValue(valueStore, (item) => {
-      if (
-        item.schema.$ref === SystemSchemaIds.File &&
-        item.type === JsonSchemaTypeName.Object
-      ) {
-        callback(new FileValueStore(item));
-      }
-    });
-  }
-
   private prepareReadyFile(store: FileValueStore) {
     store.status = FileStatus.ready;
-    store.fileId = nanoid();
+    store.fileId = nanoid(ID_LENGTH);
   }
 }

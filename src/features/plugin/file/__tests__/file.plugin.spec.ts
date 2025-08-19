@@ -16,7 +16,8 @@ import {
   getRefSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FilePlugin, FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/consts';
+import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
@@ -435,6 +436,324 @@ describe('file.plugin', () => {
           file: createExpressImageFile(),
         }),
       ).rejects.toThrow(`Invalid count of files`);
+    });
+  });
+
+  describe('restore mode', () => {
+    describe('afterCreateRow with isRestore=true', () => {
+      it('should validate and accept valid restore data', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const validFileData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(), // 21 chars nanoid format
+          url: 'https://example.com/file.jpg',
+          fileName: 'test-image.jpg',
+          hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2', // 64 chars SHA-256
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          size: 102400,
+          width: 800,
+          height: 600,
+        };
+
+        const data = {
+          file: validFileData,
+          files: [],
+        };
+
+        const result = (await pluginService.afterCreateRow({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          rowId: nanoid(),
+          data,
+          isRestore: true,
+        })) as typeof data;
+
+        expect(result.file.status).toBe(FileStatus.uploaded);
+        expect(result.file.fileId).toBe(validFileData.fileId);
+        expect(result.file.hash).toBe(validFileData.hash);
+        expect(result.file.url).toBe('');
+      });
+
+      it('should validate and accept ready status files', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const validFileData = {
+          status: FileStatus.ready,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: validFileData,
+          files: [],
+        };
+
+        const result = (await pluginService.afterCreateRow({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          rowId: nanoid(),
+          data,
+          isRestore: true,
+        })) as typeof data;
+
+        expect(result.file.status).toBe(FileStatus.ready);
+        expect(result.file.fileId).toBe(validFileData.fileId);
+        expect(result.file.url).toBe('');
+      });
+
+      it('should throw error for invalid fileId format', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidFileData = {
+          status: FileStatus.ready,
+          fileId: 'invalid-id',
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: invalidFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          'Invalid fileId format - must be nanoid (21 URL-safe characters)',
+        );
+      });
+
+      it('should throw error for duplicate fileIds', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const duplicateFileId = nanoid();
+        const fileData = {
+          status: FileStatus.ready,
+          fileId: duplicateFileId,
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: fileData,
+          files: [fileData],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          `Duplicate fileId found: ${duplicateFileId}. FileId must be unique within a row`,
+        );
+      });
+
+      it('should throw error for uploaded file without required fields', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const incompleteFileData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: '',
+          fileName: '',
+          hash: '',
+          extension: '',
+          mimeType: '',
+          size: 0,
+          width: 0,
+          height: 0,
+        };
+
+        const data = {
+          file: incompleteFileData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('hash is required when status is uploaded');
+      });
+
+      it('should throw error for invalid hash format', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidHashData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/file.jpg',
+          fileName: 'test.jpg',
+          hash: 'invalid-hash-format',
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          width: 100,
+          height: 100,
+        };
+
+        const data = {
+          file: invalidHashData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow(
+          'Invalid hash format - must be MD5, SHA-1, SHA-256, or SHA-512',
+        );
+      });
+
+      it('should throw error for invalid file dimensions', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const invalidDimensionsData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/file.jpg',
+          fileName: 'test.jpg',
+          hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          size: 1024,
+          width: -100,
+          height: 100,
+        };
+
+        const data = {
+          file: invalidDimensionsData,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('width must be a non-negative integer');
+      });
+
+      it('should throw error for non-image file with dimensions', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const nonImageWithDimensions = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/file.pdf',
+          fileName: 'document.pdf',
+          hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2',
+          extension: 'pdf',
+          mimeType: 'application/pdf',
+          size: 1024,
+          width: 100,
+          height: 100,
+        };
+
+        const data = {
+          file: nonImageWithDimensions,
+          files: [],
+        };
+
+        await expect(
+          pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data,
+            isRestore: true,
+          }),
+        ).rejects.toThrow('width and height must be 0 for non-image files');
+      });
+    });
+
+    describe('afterUpdateRow with isRestore=true', () => {
+      it('should validate restore data for update', async () => {
+        const { draftRevisionId, table } = await setupProjectWithFileSchema();
+
+        const validFileData = {
+          status: FileStatus.uploaded,
+          fileId: nanoid(),
+          url: 'https://example.com/updated.jpg',
+          fileName: 'updated-image.jpg',
+          hash: 'b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0b2c3d4',
+          extension: 'jpg',
+          mimeType: 'image/jpeg',
+          size: 204800,
+          width: 1024,
+          height: 768,
+        };
+
+        const data = {
+          file: validFileData,
+          files: [],
+        };
+
+        // Create row first for update test
+        const { rowDraft } = await prepareRow({
+          prismaService,
+          headTableVersionId: table.headTableVersionId,
+          draftTableVersionId: table.draftTableVersionId,
+          schema: table.schema,
+          data: { file: createEmptyFile(), files: [] },
+          dataDraft: { file: createEmptyFile(), files: [] },
+        });
+
+        const result = (await pluginService.afterUpdateRow({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          rowId: rowDraft.id,
+          data,
+          isRestore: true,
+        })) as typeof data;
+
+        expect(result.file.status).toBe(FileStatus.uploaded);
+        expect(result.file.fileId).toBe(validFileData.fileId);
+        expect(result.file.url).toBe('');
+      });
     });
   });
 

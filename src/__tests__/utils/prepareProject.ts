@@ -12,7 +12,7 @@ import {
   getTestLinkedSchema,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';

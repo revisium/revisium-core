@@ -11,7 +11,7 @@ import {
   getStringSchema,
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { FileStatus } from 'src/features/plugin/file/file.plugin';
+import { FileStatus } from 'src/features/plugin/file/consts';
 import { ResolveRowForeignKeysToQuery } from 'src/features/row/queries/impl';
 import { ResolveRowForeignKeysToReturnType } from 'src/features/row/queries/types';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
