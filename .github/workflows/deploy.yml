@@ -14,6 +14,7 @@ env:
   KUBE_NAMESPACE: ${{ secrets.KUBE_NAMESPACE }}
   KUBE_SERVICE_NAME: ${{ secrets.KUBE_SERVICE_NAME }}
   KUBE_APP_URL: ${{ secrets.KUBE_APP_URL }}
+  KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
 
 jobs:
   deploy:
@@ -65,16 +66,18 @@ jobs:
               });
 
       - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede #azure/setup-kubectl@v4.0.1
         with:
           version: v1.29.6
 
       - name: Set up kubectl
+        shell: bash
         run: |
-          printf '%s\n' "${{ secrets.KUBE_CONFIG }}" > /tmp/kubeconfig
-
+          set -euo pipefail
+          umask 177
+          echo "$KUBE_CONFIG" | base64 -d > /tmp/kubeconfig
           chmod 600 /tmp/kubeconfig
-          echo "KUBECONFIG=/tmp/kubeconfig" >> $GITHUB_ENV
+          echo "KUBECONFIG=/tmp/kubeconfig" >> "$GITHUB_ENV"
 
       - name: Rollout restart deployment
         run: |
