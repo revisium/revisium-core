@@ -64,7 +64,7 @@ const validateMimeTypeFormat = (mimeType: string): void => {
       throw new Error('mimeType too long - maximum 100 characters');
     }
     if (
-      !/^[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.]*$/.test(
+      !/^[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_]*\/[a-zA-Z0-9][a-zA-Z0-9!#$&\-^_.+]*$/.test(
         mimeType,
       )
     ) {

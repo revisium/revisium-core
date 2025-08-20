@@ -1345,7 +1345,7 @@
     "contact": {},
     "description": "",
     "title": "Revisium API",
-    "version": "2.1.0"
+    "version": "2.1.1"
   },
   "openapi": "3.0.0",
   "paths": {
