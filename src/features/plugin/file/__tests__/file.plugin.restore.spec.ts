@@ -275,6 +275,54 @@ describe('file.plugin restore mode', () => {
     });
   });
 
+  describe('valid MIME types', () => {
+    const validMimeTypes = [
+      // Test MIME types with special characters: "+", ".", "-"
+      { mimeType: 'image/svg+xml', extension: 'svg', fileName: 'image.svg' },
+      {
+        mimeType: 'application/vnd.ms-excel',
+        extension: 'xls',
+        fileName: 'spreadsheet.xls',
+        width: 0,
+        height: 0,
+      },
+      {
+        mimeType: 'font/woff2',
+        extension: 'woff2',
+        fileName: 'font.woff2',
+        width: 0,
+        height: 0,
+      },
+    ];
+
+    validMimeTypes.forEach(
+      ({ mimeType, extension, fileName, width, height }) => {
+        it(`should accept ${mimeType} MIME type`, async () => {
+          const { draftRevisionId, table } = await setupProjectWithFileSchema();
+          const validFileData = createValidFileData({
+            mimeType,
+            extension,
+            fileName,
+            ...(width !== undefined && { width }),
+            ...(height !== undefined && { height }),
+          });
+          const data = createTestData(validFileData);
+
+          const result = (await pluginService.afterCreateRow({
+            revisionId: draftRevisionId,
+            tableId: table.tableId,
+            rowId: nanoid(),
+            data: data as any,
+            isRestore: true,
+          })) as any;
+
+          expect(result.file.mimeType).toBe(mimeType);
+          expect(result.file.status).toBe(FileStatus.uploaded);
+        });
+      },
+    );
+  });
+
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
