@@ -12,8 +12,10 @@ import {
 } from 'src/__tests__/utils/schema/schema.mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { ResolveRowForeignKeysByQuery } from 'src/features/row/queries/impl';
-import { ResolveRowForeignKeysByReturnType } from 'src/features/row/queries/types';
+import {
+  ResolveRowForeignKeysByQuery,
+  ResolveRowForeignKeysByReturnType,
+} from 'src/features/row/queries/impl';
 import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';

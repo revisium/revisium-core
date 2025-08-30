@@ -13,6 +13,7 @@ import {
   PatchRowCommand,
   PatchRowCommandReturnType,
 } from 'src/features/draft/commands/impl/patch-row.command';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { ShareCommands } from 'src/features/share/share.commands';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -26,8 +27,9 @@ export class ApiPatchRowHandler
     protected readonly queryBus: QueryBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly shareCommands: ShareCommands,
+    protected readonly rowApi: RowApiService,
   ) {
-    super(queryBus, shareCommands);
+    super(queryBus, shareCommands, rowApi);
   }
 
   async execute({ data }: ApiPatchRowCommand) {

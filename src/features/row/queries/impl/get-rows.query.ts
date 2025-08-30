@@ -1,4 +1,6 @@
 import { Prisma } from '@prisma/client';
+import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { RowWithContext } from 'src/features/share/types/row-with-context.types';
 
 export class GetRowsQuery {
   constructor(
@@ -12,3 +14,7 @@ export class GetRowsQuery {
     },
   ) {}
 }
+
+export type GetRowsQueryData = GetRowsQuery['data'];
+
+export type GetRowsQueryReturnType = IPaginatedType<RowWithContext>;

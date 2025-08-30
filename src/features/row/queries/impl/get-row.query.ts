@@ -1,3 +1,5 @@
+import { RowWithContext } from 'src/features/share/types/row-with-context.types';
+
 export class GetRowQuery {
   constructor(
     public readonly data: {
@@ -7,3 +9,7 @@ export class GetRowQuery {
     },
   ) {}
 }
+
+export type GetRowQueryData = GetRowQuery['data'];
+
+export type GetRowQueryReturnType = RowWithContext | null;

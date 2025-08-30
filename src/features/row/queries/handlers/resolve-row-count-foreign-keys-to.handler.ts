@@ -2,7 +2,10 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ResolveRowCountForeignKeysToQuery } from 'src/features/row/queries/impl';
+import {
+  ResolveRowCountForeignKeysToQuery,
+  ResolveRowCountForeignKeysToQueryReturnType,
+} from 'src/features/row/queries/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
@@ -14,7 +17,11 @@ import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
 
 @QueryHandler(ResolveRowCountForeignKeysToQuery)
 export class ResolveRowCountForeignKeysToHandler
-  implements IQueryHandler<ResolveRowCountForeignKeysToQuery>
+  implements
+    IQueryHandler<
+      ResolveRowCountForeignKeysToQuery,
+      ResolveRowCountForeignKeysToQueryReturnType
+    >
 {
   constructor(
     private readonly transactionService: TransactionPrismaService,

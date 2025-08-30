@@ -13,6 +13,7 @@ import {
   RenameRowCommand,
   RenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/rename-row.command';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ShareCommands } from 'src/features/share/share.commands';
 
@@ -26,8 +27,9 @@ export class ApiRenameRowHandler
     protected readonly queryBus: QueryBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly shareCommands: ShareCommands,
+    protected readonly rowApi: RowApiService,
   ) {
-    super(queryBus, shareCommands);
+    super(queryBus, shareCommands, rowApi);
   }
 
   async execute({ data }: ApiRenameRowCommand) {

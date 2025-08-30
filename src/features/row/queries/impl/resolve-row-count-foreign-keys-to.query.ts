@@ -7,3 +7,8 @@ export class ResolveRowCountForeignKeysToQuery {
     },
   ) {}
 }
+
+export type ResolveRowCountForeignKeysToQueryData =
+  ResolveRowCountForeignKeysToQuery['data'];
+
+export type ResolveRowCountForeignKeysToQueryReturnType = number;

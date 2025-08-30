@@ -5,8 +5,10 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { GetRowByIdQuery } from 'src/features/row/queries/impl';
-import { GetRowReturnType } from 'src/features/row/queries/types';
+import {
+  GetRowByIdQuery,
+  GetRowByIdQueryReturnType,
+} from 'src/features/row/queries/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -37,7 +39,9 @@ describe('getRowById', () => {
     expect(resultData.file.url).toBeTruthy();
   });
 
-  function runTransaction(query: GetRowByIdQuery): Promise<GetRowReturnType> {
+  function runTransaction(
+    query: GetRowByIdQuery,
+  ): Promise<GetRowByIdQueryReturnType> {
     return transactionService.run(async () => queryBus.execute(query));
   }
 

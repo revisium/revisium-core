@@ -7,8 +7,10 @@ import {
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
-import { GetRowsQuery } from 'src/features/row/queries/impl';
-import { GetRowsReturnType } from 'src/features/row/queries/types';
+import {
+  GetRowsQuery,
+  GetRowsQueryReturnType,
+} from 'src/features/row/queries/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -206,7 +208,9 @@ describe('getRows', () => {
     });
   });
 
-  function runTransaction(query: GetRowsQuery): Promise<GetRowsReturnType> {
+  function runTransaction(
+    query: GetRowsQuery,
+  ): Promise<GetRowsQueryReturnType> {
     return transactionService.run(async () => queryBus.execute(query));
   }
 

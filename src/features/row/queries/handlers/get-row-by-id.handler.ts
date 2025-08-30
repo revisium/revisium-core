@@ -1,12 +1,14 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { GetRowByIdQuery } from 'src/features/row/queries/impl/get-row-by-id.query';
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import {
+  GetRowByIdQuery,
+  GetRowByIdQueryReturnType,
+} from 'src/features/row/queries/impl/get-row-by-id.query';
 
 @QueryHandler(GetRowByIdQuery)
 export class GetRowByIdHandler
-  implements IQueryHandler<GetRowByIdQuery, GetRowByIdReturnType>
+  implements IQueryHandler<GetRowByIdQuery, GetRowByIdQueryReturnType>
 {
   constructor(
     private readonly prisma: PrismaService,

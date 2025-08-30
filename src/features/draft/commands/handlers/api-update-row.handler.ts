@@ -9,6 +9,7 @@ import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { ShareCommands } from 'src/features/share/share.commands';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -22,8 +23,9 @@ export class ApiUpdateRowHandler
     protected readonly queryBus: QueryBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly shareCommands: ShareCommands,
+    protected readonly rowApi: RowApiService,
   ) {
-    super(queryBus, shareCommands);
+    super(queryBus, shareCommands, rowApi);
   }
 
   async execute({ data }: ApiUpdateRowCommand) {

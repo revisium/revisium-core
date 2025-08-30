@@ -1,4 +1,4 @@
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import { GetRowByIdQueryReturnType } from 'src/features/row/queries/impl';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 export class ApiRenameRowCommand {
@@ -15,6 +15,6 @@ export class ApiRenameRowCommand {
 export type ApiRenameRowCommandReturnType = {
   table: GetTableByIdReturnType;
   previousVersionTableId: string;
-  row: GetRowByIdReturnType;
+  row: GetRowByIdQueryReturnType;
   previousVersionRowId: string;
 };

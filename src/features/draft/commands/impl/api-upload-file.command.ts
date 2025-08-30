@@ -1,4 +1,4 @@
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import { GetRowByIdQueryReturnType } from 'src/features/row/queries/impl';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 export class ApiUploadFileCommand {
@@ -18,6 +18,6 @@ export type ApiUploadFileCommandData = ApiUploadFileCommand['data'];
 export type ApiUploadFileCommandReturnType = {
   table: GetTableByIdReturnType;
   previousVersionTableId: string;
-  row: GetRowByIdReturnType;
+  row: GetRowByIdQueryReturnType;
   previousVersionRowId: string;
 };

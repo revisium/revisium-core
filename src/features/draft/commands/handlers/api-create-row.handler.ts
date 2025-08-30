@@ -6,6 +6,7 @@ import {
   QueryBus,
 } from '@nestjs/cqrs';
 import { ApiBaseRowHandler } from 'src/features/draft/commands/handlers/api-base-row.handler';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
 import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
@@ -23,8 +24,9 @@ export class ApiCreateRowHandler
     protected readonly queryBus: QueryBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly shareCommands: ShareCommands,
+    protected readonly rowApi: RowApiService,
   ) {
-    super(queryBus, shareCommands);
+    super(queryBus, shareCommands, rowApi);
   }
 
   async execute({ data }: ApiCreateRowCommand) {
