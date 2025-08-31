@@ -30,6 +30,10 @@ export class TransactionPrismaService {
     return transactionInCurrentContext?.$prisma;
   }
 
+  public getTransactionOrPrisma() {
+    return this.getTransactionUnsafe() ?? this.prismaService;
+  }
+
   public run<T>(
     handler: (...rest: unknown[]) => Promise<T>,
     options?: {

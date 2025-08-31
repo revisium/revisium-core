@@ -10,7 +10,7 @@ export class ForeignKeysService {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {
-    return this.transactionService.getTransaction();
+    return this.transactionService.getTransactionOrPrisma();
   }
 
   async findRowsByKeyValueInData(
