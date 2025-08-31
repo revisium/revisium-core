@@ -40,7 +40,7 @@ export const graphqlQueryError = async ({
   variables?: Record<string, any>;
   token?: string;
 }) => {
-  await request(app.getHttpServer())
+  return request(app.getHttpServer())
     .post(GRAPHQL_URL)
     .set('Authorization', `Bearer ${token}`)
     .send({
