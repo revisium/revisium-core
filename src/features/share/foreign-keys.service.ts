@@ -18,10 +18,6 @@ export class ForeignKeysService {
    * Only rejects strings that could break PostgreSQL queries
    */
   private validateJsonKey(input: string, label = 'key'): void {
-    if (!input || typeof input !== 'string') {
-      throw new Error(`Invalid ${label}: must be a non-empty string`);
-    }
-
     // Only reject strings with null bytes or other characters that could break PostgreSQL
     if (input.includes('\0')) {
       throw new Error(`Invalid ${label}: contains null byte`);
@@ -37,10 +33,6 @@ export class ForeignKeysService {
    * Validates JSON path format - very permissive, only essential safety checks
    */
   private validateJsonPath(path: string): void {
-    if (!path || typeof path !== 'string') {
-      throw new Error('Invalid JSON path: must be a non-empty string');
-    }
-
     // Basic JSON path validation - must start with $
     if (!path.startsWith('$')) {
       throw new Error(`Invalid JSON path: must start with $ - got: ${path}`);
@@ -49,11 +41,6 @@ export class ForeignKeysService {
     // Only reject paths with null bytes that could break PostgreSQL
     if (path.includes('\0')) {
       throw new Error('Invalid JSON path: contains null byte');
-    }
-
-    // Length check for practical reasons
-    if (path.length > 1000) {
-      throw new Error('Invalid JSON path: too long (max 1000 characters)');
     }
   }
 
