@@ -358,21 +358,69 @@ describe('ForeignKeysService', () => {
       expect(results).toHaveLength(0);
     });
 
-    it('should reject invalid JSON paths', async () => {
+    it('should find data using JSON paths with various special characters', async () => {
+      const tableVersionId = await createTableWithSpecialKeys();
+
+      // Test finding data with $ in field name
+      const results1 = await transactionPrismaService.run(async () => {
+        return service.findRowsByPathsAndValueInData(
+          tableVersionId,
+          ['$."field$with$dollars"'],
+          'value9',
+          10,
+          0,
+        );
+      });
+
+      // Test finding data with ; in field name
+      const results2 = await transactionPrismaService.run(async () => {
+        return service.findRowsByPathsAndValueInData(
+          tableVersionId,
+          ['$."field;with;semicolons"'],
+          'value10',
+          10,
+          0,
+        );
+      });
+
+      // Test finding data with " in field name (escaped in JSON)
+      const results3 = await transactionPrismaService.run(async () => {
+        return service.findRowsByPathsAndValueInData(
+          tableVersionId,
+          ['$."field\\"with\\"quotes"'],
+          'value11',
+          10,
+          0,
+        );
+      });
+
+      // Should find the matching rows
+      expect(results1).toHaveLength(1);
+      expect(results2).toHaveLength(1);
+      expect(results3).toHaveLength(1);
+
+      expect(results1[0].data).toHaveProperty('field$with$dollars', 'value9');
+      expect(results2[0].data).toHaveProperty(
+        'field;with;semicolons',
+        'value10',
+      );
+      expect(results3[0].data).toHaveProperty('field"with"quotes', 'value11');
+    });
+
+    it('should reject JSON paths with null bytes', async () => {
       const tableVersionId = await createTableWithRows();
 
-      // Test with invalid JSON path containing forbidden characters
       await expect(
         transactionPrismaService.run(async () => {
           return service.findRowsByPathsAndValueInData(
             tableVersionId,
-            ['$\'; DROP TABLE "Row"; --'],
+            ['$.field\0withnull'],
             'test',
             10,
             0,
           );
         }),
-      ).rejects.toThrow('Invalid JSON path: contains forbidden characters');
+      ).rejects.toThrow('contains null byte');
     });
 
     it('should reject JSON paths not starting with $', async () => {
@@ -985,6 +1033,9 @@ describe('ForeignKeysService', () => {
       UPPERCASE_KEY: 'value6',
       кирилица: 'value7',
       特殊字符: 'value8',
+      field$with$dollars: 'value9',
+      'field;with;semicolons': 'value10',
+      'field"with"quotes': 'value11',
     };
 
     await prismaService.row.create({
