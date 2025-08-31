@@ -2,8 +2,10 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from '@prisma/client';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ResolveRowForeignKeysByQuery } from 'src/features/row/queries/impl';
-import { ResolveRowCountForeignKeysByQuery } from 'src/features/row/queries/impl/resolve-row-count-foreign-keys-by.query';
+import {
+  ResolveRowCountForeignKeysByQuery,
+  ResolveRowCountForeignKeysByQueryReturnType,
+} from 'src/features/row/queries/impl';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -14,7 +16,11 @@ import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema
 
 @QueryHandler(ResolveRowCountForeignKeysByQuery)
 export class ResolveRowCountForeignKeysByHandler
-  implements IQueryHandler<ResolveRowCountForeignKeysByQuery>
+  implements
+    IQueryHandler<
+      ResolveRowCountForeignKeysByQuery,
+      ResolveRowCountForeignKeysByQueryReturnType
+    >
 {
   constructor(
     private readonly transactionService: TransactionPrismaService,
@@ -27,7 +33,7 @@ export class ResolveRowCountForeignKeysByHandler
     return this.transactionService.getTransaction();
   }
 
-  async execute({ data }: ResolveRowForeignKeysByQuery) {
+  async execute({ data }: ResolveRowCountForeignKeysByQuery) {
     return this.transactionService.run(() => this.transactionHandler(data), {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });

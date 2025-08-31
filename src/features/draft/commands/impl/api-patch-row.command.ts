@@ -1,4 +1,4 @@
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import { GetRowByIdQueryReturnType } from 'src/features/row/queries/impl';
 import { JsonValuePatchReplace } from 'src/features/share/utils/schema/types/json-value-patch.types';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
@@ -19,6 +19,6 @@ export type ApiPatchRowCommandData = ApiPatchRowCommand['data'];
 export type ApiPatchRowCommandReturnType = {
   table: GetTableByIdReturnType;
   previousVersionTableId: string;
-  row: GetRowByIdReturnType;
+  row: GetRowByIdQueryReturnType;
   previousVersionRowId: string;
 };

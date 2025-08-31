@@ -1,8 +1,8 @@
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import { GetRowByIdQueryReturnType } from 'src/features/row/queries/impl';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 export type ApiCreateRowHandlerReturnType = {
   table: NonNullable<GetTableByIdReturnType>;
   previousVersionTableId: string;
-  row: NonNullable<GetRowByIdReturnType>;
+  row: NonNullable<GetRowByIdQueryReturnType>;
 };

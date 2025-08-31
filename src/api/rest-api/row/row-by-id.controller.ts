@@ -43,6 +43,7 @@ import {
 } from 'src/features/draft/commands/impl/api-upload-file.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   GetRowForeignKeysByDto,
@@ -65,14 +66,6 @@ import {
   transformFromPrismaToRowModel,
 } from 'src/api/rest-api/share/utils/transformFromPrismaToRowModel';
 import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/transformFromPrismaToTableModel';
-import {
-  GetRowQuery,
-  ResolveRowCountForeignKeysByQuery,
-  ResolveRowCountForeignKeysToQuery,
-  ResolveRowForeignKeysByQuery,
-  ResolveRowForeignKeysToQuery,
-} from 'src/features/row/queries/impl';
-import { GetRowReturnType } from 'src/features/row/queries/types';
 
 @UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
@@ -86,6 +79,7 @@ export class RowByIdController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly rowApi: RowApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -118,9 +112,11 @@ export class RowByIdController {
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ) {
-    return this.queryBus.execute(
-      new ResolveRowCountForeignKeysByQuery({ revisionId, tableId, rowId }),
-    );
+    return this.rowApi.resolveRowCountForeignKeysBy({
+      revisionId,
+      tableId,
+      rowId,
+    });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -134,16 +130,14 @@ export class RowByIdController {
     @Query() data: GetRowForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
-      await this.queryBus.execute(
-        new ResolveRowForeignKeysByQuery({
-          revisionId,
-          tableId,
-          rowId,
-          foreignKeyByTableId: data.foreignKeyByTableId,
-          after: data.after,
-          first: data.first,
-        }),
-      ),
+      await this.rowApi.resolveRowForeignKeysBy({
+        revisionId,
+        tableId,
+        rowId,
+        foreignKeyByTableId: data.foreignKeyByTableId,
+        after: data.after,
+        first: data.first,
+      }),
     );
   }
 
@@ -158,9 +152,11 @@ export class RowByIdController {
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ) {
-    return this.queryBus.execute(
-      new ResolveRowCountForeignKeysToQuery({ revisionId, tableId, rowId }),
-    );
+    return this.rowApi.resolveRowCountForeignKeysTo({
+      revisionId,
+      tableId,
+      rowId,
+    });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -174,16 +170,14 @@ export class RowByIdController {
     @Query() data: GetRowForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
-      await this.queryBus.execute(
-        new ResolveRowForeignKeysToQuery({
-          revisionId,
-          tableId,
-          rowId,
-          foreignKeyToTableId: data.foreignKeyToTableId, // TODO naming
-          after: data.after,
-          first: data.first,
-        }),
-      ),
+      await this.rowApi.resolveRowForeignKeysTo({
+        revisionId,
+        tableId,
+        rowId,
+        foreignKeyToTableId: data.foreignKeyToTableId, // TODO naming
+        after: data.after,
+        first: data.first,
+      }),
     );
   }
 
@@ -346,8 +340,6 @@ export class RowByIdController {
   }
 
   private resolveRow(revisionId: string, tableId: string, rowId: string) {
-    return this.queryBus.execute<GetRowQuery, GetRowReturnType>(
-      new GetRowQuery({ revisionId, tableId, rowId }),
-    );
+    return this.rowApi.getRow({ revisionId, tableId, rowId });
   }
 }

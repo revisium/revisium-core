@@ -3,8 +3,10 @@ import { Prisma } from '@prisma/client';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ResolveRowForeignKeysByQuery } from 'src/features/row/queries/impl';
-import { ResolveRowForeignKeysByReturnType } from 'src/features/row/queries/types';
+import {
+  ResolveRowForeignKeysByQuery,
+  ResolveRowForeignKeysByReturnType,
+} from 'src/features/row/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';

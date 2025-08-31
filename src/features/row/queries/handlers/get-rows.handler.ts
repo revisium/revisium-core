@@ -2,14 +2,16 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma, Row } from '@prisma/client';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { GetRowsQuery } from 'src/features/row/queries/impl';
-import { GetRowsReturnType } from 'src/features/row/queries/types';
+import {
+  GetRowsQuery,
+  GetRowsQueryReturnType,
+} from 'src/features/row/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetRowsQuery)
 export class GetRowsHandler
-  implements IQueryHandler<GetRowsQuery, GetRowsReturnType>
+  implements IQueryHandler<GetRowsQuery, GetRowsQueryReturnType>
 {
   constructor(
     private readonly transactionService: TransactionPrismaService,
@@ -21,7 +23,7 @@ export class GetRowsHandler
     return this.transactionService.getTransaction();
   }
 
-  async execute({ data }: GetRowsQuery): Promise<GetRowsReturnType> {
+  async execute({ data }: GetRowsQuery): Promise<GetRowsQueryReturnType> {
     return this.transactionService.run(() => this.transactionHandler(data), {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });

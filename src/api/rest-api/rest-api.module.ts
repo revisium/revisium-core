@@ -4,6 +4,7 @@ import { AuthModule } from 'src/features/auth/auth.module';
 import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { RevisionModule } from 'src/features/revision/revision.module';
+import { RowModule } from 'src/features/row/row.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { AuthController } from 'src/api/rest-api/auth/auth.controller';
 import { BranchByNameController } from 'src/api/rest-api/branch/branch-by-name.controller';
@@ -24,6 +25,7 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
     EndpointModule,
     RevisionModule,
     DraftModule,
+    RowModule,
   ],
   controllers: [
     AuthController,

@@ -1,6 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
-import { GetRowByIdQuery } from 'src/features/row/queries/impl';
-import { GetRowByIdReturnType } from 'src/features/row/queries/types';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { ShareCommands } from 'src/features/share/share.commands';
 import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-id.query';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
@@ -9,6 +8,7 @@ export class ApiBaseRowHandler {
   constructor(
     protected readonly queryBus: QueryBus,
     protected readonly shareCommands: ShareCommands,
+    protected readonly rowApi: RowApiService,
   ) {}
 
   protected async tryToNotifyEndpoints({
@@ -40,13 +40,11 @@ export class ApiBaseRowHandler {
       this.queryBus.execute<GetTableByIdQuery, GetTableByIdReturnType>(
         new GetTableByIdQuery({ revisionId: revisionId, tableVersionId }),
       ),
-      this.queryBus.execute<GetRowByIdQuery, GetRowByIdReturnType>(
-        new GetRowByIdQuery({
-          revisionId: revisionId,
-          tableId: tableId,
-          rowVersionId,
-        }),
-      ),
+      this.rowApi.getRowById({
+        revisionId: revisionId,
+        tableId: tableId,
+        rowVersionId,
+      }),
     ]);
 
     return { table, row };

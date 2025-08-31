@@ -1,3 +1,6 @@
+import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { RowWithContext } from 'src/features/share/types/row-with-context.types';
+
 export class ResolveRowForeignKeysByQuery {
   constructor(
     public readonly data: {
@@ -10,3 +13,8 @@ export class ResolveRowForeignKeysByQuery {
     },
   ) {}
 }
+
+export type ResolveRowForeignKeysByQueryData =
+  ResolveRowForeignKeysByQuery['data'];
+
+export type ResolveRowForeignKeysByReturnType = IPaginatedType<RowWithContext>;
