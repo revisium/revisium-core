@@ -220,59 +220,148 @@ describe('ForeignKeysService', () => {
     });
   });
 
-  describe('Security Tests for $queryRawUnsafe', () => {
-    it('should handle SQL injection attempts in key parameter', async () => {
+  describe('Validation Tests', () => {
+    it('should accept keys with numbers, hyphens and other valid characters', async () => {
+      const tableVersionId = await createTableWithSpecialKeys();
+
+      // These should all work now
+      const results1 = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          '123numerickey',
+          'value1',
+          10,
+          0,
+        );
+      });
+
+      const results2 = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'key-with-hyphens',
+          'value2',
+          10,
+          0,
+        );
+      });
+
+      const results3 = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'key.with.dots',
+          'value3',
+          10,
+          0,
+        );
+      });
+
+      const results4 = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'key with spaces',
+          'value4',
+          10,
+          0,
+        );
+      });
+
+      expect(results1).toHaveLength(1);
+      expect(results2).toHaveLength(1);
+      expect(results3).toHaveLength(1);
+      expect(results4).toHaveLength(1);
+    });
+
+    it('should reject keys with null bytes', async () => {
       const tableVersionId = await createTableWithRows();
 
-      // Test with malicious key
       await expect(
         transactionPrismaService.run(async () => {
           return service.findRowsByKeyValueInData(
             tableVersionId,
-            'title\'; DROP TABLE "Row"; --',
+            'key\0withnull',
             'test',
             10,
             0,
           );
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow('contains null byte');
     });
 
-    it('should handle SQL injection attempts in value parameter', async () => {
+    it('should reject extremely long keys', async () => {
       const tableVersionId = await createTableWithRows();
+      const longKey = 'a'.repeat(1001);
 
-      // Test with malicious value
       await expect(
         transactionPrismaService.run(async () => {
           return service.findRowsByKeyValueInData(
             tableVersionId,
-            'title',
-            'test\'; DROP TABLE "Row"; --',
-            10,
-            0,
-          );
-        }),
-      ).rejects.toThrow();
-    });
-
-    it('should handle SQL injection attempts in tableVersionId parameter', async () => {
-      // Test with malicious tableVersionId
-      await expect(
-        transactionPrismaService.run(async () => {
-          return service.findRowsByKeyValueInData(
-            'test\'; DROP TABLE "Row"; --',
-            'title',
+            longKey,
             'test',
             10,
             0,
           );
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow('too long');
     });
 
-    it('should handle SQL injection attempts in jsonPaths parameter', async () => {
+    it('should handle special characters in values with parameterized queries', async () => {
+      const tableVersionId = await createTableWithSpecialChars();
+
+      // Values with special characters should work fine with parameterized queries
+      const results = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'title',
+          'Title with \'quotes\' and "double quotes"',
+          10,
+          0,
+        );
+      });
+
+      // Should find the matching row
+      expect(results).toHaveLength(1);
+    });
+
+    it('should handle backslashes in values with parameterized queries', async () => {
+      const tableVersionId = await createTableWithBackslashes();
+
+      // Values with backslashes should work fine with parameterized queries
+      const results = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'path',
+          'C:\\Windows\\System32\\file.exe',
+          10,
+          0,
+        );
+      });
+
+      // Should find the matching row
+      expect(results).toHaveLength(1);
+    });
+
+    it('should handle potentially malicious values safely with parameterized queries', async () => {
       const tableVersionId = await createTableWithRows();
 
+      // Malicious values should be treated as literal strings, not SQL
+      const results = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'title',
+          'test\'; DROP TABLE "Row"; --',
+          10,
+          0,
+        );
+      });
+
+      // Should return no results (treated as literal string match)
+      expect(results).toHaveLength(0);
+    });
+
+    it('should reject invalid JSON paths', async () => {
+      const tableVersionId = await createTableWithRows();
+
+      // Test with invalid JSON path containing forbidden characters
       await expect(
         transactionPrismaService.run(async () => {
           return service.findRowsByPathsAndValueInData(
@@ -283,23 +372,45 @@ describe('ForeignKeysService', () => {
             0,
           );
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow('Invalid JSON path: contains forbidden characters');
     });
 
-    it('should handle special characters in legitimate data', async () => {
-      const tableVersionId = await createTableWithSpecialChars();
+    it('should reject JSON paths not starting with $', async () => {
+      const tableVersionId = await createTableWithRows();
 
       await expect(
         transactionPrismaService.run(async () => {
-          return service.findRowsByKeyValueInData(
+          return service.findRowsByPathsAndValueInData(
             tableVersionId,
-            'title',
-            'Title with \'quotes\' and "double quotes"',
+            ['invalid.path'],
+            'test',
             10,
             0,
           );
         }),
-      ).rejects.toThrow();
+      ).rejects.toThrow('Invalid JSON path: must start with $');
+    });
+
+    it('should work correctly with field names containing SQL keywords', async () => {
+      const tableVersionId = await createTableWithLegitimateFieldNames();
+
+      // Test that legitimate field names containing SQL keywords work correctly
+      const results = await transactionPrismaService.run(async () => {
+        return service.findRowsByKeyValueInData(
+          tableVersionId,
+          'fieldDROP', // Legitimate field name containing DROP
+          'some value',
+          10,
+          0,
+        );
+      });
+
+      expect(results).toHaveLength(1);
+      expect(results[0].data).toEqual({
+        fieldDROP: 'some value',
+        myUpdateField: 'another value',
+        categoryDELETE: 'test',
+      });
     });
   });
 
@@ -650,6 +761,230 @@ describe('ForeignKeysService', () => {
       title: 'Title with \'quotes\' and "double quotes"',
       description: 'Text with; semicolon and -- comment',
       content: 'Some $pecial ch@r@cters!',
+    };
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        versionId: nanoid(),
+        createdId: nanoid(),
+        data,
+        hash: hash(data),
+        schemaHash: 'test-schema-hash',
+        tables: {
+          connect: { versionId: tableVersionId },
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publishedAt: new Date(),
+      },
+    });
+
+    return tableVersionId;
+  }
+
+  async function createTableWithLegitimateFieldNames() {
+    const tableVersionId = nanoid();
+    const branchId = nanoid();
+    const revisionId = nanoid();
+
+    // Create branch with revision
+    await prismaService.branch.create({
+      data: {
+        id: branchId,
+        name: `test-branch-${nanoid()}`,
+        isRoot: true,
+        project: {
+          create: {
+            id: nanoid(),
+            name: `test-project-${nanoid()}`,
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+        revisions: {
+          create: {
+            id: revisionId,
+            isStart: true,
+            isHead: true,
+            hasChanges: false,
+          },
+        },
+      },
+    });
+
+    // Create table
+    await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: tableVersionId,
+        revisions: {
+          connect: { id: revisionId },
+        },
+      },
+    });
+
+    // Create row with legitimate field names that contain SQL keywords
+    const data = {
+      fieldDROP: 'some value',
+      myUpdateField: 'another value',
+      categoryDELETE: 'test',
+    };
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        versionId: nanoid(),
+        createdId: nanoid(),
+        data,
+        hash: hash(data),
+        schemaHash: 'test-schema-hash',
+        tables: {
+          connect: { versionId: tableVersionId },
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publishedAt: new Date(),
+      },
+    });
+
+    return tableVersionId;
+  }
+
+  async function createTableWithBackslashes() {
+    const tableVersionId = nanoid();
+    const branchId = nanoid();
+    const revisionId = nanoid();
+
+    // Create branch with revision
+    await prismaService.branch.create({
+      data: {
+        id: branchId,
+        name: `test-branch-${nanoid()}`,
+        isRoot: true,
+        project: {
+          create: {
+            id: nanoid(),
+            name: `test-project-${nanoid()}`,
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+        revisions: {
+          create: {
+            id: revisionId,
+            isStart: true,
+            isHead: true,
+            hasChanges: false,
+          },
+        },
+      },
+    });
+
+    // Create table
+    await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: tableVersionId,
+        revisions: {
+          connect: { id: revisionId },
+        },
+      },
+    });
+
+    // Create row with backslashes
+    const data = {
+      path: 'C:\\Windows\\System32\\file.exe',
+      description: 'File path with \\backslashes\\ and "quotes"',
+      regex: '\\d+\\.\\d+',
+    };
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        versionId: nanoid(),
+        createdId: nanoid(),
+        data,
+        hash: hash(data),
+        schemaHash: 'test-schema-hash',
+        tables: {
+          connect: { versionId: tableVersionId },
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        publishedAt: new Date(),
+      },
+    });
+
+    return tableVersionId;
+  }
+
+  async function createTableWithSpecialKeys() {
+    const tableVersionId = nanoid();
+    const branchId = nanoid();
+    const revisionId = nanoid();
+
+    // Create branch with revision
+    await prismaService.branch.create({
+      data: {
+        id: branchId,
+        name: `test-branch-${nanoid()}`,
+        isRoot: true,
+        project: {
+          create: {
+            id: nanoid(),
+            name: `test-project-${nanoid()}`,
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+        revisions: {
+          create: {
+            id: revisionId,
+            isStart: true,
+            isHead: true,
+            hasChanges: false,
+          },
+        },
+      },
+    });
+
+    // Create table
+    await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: tableVersionId,
+        revisions: {
+          connect: { id: revisionId },
+        },
+      },
+    });
+
+    // Create row with special key names that should be supported
+    const data = {
+      '123numerickey': 'value1',
+      'key-with-hyphens': 'value2',
+      'key.with.dots': 'value3',
+      'key with spaces': 'value4',
+      _underscore_key: 'value5',
+      UPPERCASE_KEY: 'value6',
+      кирилица: 'value7',
+      特殊字符: 'value8',
     };
 
     await prismaService.row.create({

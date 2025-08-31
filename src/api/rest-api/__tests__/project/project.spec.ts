@@ -343,12 +343,14 @@ describe('restapi - project', () => {
     beforeEach(async () => {
       preparedData = await prepareData(app);
 
+      const id = nanoid();
+
       // Create and add a user to the project
       const targetUser = await prismaService.user.create({
         data: {
-          id: nanoid(),
-          email: `test-user-${Date.now()}@example.com`,
-          username: `testuser${Date.now()}`,
+          id,
+          email: `test-user-${id}@example.com`,
+          username: `testuser${id}`,
           password: 'hashedpassword',
           isEmailConfirmed: true,
           roleId: 'systemUser',
