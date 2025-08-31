@@ -69,6 +69,11 @@ export class ForeignKeysService {
     offset: number = 0,
   ) {
     // TODO refactor unsafe
+
+    if (jsonPaths.length === 0) {
+      return [];
+    }
+
     const conditions = jsonPaths
       .map((path) => `jsonb_path_exists("data", '${path} ? (@ == "${value}")')`)
       .join(' OR ');
@@ -96,6 +101,11 @@ export class ForeignKeysService {
     value: string,
   ) {
     // TODO refactor  unsafe
+
+    if (jsonPaths.length === 0) {
+      return 0;
+    }
+
     const conditions = jsonPaths
       .map((path) => `jsonb_path_exists("data", '${path} ? (@ == "${value}")')`)
       .join(' OR ');

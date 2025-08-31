@@ -133,7 +133,7 @@ describe('restapi - row-by-id', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(result.totalCount).toBe(1);
+      expect(result.totalCount).toBe(0);
     });
 
     it('another owner cannot get foreign keys by (private project)', async () => {
