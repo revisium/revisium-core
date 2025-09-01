@@ -12,7 +12,6 @@ import {
   SqlResult,
   RowOrderInput,
   JsonOrderInput,
-  SortOrder,
   JsonValueType,
   JsonAggregation,
 } from './types';
@@ -510,7 +509,7 @@ export class WhereGenerator {
    */
   private parseJsonPath(path: string): string[] {
     // Remove leading $. if present
-    let cleanPath = path.startsWith('$.') ? path.substring(2) : path;
+    const cleanPath = path.startsWith('$.') ? path.substring(2) : path;
 
     // Handle simple dot notation
     if (!cleanPath.includes('[')) {
@@ -613,16 +612,17 @@ export class WhereGenerator {
         }
         break;
 
-      case 'last':
+      case 'last': {
         // Use negative index for last element
         const lastPath = [...beforeStar, '-1', ...afterStar];
         return `(${fieldMapping}#>>'{${lastPath.join(',')}}')::${sqlType} ${sortOrder}`;
-
+      }
       case 'first':
-      default:
+      default: {
         // Use index 0 for first element
         const firstPath = [...beforeStar, '0', ...afterStar];
         return `(${fieldMapping}#>>'{${firstPath.join(',')}}')::${sqlType} ${sortOrder}`;
+      }
     }
 
     return `(${subQuery}) ${sortOrder}`;
@@ -641,7 +641,7 @@ export class WhereGenerator {
         return 'float';
       case 'boolean':
         return 'boolean';
-      case 'date':
+      case 'timestamp':
         return 'timestamp';
       default:
         return 'text';

@@ -81,7 +81,7 @@ export interface JsonFilter {
 
 export type SortOrder = 'asc' | 'desc';
 
-export type JsonValueType = 'text' | 'int' | 'float' | 'boolean' | 'date';
+export type JsonValueType = 'text' | 'int' | 'float' | 'boolean' | 'timestamp';
 
 export type JsonAggregation = 'min' | 'max' | 'avg' | 'first' | 'last';
 

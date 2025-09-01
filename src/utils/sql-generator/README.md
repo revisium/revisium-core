@@ -249,7 +249,7 @@ const orderBy: RowOrderInput[] = [
     data: {
       path: "createdDate",    // JSON date field
       direction: 'desc',
-      type: 'date'            // Cast to timestamp
+      type: 'timestamp'       // Cast to timestamp
     }
   },
   
@@ -268,7 +268,7 @@ const orderBy: RowOrderInput[] = [
     data: {
       path: "$.events[*].date",     // All event dates in array
       direction: 'desc',
-      type: 'date',
+      type: 'timestamp',
       aggregation: 'max'            // Latest date among events
     }
   }
@@ -282,7 +282,7 @@ const orderBy: RowOrderInput[] = [
 - `'int'` - Integer numbers
 - `'float'` - Floating point numbers  
 - `'boolean'` - Boolean values
-- `'date'` - Date/timestamp values (ISO 8601 strings)
+- `'timestamp'` - Date/timestamp values (ISO 8601 strings)
 
 ### JSON Path Formats
 
@@ -367,7 +367,7 @@ ORDER BY (r."data"#>>'{name}')::text ASC
 -- Nested path: data.user.age  
 ORDER BY (r."data"#>>'{user,age}')::int DESC
 
--- Date field: data.createdDate
+-- Timestamp field: data.createdDate
 ORDER BY (r."data"#>>'{createdDate}')::timestamp DESC
 
 -- Array aggregation: MAX(data.products[*].price)
@@ -376,7 +376,7 @@ ORDER BY (
   FROM jsonb_array_elements(r."data"#>'{products}') AS value
 ) DESC
 
--- Date array aggregation: MAX(data.events[*].date)
+-- Timestamp array aggregation: MAX(data.events[*].date)
 ORDER BY (
   SELECT MAX((value#>>'{date}')::timestamp)
   FROM jsonb_array_elements(r."data"#>'{events}') AS value

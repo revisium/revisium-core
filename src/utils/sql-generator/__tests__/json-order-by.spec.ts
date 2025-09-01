@@ -463,7 +463,7 @@ describe('JSON Path ORDER BY Tests', () => {
       expect(sqlResult.rows.length).toBeGreaterThan(0);
     });
 
-    it('should handle date type for JSON date values', async () => {
+    it('should handle timestamp type for JSON date values', async () => {
       const { table } = await createTableWithComplexJsonData(prismaService);
 
       const orderBy: RowOrderInput[] = [
@@ -471,14 +471,14 @@ describe('JSON Path ORDER BY Tests', () => {
           data: {
             path: 'createdDate',
             direction: 'desc',
-            type: 'date',
+            type: 'timestamp',
           },
         },
         {
           data: {
             path: 'lastLogin',
             direction: 'asc',
-            type: 'date',
+            type: 'timestamp',
           },
         },
       ];
@@ -517,7 +517,7 @@ describe('JSON Path ORDER BY Tests', () => {
       }
     });
 
-    it('should handle date aggregation in arrays', async () => {
+    it('should handle timestamp aggregation in arrays', async () => {
       const { table } = await createTableWithComplexJsonData(prismaService);
 
       // First add array of dates to test data via direct SQL
@@ -530,7 +530,7 @@ describe('JSON Path ORDER BY Tests', () => {
           data: {
             path: '$.eventDates[*]',
             direction: 'desc',
-            type: 'date',
+            type: 'timestamp',
             aggregation: 'max', // Latest date in array
           },
         },
@@ -546,14 +546,14 @@ describe('JSON Path ORDER BY Tests', () => {
 
       const sqlResult = await pgClient.query(sql, params);
 
-      // Verify SQL contains date array aggregation
+      // Verify SQL contains timestamp array aggregation
       expect(sql).toContain("SELECT MAX((value#>>'{}'::text[])::timestamp)");
       expect(sql).toContain('FROM jsonb_array_elements');
       expect(sql).toContain('DESC');
       expect(sqlResult.rows.length).toBeGreaterThan(0);
     });
 
-    it('should handle mixed date and other types in ordering', async () => {
+    it('should handle mixed timestamp and other types in ordering', async () => {
       const { table } = await createTableWithComplexJsonData(prismaService);
 
       const orderBy: RowOrderInput[] = [
@@ -561,7 +561,7 @@ describe('JSON Path ORDER BY Tests', () => {
           data: {
             path: 'createdDate',
             direction: 'desc',
-            type: 'date',
+            type: 'timestamp',
           },
         },
         {
