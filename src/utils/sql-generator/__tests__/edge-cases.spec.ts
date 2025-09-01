@@ -85,7 +85,8 @@ describe('Edge Cases and Error Handling Tests', () => {
       });
 
       expect(result.sql).toContain('#>>');
-      expect(result.sql).toContain('{user,profile,name}');
+      expect(result.params[0]).toBe('{user,profile,name}');
+      expect(result.params[1]).toBe('Alice');
     });
   });
 
@@ -427,7 +428,7 @@ describe('Edge Cases and Error Handling Tests', () => {
         AND: [],
       });
 
-      expect(result.sql).toBe('(()) AND (())');
+      expect(result.sql).toBe('() AND ()');
     });
 
     it('should handle mixed field types in complex query', async () => {
