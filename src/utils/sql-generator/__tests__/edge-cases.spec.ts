@@ -443,7 +443,7 @@ describe('Edge Cases and Error Handling Tests', () => {
         AND: [],
       });
 
-      expect(result.sql).toBe('() AND ()');
+      expect(result.sql).toBe('TRUE');
     });
 
     it('should handle mixed field types in complex query', async () => {

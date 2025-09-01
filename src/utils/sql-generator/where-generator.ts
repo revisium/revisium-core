@@ -48,18 +48,22 @@ export class WhereGenerator {
     const clauses: string[] = [];
 
     // Logical operators first
-    if (conditions.AND) {
+    if (Array.isArray(conditions.AND) && conditions.AND.length > 0) {
       const andClauses = conditions.AND.map((cond) =>
         this.processConditions(cond),
-      );
-      clauses.push(`(${andClauses.join(' AND ')})`);
+      ).filter((c) => c && c !== 'TRUE');
+      if (andClauses.length > 0) {
+        clauses.push(`(${andClauses.join(' AND ')})`);
+      }
     }
 
-    if (conditions.OR) {
+    if (Array.isArray(conditions.OR) && conditions.OR.length > 0) {
       const orClauses = conditions.OR.map((cond) =>
         this.processConditions(cond),
-      );
-      clauses.push(`(${orClauses.join(' OR ')})`);
+      ).filter((c) => c && c !== 'TRUE');
+      if (orClauses.length > 0) {
+        clauses.push(`(${orClauses.join(' OR ')})`);
+      }
     }
 
     if (conditions.NOT) {
@@ -169,6 +173,7 @@ export class WhereGenerator {
     }
 
     if (filter.in !== undefined) {
+      if (Array.isArray(filter.in) && filter.in.length === 0) return 'FALSE';
       const placeholders = filter.in
         .map((val) => this.addParam(val))
         .join(', ');
@@ -176,6 +181,8 @@ export class WhereGenerator {
     }
 
     if (filter.notIn !== undefined) {
+      if (Array.isArray(filter.notIn) && filter.notIn.length === 0)
+        return 'TRUE';
       const placeholders = filter.notIn
         .map((val) => this.addParam(val))
         .join(', ');
@@ -204,7 +211,7 @@ export class WhereGenerator {
 
     if (filter.search !== undefined) {
       // PostgreSQL full-text search
-      return `${fieldName} @@ plainto_tsquery(${this.addParam(filter.search)})`;
+      return `to_tsvector('simple', ${fieldName}) @@ plainto_tsquery('simple', ${this.addParam(filter.search)})`;
     }
 
     throw new Error(`Unsupported StringFilter: ${JSON.stringify(filter)}`);
@@ -281,6 +288,7 @@ export class WhereGenerator {
     }
 
     if (filter.in !== undefined) {
+      if (Array.isArray(filter.in) && filter.in.length === 0) return 'FALSE';
       const dateStrs = filter.in.map((d) =>
         d instanceof Date ? d.toISOString() : d,
       );
@@ -289,6 +297,8 @@ export class WhereGenerator {
     }
 
     if (filter.notIn !== undefined) {
+      if (Array.isArray(filter.notIn) && filter.notIn.length === 0)
+        return 'TRUE';
       const dateStrs = filter.notIn.map((d) =>
         d instanceof Date ? d.toISOString() : d,
       );
@@ -303,59 +313,59 @@ export class WhereGenerator {
     const { path, mode = 'default' } = condition;
     const isInsensitive = mode === 'insensitive';
 
-    // Build JSON path: field->'path1'->'path2'...
-    const jsonPath =
+    // Build JSON path for text operations
+    const jsonTextPath =
       path.length === 1
         ? `${fieldName}->>${this.addParam(path[0])}`
         : `${fieldName}#>>${this.addParam(`{${path.join(',')}}`)}`; // PostgreSQL array format
 
     if (condition.equals !== undefined) {
       if (typeof condition.equals === 'string' && isInsensitive) {
-        return `LOWER(${jsonPath}) = LOWER(${this.addParam(condition.equals)})`;
+        return `LOWER(${jsonTextPath}) = LOWER(${this.addParam(condition.equals)})`;
       }
       // For string values, compare as text without JSON encoding
       if (typeof condition.equals === 'string') {
-        return `${jsonPath} = ${this.addParam(condition.equals)}`;
+        return `${jsonTextPath} = ${this.addParam(condition.equals)}`;
       }
       // For non-string values (numbers, booleans, objects), use JSON comparison
-      return `${jsonPath} = ${this.addParam(JSON.stringify(condition.equals))}`;
+      return `${jsonTextPath} = ${this.addParam(JSON.stringify(condition.equals))}`;
     }
 
     if (condition.string_contains !== undefined) {
       if (isInsensitive) {
-        return `${jsonPath} ILIKE ${this.addParam(`%${condition.string_contains}%`)}`;
+        return `${jsonTextPath} ILIKE ${this.addParam(`%${condition.string_contains}%`)}`;
       }
-      return `${jsonPath} LIKE ${this.addParam(`%${condition.string_contains}%`)}`;
+      return `${jsonTextPath} LIKE ${this.addParam(`%${condition.string_contains}%`)}`;
     }
 
     if (condition.string_starts_with !== undefined) {
       if (isInsensitive) {
-        return `${jsonPath} ILIKE ${this.addParam(`${condition.string_starts_with}%`)}`;
+        return `${jsonTextPath} ILIKE ${this.addParam(`${condition.string_starts_with}%`)}`;
       }
-      return `${jsonPath} LIKE ${this.addParam(`${condition.string_starts_with}%`)}`;
+      return `${jsonTextPath} LIKE ${this.addParam(`${condition.string_starts_with}%`)}`;
     }
 
     if (condition.string_ends_with !== undefined) {
       if (isInsensitive) {
-        return `${jsonPath} ILIKE ${this.addParam(`%${condition.string_ends_with}`)}`;
+        return `${jsonTextPath} ILIKE ${this.addParam(`%${condition.string_ends_with}`)}`;
       }
-      return `${jsonPath} LIKE ${this.addParam(`%${condition.string_ends_with}`)}`;
+      return `${jsonTextPath} LIKE ${this.addParam(`%${condition.string_ends_with}`)}`;
     }
 
     if (condition.gt !== undefined) {
-      return `(${jsonPath})::numeric > ${this.addParam(condition.gt)}`;
+      return `(${jsonTextPath})::numeric > ${this.addParam(condition.gt)}`;
     }
 
     if (condition.gte !== undefined) {
-      return `(${jsonPath})::numeric >= ${this.addParam(condition.gte)}`;
+      return `(${jsonTextPath})::numeric >= ${this.addParam(condition.gte)}`;
     }
 
     if (condition.lt !== undefined) {
-      return `(${jsonPath})::numeric < ${this.addParam(condition.lt)}`;
+      return `(${jsonTextPath})::numeric < ${this.addParam(condition.lt)}`;
     }
 
     if (condition.lte !== undefined) {
-      return `(${jsonPath})::numeric <= ${this.addParam(condition.lte)}`;
+      return `(${jsonTextPath})::numeric <= ${this.addParam(condition.lte)}`;
     }
 
     if (condition.array_contains !== undefined) {
@@ -363,6 +373,8 @@ export class WhereGenerator {
     }
 
     if (condition.in !== undefined) {
+      if (Array.isArray(condition.in) && condition.in.length === 0)
+        return 'FALSE';
       const placeholders = condition.in
         .map((val) =>
           typeof val === 'string'
@@ -370,10 +382,12 @@ export class WhereGenerator {
             : this.addParam(JSON.stringify(val)),
         )
         .join(', ');
-      return `${jsonPath} IN (${placeholders})`;
+      return `${jsonTextPath} IN (${placeholders})`;
     }
 
     if (condition.notIn !== undefined) {
+      if (Array.isArray(condition.notIn) && condition.notIn.length === 0)
+        return 'TRUE';
       const placeholders = condition.notIn
         .map((val) =>
           typeof val === 'string'
@@ -381,15 +395,15 @@ export class WhereGenerator {
             : this.addParam(JSON.stringify(val)),
         )
         .join(', ');
-      return `${jsonPath} NOT IN (${placeholders})`;
+      return `${jsonTextPath} NOT IN (${placeholders})`;
     }
 
     if (condition.not !== undefined) {
       // Prisma-style NOT: exclude nulls and non-matching values
       if (typeof condition.not === 'string') {
-        return `(${jsonPath} IS NOT NULL AND ${jsonPath} != ${this.addParam(condition.not)})`;
+        return `(${jsonTextPath} IS NOT NULL AND ${jsonTextPath} != ${this.addParam(condition.not)})`;
       }
-      return `(${jsonPath} IS NOT NULL AND ${jsonPath} != ${this.addParam(JSON.stringify(condition.not))})`;
+      return `(${jsonTextPath} IS NOT NULL AND ${jsonTextPath} != ${this.addParam(JSON.stringify(condition.not))})`;
     }
 
     throw new Error(`Unsupported JsonFilter: ${JSON.stringify(condition)}`);
