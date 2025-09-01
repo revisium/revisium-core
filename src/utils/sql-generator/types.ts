@@ -79,6 +79,22 @@ export interface JsonFilter {
   mode?: 'default' | 'insensitive';
 }
 
+export type SortOrder = 'asc' | 'desc';
+
+export interface RowOrderInput {
+  versionId?: SortOrder;
+  createdId?: SortOrder;
+  id?: SortOrder;
+  readonly?: SortOrder;
+  createdAt?: SortOrder;
+  updatedAt?: SortOrder;
+  publishedAt?: SortOrder;
+  data?: SortOrder;
+  meta?: SortOrder;
+  hash?: SortOrder;
+  schemaHash?: SortOrder;
+}
+
 export interface SqlResult {
   sql: string;
   params: any[];
