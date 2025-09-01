@@ -1,0 +1,451 @@
+/**
+ * Simple WHERE clause generator for getRows.sql
+ * Based on Prisma FilterVisitor patterns but simplified for our use case
+ */
+
+import {
+  WhereConditions,
+  StringFilter,
+  BoolFilter,
+  DateFilter,
+  JsonFilter,
+  SqlResult,
+} from './types';
+
+/**
+ * Main WHERE clause generator
+ */
+export class WhereGenerator {
+  private paramIndex = 1;
+  private params: any[] = [];
+
+  constructor(startParamIndex: number = 1) {
+    this.paramIndex = startParamIndex;
+  }
+
+  addParam(value: any): string {
+    this.params.push(value);
+    return `$${this.paramIndex++}`;
+  }
+
+  getParams(): any[] {
+    return this.params;
+  }
+
+  /**
+   * Generate WHERE clause from conditions
+   */
+  generateWhere(conditions: WhereConditions): SqlResult {
+    if (!conditions || Object.keys(conditions).length === 0) {
+      return { sql: 'TRUE', params: [] };
+    }
+
+    const sql = this.processConditions(conditions);
+    return { sql, params: this.params };
+  }
+
+  private processConditions(conditions: WhereConditions): string {
+    const clauses: string[] = [];
+
+    // Logical operators first
+    if (conditions.AND) {
+      const andClauses = conditions.AND.map((cond) =>
+        this.processConditions(cond),
+      );
+      clauses.push(`(${andClauses.join(' AND ')})`);
+    }
+
+    if (conditions.OR) {
+      const orClauses = conditions.OR.map((cond) =>
+        this.processConditions(cond),
+      );
+      clauses.push(`(${orClauses.join(' OR ')})`);
+    }
+
+    if (conditions.NOT) {
+      const notClause = this.processConditions(conditions.NOT);
+      clauses.push(`NOT (${notClause})`);
+    }
+
+    // String fields
+    if (conditions.versionId !== undefined) {
+      clauses.push(
+        this.processStringField('r."versionId"', conditions.versionId),
+      );
+    }
+    if (conditions.createdId !== undefined) {
+      clauses.push(
+        this.processStringField('r."createdId"', conditions.createdId),
+      );
+    }
+    if (conditions.id !== undefined) {
+      clauses.push(this.processStringField('r."id"', conditions.id));
+    }
+    if (conditions.hash !== undefined) {
+      clauses.push(this.processStringField('r."hash"', conditions.hash));
+    }
+    if (conditions.schemaHash !== undefined) {
+      clauses.push(
+        this.processStringField('r."schemaHash"', conditions.schemaHash),
+      );
+    }
+
+    // Boolean field
+    if (conditions.readonly !== undefined) {
+      clauses.push(this.processBoolField('r."readonly"', conditions.readonly));
+    }
+
+    // Date fields
+    if (conditions.createdAt !== undefined) {
+      clauses.push(
+        this.processDateField('r."createdAt"', conditions.createdAt),
+      );
+    }
+    if (conditions.updatedAt !== undefined) {
+      clauses.push(
+        this.processDateField('r."updatedAt"', conditions.updatedAt),
+      );
+    }
+    if (conditions.publishedAt !== undefined) {
+      clauses.push(
+        this.processDateField('r."publishedAt"', conditions.publishedAt),
+      );
+    }
+
+    // JSON fields
+    if (conditions.data !== undefined) {
+      clauses.push(this.processJsonField('r."data"', conditions.data));
+    }
+    if (conditions.meta !== undefined) {
+      clauses.push(this.processJsonField('r."meta"', conditions.meta));
+    }
+
+    return clauses.length > 0 ? clauses.join(' AND ') : 'TRUE';
+  }
+
+  private processStringField(
+    fieldName: string,
+    condition: string | StringFilter,
+  ): string {
+    if (typeof condition === 'string') {
+      // Simple equality: { id: "value" }
+      return `${fieldName} = ${this.addParam(condition)}`;
+    }
+
+    // Complex StringFilter object
+    const filter = condition as StringFilter;
+    const mode = filter.mode || 'default';
+    const isInsensitive = mode === 'insensitive';
+
+    if (filter.equals !== undefined) {
+      if (isInsensitive) {
+        return `${fieldName} ILIKE ${this.addParam(filter.equals)}`;
+      }
+      return `${fieldName} = ${this.addParam(filter.equals)}`;
+    }
+
+    if (filter.contains !== undefined) {
+      const pattern = `%${filter.contains}%`;
+      if (isInsensitive) {
+        return `${fieldName} ILIKE ${this.addParam(pattern)}`;
+      }
+      return `${fieldName} LIKE ${this.addParam(pattern)}`;
+    }
+
+    if (filter.startsWith !== undefined) {
+      const pattern = `${filter.startsWith}%`;
+      if (isInsensitive) {
+        return `${fieldName} ILIKE ${this.addParam(pattern)}`;
+      }
+      return `${fieldName} LIKE ${this.addParam(pattern)}`;
+    }
+
+    if (filter.endsWith !== undefined) {
+      const pattern = `%${filter.endsWith}`;
+      if (isInsensitive) {
+        return `${fieldName} ILIKE ${this.addParam(pattern)}`;
+      }
+      return `${fieldName} LIKE ${this.addParam(pattern)}`;
+    }
+
+    if (filter.in !== undefined) {
+      const placeholders = filter.in
+        .map((val) => this.addParam(val))
+        .join(', ');
+      return `${fieldName} IN (${placeholders})`;
+    }
+
+    if (filter.notIn !== undefined) {
+      const placeholders = filter.notIn
+        .map((val) => this.addParam(val))
+        .join(', ');
+      return `${fieldName} NOT IN (${placeholders})`;
+    }
+
+    if (filter.gt !== undefined) {
+      return `${fieldName} > ${this.addParam(filter.gt)}`;
+    }
+
+    if (filter.gte !== undefined) {
+      return `${fieldName} >= ${this.addParam(filter.gte)}`;
+    }
+
+    if (filter.lt !== undefined) {
+      return `${fieldName} < ${this.addParam(filter.lt)}`;
+    }
+
+    if (filter.lte !== undefined) {
+      return `${fieldName} <= ${this.addParam(filter.lte)}`;
+    }
+
+    if (filter.not !== undefined) {
+      return `${fieldName} != ${this.addParam(filter.not)}`;
+    }
+
+    if (filter.search !== undefined) {
+      // PostgreSQL full-text search
+      return `${fieldName} @@ plainto_tsquery(${this.addParam(filter.search)})`;
+    }
+
+    throw new Error(`Unsupported StringFilter: ${JSON.stringify(filter)}`);
+  }
+
+  private processBoolField(
+    fieldName: string,
+    condition: boolean | BoolFilter,
+  ): string {
+    if (typeof condition === 'boolean') {
+      return `${fieldName} = ${this.addParam(condition)}`;
+    }
+
+    const filter = condition as BoolFilter;
+    if (filter.equals !== undefined) {
+      return `${fieldName} = ${this.addParam(filter.equals)}`;
+    }
+
+    if (filter.not !== undefined) {
+      return `${fieldName} != ${this.addParam(filter.not)}`;
+    }
+
+    throw new Error(`Unsupported BoolFilter: ${JSON.stringify(filter)}`);
+  }
+
+  private processDateField(
+    fieldName: string,
+    condition: string | Date | DateFilter,
+  ): string {
+    if (typeof condition === 'string' || condition instanceof Date) {
+      const dateStr =
+        condition instanceof Date ? condition.toISOString() : condition;
+      return `${fieldName} = ${this.addParam(dateStr)}`;
+    }
+
+    const filter = condition as DateFilter;
+
+    if (filter.equals !== undefined) {
+      const dateStr =
+        filter.equals instanceof Date
+          ? filter.equals.toISOString()
+          : filter.equals;
+      return `${fieldName} = ${this.addParam(dateStr)}`;
+    }
+
+    if (filter.gt !== undefined) {
+      const dateStr =
+        filter.gt instanceof Date ? filter.gt.toISOString() : filter.gt;
+      return `${fieldName} > ${this.addParam(dateStr)}`;
+    }
+
+    if (filter.gte !== undefined) {
+      const dateStr =
+        filter.gte instanceof Date ? filter.gte.toISOString() : filter.gte;
+      return `${fieldName} >= ${this.addParam(dateStr)}`;
+    }
+
+    if (filter.lt !== undefined) {
+      const dateStr =
+        filter.lt instanceof Date ? filter.lt.toISOString() : filter.lt;
+      return `${fieldName} < ${this.addParam(dateStr)}`;
+    }
+
+    if (filter.lte !== undefined) {
+      const dateStr =
+        filter.lte instanceof Date ? filter.lte.toISOString() : filter.lte;
+      return `${fieldName} <= ${this.addParam(dateStr)}`;
+    }
+
+    if (filter.in !== undefined) {
+      const dateStrs = filter.in.map((d) =>
+        d instanceof Date ? d.toISOString() : d,
+      );
+      const placeholders = dateStrs.map((d) => this.addParam(d)).join(', ');
+      return `${fieldName} IN (${placeholders})`;
+    }
+
+    if (filter.notIn !== undefined) {
+      const dateStrs = filter.notIn.map((d) =>
+        d instanceof Date ? d.toISOString() : d,
+      );
+      const placeholders = dateStrs.map((d) => this.addParam(d)).join(', ');
+      return `${fieldName} NOT IN (${placeholders})`;
+    }
+
+    throw new Error(`Unsupported DateFilter: ${JSON.stringify(filter)}`);
+  }
+
+  private processJsonField(fieldName: string, condition: JsonFilter): string {
+    const { path, mode = 'default' } = condition;
+    const isInsensitive = mode === 'insensitive';
+
+    // Build JSON path: field->'path1'->'path2'...
+    const jsonPath =
+      path.length === 1
+        ? `${fieldName}->>${this.addParam(path[0])}`
+        : `${fieldName}#>>${this.addParam(JSON.stringify(path))}`;
+
+    if (condition.equals !== undefined) {
+      if (typeof condition.equals === 'string' && isInsensitive) {
+        return `LOWER(${jsonPath}) = LOWER(${this.addParam(condition.equals)})`;
+      }
+      // For string values, compare as text without JSON encoding
+      if (typeof condition.equals === 'string') {
+        return `${jsonPath} = ${this.addParam(condition.equals)}`;
+      }
+      // For non-string values (numbers, booleans, objects), use JSON comparison
+      return `${jsonPath} = ${this.addParam(JSON.stringify(condition.equals))}`;
+    }
+
+    if (condition.string_contains !== undefined) {
+      if (isInsensitive) {
+        return `${jsonPath} ILIKE ${this.addParam(`%${condition.string_contains}%`)}`;
+      }
+      return `${jsonPath} LIKE ${this.addParam(`%${condition.string_contains}%`)}`;
+    }
+
+    if (condition.string_starts_with !== undefined) {
+      if (isInsensitive) {
+        return `${jsonPath} ILIKE ${this.addParam(`${condition.string_starts_with}%`)}`;
+      }
+      return `${jsonPath} LIKE ${this.addParam(`${condition.string_starts_with}%`)}`;
+    }
+
+    if (condition.string_ends_with !== undefined) {
+      if (isInsensitive) {
+        return `${jsonPath} ILIKE ${this.addParam(`%${condition.string_ends_with}`)}`;
+      }
+      return `${jsonPath} LIKE ${this.addParam(`%${condition.string_ends_with}`)}`;
+    }
+
+    if (condition.gt !== undefined) {
+      return `(${jsonPath})::numeric > ${this.addParam(condition.gt)}`;
+    }
+
+    if (condition.gte !== undefined) {
+      return `(${jsonPath})::numeric >= ${this.addParam(condition.gte)}`;
+    }
+
+    if (condition.lt !== undefined) {
+      return `(${jsonPath})::numeric < ${this.addParam(condition.lt)}`;
+    }
+
+    if (condition.lte !== undefined) {
+      return `(${jsonPath})::numeric <= ${this.addParam(condition.lte)}`;
+    }
+
+    if (condition.array_contains !== undefined) {
+      return `${fieldName} @> ${this.addParam(JSON.stringify(condition.array_contains))}`;
+    }
+
+    if (condition.in !== undefined) {
+      const placeholders = condition.in
+        .map((val) =>
+          typeof val === 'string'
+            ? this.addParam(val)
+            : this.addParam(JSON.stringify(val)),
+        )
+        .join(', ');
+      return `${jsonPath} IN (${placeholders})`;
+    }
+
+    if (condition.notIn !== undefined) {
+      const placeholders = condition.notIn
+        .map((val) =>
+          typeof val === 'string'
+            ? this.addParam(val)
+            : this.addParam(JSON.stringify(val)),
+        )
+        .join(', ');
+      return `${jsonPath} NOT IN (${placeholders})`;
+    }
+
+    if (condition.not !== undefined) {
+      return `${jsonPath} != ${this.addParam(JSON.stringify(condition.not))}`;
+    }
+
+    throw new Error(`Unsupported JsonFilter: ${JSON.stringify(condition)}`);
+  }
+}
+
+/**
+ * Helper function to generate complete getRows query with timing information
+ */
+export function generateGetRowsQuery(
+  tableId: string,
+  take: number,
+  skip: number,
+  whereConditions?: WhereConditions,
+): SqlResult {
+  const whereGenerator = new WhereGenerator(4); // Start from $4 since $1-$3 are already used
+  const whereClause = whereConditions
+    ? whereGenerator.generateWhere(whereConditions)
+    : { sql: 'TRUE', params: [] };
+
+  const sql = `
+SELECT 
+    r."versionId",
+    r."createdId", 
+    r."id",
+    r."readonly",
+    r."createdAt",
+    r."updatedAt", 
+    r."publishedAt",
+    r."data",
+    r."meta",
+    r."hash",
+    r."schemaHash"
+FROM "Row" r
+INNER JOIN "_RowToTable" rt ON rt."A" = r."versionId"
+WHERE rt."B" = $1 
+  AND (${whereClause.sql})
+ORDER BY r."createdAt" DESC
+LIMIT $2
+OFFSET $3
+  `.trim();
+
+  return {
+    sql,
+    params: [tableId, take, skip, ...whereClause.params],
+  };
+}
+
+/**
+ * Helper function to generate query with performance timing
+ */
+export function generateGetRowsQueryWithTiming(
+  tableId: string,
+  take: number,
+  skip: number,
+  whereConditions?: WhereConditions,
+): SqlResult & { generationTimeMs: number } {
+  const startTime = process.hrtime.bigint();
+
+  const result = generateGetRowsQuery(tableId, take, skip, whereConditions);
+
+  const endTime = process.hrtime.bigint();
+  const generationTimeMs = Number(endTime - startTime) / 1_000_000; // Convert to milliseconds
+
+  return {
+    ...result,
+    generationTimeMs,
+  };
+}
