@@ -301,7 +301,7 @@ export class WhereGenerator {
     const jsonPath =
       path.length === 1
         ? `${fieldName}->>${this.addParam(path[0])}`
-        : `${fieldName}#>>${this.addParam(JSON.stringify(path))}`;
+        : `${fieldName}#>>${this.addParam(`{${path.join(',')}}`)}`; // PostgreSQL array format
 
     if (condition.equals !== undefined) {
       if (typeof condition.equals === 'string' && isInsensitive) {
@@ -379,7 +379,11 @@ export class WhereGenerator {
     }
 
     if (condition.not !== undefined) {
-      return `${jsonPath} != ${this.addParam(JSON.stringify(condition.not))}`;
+      // Prisma-style NOT: exclude nulls and non-matching values
+      if (typeof condition.not === 'string') {
+        return `(${jsonPath} IS NOT NULL AND ${jsonPath} != ${this.addParam(condition.not)})`;
+      }
+      return `(${jsonPath} IS NOT NULL AND ${jsonPath} != ${this.addParam(JSON.stringify(condition.not))})`;
     }
 
     throw new Error(`Unsupported JsonFilter: ${JSON.stringify(condition)}`);
