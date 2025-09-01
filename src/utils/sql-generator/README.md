@@ -102,7 +102,7 @@ export interface WhereConditions {
 ### Basic Example
 
 ```typescript
-import { generateGetRowsQuery, WhereConditions } from './sql-generator';
+import { generateGetRowsQuery, WhereConditions, RowOrderInput } from './sql-generator';
 
 const conditions: WhereConditions = {
   readonly: false,
@@ -112,11 +112,17 @@ const conditions: WhereConditions = {
   },
 };
 
+const orderBy: RowOrderInput[] = [
+  { createdAt: 'desc' },
+  { id: 'asc' },
+];
+
 const { sql, params } = generateGetRowsQuery(
   'table-id',
   10, // limit
   0, // offset
   conditions,
+  orderBy, // optional
 );
 
 const result = await pgClient.query(sql, params);
@@ -178,6 +184,220 @@ const searchFilter: WhereConditions = {
     mode: 'insensitive',
   },
 };
+```
+
+## 📊 ORDER BY Support
+
+### Basic Field Ordering
+
+Sort by any Row table field with `asc` or `desc` direction:
+
+```typescript
+const orderBy: RowOrderInput[] = [
+  { createdAt: 'desc' },    // Date field
+  { id: 'asc' },            // String field
+  { readonly: 'asc' },      // Boolean field
+  { hash: 'desc' },         // String field
+];
+
+const { sql, params } = generateGetRowsQuery(
+  'table-id', 10, 0, conditions, orderBy
+);
+```
+
+**Supported Fields:**
+- `versionId`, `createdId`, `id`, `hash`, `schemaHash` (String)
+- `readonly` (Boolean)
+- `createdAt`, `updatedAt`, `publishedAt` (Date)
+- `data`, `meta` (JSON - see JSON Path Ordering)
+
+### JSON Path Ordering
+
+**🚀 Advanced Feature**: Sort by JSON field values using path expressions.
+
+```typescript
+const orderBy: RowOrderInput[] = [
+  // Simple JSON path
+  {
+    data: {
+      path: "name",           // Simple key access
+      direction: 'asc',
+      type: 'text'
+    }
+  },
+  
+  // Nested JSON path
+  {
+    data: {
+      path: "user.profile.age", // Nested object access
+      direction: 'desc',
+      type: 'int'
+    }
+  },
+  
+  // Array element access
+  {
+    data: {
+      path: "$.tags[0]",      // First array element
+      direction: 'asc',
+      type: 'text'
+    }
+  },
+  
+  // Date field sorting
+  {
+    data: {
+      path: "createdDate",    // JSON date field
+      direction: 'desc',
+      type: 'date'            // Cast to timestamp
+    }
+  },
+  
+  // Array aggregation with wildcard
+  {
+    data: {
+      path: "$.products[*].price",  // All prices in array
+      direction: 'desc',
+      type: 'float',
+      aggregation: 'max'            // MAX(price) among all products
+    }
+  },
+  
+  // Date array aggregation
+  {
+    data: {
+      path: "$.events[*].date",     // All event dates in array
+      direction: 'desc',
+      type: 'date',
+      aggregation: 'max'            // Latest date among events
+    }
+  }
+];
+```
+
+### JSON Path Types
+
+**Supported `type` values for proper SQL casting:**
+- `'text'` - String values
+- `'int'` - Integer numbers
+- `'float'` - Floating point numbers  
+- `'boolean'` - Boolean values
+- `'date'` - Date/timestamp values (ISO 8601 strings)
+
+### JSON Path Formats
+
+**Simple paths:**
+```typescript
+"name"                    // data.name
+"category"                // data.category  
+"user.name"               // data.user.name
+"settings.theme.color"    // data.settings.theme.color
+```
+
+**JSONPath syntax:**
+```typescript
+"$.name"                  // data.name (alternative syntax)
+"$.user.profile.age"      // data.user.profile.age
+"$.tags[0]"              // data.tags[0] (first element)
+"$.tags[-1]"             // data.tags[-1] (last element)
+"$.products[*].price"    // All prices in products array
+"$.users[*].score"       // All scores in users array
+```
+
+### Array Aggregation
+
+For paths with `[*]` wildcard, specify how to aggregate multiple values:
+
+```typescript
+{
+  data: {
+    path: "$.reviews[*].rating",
+    direction: 'desc',
+    type: 'float',
+    aggregation: 'avg'        // Options: 'min', 'max', 'avg', 'first', 'last'
+  }
+}
+```
+
+**Aggregation options:**
+- `'min'` - Minimum value in array
+- `'max'` - Maximum value in array  
+- `'avg'` - Average value in array
+- `'first'` - First element (default)
+- `'last'` - Last element
+
+### Mixed Ordering
+
+Combine regular fields with JSON path ordering:
+
+```typescript
+const orderBy: RowOrderInput[] = [
+  { createdAt: 'desc' },              // Regular field
+  {
+    data: {
+      path: "priority",               // JSON field
+      direction: 'desc', 
+      type: 'int'
+    }
+  },
+  {
+    meta: {
+      path: "$.scores[*]",           // JSON array aggregation
+      direction: 'desc',
+      type: 'float',
+      aggregation: 'max'
+    }
+  },
+  { id: 'asc' }                      // Regular field
+];
+```
+
+### Generated SQL Examples
+
+**Regular field ordering:**
+```sql
+ORDER BY r."createdAt" DESC, r."id" ASC
+```
+
+**JSON path ordering:**
+```sql
+-- Simple path: data.name
+ORDER BY (r."data"#>>'{name}')::text ASC
+
+-- Nested path: data.user.age  
+ORDER BY (r."data"#>>'{user,age}')::int DESC
+
+-- Date field: data.createdDate
+ORDER BY (r."data"#>>'{createdDate}')::timestamp DESC
+
+-- Array aggregation: MAX(data.products[*].price)
+ORDER BY (
+  SELECT MAX((value#>>'{price}')::float)
+  FROM jsonb_array_elements(r."data"#>'{products}') AS value
+) DESC
+
+-- Date array aggregation: MAX(data.events[*].date)
+ORDER BY (
+  SELECT MAX((value#>>'{date}')::timestamp)
+  FROM jsonb_array_elements(r."data"#>'{events}') AS value
+) DESC
+
+-- Mixed ordering
+ORDER BY 
+  r."createdAt" DESC,
+  (r."data"#>>'{priority}')::int DESC,
+  (
+    SELECT MAX((value)::float)
+    FROM jsonb_array_elements(r."meta"#>'{scores}') AS value
+  ) DESC,
+  r."id" ASC
+```
+
+### Default Ordering
+
+If no `orderBy` is specified, defaults to:
+```sql
+ORDER BY r."createdAt" DESC
 ```
 
 ## 🛠️ Development
@@ -299,13 +519,24 @@ console.log(`SQL generated in ${generationTimeMs}ms`);
 
 ## 📋 Version History
 
-### v1.0 (Current)
+### v1.1 (Current)
 
+- ✅ **ORDER BY Support**: Complete sorting functionality for all field types
+- ✅ **JSON Path Ordering**: Advanced sorting by JSON field values with path expressions
+- ✅ **Array Aggregation**: Sort by aggregated values from JSON arrays (min, max, avg, first, last)
+- ✅ **Mixed Ordering**: Combine regular fields with JSON path sorting
+- ✅ **96 comprehensive tests**: All ORDER BY functionality validated
 - ✅ Complete logical operators (AND/OR/NOT)
 - ✅ All filter types (String, Bool, Date, JSON)
 - ✅ 2.6x performance improvement over Prisma
 - ✅ Full TypeScript type safety
-- ✅ Comprehensive test coverage
+
+### v1.0
+
+- ✅ WHERE clause generation for all field types
+- ✅ JSON path filtering with complex operations
+- ✅ Logical operators (AND/OR/NOT) with recursion
+- ✅ Performance benchmarking and optimization
 
 ---
 

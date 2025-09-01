@@ -11,6 +11,10 @@ import {
   JsonFilter,
   SqlResult,
   RowOrderInput,
+  JsonOrderInput,
+  SortOrder,
+  JsonValueType,
+  JsonAggregation,
 } from './types';
 
 /**
@@ -422,9 +426,17 @@ export class WhereGenerator {
 
     for (const orderItem of orderBy) {
       for (const [field, direction] of Object.entries(orderItem)) {
-        const sortOrder = direction.toUpperCase();
-        const fieldMapping = this.getFieldMapping(field);
-        orderClauses.push(`${fieldMapping} ${sortOrder}`);
+        if (typeof direction === 'string') {
+          // Regular field ordering
+          const sortOrder = direction.toUpperCase();
+          const fieldMapping = this.getFieldMapping(field);
+          orderClauses.push(`${fieldMapping} ${sortOrder}`);
+        } else if (typeof direction === 'object' && direction !== null) {
+          // JSON path ordering
+          const jsonOrder = direction as JsonOrderInput;
+          const jsonOrderClause = this.generateJsonOrderBy(field, jsonOrder);
+          orderClauses.push(jsonOrderClause);
+        }
       }
     }
 
@@ -457,6 +469,183 @@ export class WhereGenerator {
     }
 
     return mapping;
+  }
+
+  /**
+   * Generate JSON path ORDER BY clause
+   */
+  private generateJsonOrderBy(
+    fieldName: string,
+    jsonOrder: JsonOrderInput,
+  ): string {
+    const { path, direction, type, aggregation = 'first' } = jsonOrder;
+    const fieldMapping = this.getFieldMapping(fieldName); // r."data" or r."meta"
+    const sortOrder = direction.toUpperCase();
+
+    // Parse JSON path to PostgreSQL array format
+    const pgPath = this.parseJsonPath(path);
+
+    // Check if path contains wildcard for array aggregation
+    if (path.includes('[*]') || aggregation !== 'first') {
+      return this.generateArrayAggregationOrder(
+        fieldMapping,
+        pgPath,
+        type,
+        aggregation,
+        sortOrder,
+      );
+    }
+
+    // Simple path access
+    return `(${fieldMapping}#>>'{${pgPath.join(',')}}')::${this.getSqlType(type)} ${sortOrder}`;
+  }
+
+  /**
+   * Parse JSON path string to PostgreSQL path array
+   * Examples:
+   * "name" -> ["name"]
+   * "user.age" -> ["user", "age"]
+   * "$.users[0].name" -> ["users", "0", "name"]
+   * "$.products[*].price" -> ["products", "*", "price"] (* will be handled in aggregation)
+   */
+  private parseJsonPath(path: string): string[] {
+    // Remove leading $. if present
+    let cleanPath = path.startsWith('$.') ? path.substring(2) : path;
+
+    // Handle simple dot notation
+    if (!cleanPath.includes('[')) {
+      return cleanPath.split('.');
+    }
+
+    // Handle JSONPath with array access
+    const parts: string[] = [];
+    let current = '';
+    let inBracket = false;
+
+    for (let i = 0; i < cleanPath.length; i++) {
+      const char = cleanPath[i];
+
+      if (char === '[') {
+        if (current) {
+          parts.push(current);
+          current = '';
+        }
+        inBracket = true;
+      } else if (char === ']') {
+        if (current) {
+          parts.push(current); // Array index or *
+          current = '';
+        }
+        inBracket = false;
+      } else if (char === '.' && !inBracket) {
+        if (current) {
+          parts.push(current);
+          current = '';
+        }
+      } else {
+        current += char;
+      }
+    }
+
+    if (current) {
+      parts.push(current);
+    }
+
+    return parts;
+  }
+
+  /**
+   * Generate array aggregation ORDER BY for paths with [*] wildcard
+   */
+  private generateArrayAggregationOrder(
+    fieldMapping: string,
+    pgPath: string[],
+    type: JsonValueType,
+    aggregation: JsonAggregation,
+    sortOrder: string,
+  ): string {
+    const sqlType = this.getSqlType(type);
+
+    // Find the position of * in the path
+    const starIndex = pgPath.indexOf('*');
+    if (starIndex === -1) {
+      // No * found, treat as 'first' aggregation with index 0
+      if (aggregation === 'last') {
+        pgPath.push('-1');
+      } else {
+        pgPath.push('0');
+      }
+      return `(${fieldMapping}#>>'{${pgPath.join(',')}}')::${sqlType} ${sortOrder}`;
+    }
+
+    // Split path into before and after the *
+    const beforeStar = pgPath.slice(0, starIndex);
+    const afterStar = pgPath.slice(starIndex + 1);
+
+    let subQuery: string;
+    const arrayPath = beforeStar.join(',');
+
+    switch (aggregation) {
+      case 'min':
+        if (afterStar.length > 0) {
+          const subPath = afterStar.join(',');
+          subQuery = `SELECT MIN((value#>>'{${subPath}}')::${sqlType}) FROM jsonb_array_elements(${fieldMapping}#>'{${arrayPath}}') AS value`;
+        } else {
+          subQuery = `SELECT MIN((value#>>'{}'::text[])::${sqlType}) FROM jsonb_array_elements(${fieldMapping}#>'{${arrayPath}}') AS value`;
+        }
+        break;
+
+      case 'max':
+        if (afterStar.length > 0) {
+          const subPath = afterStar.join(',');
+          subQuery = `SELECT MAX((value#>>'{${subPath}}')::${sqlType}) FROM jsonb_array_elements(${fieldMapping}#>'{${arrayPath}}') AS value`;
+        } else {
+          subQuery = `SELECT MAX((value#>>'{}'::text[])::${sqlType}) FROM jsonb_array_elements(${fieldMapping}#>'{${arrayPath}}') AS value`;
+        }
+        break;
+
+      case 'avg':
+        if (afterStar.length > 0) {
+          const subPath = afterStar.join(',');
+          subQuery = `SELECT AVG((value#>>'{${subPath}}')::${sqlType}) FROM jsonb_array_elements(${fieldMapping}#>'{${arrayPath}}') AS value`;
+        } else {
+          subQuery = `SELECT AVG((value#>>'{}'::text[])::${sqlType}) FROM jsonb_array_elements(${fieldMapping}#>'{${arrayPath}}') AS value`;
+        }
+        break;
+
+      case 'last':
+        // Use negative index for last element
+        const lastPath = [...beforeStar, '-1', ...afterStar];
+        return `(${fieldMapping}#>>'{${lastPath.join(',')}}')::${sqlType} ${sortOrder}`;
+
+      case 'first':
+      default:
+        // Use index 0 for first element
+        const firstPath = [...beforeStar, '0', ...afterStar];
+        return `(${fieldMapping}#>>'{${firstPath.join(',')}}')::${sqlType} ${sortOrder}`;
+    }
+
+    return `(${subQuery}) ${sortOrder}`;
+  }
+
+  /**
+   * Map JsonValueType to PostgreSQL cast type
+   */
+  private getSqlType(type: JsonValueType): string {
+    switch (type) {
+      case 'text':
+        return 'text';
+      case 'int':
+        return 'int';
+      case 'float':
+        return 'float';
+      case 'boolean':
+        return 'boolean';
+      case 'date':
+        return 'timestamp';
+      default:
+        return 'text';
+    }
   }
 }
 
