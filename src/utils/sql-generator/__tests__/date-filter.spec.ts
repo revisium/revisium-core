@@ -262,13 +262,9 @@ describe('Date Filter Tests', () => {
       );
       const sqlResult = await pgClient.query(sql, params);
       expect(sqlResult.rows).toHaveLength(prismaResult.length);
-      expect(
-        sqlResult.rows.every(
-          (r: any) =>
-            new Date(r.createdat).toISOString() !==
-            excludeDates[0].toISOString(),
-        ),
-      ).toBe(true);
+      expect(sqlResult.rows.map((r: TestRow) => r.id).sort()).toEqual(
+        prismaResult.map((r: TestRow) => r.id).sort(),
+      );
     });
 
     it('should filter with string date value', async () => {
