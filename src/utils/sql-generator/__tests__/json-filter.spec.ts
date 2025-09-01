@@ -257,6 +257,54 @@ describe('JSON Filter Tests', () => {
       expect(sqlResult.rows.length).toBeGreaterThan(0);
     });
 
+    it('should filter by JSON path string starts with - case insensitive', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const whereConditions: WhereConditions = {
+        data: {
+          path: ['title'],
+          string_starts_with: 'senior', // lowercase to test insensitive mode
+          mode: 'insensitive',
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should find rows with titles starting with 'Senior' (case insensitive)
+      expect(sqlResult.rows.length).toBeGreaterThan(0);
+    });
+
+    it('should filter by JSON path string ends with - case insensitive', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const whereConditions: WhereConditions = {
+        data: {
+          path: ['title'],
+          string_ends_with: 'DEVELOPER', // uppercase to test insensitive mode
+          mode: 'insensitive',
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should find rows with titles ending with 'Developer' (case insensitive)
+      expect(sqlResult.rows.length).toBeGreaterThan(0);
+    });
+
     it('should filter by JSON path number less than', async () => {
       const { table } = await createTableWithJsonData(prismaService);
 
@@ -561,6 +609,79 @@ describe('JSON Filter Tests', () => {
         const categoryValue = row.data?.category;
         expect(categoryValue).not.toBe('guest');
       }
+    });
+
+    it('should handle JSON equals with numeric values', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const whereConditions: WhereConditions = {
+        data: {
+          path: ['age'],
+          equals: 35, // Non-string value
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should work with numeric values
+      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      expect(params).toContain('35'); // JSON.stringify(35) = "35"
+    });
+
+    it('should handle JSON equals with boolean values', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const whereConditions: WhereConditions = {
+        data: {
+          path: ['isActive'],
+          equals: true, // Boolean value
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should work with boolean values
+      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      expect(params).toContain('true'); // JSON.stringify(true) = "true"
+    });
+
+    it('should handle JSON equals with object values', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const objectValue = { nested: 'value', count: 42 };
+      const whereConditions: WhereConditions = {
+        data: {
+          path: ['config'],
+          equals: objectValue, // Object value
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should work with object values
+      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      expect(params).toContain(JSON.stringify(objectValue));
     });
   });
 });

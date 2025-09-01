@@ -135,11 +135,11 @@ describe('Date Filter Tests', () => {
           },
         });
 
-      // Test our dynamic SQL generation
+      // Test our dynamic SQL generation - use same Date objects as Prisma
       const whereConditions: WhereConditions = {
         createdAt: {
-          gte: startDate.toISOString(),
-          lte: endDate.toISOString(),
+          gte: startDate,
+          lte: endDate,
         },
       };
 
@@ -339,6 +339,84 @@ describe('Date Filter Tests', () => {
 
       // Should work with publishedAt field
       expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should filter by date range with string dates', async () => {
+      const { table } = await createTableWithDateData(prismaService);
+
+      const whereConditions: WhereConditions = {
+        createdAt: {
+          gte: '2024-12-15T00:00:00.000Z',
+          lte: '2025-01-20T00:00:00.000Z',
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should work with string dates
+      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      expect(params).toContain('2024-12-15T00:00:00.000Z');
+      expect(params).toContain('2025-01-20T00:00:00.000Z');
+    });
+
+    it('should handle mixed Date and string date filters', async () => {
+      const { table } = await createTableWithDateData(prismaService);
+
+      const whereConditions: WhereConditions = {
+        AND: [
+          { createdAt: { gte: new Date('2024-12-01T00:00:00.000Z') } },
+          { updatedAt: { lte: '2025-02-01T00:00:00.000Z' } },
+        ],
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should handle mixed Date and string dates
+      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle string dates in in/notIn arrays', async () => {
+      const { table } = await createTableWithDateData(prismaService);
+
+      const stringDates = [
+        '2024-12-01T00:00:00.000Z',
+        '2025-01-01T00:00:00.000Z',
+      ];
+
+      const whereConditions: WhereConditions = {
+        createdAt: {
+          in: stringDates,
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereConditions,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should work with string dates in arrays
+      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      stringDates.forEach((date) => {
+        expect(params).toContain(date);
+      });
     });
   });
 });

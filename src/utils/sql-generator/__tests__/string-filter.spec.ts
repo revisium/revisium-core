@@ -271,6 +271,29 @@ describe('String Filter Tests', () => {
       expect(sqlResult.rows.length).toBeGreaterThan(0);
     });
 
+    it('should support equals with case-insensitive mode', async () => {
+      const { table } = await createTableWithStringData(prismaService);
+
+      const whereCondition: WhereConditions = {
+        createdId: {
+          equals: 'CREATED-ALPHA', // uppercase to test insensitive mode
+          mode: 'insensitive',
+        },
+      };
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        whereCondition,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Should find rows with 'created-alpha' (case insensitive)
+      expect(sqlResult.rows.length).toBeGreaterThan(0);
+    });
+
     it('should support full-text search for StringFilter', async () => {
       const { table } = await createTableWithStringData(prismaService);
 

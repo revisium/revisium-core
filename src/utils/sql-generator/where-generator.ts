@@ -241,6 +241,7 @@ export class WhereGenerator {
     }
 
     const filter = condition as DateFilter;
+    const clauses: string[] = [];
 
     if (filter.equals !== undefined) {
       const dateStr =
@@ -253,25 +254,30 @@ export class WhereGenerator {
     if (filter.gt !== undefined) {
       const dateStr =
         filter.gt instanceof Date ? filter.gt.toISOString() : filter.gt;
-      return `${fieldName} > ${this.addParam(dateStr)}`;
+      clauses.push(`${fieldName} > ${this.addParam(dateStr)}`);
     }
 
     if (filter.gte !== undefined) {
       const dateStr =
         filter.gte instanceof Date ? filter.gte.toISOString() : filter.gte;
-      return `${fieldName} >= ${this.addParam(dateStr)}`;
+      clauses.push(`${fieldName} >= ${this.addParam(dateStr)}`);
     }
 
     if (filter.lt !== undefined) {
       const dateStr =
         filter.lt instanceof Date ? filter.lt.toISOString() : filter.lt;
-      return `${fieldName} < ${this.addParam(dateStr)}`;
+      clauses.push(`${fieldName} < ${this.addParam(dateStr)}`);
     }
 
     if (filter.lte !== undefined) {
       const dateStr =
         filter.lte instanceof Date ? filter.lte.toISOString() : filter.lte;
-      return `${fieldName} <= ${this.addParam(dateStr)}`;
+      clauses.push(`${fieldName} <= ${this.addParam(dateStr)}`);
+    }
+
+    // Return early if we have basic range conditions
+    if (clauses.length > 0) {
+      return clauses.join(' AND ');
     }
 
     if (filter.in !== undefined) {

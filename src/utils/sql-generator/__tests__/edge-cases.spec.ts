@@ -62,6 +62,21 @@ describe('Edge Cases and Error Handling Tests', () => {
       expect(result.params).toEqual(['test-id', true]);
     });
 
+    it('should test getParams() method directly', () => {
+      const generator = new WhereGenerator();
+
+      // Initially should be empty
+      expect(generator.getParams()).toEqual([]);
+
+      // Add some parameters manually using addParam
+      generator.addParam('param1');
+      generator.addParam('param2');
+      generator.addParam(42);
+
+      // getParams() should return all added parameters
+      expect(generator.getParams()).toEqual(['param1', 'param2', 42]);
+    });
+
     it('should handle single path JSON filter', () => {
       const generator = new WhereGenerator();
       const result = generator.generateWhere({
