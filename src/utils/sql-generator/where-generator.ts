@@ -10,6 +10,7 @@ import {
   DateFilter,
   JsonFilter,
   SqlResult,
+  RowOrderInput,
 } from './types';
 
 /**
@@ -408,6 +409,55 @@ export class WhereGenerator {
 
     throw new Error(`Unsupported JsonFilter: ${JSON.stringify(condition)}`);
   }
+
+  /**
+   * Generate ORDER BY clause from order conditions
+   */
+  generateOrderBy(orderBy?: RowOrderInput[]): string {
+    if (!orderBy || orderBy.length === 0) {
+      return 'r."createdAt" DESC'; // Default ordering
+    }
+
+    const orderClauses: string[] = [];
+
+    for (const orderItem of orderBy) {
+      for (const [field, direction] of Object.entries(orderItem)) {
+        const sortOrder = direction.toUpperCase();
+        const fieldMapping = this.getFieldMapping(field);
+        orderClauses.push(`${fieldMapping} ${sortOrder}`);
+      }
+    }
+
+    return orderClauses.length > 0
+      ? orderClauses.join(', ')
+      : 'r."createdAt" DESC'; // Fallback to default
+  }
+
+  /**
+   * Map field names to SQL column references
+   */
+  private getFieldMapping(fieldName: string): string {
+    const fieldMappings: Record<string, string> = {
+      versionId: 'r."versionId"',
+      createdId: 'r."createdId"',
+      id: 'r."id"',
+      readonly: 'r."readonly"',
+      createdAt: 'r."createdAt"',
+      updatedAt: 'r."updatedAt"',
+      publishedAt: 'r."publishedAt"',
+      data: 'r."data"',
+      meta: 'r."meta"',
+      hash: 'r."hash"',
+      schemaHash: 'r."schemaHash"',
+    };
+
+    const mapping = fieldMappings[fieldName];
+    if (!mapping) {
+      throw new Error(`Unsupported ORDER BY field: ${fieldName}`);
+    }
+
+    return mapping;
+  }
 }
 
 /**
@@ -418,11 +468,14 @@ export function generateGetRowsQuery(
   take: number,
   skip: number,
   whereConditions?: WhereConditions,
+  orderBy?: RowOrderInput[],
 ): SqlResult {
   const whereGenerator = new WhereGenerator(4); // Start from $4 since $1-$3 are already used
   const whereClause = whereConditions
     ? whereGenerator.generateWhere(whereConditions)
     : { sql: 'TRUE', params: [] };
+
+  const orderByClause = whereGenerator.generateOrderBy(orderBy);
 
   const sql = `
 SELECT 
@@ -441,7 +494,7 @@ FROM "Row" r
 INNER JOIN "_RowToTable" rt ON rt."A" = r."versionId"
 WHERE rt."B" = $1 
   AND (${whereClause.sql})
-ORDER BY r."createdAt" DESC
+ORDER BY ${orderByClause}
 LIMIT $2
 OFFSET $3
   `.trim();
