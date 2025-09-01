@@ -250,25 +250,32 @@ describe('String Filter Tests', () => {
 
     it('should support case-insensitive mode for StringFilter', async () => {
       const { table } = await createTableWithStringData(prismaService);
-
       const whereCondition: WhereConditions = {
         hash: {
           contains: 'SPECIAL',
           mode: 'insensitive',
         },
       };
-
+      // Compare generated SQL results directly against Prisma’s own query
+      const prismaResult = await prismaService.table
+        .findUniqueOrThrow({ where: { versionId: table.versionId } })
+        .rows({
+          take: 10,
+          skip: 0,
+          orderBy: { createdAt: Prisma.SortOrder.desc },
+          where: { hash: { contains: 'SPECIAL', mode: 'insensitive' } },
+        });
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
         10,
         0,
         whereCondition,
       );
-
       const sqlResult = await pgClient.query(sql, params);
-
-      // Should find rows with 'special' (case insensitive)
-      expect(sqlResult.rows.length).toBeGreaterThan(0);
+      expect(sqlResult.rows).toHaveLength(prismaResult.length);
+      expect(sqlResult.rows.map((r: TestRow) => r.id).sort()).toEqual(
+        prismaResult.map((r: TestRow) => r.id).sort(),
+      );
     });
 
     it('should support equals with case-insensitive mode', async () => {

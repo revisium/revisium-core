@@ -45,7 +45,7 @@ describe('Logical Operators Tests', () => {
               { readonly: false },
               {
                 id: {
-                  startsWith: 'user-',
+                  startsWith: 'json-test-',
                 },
               },
             ],
@@ -58,7 +58,7 @@ describe('Logical Operators Tests', () => {
           { readonly: false },
           {
             id: {
-              startsWith: 'user-',
+              startsWith: 'json-test-',
             },
           },
         ],
@@ -84,7 +84,21 @@ describe('Logical Operators Tests', () => {
 
     it('should handle nested AND conditions', async () => {
       const { table } = await createTableWithJsonData(prismaService);
-
+      const prismaResult = await prismaService.table
+        .findUniqueOrThrow({ where: { versionId: table.versionId } })
+        .rows({
+          take: 10,
+          skip: 0,
+          orderBy: { createdAt: Prisma.SortOrder.desc },
+          where: {
+            AND: [
+              { data: { path: ['category'], equals: 'admin' } },
+              {
+                AND: [{ readonly: false }, { data: { path: ['age'], gt: 30 } }],
+              },
+            ],
+          },
+        });
       const whereConditions: WhereConditions = {
         AND: [
           {
@@ -106,18 +120,19 @@ describe('Logical Operators Tests', () => {
           },
         ],
       };
-
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
         10,
         0,
         whereConditions,
       );
-
       const sqlResult = await pgClient.query(sql, params);
-
-      // Should return results matching nested AND logic
-      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      expect(sqlResult.rows).toHaveLength(prismaResult.length);
+      if (prismaResult.length) {
+        expect(sqlResult.rows.map((r: TestRow) => r.id).sort()).toEqual(
+          prismaResult.map((r: TestRow) => r.id).sort(),
+        );
+      }
     });
   });
 
@@ -251,7 +266,14 @@ describe('Logical Operators Tests', () => {
 
     it('should handle NOT with JSON conditions', async () => {
       const { table } = await createTableWithJsonData(prismaService);
-
+      const prismaResult = await prismaService.table
+        .findUniqueOrThrow({ where: { versionId: table.versionId } })
+        .rows({
+          take: 10,
+          skip: 0,
+          orderBy: { createdAt: Prisma.SortOrder.desc },
+          where: { NOT: { data: { path: ['category'], equals: 'guest' } } },
+        });
       const whereConditions: WhereConditions = {
         NOT: {
           data: {
@@ -260,18 +282,19 @@ describe('Logical Operators Tests', () => {
           },
         },
       };
-
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
         10,
         0,
         whereConditions,
       );
-
       const sqlResult = await pgClient.query(sql, params);
-
-      // Should exclude rows with category = 'guest'
-      expect(sqlResult.rows.length).toBeGreaterThan(0);
+      expect(sqlResult.rows).toHaveLength(prismaResult.length);
+      if (prismaResult.length) {
+        expect(sqlResult.rows.map((r: TestRow) => r.id).sort()).toEqual(
+          prismaResult.map((r: TestRow) => r.id).sort(),
+        );
+      }
     });
   });
 

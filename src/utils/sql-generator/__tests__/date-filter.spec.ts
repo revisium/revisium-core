@@ -209,50 +209,66 @@ describe('Date Filter Tests', () => {
   describe('Advanced Date Operations', () => {
     it('should filter by date less than or equal', async () => {
       const { table } = await createTableWithDateData(prismaService);
-
       const maxDate = new Date('2025-01-10T00:00:00.000Z');
-
       const whereConditions: WhereConditions = {
         createdAt: {
           lte: maxDate.toISOString(),
         },
       };
-
+      // Prisma baseline
+      const prismaResult = await prismaService.table
+        .findUniqueOrThrow({ where: { versionId: table.versionId } })
+        .rows({
+          take: 10,
+          skip: 0,
+          orderBy: { createdAt: Prisma.SortOrder.desc },
+          where: { createdAt: { lte: maxDate } },
+        });
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
         10,
         0,
         whereConditions,
       );
-
       const sqlResult = await pgClient.query(sql, params);
-
-      // Should find rows with dates <= maxDate
-      expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+      expect(sqlResult.rows).toHaveLength(prismaResult.length);
+      expect(sqlResult.rows.map((r: TestRow) => r.id).sort()).toEqual(
+        prismaResult.map((r: TestRow) => r.id).sort(),
+      );
     });
 
     it('should filter by date not in array', async () => {
       const { table, dates } = await createTableWithDateData(prismaService);
-
       const excludeDates = [dates[1]]; // Exclude second date
-
       const whereConditions: WhereConditions = {
         createdAt: {
           notIn: excludeDates.map((d) => d.toISOString()),
         },
       };
-
+      // Prisma baseline
+      const prismaResult = await prismaService.table
+        .findUniqueOrThrow({ where: { versionId: table.versionId } })
+        .rows({
+          take: 10,
+          skip: 0,
+          orderBy: { createdAt: Prisma.SortOrder.desc },
+          where: { createdAt: { notIn: excludeDates } },
+        });
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
         10,
         0,
         whereConditions,
       );
-
       const sqlResult = await pgClient.query(sql, params);
-
-      // Should exclude the specified date
-      expect(sqlResult.rows.length).toBeGreaterThan(0);
+      expect(sqlResult.rows).toHaveLength(prismaResult.length);
+      expect(
+        sqlResult.rows.every(
+          (r: any) =>
+            new Date(r.createdat).toISOString() !==
+            excludeDates[0].toISOString(),
+        ),
+      ).toBe(true);
     });
 
     it('should filter with string date value', async () => {
