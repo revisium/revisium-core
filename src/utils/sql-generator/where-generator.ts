@@ -693,25 +693,3 @@ OFFSET $3
     params: [tableId, take, skip, ...whereClause.params],
   };
 }
-
-/**
- * Helper function to generate query with performance timing
- */
-export function generateGetRowsQueryWithTiming(
-  tableId: string,
-  take: number,
-  skip: number,
-  whereConditions?: WhereConditions,
-): SqlResult & { generationTimeMs: number } {
-  const startTime = process.hrtime.bigint();
-
-  const result = generateGetRowsQuery(tableId, take, skip, whereConditions);
-
-  const endTime = process.hrtime.bigint();
-  const generationTimeMs = Number(endTime - startTime) / 1_000_000; // Convert to milliseconds
-
-  return {
-    ...result,
-    generationTimeMs,
-  };
-}

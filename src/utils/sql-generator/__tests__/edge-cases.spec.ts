@@ -550,4 +550,59 @@ describe('Edge Cases and Error Handling Tests', () => {
       });
     });
   });
+
+  describe('Error Handling Coverage', () => {
+    it('should throw error for unsupported ORDER BY field', () => {
+      const generator = new WhereGenerator();
+
+      expect(() => {
+        generator.generateOrderBy([{ unsupportedField: 'asc' } as any]);
+      }).toThrow('Unsupported ORDER BY field: unsupportedField');
+    });
+
+    it('should handle getSqlType with all supported types', () => {
+      const generator = new WhereGenerator();
+
+      // Test all supported JsonValueType cases
+      const testCases = [
+        { type: 'text' as const, expected: 'text' },
+        { type: 'int' as const, expected: 'int' },
+        { type: 'float' as const, expected: 'float' },
+        { type: 'boolean' as const, expected: 'boolean' },
+        { type: 'timestamp' as const, expected: 'timestamp' },
+      ];
+
+      testCases.forEach(({ type, expected }) => {
+        const result = (generator as any).getSqlType(type);
+        expect(result).toBe(expected);
+      });
+    });
+
+    it('should handle getSqlType default case', () => {
+      const generator = new WhereGenerator();
+
+      // Test default case with invalid type
+      const result = (generator as any).getSqlType('invalid-type' as any);
+      expect(result).toBe('text');
+    });
+
+    it('should handle empty aggregation string in JSON ordering', () => {
+      const generator = new WhereGenerator();
+
+      // Test case where aggregation might be empty or undefined
+      const result = generator.generateOrderBy([
+        {
+          data: {
+            path: 'test',
+            direction: 'asc',
+            type: 'text',
+            aggregation: undefined,
+          },
+        },
+      ]);
+
+      expect(result).toContain('r."data"');
+      expect(result).toContain('ASC');
+    });
+  });
 });

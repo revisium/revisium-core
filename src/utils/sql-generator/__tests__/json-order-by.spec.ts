@@ -248,6 +248,88 @@ describe('JSON Path ORDER BY Tests', () => {
       expect(sql).toContain('scores');
     });
 
+    it('should order by array min aggregation with subPath ($.products[*].price min)', async () => {
+      const { table } = await createTableWithComplexJsonData(prismaService);
+
+      const orderBy: RowOrderInput[] = [
+        {
+          data: {
+            path: '$.products[*].price',
+            direction: 'asc',
+            type: 'float',
+            aggregation: 'min',
+          },
+        },
+      ];
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        undefined,
+        orderBy,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Verify results are sorted by min product price in ascending order
+      expect(sqlResult.rows.length).toBeGreaterThan(0);
+
+      const names = sqlResult.rows.map((row: any) => {
+        const dataObj = safeParseJSON(row.data);
+        return dataObj?.name || '';
+      });
+
+      // Expected order by min price: Eve (49.99), Bob (79.99), Charlie (89.5), Alice (99.99), David (159.99)
+      expect(names).toEqual(['Eve', 'Bob', 'Charlie', 'Alice', 'David']);
+
+      // Verify SQL generation contains MIN with subPath
+      expect(sql).toContain('ORDER BY');
+      expect(sql).toContain("SELECT MIN((value#>>'{price}')::float)");
+      expect(sql).toContain('FROM jsonb_array_elements');
+    });
+
+    it('should order by array avg aggregation without subPath ($.scores[*] avg)', async () => {
+      const { table } = await createTableWithComplexJsonData(prismaService);
+
+      const orderBy: RowOrderInput[] = [
+        {
+          data: {
+            path: '$.scores[*]',
+            direction: 'desc',
+            type: 'float',
+            aggregation: 'avg',
+          },
+        },
+      ];
+
+      const { sql, params } = generateGetRowsQuery(
+        table.versionId,
+        10,
+        0,
+        undefined,
+        orderBy,
+      );
+
+      const sqlResult = await pgClient.query(sql, params);
+
+      // Verify results are sorted by average scores in descending order
+      expect(sqlResult.rows.length).toBeGreaterThan(0);
+
+      const names = sqlResult.rows.map((row: any) => {
+        const dataObj = safeParseJSON(row.data);
+        return dataObj?.name || '';
+      });
+
+      // Expected order by avg scores: David (~91.3), Alice (90), Charlie (~89), Eve (~81.7), Bob (75)
+      expect(names).toEqual(['David', 'Alice', 'Charlie', 'Eve', 'Bob']);
+
+      // Verify SQL generation contains AVG without subPath
+      expect(sql).toContain('ORDER BY');
+      expect(sql).toContain("SELECT AVG((value#>>'{}':text[])::float");
+      expect(sql).toContain('FROM jsonb_array_elements');
+    });
+
     it('should order by array avg aggregation ($.reviews[*].rating avg)', async () => {
       const { table } = await createTableWithComplexJsonData(prismaService);
 
