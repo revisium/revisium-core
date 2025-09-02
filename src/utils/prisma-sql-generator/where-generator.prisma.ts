@@ -1,0 +1,754 @@
+import { Prisma } from '@prisma/client';
+import {
+  WhereConditions,
+  StringFilter,
+  BoolFilter,
+  DateFilter,
+  JsonFilter,
+  GetRowsOptions,
+  RowOrderInput,
+} from './types';
+
+/**
+ * Main WHERE clause generator using Prisma.sql template literals
+ * This is a complete rewrite of the existing where-generator.ts using Prisma.sql approach
+ */
+export class WhereGeneratorPrisma {
+  /**
+   * Generates WHERE clause using Prisma.sql template literals
+   * Returns Prisma.Sql node instead of {sql, params}
+   */
+  generateWhere(conditions: WhereConditions): Prisma.Sql {
+    if (!conditions || Object.keys(conditions).length === 0) {
+      return Prisma.sql`TRUE`;
+    }
+
+    return this.processConditions(conditions);
+  }
+
+  /**
+   * Process conditions and combine them with AND
+   */
+  private processConditions(conditions: WhereConditions): Prisma.Sql {
+    const clauses: Prisma.Sql[] = [];
+
+    // Logical operators first - Stage 3
+    if (Array.isArray(conditions.AND) && conditions.AND.length > 0) {
+      const andClauses = conditions.AND.map((cond) =>
+        this.processConditions(cond),
+      ).filter((c) => c.inspect().sql !== 'TRUE');
+      if (andClauses.length > 0) {
+        clauses.push(Prisma.sql`(${this.combineWithAnd(andClauses)})`);
+      }
+    }
+
+    if (Array.isArray(conditions.OR) && conditions.OR.length > 0) {
+      const orClauses = conditions.OR.map((cond) =>
+        this.processConditions(cond),
+      ).filter((c) => c.inspect().sql !== 'TRUE');
+      if (orClauses.length > 0) {
+        clauses.push(Prisma.sql`(${this.combineWithOr(orClauses)})`);
+      }
+    }
+
+    if (conditions.NOT) {
+      const notClause = this.processConditions(conditions.NOT);
+      clauses.push(Prisma.sql`NOT (${notClause})`);
+    }
+
+    // String fields - Stage 2
+    if (conditions.versionId !== undefined) {
+      clauses.push(this.processStringField('versionId', conditions.versionId));
+    }
+    if (conditions.createdId !== undefined) {
+      clauses.push(this.processStringField('createdId', conditions.createdId));
+    }
+    if (conditions.id !== undefined) {
+      clauses.push(this.processStringField('id', conditions.id));
+    }
+    if (conditions.hash !== undefined) {
+      clauses.push(this.processStringField('hash', conditions.hash));
+    }
+    if (conditions.schemaHash !== undefined) {
+      clauses.push(
+        this.processStringField('schemaHash', conditions.schemaHash),
+      );
+    }
+
+    // Boolean field - Stage 2
+    if (conditions.readonly !== undefined) {
+      clauses.push(this.processBoolField('readonly', conditions.readonly));
+    }
+
+    // Date fields - Stage 2
+    if (conditions.createdAt !== undefined) {
+      clauses.push(this.processDateField('createdAt', conditions.createdAt));
+    }
+    if (conditions.updatedAt !== undefined) {
+      clauses.push(this.processDateField('updatedAt', conditions.updatedAt));
+    }
+    if (conditions.publishedAt !== undefined) {
+      clauses.push(
+        this.processDateField('publishedAt', conditions.publishedAt),
+      );
+    }
+
+    // JSON fields - Stage 3
+    if (conditions.data !== undefined) {
+      clauses.push(this.processJsonField('data', conditions.data));
+    }
+    if (conditions.meta !== undefined) {
+      clauses.push(this.processJsonField('meta', conditions.meta));
+    }
+
+    if (clauses.length === 0) {
+      return Prisma.sql`TRUE`;
+    }
+
+    if (clauses.length === 1) {
+      return clauses[0];
+    }
+
+    // Combine multiple clauses with AND
+    return this.combineWithAnd(clauses);
+  }
+
+  /**
+   * Combine multiple SQL clauses with AND
+   */
+  private combineWithAnd(clauses: Prisma.Sql[]): Prisma.Sql {
+    if (clauses.length === 0) {
+      return Prisma.sql`TRUE`;
+    }
+
+    if (clauses.length === 1) {
+      return clauses[0];
+    }
+
+    // Build: clause1 AND clause2 AND clause3...
+    let result = clauses[0];
+    for (let i = 1; i < clauses.length; i++) {
+      result = Prisma.sql`${result} AND ${clauses[i]}`;
+    }
+    return result;
+  }
+
+  /**
+   * Combine multiple SQL clauses with OR
+   */
+  private combineWithOr(clauses: Prisma.Sql[]): Prisma.Sql {
+    if (clauses.length === 0) {
+      return Prisma.sql`FALSE`;
+    }
+
+    if (clauses.length === 1) {
+      return clauses[0];
+    }
+
+    // Build: clause1 OR clause2 OR clause3...
+    let result = clauses[0];
+    for (let i = 1; i < clauses.length; i++) {
+      result = Prisma.sql`${result} OR ${clauses[i]}`;
+    }
+    return result;
+  }
+
+  /**
+   * Generates ORDER BY clause using Prisma.sql template literals
+   */
+  generateOrderBy(orderBy: any[]): Prisma.Sql {
+    if (!orderBy || orderBy.length === 0) {
+      return Prisma.sql`r."createdAt" DESC`;
+    }
+
+    const orderClauses: Prisma.Sql[] = [];
+
+    for (const orderItem of orderBy) {
+      for (const [field, direction] of Object.entries(orderItem)) {
+        if (typeof direction === 'string') {
+          // Regular field ordering - Stage 6
+          const fieldRef = this.getFieldReference(field);
+          const sortOrder = Prisma.raw(direction.toUpperCase());
+          orderClauses.push(Prisma.sql`${fieldRef} ${sortOrder}`);
+        } else if (typeof direction === 'object' && direction !== null) {
+          // JSON path ordering - Stage 7 (TODO)
+          const jsonOrderClause = this.generateJsonOrderBy(field, direction);
+          orderClauses.push(jsonOrderClause);
+        }
+      }
+    }
+
+    return orderClauses.length > 0
+      ? this.combineOrderBy(orderClauses)
+      : Prisma.sql`r."createdAt" DESC`;
+  }
+
+  /**
+   * Processes string field conditions
+   */
+  private processStringField(
+    field: string,
+    condition: string | StringFilter,
+  ): Prisma.Sql {
+    const fieldRef = Prisma.raw(`r."${field}"`);
+
+    if (typeof condition === 'string') {
+      // Simple equality: { id: "value" }
+      return Prisma.sql`${fieldRef} = ${condition}`;
+    }
+
+    // Complex StringFilter object
+    const filter = condition as StringFilter;
+    const mode = filter.mode || 'default';
+    const isInsensitive = mode === 'insensitive';
+
+    if (filter.equals !== undefined) {
+      if (isInsensitive) {
+        return Prisma.sql`${fieldRef} ILIKE ${filter.equals}`;
+      }
+      return Prisma.sql`${fieldRef} = ${filter.equals}`;
+    }
+
+    if (filter.contains !== undefined) {
+      const pattern = `%${filter.contains}%`;
+      if (isInsensitive) {
+        return Prisma.sql`${fieldRef} ILIKE ${pattern}`;
+      }
+      return Prisma.sql`${fieldRef} LIKE ${pattern}`;
+    }
+
+    if (filter.startsWith !== undefined) {
+      const pattern = `${filter.startsWith}%`;
+      if (isInsensitive) {
+        return Prisma.sql`${fieldRef} ILIKE ${pattern}`;
+      }
+      return Prisma.sql`${fieldRef} LIKE ${pattern}`;
+    }
+
+    if (filter.endsWith !== undefined) {
+      const pattern = `%${filter.endsWith}`;
+      if (isInsensitive) {
+        return Prisma.sql`${fieldRef} ILIKE ${pattern}`;
+      }
+      return Prisma.sql`${fieldRef} LIKE ${pattern}`;
+    }
+
+    if (filter.in !== undefined) {
+      if (Array.isArray(filter.in) && filter.in.length === 0) {
+        return Prisma.sql`FALSE`;
+      }
+      return Prisma.sql`${fieldRef} IN (${Prisma.join(filter.in)})`;
+    }
+
+    if (filter.notIn !== undefined) {
+      if (Array.isArray(filter.notIn) && filter.notIn.length === 0) {
+        return Prisma.sql`TRUE`;
+      }
+      return Prisma.sql`${fieldRef} NOT IN (${Prisma.join(filter.notIn)})`;
+    }
+
+    if (filter.gt !== undefined) {
+      return Prisma.sql`${fieldRef} > ${filter.gt}`;
+    }
+
+    if (filter.gte !== undefined) {
+      return Prisma.sql`${fieldRef} >= ${filter.gte}`;
+    }
+
+    if (filter.lt !== undefined) {
+      return Prisma.sql`${fieldRef} < ${filter.lt}`;
+    }
+
+    if (filter.lte !== undefined) {
+      return Prisma.sql`${fieldRef} <= ${filter.lte}`;
+    }
+
+    if (filter.not !== undefined) {
+      return Prisma.sql`${fieldRef} != ${filter.not}`;
+    }
+
+    if (filter.search !== undefined) {
+      // PostgreSQL full-text search - exactly like existing generator
+      return Prisma.sql`to_tsvector('simple', ${fieldRef}) @@ plainto_tsquery('simple', ${filter.search})`;
+    }
+
+    throw new Error(`Unsupported StringFilter: ${JSON.stringify(filter)}`);
+  }
+
+  /**
+   * Processes boolean field conditions
+   */
+  private processBoolField(
+    field: string,
+    condition: boolean | BoolFilter,
+  ): Prisma.Sql {
+    const fieldRef = Prisma.raw(`r."${field}"`);
+
+    if (typeof condition === 'boolean') {
+      return Prisma.sql`${fieldRef} = ${condition}`;
+    }
+
+    const filter = condition as BoolFilter;
+    if (filter.equals !== undefined) {
+      return Prisma.sql`${fieldRef} = ${filter.equals}`;
+    }
+
+    if (filter.not !== undefined) {
+      return Prisma.sql`${fieldRef} != ${filter.not}`;
+    }
+
+    throw new Error(`Unsupported BoolFilter: ${JSON.stringify(filter)}`);
+  }
+
+  /**
+   * Processes date field conditions
+   */
+  private processDateField(
+    field: string,
+    condition: string | Date | DateFilter,
+  ): Prisma.Sql {
+    const fieldRef = Prisma.raw(`r."${field}"`);
+
+    if (typeof condition === 'string' || condition instanceof Date) {
+      const dateStr =
+        condition instanceof Date ? condition.toISOString() : condition;
+      return Prisma.sql`${fieldRef} = ${dateStr}::timestamp`;
+    }
+
+    const filter = condition as DateFilter;
+    const clauses: Prisma.Sql[] = [];
+
+    if (filter.equals !== undefined) {
+      const dateStr =
+        filter.equals instanceof Date
+          ? filter.equals.toISOString()
+          : filter.equals;
+      return Prisma.sql`${fieldRef} = ${dateStr}::timestamp`;
+    }
+
+    if (filter.gt !== undefined) {
+      const dateStr =
+        filter.gt instanceof Date ? filter.gt.toISOString() : filter.gt;
+      clauses.push(Prisma.sql`${fieldRef} > ${dateStr}::timestamp`);
+    }
+
+    if (filter.gte !== undefined) {
+      const dateStr =
+        filter.gte instanceof Date ? filter.gte.toISOString() : filter.gte;
+      clauses.push(Prisma.sql`${fieldRef} >= ${dateStr}::timestamp`);
+    }
+
+    if (filter.lt !== undefined) {
+      const dateStr =
+        filter.lt instanceof Date ? filter.lt.toISOString() : filter.lt;
+      clauses.push(Prisma.sql`${fieldRef} < ${dateStr}::timestamp`);
+    }
+
+    if (filter.lte !== undefined) {
+      const dateStr =
+        filter.lte instanceof Date ? filter.lte.toISOString() : filter.lte;
+      clauses.push(Prisma.sql`${fieldRef} <= ${dateStr}::timestamp`);
+    }
+
+    // Return early if we have basic range conditions
+    if (clauses.length > 0) {
+      return this.combineWithAnd(clauses);
+    }
+
+    if (filter.in !== undefined) {
+      if (Array.isArray(filter.in) && filter.in.length === 0) {
+        return Prisma.sql`FALSE`;
+      }
+      const dateStrs = filter.in.map((d) =>
+        d instanceof Date ? d.toISOString() : d,
+      );
+      const castDates = dateStrs.map((d) => Prisma.sql`${d}::timestamp`);
+      return Prisma.sql`${fieldRef} IN (${Prisma.join(castDates)})`;
+    }
+
+    if (filter.notIn !== undefined) {
+      if (Array.isArray(filter.notIn) && filter.notIn.length === 0) {
+        return Prisma.sql`TRUE`;
+      }
+      const dateStrs = filter.notIn.map((d) =>
+        d instanceof Date ? d.toISOString() : d,
+      );
+      const castDates = dateStrs.map((d) => Prisma.sql`${d}::timestamp`);
+      return Prisma.sql`${fieldRef} NOT IN (${Prisma.join(castDates)})`;
+    }
+
+    throw new Error(`Unsupported DateFilter: ${JSON.stringify(filter)}`);
+  }
+
+  /**
+   * Processes JSON field conditions (data, meta)
+   */
+  private processJsonField(field: string, condition: JsonFilter): Prisma.Sql {
+    const fieldRef = Prisma.raw(`r."${field}"`);
+    const { path, mode = 'default' } = condition;
+    const isInsensitive = mode === 'insensitive';
+
+    // Build JSON path for text operations
+    // Single path: field->>$1, Multiple paths: field#>>$1 with array format {path1,path2}
+    const pathParam = path.length === 1 ? path[0] : `{${path.join(',')}}`;
+    const jsonTextPath =
+      path.length === 1
+        ? Prisma.sql`${fieldRef}->>${pathParam}`
+        : Prisma.sql`${fieldRef}#>>${pathParam}`;
+
+    if (condition.equals !== undefined) {
+      if (typeof condition.equals === 'string' && isInsensitive) {
+        return Prisma.sql`LOWER(${jsonTextPath}) = LOWER(${condition.equals})`;
+      }
+      // For string values, compare as text without JSON encoding
+      if (typeof condition.equals === 'string') {
+        return Prisma.sql`${jsonTextPath} = ${condition.equals}`;
+      }
+      // For non-string values (numbers, booleans, objects), use JSON comparison
+      const jsonValue = JSON.stringify(condition.equals);
+      return Prisma.sql`${jsonTextPath} = ${jsonValue}`;
+    }
+
+    if (condition.string_contains !== undefined) {
+      const pattern = `%${condition.string_contains}%`;
+      if (isInsensitive) {
+        return Prisma.sql`${jsonTextPath} ILIKE ${pattern}`;
+      }
+      return Prisma.sql`${jsonTextPath} LIKE ${pattern}`;
+    }
+
+    if (condition.string_starts_with !== undefined) {
+      const pattern = `${condition.string_starts_with}%`;
+      if (isInsensitive) {
+        return Prisma.sql`${jsonTextPath} ILIKE ${pattern}`;
+      }
+      return Prisma.sql`${jsonTextPath} LIKE ${pattern}`;
+    }
+
+    if (condition.string_ends_with !== undefined) {
+      const pattern = `%${condition.string_ends_with}`;
+      if (isInsensitive) {
+        return Prisma.sql`${jsonTextPath} ILIKE ${pattern}`;
+      }
+      return Prisma.sql`${jsonTextPath} LIKE ${pattern}`;
+    }
+
+    if (condition.gt !== undefined) {
+      return Prisma.sql`(${jsonTextPath})::numeric > ${condition.gt}`;
+    }
+
+    if (condition.gte !== undefined) {
+      return Prisma.sql`(${jsonTextPath})::numeric >= ${condition.gte}`;
+    }
+
+    if (condition.lt !== undefined) {
+      return Prisma.sql`(${jsonTextPath})::numeric < ${condition.lt}`;
+    }
+
+    if (condition.lte !== undefined) {
+      return Prisma.sql`(${jsonTextPath})::numeric <= ${condition.lte}`;
+    }
+
+    if (condition.array_contains !== undefined) {
+      const jsonValue = JSON.stringify(condition.array_contains);
+      return Prisma.sql`${fieldRef} @> ${jsonValue}::jsonb`;
+    }
+
+    if (condition.in !== undefined) {
+      if (Array.isArray(condition.in) && condition.in.length === 0) {
+        return Prisma.sql`FALSE`;
+      }
+      const values = condition.in.map((val) =>
+        typeof val === 'string' ? val : JSON.stringify(val),
+      );
+      return Prisma.sql`${jsonTextPath} IN (${Prisma.join(values)})`;
+    }
+
+    if (condition.notIn !== undefined) {
+      if (Array.isArray(condition.notIn) && condition.notIn.length === 0) {
+        return Prisma.sql`TRUE`;
+      }
+      const values = condition.notIn.map((val) =>
+        typeof val === 'string' ? val : JSON.stringify(val),
+      );
+      return Prisma.sql`${jsonTextPath} NOT IN (${Prisma.join(values)})`;
+    }
+
+    if (condition.not !== undefined) {
+      if (typeof condition.not === 'string') {
+        return Prisma.sql`${jsonTextPath} != ${condition.not}`;
+      }
+      const jsonValue = JSON.stringify(condition.not);
+      return Prisma.sql`${jsonTextPath} != ${jsonValue}`;
+    }
+
+    throw new Error(`Unsupported JsonFilter: ${JSON.stringify(condition)}`);
+  }
+
+  /**
+   * Get field reference for ORDER BY
+   */
+  private getFieldReference(fieldName: string): Prisma.Sql {
+    return Prisma.raw(`r."${fieldName}"`);
+  }
+
+  /**
+   * Combine multiple ORDER BY clauses
+   */
+  private combineOrderBy(clauses: Prisma.Sql[]): Prisma.Sql {
+    if (clauses.length === 0) {
+      return Prisma.sql`r."createdAt" DESC`;
+    }
+
+    if (clauses.length === 1) {
+      return clauses[0];
+    }
+
+    // Build: clause1, clause2, clause3...
+    let result = clauses[0];
+    for (let i = 1; i < clauses.length; i++) {
+      result = Prisma.sql`${result}, ${clauses[i]}`;
+    }
+    return result;
+  }
+
+  /**
+   * Generate JSON ORDER BY clause (Stage 7)
+   */
+  private generateJsonOrderBy(field: string, jsonOrder: any): Prisma.Sql {
+    const {
+      path,
+      direction = 'asc',
+      type = 'text',
+      aggregation = 'first',
+    } = jsonOrder;
+    const fieldRef = Prisma.raw(`r."${field}"`);
+    const sortOrder = Prisma.raw(direction.toUpperCase());
+
+    // Parse JSON path - handle both string and array formats
+    const pgPath = typeof path === 'string' ? this.parseJsonPath(path) : path;
+
+    // Check if path contains wildcard for array aggregation
+    const pathStr = Array.isArray(path) ? path.join('.') : path;
+    if (pathStr.includes('[*]') || aggregation !== 'first') {
+      return this.generateArrayAggregationOrder(
+        fieldRef,
+        pgPath,
+        type,
+        aggregation,
+        sortOrder,
+      );
+    }
+
+    // Simple path access: (r."data"#>>'{path,subpath}')::type ORDER
+    const pathParam = Prisma.raw(`'{${pgPath.join(',')}}'`);
+    const sqlType = this.getSqlType(type);
+
+    return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
+  }
+
+  /**
+   * Parse JSON path string to PostgreSQL path array
+   */
+  private parseJsonPath(path: string): string[] {
+    // Remove leading $. if present
+    const cleanPath = path.startsWith('$.') ? path.substring(2) : path;
+
+    // Handle simple dot notation
+    if (!cleanPath.includes('[')) {
+      return cleanPath.split('.');
+    }
+
+    // Handle JSONPath with array access
+    const parts: string[] = [];
+    let current = '';
+    let inBracket = false;
+
+    for (let i = 0; i < cleanPath.length; i++) {
+      const char = cleanPath[i];
+
+      if (char === '[') {
+        if (current) {
+          parts.push(current);
+          current = '';
+        }
+        inBracket = true;
+      } else if (char === ']') {
+        if (current) {
+          parts.push(current); // Array index or *
+          current = '';
+        }
+        inBracket = false;
+      } else if (char === '.' && !inBracket) {
+        if (current) {
+          parts.push(current);
+          current = '';
+        }
+      } else {
+        current += char;
+      }
+    }
+
+    if (current) {
+      parts.push(current);
+    }
+
+    return parts;
+  }
+
+  /**
+   * Get SQL type for JSON values
+   */
+  private getSqlType(type: string): string {
+    switch (type) {
+      case 'text':
+        return 'text';
+      case 'int':
+        return 'int';
+      case 'float':
+        return 'float';
+      case 'boolean':
+        return 'boolean';
+      case 'timestamp':
+        return 'timestamp';
+      default:
+        return 'text';
+    }
+  }
+
+  /**
+   * Generate array aggregation ORDER BY for paths with [*] wildcard (Advanced feature)
+   */
+  private generateArrayAggregationOrder(
+    fieldRef: Prisma.Sql,
+    pgPath: string[],
+    type: string,
+    aggregation: string,
+    sortOrder: Prisma.Sql,
+  ): Prisma.Sql {
+    const sqlType = this.getSqlType(type);
+
+    // Find the position of * in the path
+    const starIndex = pgPath.indexOf('*');
+    if (starIndex === -1) {
+      // No * found, treat as 'first' aggregation with index 0
+      if (aggregation === 'last') {
+        pgPath.push('-1');
+      } else {
+        pgPath.push('0');
+      }
+      const pathParam = Prisma.raw(`'{${pgPath.join(',')}}'`);
+      return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
+    }
+
+    // For complex array aggregations, we'll implement a simplified version
+    // Full implementation would require subqueries
+    const beforeStar = pgPath.slice(0, starIndex);
+    const pathParam = Prisma.raw(`'{${beforeStar.join(',')},0}'`); // Use first element as fallback
+
+    return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
+  }
+
+  /**
+   * NEW: Prisma-style convenient contract
+   * Generates complete getRows query with normalized options
+   */
+  generateGetRowsQueryPrisma(
+    tableId: string,
+    options: GetRowsOptions = {},
+  ): Prisma.Sql {
+    // Normalize and clamp options
+    const take = Math.max(1, Math.min(500, Number(options.take ?? 50)));
+    const skip = Math.max(0, Number(options.skip ?? 0));
+    const orderByArray = Array.isArray(options.orderBy)
+      ? options.orderBy
+      : options.orderBy
+        ? [options.orderBy]
+        : [];
+
+    // Generate SQL parts
+    const whereSql = this.generateWhere(options.where || {});
+    const orderSql = this.generateOrderBy(orderByArray);
+
+    return Prisma.sql`
+      SELECT 
+        r."versionId",
+        r."createdId", 
+        r."id",
+        r."readonly",
+        r."createdAt",
+        r."updatedAt", 
+        r."publishedAt",
+        r."data",
+        r."meta",
+        r."hash",
+        r."schemaHash"
+      FROM "Row" r
+      INNER JOIN "_RowToTable" rt ON rt."A" = r."versionId"
+      WHERE rt."B" = ${tableId}
+        AND ${whereSql}
+      ORDER BY ${orderSql}
+      LIMIT ${take}
+      OFFSET ${skip}
+    `;
+  }
+
+  /**
+   * Legacy low-level method for compatibility
+   */
+  generateGetRowsQuery(
+    tableId: string,
+    take: number,
+    skip: number,
+    whereConditions?: WhereConditions,
+    orderBy?: RowOrderInput[],
+  ): Prisma.Sql {
+    return this.generateGetRowsQueryPrisma(tableId, {
+      take,
+      skip,
+      where: whereConditions,
+      orderBy,
+    });
+  }
+}
+
+/**
+ * Main entry point function - generates complete getRows query
+ * This replaces the existing generateGetRowsQuery function
+ */
+export function generateGetRowsQueryPrisma(
+  tableId: string,
+  take: number,
+  skip: number,
+  whereConditions?: WhereConditions,
+  orderBy?: any[],
+): Prisma.Sql {
+  // TODO: Stage 5 - Implement complete query generation
+
+  const generator = new WhereGeneratorPrisma();
+  const whereClause = generator.generateWhere(whereConditions || {});
+  const orderByClause = generator.generateOrderBy(orderBy || []);
+
+  // Placeholder implementation
+  return Prisma.sql`
+    SELECT 
+      r."versionId",
+      r."createdId", 
+      r."id",
+      r."readonly",
+      r."createdAt",
+      r."updatedAt", 
+      r."publishedAt",
+      r."data",
+      r."meta",
+      r."hash",
+      r."schemaHash"
+    FROM "Row" r
+    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A" 
+    WHERE rt."B" = ${tableId}
+      AND (${whereClause})
+    ORDER BY ${orderByClause}
+    LIMIT ${take}
+    OFFSET ${skip}
+  `;
+}
