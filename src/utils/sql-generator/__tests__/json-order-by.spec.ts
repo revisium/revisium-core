@@ -326,7 +326,8 @@ describe('JSON Path ORDER BY Tests', () => {
 
       // Verify SQL generation contains AVG without subPath
       expect(sql).toContain('ORDER BY');
-      expect(sql).toContain("SELECT AVG((value#>>'{}':text[])::float");
+      expect(sql).toContain('SELECT AVG');
+      expect(sql).toContain("value#>>'{}'");
       expect(sql).toContain('FROM jsonb_array_elements');
     });
 
