@@ -8,6 +8,15 @@ import {
   GetRowsOptions,
   RowOrderInput,
 } from './types';
+import {
+  parseJsonPath,
+  getSqlType,
+  validateJsonPath,
+  hasArrayWildcard,
+  buildJsonPathParam,
+  handleArrayAggregation,
+  splitPathAtWildcard,
+} from './json-path';
 
 /**
  * Main WHERE clause generator using Prisma.sql template literals
@@ -18,7 +27,7 @@ export class WhereGeneratorPrisma {
    * Generates WHERE clause using Prisma.sql template literals
    * Returns Prisma.Sql node instead of {sql, params}
    */
-  generateWhere(conditions: WhereConditions): Prisma.Sql {
+  generateWhere(conditions?: WhereConditions): Prisma.Sql {
     if (!conditions || Object.keys(conditions).length === 0) {
       return Prisma.sql`TRUE`;
     }
@@ -151,7 +160,7 @@ export class WhereGeneratorPrisma {
   /**
    * Generates ORDER BY clause using Prisma.sql template literals
    */
-  generateOrderBy(orderBy: any[]): Prisma.Sql {
+  generateOrderBy(orderBy?: any[]): Prisma.Sql {
     if (!orderBy || orderBy.length === 0) {
       return Prisma.sql`r."createdAt" DESC`;
     }
@@ -261,7 +270,14 @@ export class WhereGeneratorPrisma {
     }
 
     if (filter.search !== undefined) {
-      // PostgreSQL full-text search - exactly like existing generator
+      // PostgreSQL full-text search with additional validation
+      if (typeof filter.search !== 'string') {
+        throw new Error('Full-text search term must be a string');
+      }
+      if (filter.search.length > 1000) {
+        throw new Error('Full-text search term too long (max 1000 characters)');
+      }
+      // Use plainto_tsquery for safe search term processing (handles special characters)
       return Prisma.sql`to_tsvector('simple', ${fieldRef}) @@ plainto_tsquery('simple', ${filter.search})`;
     }
 
@@ -479,9 +495,31 @@ export class WhereGeneratorPrisma {
   }
 
   /**
-   * Get field reference for ORDER BY
+   * Valid fields for ORDER BY operations
+   */
+  private static readonly VALID_ORDER_FIELDS = new Set([
+    'versionId',
+    'createdId',
+    'id',
+    'hash',
+    'schemaHash',
+    'readonly',
+    'createdAt',
+    'updatedAt',
+    'publishedAt',
+    'data',
+    'meta',
+  ]);
+
+  /**
+   * Get field reference for ORDER BY with validation
    */
   private getFieldReference(fieldName: string): Prisma.Sql {
+    if (!WhereGeneratorPrisma.VALID_ORDER_FIELDS.has(fieldName)) {
+      throw new Error(
+        `Invalid ORDER BY field: ${fieldName}. Allowed fields: ${Array.from(WhereGeneratorPrisma.VALID_ORDER_FIELDS).join(', ')}`,
+      );
+    }
     return Prisma.raw(`r."${fieldName}"`);
   }
 
@@ -519,11 +557,11 @@ export class WhereGeneratorPrisma {
     const sortOrder = Prisma.raw(direction.toUpperCase());
 
     // Parse JSON path - handle both string and array formats
-    const pgPath = typeof path === 'string' ? this.parseJsonPath(path) : path;
+    const pgPath = typeof path === 'string' ? parseJsonPath(path) : path;
+    validateJsonPath(pgPath);
 
     // Check if path contains wildcard for array aggregation
-    const pathStr = Array.isArray(path) ? path.join('.') : path;
-    if (pathStr.includes('[*]') || aggregation !== 'first') {
+    if (hasArrayWildcard(path) || aggregation !== 'first') {
       return this.generateArrayAggregationOrder(
         fieldRef,
         pgPath,
@@ -534,80 +572,13 @@ export class WhereGeneratorPrisma {
     }
 
     // Simple path access: (r."data"#>>'{path,subpath}')::type ORDER
-    const pathParam = Prisma.raw(`'{${pgPath.join(',')}}'`);
-    const sqlType = this.getSqlType(type);
+    const pathParam = Prisma.raw(`'${buildJsonPathParam(pgPath)}'`);
+    const sqlType = getSqlType(type);
 
     return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
   }
 
-  /**
-   * Parse JSON path string to PostgreSQL path array
-   */
-  private parseJsonPath(path: string): string[] {
-    // Remove leading $. if present
-    const cleanPath = path.startsWith('$.') ? path.substring(2) : path;
-
-    // Handle simple dot notation
-    if (!cleanPath.includes('[')) {
-      return cleanPath.split('.');
-    }
-
-    // Handle JSONPath with array access
-    const parts: string[] = [];
-    let current = '';
-    let inBracket = false;
-
-    for (let i = 0; i < cleanPath.length; i++) {
-      const char = cleanPath[i];
-
-      if (char === '[') {
-        if (current) {
-          parts.push(current);
-          current = '';
-        }
-        inBracket = true;
-      } else if (char === ']') {
-        if (current) {
-          parts.push(current); // Array index or *
-          current = '';
-        }
-        inBracket = false;
-      } else if (char === '.' && !inBracket) {
-        if (current) {
-          parts.push(current);
-          current = '';
-        }
-      } else {
-        current += char;
-      }
-    }
-
-    if (current) {
-      parts.push(current);
-    }
-
-    return parts;
-  }
-
-  /**
-   * Get SQL type for JSON values
-   */
-  private getSqlType(type: string): string {
-    switch (type) {
-      case 'text':
-        return 'text';
-      case 'int':
-        return 'int';
-      case 'float':
-        return 'float';
-      case 'boolean':
-        return 'boolean';
-      case 'timestamp':
-        return 'timestamp';
-      default:
-        return 'text';
-    }
-  }
+  // JSON path parsing methods moved to json-path.ts utility
 
   /**
    * Generate array aggregation ORDER BY for paths with [*] wildcard (Advanced feature)
@@ -619,25 +590,18 @@ export class WhereGeneratorPrisma {
     aggregation: string,
     sortOrder: Prisma.Sql,
   ): Prisma.Sql {
-    const sqlType = this.getSqlType(type);
+    const sqlType = getSqlType(type);
+    const { beforeStar, starIndex } = splitPathAtWildcard(pgPath);
 
-    // Find the position of * in the path
-    const starIndex = pgPath.indexOf('*');
     if (starIndex === -1) {
-      // No * found, treat as 'first' aggregation with index 0
-      if (aggregation === 'last') {
-        pgPath.push('-1');
-      } else {
-        pgPath.push('0');
-      }
-      const pathParam = Prisma.raw(`'{${pgPath.join(',')}}'`);
+      // No * found, treat as aggregation with index
+      const modifiedPath = handleArrayAggregation(pgPath, aggregation as any);
+      const pathParam = Prisma.raw(`'${buildJsonPathParam(modifiedPath)}'`);
       return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
     }
 
-    // For complex array aggregations, we'll implement a simplified version
-    // Full implementation would require subqueries
-    const beforeStar = pgPath.slice(0, starIndex);
-    const pathParam = Prisma.raw(`'{${beforeStar.join(',')},0}'`); // Use first element as fallback
+    const simplifiedPath = [...beforeStar, '0']; // Use first element as fallback
+    const pathParam = Prisma.raw(`'${buildJsonPathParam(simplifiedPath)}'`);
 
     return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
   }
@@ -651,8 +615,10 @@ export class WhereGeneratorPrisma {
     options: GetRowsOptions = {},
   ): Prisma.Sql {
     // Normalize and clamp options
-    const take = Math.max(1, Math.min(500, Number(options.take ?? 50)));
-    const skip = Math.max(0, Number(options.skip ?? 0));
+    const takeNum = Number(options.take ?? 50);
+    const take = Math.max(1, Math.min(500, isNaN(takeNum) ? 50 : takeNum));
+    const skipNum = Number(options.skip ?? 0);
+    const skip = Math.max(0, isNaN(skipNum) ? 0 : skipNum);
     const orderByArray = Array.isArray(options.orderBy)
       ? options.orderBy
       : options.orderBy
