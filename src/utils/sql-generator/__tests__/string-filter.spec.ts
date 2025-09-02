@@ -3,7 +3,7 @@ import { Client } from 'pg';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { Prisma } from '@prisma/client';
-import { generateGetRowsQuery } from '../where-generator';
+import { generateGetRowsQuery, WhereGenerator } from '../where-generator';
 import { WhereConditions } from '../types';
 import { TestRow, createTableWithStringData } from './test-helpers';
 
@@ -434,6 +434,18 @@ describe('String Filter Tests', () => {
 
       // Should find rows with id < 'user-2' (alphabetically)
       expect(sqlResult.rows.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should throw error for completely unsupported StringFilter operation', () => {
+      const generator = new WhereGenerator();
+
+      expect(() => {
+        generator.generateWhere({
+          id: {
+            completelyInvalidOp: 'value',
+          } as any,
+        });
+      }).toThrow('Unsupported StringFilter');
     });
   });
 });

@@ -105,17 +105,23 @@ describe('ORDER BY Tests', () => {
     it('should order by readonly field', async () => {
       const { table } = await createTableWithJsonData(prismaService);
 
-      // Test Prisma query first
+      // Test Prisma query first with deterministic secondary sort
       const prismaResult = await prismaService.table
         .findUniqueOrThrow({ where: { versionId: table.versionId } })
         .rows({
           take: 10,
           skip: 0,
-          orderBy: { readonly: Prisma.SortOrder.asc },
+          orderBy: [
+            { readonly: Prisma.SortOrder.asc },
+            { id: Prisma.SortOrder.asc }, // Secondary sort for deterministic results
+          ],
         });
 
-      // Test our dynamic SQL generation
-      const rowOrderInput: RowOrderInput[] = [{ readonly: 'asc' }];
+      // Test our dynamic SQL generation with same ordering
+      const rowOrderInput: RowOrderInput[] = [
+        { readonly: 'asc' },
+        { id: 'asc' },
+      ];
 
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
@@ -129,7 +135,7 @@ describe('ORDER BY Tests', () => {
 
       // Compare results
       expect(sqlResult.rows).toHaveLength(prismaResult.length);
-      expect(sql).toContain('ORDER BY r."readonly" ASC');
+      expect(sql).toContain('ORDER BY r."readonly" ASC, r."id" ASC');
 
       if (prismaResult.length > 1 && sqlResult.rows.length > 1) {
         expect(sqlResult.rows.map((r: TestRow) => r.id)).toEqual(
@@ -569,6 +575,77 @@ describe('ORDER BY Tests', () => {
           { unsupportedField: 'asc' } as any,
         ]);
       }).toThrow('Unsupported ORDER BY field: unsupportedField');
+    });
+
+    it('should test getFieldMapping method coverage for all supported fields', () => {
+      const supportedFields: (keyof RowOrderInput)[] = [
+        'versionId',
+        'createdId',
+        'id',
+        'readonly',
+        'createdAt',
+        'updatedAt',
+        'publishedAt',
+        'hash',
+        'schemaHash',
+      ];
+
+      supportedFields.forEach((field) => {
+        expect(() => {
+          const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+            { [field]: 'asc' },
+          ]);
+
+          // Should contain the field mapping
+          expect(sql).toContain(`r."${field}"`);
+          expect(sql).toContain('ASC');
+        }).not.toThrow();
+      });
+    });
+
+    it('should handle case-insensitive sort directions', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+        { id: 'ASC' as any }, // uppercase
+        { createdAt: 'desc' }, // lowercase
+      ]);
+
+      expect(sql).toContain('r."id" ASC');
+      expect(sql).toContain('r."createdAt" DESC');
+    });
+
+    it('should return default ordering for empty orderBy array', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, []);
+
+      expect(sql).toContain('ORDER BY r."createdAt" DESC');
+    });
+
+    it('should return default ordering for undefined orderBy', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, undefined);
+
+      expect(sql).toContain('ORDER BY r."createdAt" DESC');
+    });
+
+    it('should handle getSqlType method with all supported types', () => {
+      const types = ['text', 'int', 'float', 'boolean', 'timestamp'];
+
+      types.forEach((type) => {
+        const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+          { data: { path: 'test', direction: 'asc', type: type as any } },
+        ]);
+
+        expect(sql).toContain(`::${type}`);
+      });
+    });
+
+    it('should use text as default for unsupported JSON type', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+        {
+          data: { path: 'test', direction: 'asc', type: 'unsupported' as any },
+        },
+      ]);
+
+      // Should default to text type
+      expect(sql).toContain('::text');
     });
   });
 });

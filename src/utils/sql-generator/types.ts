@@ -81,6 +81,17 @@ export interface JsonFilter {
 
 export type SortOrder = 'asc' | 'desc';
 
+export type JsonValueType = 'text' | 'int' | 'float' | 'boolean' | 'timestamp';
+
+export type JsonAggregation = 'min' | 'max' | 'avg' | 'first' | 'last';
+
+export interface JsonOrderInput {
+  path: string; // JSON path like "$.arr[*].price" or "name" or "user.age"
+  direction: SortOrder;
+  type: JsonValueType; // Type for proper casting in SQL
+  aggregation?: JsonAggregation; // How to aggregate array values (default: 'first')
+}
+
 export interface RowOrderInput {
   versionId?: SortOrder;
   createdId?: SortOrder;
@@ -89,8 +100,8 @@ export interface RowOrderInput {
   createdAt?: SortOrder;
   updatedAt?: SortOrder;
   publishedAt?: SortOrder;
-  data?: SortOrder;
-  meta?: SortOrder;
+  data?: SortOrder | JsonOrderInput;
+  meta?: SortOrder | JsonOrderInput;
   hash?: SortOrder;
   schemaHash?: SortOrder;
 }
