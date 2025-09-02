@@ -32,7 +32,6 @@ export class WhereGeneratorPrisma {
   private processConditions(conditions: WhereConditions): Prisma.Sql {
     const clauses: Prisma.Sql[] = [];
 
-    // Logical operators first - Stage 3
     if (Array.isArray(conditions.AND) && conditions.AND.length > 0) {
       const andClauses = conditions.AND.map((cond) =>
         this.processConditions(cond),
@@ -56,7 +55,6 @@ export class WhereGeneratorPrisma {
       clauses.push(Prisma.sql`NOT (${notClause})`);
     }
 
-    // String fields - Stage 2
     if (conditions.versionId !== undefined) {
       clauses.push(this.processStringField('versionId', conditions.versionId));
     }
@@ -75,12 +73,10 @@ export class WhereGeneratorPrisma {
       );
     }
 
-    // Boolean field - Stage 2
     if (conditions.readonly !== undefined) {
       clauses.push(this.processBoolField('readonly', conditions.readonly));
     }
 
-    // Date fields - Stage 2
     if (conditions.createdAt !== undefined) {
       clauses.push(this.processDateField('createdAt', conditions.createdAt));
     }
@@ -93,7 +89,6 @@ export class WhereGeneratorPrisma {
       );
     }
 
-    // JSON fields - Stage 3
     if (conditions.data !== undefined) {
       clauses.push(this.processJsonField('data', conditions.data));
     }
@@ -166,12 +161,10 @@ export class WhereGeneratorPrisma {
     for (const orderItem of orderBy) {
       for (const [field, direction] of Object.entries(orderItem)) {
         if (typeof direction === 'string') {
-          // Regular field ordering - Stage 6
           const fieldRef = this.getFieldReference(field);
           const sortOrder = Prisma.raw(direction.toUpperCase());
           orderClauses.push(Prisma.sql`${fieldRef} ${sortOrder}`);
         } else if (typeof direction === 'object' && direction !== null) {
-          // JSON path ordering - Stage 7 (TODO)
           const jsonOrderClause = this.generateJsonOrderBy(field, direction);
           orderClauses.push(jsonOrderClause);
         }
@@ -513,7 +506,7 @@ export class WhereGeneratorPrisma {
   }
 
   /**
-   * Generate JSON ORDER BY clause (Stage 7)
+   * Generate JSON ORDER BY clause
    */
   private generateJsonOrderBy(field: string, jsonOrder: any): Prisma.Sql {
     const {
@@ -723,8 +716,6 @@ export function generateGetRowsQueryPrisma(
   whereConditions?: WhereConditions,
   orderBy?: any[],
 ): Prisma.Sql {
-  // TODO: Stage 5 - Implement complete query generation
-
   const generator = new WhereGeneratorPrisma();
   const whereClause = generator.generateWhere(whereConditions || {});
   const orderByClause = generator.generateOrderBy(orderBy || []);
