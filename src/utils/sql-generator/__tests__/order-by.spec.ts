@@ -105,17 +105,23 @@ describe('ORDER BY Tests', () => {
     it('should order by readonly field', async () => {
       const { table } = await createTableWithJsonData(prismaService);
 
-      // Test Prisma query first
+      // Test Prisma query first with deterministic secondary sort
       const prismaResult = await prismaService.table
         .findUniqueOrThrow({ where: { versionId: table.versionId } })
         .rows({
           take: 10,
           skip: 0,
-          orderBy: { readonly: Prisma.SortOrder.asc },
+          orderBy: [
+            { readonly: Prisma.SortOrder.asc },
+            { id: Prisma.SortOrder.asc }, // Secondary sort for deterministic results
+          ],
         });
 
-      // Test our dynamic SQL generation
-      const rowOrderInput: RowOrderInput[] = [{ readonly: 'asc' }];
+      // Test our dynamic SQL generation with same ordering
+      const rowOrderInput: RowOrderInput[] = [
+        { readonly: 'asc' },
+        { id: 'asc' },
+      ];
 
       const { sql, params } = generateGetRowsQuery(
         table.versionId,
@@ -129,7 +135,7 @@ describe('ORDER BY Tests', () => {
 
       // Compare results
       expect(sqlResult.rows).toHaveLength(prismaResult.length);
-      expect(sql).toContain('ORDER BY r."readonly" ASC');
+      expect(sql).toContain('ORDER BY r."readonly" ASC, r."id" ASC');
 
       if (prismaResult.length > 1 && sqlResult.rows.length > 1) {
         expect(sqlResult.rows.map((r: TestRow) => r.id)).toEqual(
