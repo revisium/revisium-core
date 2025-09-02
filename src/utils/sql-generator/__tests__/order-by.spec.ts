@@ -570,5 +570,76 @@ describe('ORDER BY Tests', () => {
         ]);
       }).toThrow('Unsupported ORDER BY field: unsupportedField');
     });
+
+    it('should test getFieldMapping method coverage for all supported fields', () => {
+      const supportedFields: (keyof RowOrderInput)[] = [
+        'versionId',
+        'createdId',
+        'id',
+        'readonly',
+        'createdAt',
+        'updatedAt',
+        'publishedAt',
+        'hash',
+        'schemaHash',
+      ];
+
+      supportedFields.forEach((field) => {
+        expect(() => {
+          const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+            { [field]: 'asc' },
+          ]);
+
+          // Should contain the field mapping
+          expect(sql).toContain(`r."${field}"`);
+          expect(sql).toContain('ASC');
+        }).not.toThrow();
+      });
+    });
+
+    it('should handle case-insensitive sort directions', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+        { id: 'ASC' as any }, // uppercase
+        { createdAt: 'desc' }, // lowercase
+      ]);
+
+      expect(sql).toContain('r."id" ASC');
+      expect(sql).toContain('r."createdAt" DESC');
+    });
+
+    it('should return default ordering for empty orderBy array', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, []);
+
+      expect(sql).toContain('ORDER BY r."createdAt" DESC');
+    });
+
+    it('should return default ordering for undefined orderBy', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, undefined);
+
+      expect(sql).toContain('ORDER BY r."createdAt" DESC');
+    });
+
+    it('should handle getSqlType method with all supported types', () => {
+      const types = ['text', 'int', 'float', 'boolean', 'timestamp'];
+
+      types.forEach((type) => {
+        const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+          { data: { path: 'test', direction: 'asc', type: type as any } },
+        ]);
+
+        expect(sql).toContain(`::${type}`);
+      });
+    });
+
+    it('should use text as default for unsupported JSON type', () => {
+      const { sql } = generateGetRowsQuery('test-table', 10, 0, {}, [
+        {
+          data: { path: 'test', direction: 'asc', type: 'unsupported' as any },
+        },
+      ]);
+
+      // Should default to text type
+      expect(sql).toContain('::text');
+    });
   });
 });
