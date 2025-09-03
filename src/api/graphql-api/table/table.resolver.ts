@@ -11,6 +11,7 @@ import { GetTableInput } from 'src/api/graphql-api/table/inputs/get-table.input'
 import { GetTablesInput } from 'src/api/graphql-api/table/inputs/get-tables.input';
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
+import { RowApiService } from 'src/features/row/row-api.service';
 import {
   GetCountRowsInTableQuery,
   ResolveTableCountForeignKeysByQuery,
@@ -19,12 +20,10 @@ import {
   ResolveTableForeignKeysToQuery,
   ResolveTableSchemaQuery,
 } from 'src/features/table/queries/impl';
-import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
 import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
 import { GetTablesQuery } from 'src/features/table/queries/impl/get-tables.query';
 import {
   GetTableReturnType,
-  GetTableRowsReturnType,
   GetTablesReturnType,
 } from 'src/features/table/queries/types';
 
@@ -34,7 +33,10 @@ import {
 })
 @Resolver(() => TableModel)
 export class TableResolver {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly queryBus: QueryBus,
+    private readonly rowApi: RowApiService,
+  ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TableModel, { nullable: true })
@@ -54,14 +56,11 @@ export class TableResolver {
 
   @ResolveField()
   rows(@Parent() table: TableModel, @Args('data') data: GetTableRowsInput) {
-    return this.queryBus.execute<GetRowsByTableQuery, GetTableRowsReturnType>(
-      new GetRowsByTableQuery({
-        revisionId: table.context.revisionId,
-        tableId: table.id,
-        tableVersionId: table.versionId,
-        ...data,
-      }),
-    );
+    return this.rowApi.getRows({
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+      ...data,
+    });
   }
 
   @ResolveField()
