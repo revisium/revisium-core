@@ -10,14 +10,14 @@ export class FindTableInRevisionOrThrowHandler
 {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
-  private get transaction() {
-    return this.transactionService.getTransaction();
+  private get prisma() {
+    return this.transactionService.getTransactionOrPrisma();
   }
 
   async execute({
     data,
   }: FindTableInRevisionOrThrowQuery): Promise<FindTableInRevisionType> {
-    const existingTable = await this.transaction.table.findFirst({
+    const existingTable = await this.prisma.table.findFirst({
       where: {
         id: data.tableId,
         revisions: { some: { id: data.revisionId } },

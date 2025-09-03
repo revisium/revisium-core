@@ -40,6 +40,7 @@ import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-upda
 import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
 import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
 import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { BranchModel } from 'src/api/rest-api/branch/model';
 import { RowsConnection } from 'src/api/rest-api/row/model';
@@ -74,7 +75,6 @@ import {
   ResolveTableForeignKeysToQuery,
   ResolveTableSchemaQuery,
 } from 'src/features/table/queries/impl';
-import { GetRowsByTableQuery } from 'src/features/table/queries/impl/get-rows-by-table.query';
 import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
 
 @UseInterceptors(RestMetricsInterceptor)
@@ -89,6 +89,7 @@ export class TableByIdController {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly rowApi: RowApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -136,21 +137,16 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() { orderBy, where, ...data }: GetTableRowsDto,
   ) {
-    const table = await this.resolveTable(revisionId, tableId);
-
     const prismaOrderBy = mapToPrismaOrderBy(orderBy);
 
     return transformFromPaginatedPrismaToRowModel(
-      await this.queryBus.execute(
-        new GetRowsByTableQuery({
-          revisionId,
-          tableId,
-          tableVersionId: table.versionId,
-          ...data,
-          orderBy: prismaOrderBy,
-          where,
-        }),
-      ),
+      await this.rowApi.getRows({
+        revisionId,
+        tableId,
+        ...data,
+        orderBy: prismaOrderBy,
+        where,
+      }),
     );
   }
 
