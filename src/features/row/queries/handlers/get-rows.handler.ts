@@ -20,16 +20,10 @@ export class GetRowsHandler
   ) {}
 
   private get transaction() {
-    return this.transactionService.getTransaction();
+    return this.transactionService.getTransactionOrPrisma();
   }
 
-  async execute({ data }: GetRowsQuery): Promise<GetRowsQueryReturnType> {
-    return this.transactionService.run(() => this.transactionHandler(data), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
-  }
-
-  private async transactionHandler(data: GetRowsQuery['data']) {
+  public async execute({ data }: GetRowsQuery) {
     const { versionId: tableId } =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
