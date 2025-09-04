@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 import { RowWithContext } from 'src/features/share/types/row-with-context.types';
-import { JsonAggregation, JsonValueType } from 'src/utils/sql-generator';
+import { JsonAggregation, JsonValueType } from 'src/utils/prisma-sql-generator';
 
 export type JsonOrder = {
   data: {
