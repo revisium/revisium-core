@@ -2,8 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { Prisma } from '@prisma/client';
+import { createTableWithJsonData } from 'src/utils/prisma-sql-generator/__tests__/test-helpers';
 import { WhereGeneratorPrisma } from '../where-generator.prisma';
-import { createTableWithJsonData } from '../../sql-generator/__tests__/test-helpers';
 import {
   runPrismaOrmRows,
   runViaPrismaRaw,

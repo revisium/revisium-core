@@ -1,16 +1,83 @@
-// Types matching the existing where-generator.ts interface
-import {
-  WhereConditions as BaseWhereConditions,
-  StringFilter,
-  BoolFilter,
-  DateFilter,
-  JsonFilter,
-  SqlResult,
-} from '../sql-generator/types';
+export interface WhereConditions {
+  // String fields
+  versionId?: string | StringFilter;
+  createdId?: string | StringFilter;
+  id?: string | StringFilter;
+  hash?: string | StringFilter;
+  schemaHash?: string | StringFilter;
 
-// Re-export the exact same types for compatibility
-export type WhereConditions = BaseWhereConditions;
-export type { StringFilter, BoolFilter, DateFilter, JsonFilter, SqlResult };
+  // Boolean field
+  readonly?: boolean | BoolFilter;
+
+  // Date fields
+  createdAt?: string | Date | DateFilter;
+  updatedAt?: string | Date | DateFilter;
+  publishedAt?: string | Date | DateFilter;
+
+  // JSON fields
+  data?: JsonFilter;
+  meta?: JsonFilter;
+
+  // Logical operators
+  AND?: WhereConditions[];
+  OR?: WhereConditions[];
+  NOT?: WhereConditions;
+}
+
+export interface SqlResult {
+  sql: string;
+  params: any[];
+}
+
+export interface JsonFilter {
+  path: string[];
+  equals?: any;
+  string_contains?: string;
+  string_starts_with?: string;
+  string_ends_with?: string;
+  gt?: number;
+  gte?: number;
+  lt?: number;
+  lte?: number;
+  in?: any[];
+  notIn?: any[];
+  array_contains?: any;
+  array_starts_with?: any;
+  array_ends_with?: any;
+  not?: any;
+  mode?: 'default' | 'insensitive';
+}
+
+export interface DateFilter {
+  equals?: string | Date;
+  gt?: string | Date;
+  gte?: string | Date;
+  lt?: string | Date;
+  lte?: string | Date;
+  in?: (string | Date)[];
+  notIn?: (string | Date)[];
+}
+
+export interface BoolFilter {
+  equals?: boolean;
+  not?: boolean;
+}
+
+export interface StringFilter {
+  equals?: string;
+  contains?: string;
+  startsWith?: string;
+  endsWith?: string;
+  in?: string[];
+  notIn?: string[];
+  lt?: string;
+  lte?: string;
+  gt?: string;
+  gte?: string;
+  not?: string;
+  search?: string;
+  mode?: 'default' | 'insensitive';
+}
 
 export interface JsonOrderInput {
   path: string | string[];
