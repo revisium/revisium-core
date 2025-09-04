@@ -12,6 +12,7 @@ import {
 } from 'class-validator';
 import { OrderByDto } from 'src/api/rest-api/share/model/order-by.model';
 import { IsUniqueOrderByFields } from 'src/api/rest-api/share/validators/is-unique-order-by-fields.validator';
+import { IsValidDataFieldOrder } from 'src/api/rest-api/share/validators/is-valid-data-field-order.validator';
 import { RowWhereInputDto } from 'src/api/rest-api/table/dto/row/row-where-input.dto';
 
 export class GetTableRowsDto {
@@ -46,6 +47,9 @@ export class GetTableRowsDto {
   @ValidateNested({ each: true })
   @Type(() => OrderByDto)
   @IsUniqueOrderByFields({ message: 'Each orderBy.field must be unique' })
+  @IsValidDataFieldOrder({
+    message: 'When field is data, both path and type are required',
+  })
   orderBy?: OrderByDto[];
 
   @ApiPropertyOptional({
