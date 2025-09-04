@@ -1,4 +1,5 @@
 import { QueryBus } from '@nestjs/cqrs';
+import { nanoid } from 'nanoid';
 import {
   createPreviousFile,
   prepareProject,
@@ -15,6 +16,77 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 describe('getRows', () => {
+  it('should sort by json field', async () => {
+    const { draftRowVersionId, draftRevisionId, tableId, draftTableVersionId } =
+      await prepareProject(prismaService);
+
+    await prismaService.row.update({
+      where: {
+        versionId: draftRowVersionId,
+      },
+      data: {
+        data: {
+          ver: 10,
+        },
+      },
+    });
+    await prismaService.row.create({
+      data: {
+        tables: {
+          connect: {
+            versionId: draftTableVersionId,
+          },
+        },
+        id: nanoid(),
+        versionId: nanoid(),
+        createdId: nanoid(),
+        hash: '',
+        schemaHash: '',
+        data: {
+          ver: 8,
+        },
+      },
+    });
+    await prismaService.row.create({
+      data: {
+        tables: {
+          connect: {
+            versionId: draftTableVersionId,
+          },
+        },
+        id: nanoid(),
+        versionId: nanoid(),
+        createdId: nanoid(),
+        hash: '',
+        schemaHash: '',
+        data: {
+          ver: 14,
+        },
+      },
+    });
+
+    const result = await runTransaction(
+      new GetRowsQuery({
+        revisionId: draftRevisionId,
+        tableId,
+        first: 10,
+        orderBy: [
+          {
+            data: {
+              path: 'ver',
+              type: 'int',
+              direction: 'asc',
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(
+      result.edges.map((edge) => (edge.node.data as any).ver),
+    ).toStrictEqual([8, 10, 14]);
+  });
+
   it('should compute rows', async () => {
     const data = {
       file: {

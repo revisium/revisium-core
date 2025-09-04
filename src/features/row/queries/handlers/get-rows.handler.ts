@@ -89,7 +89,7 @@ export class GetRowsHandler
   private isSimpleOrdering(
     order: GetRowsQueryData['orderBy'],
   ): order is Prisma.RowOrderByWithRelationInput[] | undefined {
-    return Boolean(order?.every((orderItem) => !orderItem['data']));
+    return !order || Boolean(order?.every((orderItem) => !orderItem['data']));
   }
 
   private async getRowsCount(tableId: string) {
