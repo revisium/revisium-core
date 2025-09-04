@@ -472,10 +472,10 @@ describe('Prisma SQL Generator - Unit Tests', () => {
             },
           },
         ]);
-        
+
         expect(result.inspect().sql).toContain(expectedSql);
         expect(result.inspect().sql).toContain('ASC');
-        
+
         // All should properly cast to int
         expect(result.inspect().sql).toContain('::int');
       });
