@@ -591,7 +591,7 @@ export class WhereGeneratorPrisma {
     sortOrder: Prisma.Sql,
   ): Prisma.Sql {
     const sqlType = getSqlType(type);
-    const { beforeStar, starIndex } = splitPathAtWildcard(pgPath);
+    const { beforeStar, afterStar, starIndex } = splitPathAtWildcard(pgPath);
 
     if (starIndex === -1) {
       // No * found, treat as aggregation with index
@@ -600,10 +600,49 @@ export class WhereGeneratorPrisma {
       return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
     }
 
-    const simplifiedPath = [...beforeStar, '0']; // Use first element as fallback
-    const pathParam = Prisma.raw(`'${buildJsonPathParam(simplifiedPath)}'`);
+    // Generate proper SQL aggregation for array wildcards
+    const arrayPath = Prisma.raw(`'${buildJsonPathParam(beforeStar)}'`);
 
-    return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
+    switch (aggregation) {
+      case 'min':
+        if (afterStar.length > 0) {
+          const subPath = Prisma.raw(`'${buildJsonPathParam(afterStar)}'`);
+          return Prisma.sql`(SELECT MIN((value#>>${subPath})::${Prisma.raw(sqlType)}) FROM jsonb_array_elements(${fieldRef}#>${arrayPath}) AS value) ${sortOrder}`;
+        } else {
+          return Prisma.sql`(SELECT MIN(value::${Prisma.raw(sqlType)}) FROM jsonb_array_elements_text(${fieldRef}#>${arrayPath}) AS value) ${sortOrder}`;
+        }
+
+      case 'max':
+        if (afterStar.length > 0) {
+          const subPath = Prisma.raw(`'${buildJsonPathParam(afterStar)}'`);
+          return Prisma.sql`(SELECT MAX((value#>>${subPath})::${Prisma.raw(sqlType)}) FROM jsonb_array_elements(${fieldRef}#>${arrayPath}) AS value) ${sortOrder}`;
+        } else {
+          return Prisma.sql`(SELECT MAX(value::${Prisma.raw(sqlType)}) FROM jsonb_array_elements_text(${fieldRef}#>${arrayPath}) AS value) ${sortOrder}`;
+        }
+
+      case 'avg':
+        if (afterStar.length > 0) {
+          const subPath = Prisma.raw(`'${buildJsonPathParam(afterStar)}'`);
+          return Prisma.sql`(SELECT AVG((value#>>${subPath})::${Prisma.raw(sqlType)}) FROM jsonb_array_elements(${fieldRef}#>${arrayPath}) AS value) ${sortOrder}`;
+        } else {
+          return Prisma.sql`(SELECT AVG(value::${Prisma.raw(sqlType)}) FROM jsonb_array_elements_text(${fieldRef}#>${arrayPath}) AS value) ${sortOrder}`;
+        }
+
+      case 'last': {
+        // Use negative index for last element
+        const lastPath = [...beforeStar, '-1', ...afterStar];
+        const pathParam = Prisma.raw(`'${buildJsonPathParam(lastPath)}'`);
+        return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
+      }
+
+      case 'first':
+      default: {
+        // Use index 0 for first element
+        const firstPath = [...beforeStar, '0', ...afterStar];
+        const pathParam = Prisma.raw(`'${buildJsonPathParam(firstPath)}'`);
+        return Prisma.sql`(${fieldRef}#>>${pathParam})::${Prisma.raw(sqlType)} ${sortOrder}`;
+      }
+    }
   }
 
   /**
