@@ -4,10 +4,15 @@ import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetRowsQuery,
+  GetRowsQueryData,
   GetRowsQueryReturnType,
 } from 'src/features/row/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import {
+  generateGetRowsQueryPrisma,
+  WhereConditions,
+} from 'src/utils/prisma-sql-generator';
 
 @QueryHandler(GetRowsQuery)
 export class GetRowsHandler
@@ -58,23 +63,40 @@ export class GetRowsHandler
     tableId: string,
     data: GetRowsQuery['data'],
   ): Promise<Row[]> {
-    return this.transaction.table
-      .findUniqueOrThrow({ where: { versionId: tableId } })
-      .rows({
-        ...args,
-        orderBy: data.orderBy ?? {
-          createdAt: Prisma.SortOrder.desc,
-        },
-        where: data.where,
-      });
+    if (this.isSimpleOrdering(data.orderBy)) {
+      return this.transaction.table
+        .findUniqueOrThrow({ where: { versionId: tableId } })
+        .rows({
+          ...args,
+          orderBy: data.orderBy ?? {
+            createdAt: Prisma.SortOrder.desc,
+          },
+          where: data.where,
+        });
+    } else {
+      return this.transaction.$queryRaw(
+        generateGetRowsQueryPrisma(
+          tableId,
+          args.take,
+          args.skip,
+          data.where as unknown as WhereConditions,
+          data.orderBy,
+        ),
+      );
+    }
   }
 
-  private getRowsCount(tableId: string) {
-    return this.transaction.table
-      .findUniqueOrThrow({
-        where: { versionId: tableId },
-        include: { _count: { select: { rows: true } } },
-      })
-      .then((result) => result._count.rows);
+  private isSimpleOrdering(
+    order: GetRowsQueryData['orderBy'],
+  ): order is Prisma.RowOrderByWithRelationInput[] | undefined {
+    return !order || Boolean(order?.every((orderItem) => !orderItem['data']));
+  }
+
+  private async getRowsCount(tableId: string) {
+    const result = await this.transaction.table.findUniqueOrThrow({
+      where: { versionId: tableId },
+      include: { _count: { select: { rows: true } } },
+    });
+    return result._count.rows;
   }
 }

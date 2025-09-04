@@ -17,20 +17,30 @@
             "type": "string"
           }
         },
-        "required": ["userId", "roleId"],
+        "required": [
+          "userId",
+          "roleId"
+        ],
         "type": "object"
       },
       "AddUserToProjectDto": {
         "properties": {
           "roleId": {
-            "enum": ["developer", "editor", "reader"],
+            "enum": [
+              "developer",
+              "editor",
+              "reader"
+            ],
             "type": "string"
           },
           "userId": {
             "type": "string"
           }
         },
-        "required": ["userId", "roleId"],
+        "required": [
+          "userId",
+          "roleId"
+        ],
         "type": "object"
       },
       "ApplyMigrationsResponseDto": {
@@ -45,11 +55,18 @@
           },
           "status": {
             "description": "The migration application status",
-            "enum": ["applied", "failed", "skipped"],
+            "enum": [
+              "applied",
+              "failed",
+              "skipped"
+            ],
             "type": "string"
           }
         },
-        "required": ["id", "status"],
+        "required": [
+          "id",
+          "status"
+        ],
         "type": "object"
       },
       "BoolFilterDto": {
@@ -90,7 +107,13 @@
             "type": "string"
           }
         },
-        "required": ["id", "projectId", "createdAt", "isRoot", "name"],
+        "required": [
+          "id",
+          "projectId",
+          "createdAt",
+          "isRoot",
+          "name"
+        ],
         "type": "object"
       },
       "BranchModelEdgeType": {
@@ -102,7 +125,10 @@
             "$ref": "#/components/schemas/BranchModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       },
       "BranchesConnection": {
@@ -120,7 +146,11 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "ChildBranchResponse": {
@@ -132,7 +162,10 @@
             "$ref": "#/components/schemas/Id"
           }
         },
-        "required": ["branch", "revision"],
+        "required": [
+          "branch",
+          "revision"
+        ],
         "type": "object"
       },
       "ConfigurationResponse": {
@@ -147,7 +180,11 @@
             "$ref": "#/components/schemas/GoogleOauth"
           }
         },
-        "required": ["availableEmailSignUp", "google", "github"],
+        "required": [
+          "availableEmailSignUp",
+          "google",
+          "github"
+        ],
         "type": "object"
       },
       "CreateBranchByRevisionDto": {
@@ -156,17 +193,24 @@
             "type": "string"
           }
         },
-        "required": ["branchName"],
+        "required": [
+          "branchName"
+        ],
         "type": "object"
       },
       "CreateEndpointDto": {
         "properties": {
           "type": {
-            "enum": ["GRAPHQL", "REST_API"],
+            "enum": [
+              "GRAPHQL",
+              "REST_API"
+            ],
             "type": "string"
           }
         },
-        "required": ["type"],
+        "required": [
+          "type"
+        ],
         "type": "object"
       },
       "CreateProjectDto": {
@@ -179,7 +223,9 @@
             "type": "string"
           }
         },
-        "required": ["projectName"],
+        "required": [
+          "projectName"
+        ],
         "type": "object"
       },
       "CreateRevisionDto": {
@@ -204,7 +250,10 @@
             "type": "string"
           }
         },
-        "required": ["rowId", "data"],
+        "required": [
+          "rowId",
+          "data"
+        ],
         "type": "object"
       },
       "CreateRowResponse": {
@@ -219,7 +268,11 @@
             "$ref": "#/components/schemas/TableModel"
           }
         },
-        "required": ["table", "previousVersionTableId", "row"],
+        "required": [
+          "table",
+          "previousVersionTableId",
+          "row"
+        ],
         "type": "object"
       },
       "CreateTableDto": {
@@ -232,7 +285,10 @@
             "type": "string"
           }
         },
-        "required": ["tableId", "schema"],
+        "required": [
+          "tableId",
+          "schema"
+        ],
         "type": "object"
       },
       "CreateTableResponse": {
@@ -244,7 +300,10 @@
             "$ref": "#/components/schemas/TableModel"
           }
         },
-        "required": ["branch", "table"],
+        "required": [
+          "branch",
+          "table"
+        ],
         "type": "object"
       },
       "CreateUserDto": {
@@ -256,14 +315,22 @@
             "type": "string"
           },
           "roleId": {
-            "enum": ["systemAdmin", "systemFullApiRead", "systemUser"],
+            "enum": [
+              "systemAdmin",
+              "systemFullApiRead",
+              "systemUser"
+            ],
             "type": "string"
           },
           "username": {
             "type": "string"
           }
         },
-        "required": ["username", "roleId", "password"],
+        "required": [
+          "username",
+          "roleId",
+          "password"
+        ],
         "type": "object"
       },
       "DateTimeFilterDto": {
@@ -315,11 +382,18 @@
             "type": "string"
           },
           "type": {
-            "enum": ["GRAPHQL", "REST_API"],
+            "enum": [
+              "GRAPHQL",
+              "REST_API"
+            ],
             "type": "string"
           }
         },
-        "required": ["id", "createdAt", "type"],
+        "required": [
+          "id",
+          "createdAt",
+          "type"
+        ],
         "type": "object"
       },
       "ErrorModel": {
@@ -334,7 +408,11 @@
             "type": "number"
           }
         },
-        "required": ["statusCode", "message", "error"],
+        "required": [
+          "statusCode",
+          "message",
+          "error"
+        ],
         "type": "object"
       },
       "GetEndpointResultDto": {
@@ -352,7 +430,12 @@
             "$ref": "#/components/schemas/RevisionModel"
           }
         },
-        "required": ["endpoint", "revision", "branch", "project"],
+        "required": [
+          "endpoint",
+          "revision",
+          "branch",
+          "project"
+        ],
         "type": "object"
       },
       "GetTableRowsDto": {
@@ -387,7 +470,9 @@
             "description": "Row filtering conditions"
           }
         },
-        "required": ["first"],
+        "required": [
+          "first"
+        ],
         "type": "object"
       },
       "GithubOauth": {
@@ -399,7 +484,9 @@
             "type": "string"
           }
         },
-        "required": ["available"],
+        "required": [
+          "available"
+        ],
         "type": "object"
       },
       "GoogleOauth": {
@@ -411,7 +498,9 @@
             "type": "string"
           }
         },
-        "required": ["available"],
+        "required": [
+          "available"
+        ],
         "type": "object"
       },
       "Id": {
@@ -420,14 +509,18 @@
             "type": "string"
           }
         },
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "type": "object"
       },
       "InitMigrationDto": {
         "properties": {
           "changeType": {
             "description": "Indicates an initialization migration",
-            "enum": ["init"],
+            "enum": [
+              "init"
+            ],
             "example": "init",
             "type": "string"
           },
@@ -449,7 +542,13 @@
             "type": "string"
           }
         },
-        "required": ["changeType", "tableId", "hash", "id", "schema"],
+        "required": [
+          "changeType",
+          "tableId",
+          "hash",
+          "id",
+          "schema"
+        ],
         "type": "object"
       },
       "JsonFilterDto": {
@@ -491,7 +590,10 @@
           },
           "mode": {
             "description": "Case sensitivity mode for string filters within JSON (\"insensitive\" uses ILIKE on PostgreSQL)",
-            "enum": ["default", "insensitive"],
+            "enum": [
+              "default",
+              "insensitive"
+            ],
             "type": "string"
           },
           "path": {
@@ -525,7 +627,10 @@
             "type": "string"
           }
         },
-        "required": ["emailOrUsername", "password"],
+        "required": [
+          "emailOrUsername",
+          "password"
+        ],
         "type": "object"
       },
       "LoginResponse": {
@@ -534,21 +639,58 @@
             "type": "string"
           }
         },
-        "required": ["accessToken"],
+        "required": [
+          "accessToken"
+        ],
         "type": "object"
       },
       "OrderByDto": {
         "properties": {
+          "aggregation": {
+            "enum": [
+              "min",
+              "max",
+              "avg",
+              "first",
+              "last"
+            ],
+            "type": "string"
+          },
           "direction": {
-            "enum": ["asc", "desc"],
+            "enum": [
+              "asc",
+              "desc"
+            ],
             "type": "string"
           },
           "field": {
-            "enum": ["createdAt", "updatedAt", "publishedAt", "id"],
+            "enum": [
+              "createdAt",
+              "updatedAt",
+              "publishedAt",
+              "id",
+              "data"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "text",
+              "int",
+              "float",
+              "boolean",
+              "timestamp"
+            ],
             "type": "string"
           }
         },
-        "required": ["field", "direction"],
+        "required": [
+          "field",
+          "direction"
+        ],
         "type": "object"
       },
       "PageInfo": {
@@ -566,7 +708,10 @@
             "type": "string"
           }
         },
-        "required": ["hasNextPage", "hasPreviousPage"],
+        "required": [
+          "hasNextPage",
+          "hasPreviousPage"
+        ],
         "type": "object"
       },
       "ParentBranchResponse": {
@@ -578,7 +723,10 @@
             "$ref": "#/components/schemas/Id"
           }
         },
-        "required": ["branch", "revision"],
+        "required": [
+          "branch",
+          "revision"
+        ],
         "type": "object"
       },
       "ProjectModel": {
@@ -597,7 +745,12 @@
             "type": "string"
           }
         },
-        "required": ["id", "organizationId", "createdAt", "name"],
+        "required": [
+          "id",
+          "organizationId",
+          "createdAt",
+          "name"
+        ],
         "type": "object"
       },
       "ProjectModelEdgeType": {
@@ -609,7 +762,10 @@
             "$ref": "#/components/schemas/ProjectModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       },
       "ProjectsConnection": {
@@ -627,14 +783,20 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "RemoveMigrationDto": {
         "properties": {
           "changeType": {
             "description": "Indicates a remove migration",
-            "enum": ["remove"],
+            "enum": [
+              "remove"
+            ],
             "example": "remove",
             "type": "string"
           },
@@ -647,7 +809,11 @@
             "type": "string"
           }
         },
-        "required": ["changeType", "id", "tableId"],
+        "required": [
+          "changeType",
+          "id",
+          "tableId"
+        ],
         "type": "object"
       },
       "RemoveRowResponse": {
@@ -662,7 +828,9 @@
             "$ref": "#/components/schemas/TableModel"
           }
         },
-        "required": ["branch"],
+        "required": [
+          "branch"
+        ],
         "type": "object"
       },
       "RemoveUserFromOrganizationDto": {
@@ -671,14 +839,18 @@
             "type": "string"
           }
         },
-        "required": ["userId"],
+        "required": [
+          "userId"
+        ],
         "type": "object"
       },
       "RenameMigrationDto": {
         "properties": {
           "changeType": {
             "description": "Indicates a rename migration",
-            "enum": ["rename"],
+            "enum": [
+              "rename"
+            ],
             "example": "rename",
             "type": "string"
           },
@@ -695,7 +867,12 @@
             "type": "string"
           }
         },
-        "required": ["changeType", "id", "tableId", "nextTableId"],
+        "required": [
+          "changeType",
+          "id",
+          "tableId",
+          "nextTableId"
+        ],
         "type": "object"
       },
       "RenameRowDto": {
@@ -704,7 +881,9 @@
             "type": "string"
           }
         },
-        "required": ["nextRowId"],
+        "required": [
+          "nextRowId"
+        ],
         "type": "object"
       },
       "RenameRowResponse": {
@@ -740,7 +919,12 @@
             "type": "boolean"
           }
         },
-        "required": ["id", "createdAt", "isDraft", "isHead"],
+        "required": [
+          "id",
+          "createdAt",
+          "isDraft",
+          "isHead"
+        ],
         "type": "object"
       },
       "RevisionModelEdgeType": {
@@ -752,7 +936,10 @@
             "$ref": "#/components/schemas/RevisionModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       },
       "RevisionsConnection": {
@@ -770,7 +957,11 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "RoleModel": {
@@ -782,7 +973,10 @@
             "type": "string"
           }
         },
-        "required": ["id", "name"],
+        "required": [
+          "id",
+          "name"
+        ],
         "type": "object"
       },
       "RowModel": {
@@ -837,7 +1031,10 @@
             "$ref": "#/components/schemas/RowModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       },
       "RowWhereInputDto": {
@@ -969,7 +1166,11 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "StringFilterDto": {
@@ -1002,7 +1203,10 @@
             "type": "string"
           },
           "mode": {
-            "enum": ["default", "insensitive"],
+            "enum": [
+              "default",
+              "insensitive"
+            ],
             "type": "string"
           },
           "not": {
@@ -1028,7 +1232,9 @@
             "type": "boolean"
           }
         },
-        "required": ["success"],
+        "required": [
+          "success"
+        ],
         "type": "object"
       },
       "TableModel": {
@@ -1073,7 +1279,10 @@
             "$ref": "#/components/schemas/TableModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       },
       "TablesConnection": {
@@ -1091,7 +1300,11 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "TouchedModelDto": {
@@ -1101,14 +1314,18 @@
             "type": "boolean"
           }
         },
-        "required": ["touched"],
+        "required": [
+          "touched"
+        ],
         "type": "object"
       },
       "UpdateMigrationDto": {
         "properties": {
           "changeType": {
             "description": "Indicates an update migration",
-            "enum": ["update"],
+            "enum": [
+              "update"
+            ],
             "example": "update",
             "type": "string"
           },
@@ -1132,7 +1349,13 @@
             "type": "string"
           }
         },
-        "required": ["changeType", "tableId", "hash", "id", "patches"],
+        "required": [
+          "changeType",
+          "tableId",
+          "hash",
+          "id",
+          "patches"
+        ],
         "type": "object"
       },
       "UpdatePasswordDto": {
@@ -1144,7 +1367,10 @@
             "type": "string"
           }
         },
-        "required": ["oldPassword", "newPassword"],
+        "required": [
+          "oldPassword",
+          "newPassword"
+        ],
         "type": "object"
       },
       "UpdateProjectDto": {
@@ -1153,7 +1379,9 @@
             "type": "boolean"
           }
         },
-        "required": ["isPublic"],
+        "required": [
+          "isPublic"
+        ],
         "type": "object"
       },
       "UpdateRowDto": {
@@ -1166,7 +1394,9 @@
             "type": "boolean"
           }
         },
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "type": "object"
       },
       "UpdateRowResponse": {
@@ -1195,7 +1425,9 @@
             "type": "array"
           }
         },
-        "required": ["patches"],
+        "required": [
+          "patches"
+        ],
         "type": "object"
       },
       "UpdateTableResponse": {
@@ -1207,7 +1439,9 @@
             "$ref": "#/components/schemas/TableModel"
           }
         },
-        "required": ["previousVersionTableId"],
+        "required": [
+          "previousVersionTableId"
+        ],
         "type": "object"
       },
       "UploadFileResponse": {
@@ -1239,7 +1473,9 @@
             "type": "string"
           }
         },
-        "required": ["id"],
+        "required": [
+          "id"
+        ],
         "type": "object"
       },
       "UsersOrganizationConnection": {
@@ -1257,7 +1493,11 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "UsersOrganizationModel": {
@@ -1272,7 +1512,11 @@
             "$ref": "#/components/schemas/UserModel"
           }
         },
-        "required": ["id", "user", "role"],
+        "required": [
+          "id",
+          "user",
+          "role"
+        ],
         "type": "object"
       },
       "UsersOrganizationModelEdgeType": {
@@ -1284,7 +1528,10 @@
             "$ref": "#/components/schemas/UsersOrganizationModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       },
       "UsersProjectConnection": {
@@ -1302,7 +1549,11 @@
             "type": "number"
           }
         },
-        "required": ["edges", "totalCount", "pageInfo"],
+        "required": [
+          "edges",
+          "totalCount",
+          "pageInfo"
+        ],
         "type": "object"
       },
       "UsersProjectModel": {
@@ -1317,7 +1568,11 @@
             "$ref": "#/components/schemas/UserModel"
           }
         },
-        "required": ["id", "user", "role"],
+        "required": [
+          "id",
+          "user",
+          "role"
+        ],
         "type": "object"
       },
       "UsersProjectModelEdgeType": {
@@ -1329,7 +1584,10 @@
             "$ref": "#/components/schemas/UsersProjectModel"
           }
         },
-        "required": ["cursor", "node"],
+        "required": [
+          "cursor",
+          "node"
+        ],
         "type": "object"
       }
     },
@@ -1381,7 +1639,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/api/auth/password": {
@@ -1416,7 +1676,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/api/auth/user": {
@@ -1451,7 +1713,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Auth"]
+        "tags": [
+          "Auth"
+        ]
       }
     },
     "/api/configuration": {
@@ -1471,7 +1735,9 @@
           }
         },
         "summary": "",
-        "tags": ["Configuration"]
+        "tags": [
+          "Configuration"
+        ]
       }
     },
     "/api/endpoints/{endpointId}": {
@@ -1505,7 +1771,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Endpoint"]
+        "tags": [
+          "Endpoint"
+        ]
       }
     },
     "/api/endpoints/{endpointId}/relatives": {
@@ -1539,7 +1807,9 @@
           }
         ],
         "summary": "Retrieve all related entities for a given endpoint",
-        "tags": ["Endpoint"]
+        "tags": [
+          "Endpoint"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects": {
@@ -1590,7 +1860,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Organization"]
+        "tags": [
+          "Organization"
+        ]
       },
       "post": {
         "operationId": "createProject",
@@ -1640,7 +1912,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Organization"]
+        "tags": [
+          "Organization"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}": {
@@ -1682,7 +1956,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       },
       "get": {
         "operationId": "project",
@@ -1722,7 +1998,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       },
       "put": {
         "operationId": "updateProject",
@@ -1772,7 +2050,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches": {
@@ -1831,7 +2111,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}": {
@@ -1881,7 +2163,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/create-revision": {
@@ -1941,7 +2225,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/draft-revision": {
@@ -1991,7 +2277,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/head-revision": {
@@ -2041,7 +2329,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/parent-branch": {
@@ -2091,7 +2381,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/revert-changes": {
@@ -2141,7 +2433,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/revisions": {
@@ -2216,7 +2510,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/start-revision": {
@@ -2266,7 +2562,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/branches/{branchName}/touched": {
@@ -2316,7 +2614,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Branch"]
+        "tags": [
+          "Branch"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/root-branch": {
@@ -2358,7 +2658,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/users": {
@@ -2417,7 +2719,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       },
       "post": {
         "operationId": "addUserToProject",
@@ -2467,7 +2771,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/api/organization/{organizationId}/projects/{projectName}/users/{userId}": {
@@ -2517,7 +2823,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/api/organization/{organizationId}/users": {
@@ -2561,7 +2869,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Organization"]
+        "tags": [
+          "Organization"
+        ]
       },
       "get": {
         "operationId": "usersOrganization",
@@ -2610,7 +2920,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Organization"]
+        "tags": [
+          "Organization"
+        ]
       },
       "post": {
         "operationId": "addUserToOrganization",
@@ -2652,7 +2964,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Organization"]
+        "tags": [
+          "Organization"
+        ]
       }
     },
     "/api/revision/{revisionId}": {
@@ -2686,7 +3000,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/apply-migrations": {
@@ -2749,7 +3065,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/child-branches": {
@@ -2786,7 +3104,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       },
       "post": {
         "operationId": "createBranch",
@@ -2828,7 +3148,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/child-revision": {
@@ -2862,7 +3184,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/endpoints": {
@@ -2899,7 +3223,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       },
       "post": {
         "operationId": "createEndpoint",
@@ -2941,7 +3267,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/migrations": {
@@ -2991,7 +3319,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/parent-revision": {
@@ -3025,7 +3355,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables": {
@@ -3076,7 +3408,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       },
       "post": {
         "operationId": "createTable",
@@ -3118,7 +3452,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Revision"]
+        "tags": [
+          "Revision"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}": {
@@ -3160,7 +3496,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       },
       "get": {
         "operationId": "table",
@@ -3200,7 +3538,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       },
       "patch": {
         "operationId": "updateTable",
@@ -3250,7 +3590,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/count-foreign-keys-by": {
@@ -3292,7 +3634,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/count-foreign-keys-to": {
@@ -3334,7 +3678,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/count-rows": {
@@ -3376,7 +3722,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/create-row": {
@@ -3428,7 +3776,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/foreign-keys-by": {
@@ -3487,7 +3837,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/foreign-keys-to": {
@@ -3546,7 +3898,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rename": {
@@ -3598,7 +3952,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows": {
@@ -3650,7 +4006,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}": {
@@ -3700,7 +4058,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       },
       "get": {
         "operationId": "row",
@@ -3758,7 +4118,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       },
       "put": {
         "operationId": "updateRow",
@@ -3816,7 +4178,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/count-foreign-keys-by": {
@@ -3866,7 +4230,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/count-foreign-keys-to": {
@@ -3916,7 +4282,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/foreign-keys-by": {
@@ -3991,7 +4359,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/foreign-keys-to": {
@@ -4066,7 +4436,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/rename": {
@@ -4126,7 +4498,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/rows/{rowId}/upload/{fileId}": {
@@ -4176,7 +4550,9 @@
                     "type": "string"
                   }
                 },
-                "required": ["file"],
+                "required": [
+                  "file"
+                ],
                 "type": "object"
               }
             }
@@ -4201,7 +4577,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Row"]
+        "tags": [
+          "Row"
+        ]
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/schema": {
@@ -4243,7 +4621,9 @@
           }
         ],
         "summary": "",
-        "tags": ["Table"]
+        "tags": [
+          "Table"
+        ]
       }
     },
     "/api/user/me": {
@@ -4268,7 +4648,9 @@
           }
         ],
         "summary": "",
-        "tags": ["User"]
+        "tags": [
+          "User"
+        ]
       }
     },
     "/health/liveness": {
@@ -4289,7 +4671,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4307,7 +4691,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {},
@@ -4322,7 +4708,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4357,7 +4745,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4379,7 +4769,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4399,7 +4791,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4423,7 +4817,9 @@
           }
         },
         "summary": "",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/health/readiness": {
@@ -4444,7 +4840,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4462,7 +4860,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {},
@@ -4477,7 +4877,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4512,7 +4914,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4534,7 +4938,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4554,7 +4960,9 @@
                             "type": "string"
                           }
                         },
-                        "required": ["status"],
+                        "required": [
+                          "status"
+                        ],
                         "type": "object"
                       },
                       "example": {
@@ -4578,7 +4986,9 @@
           }
         },
         "summary": "",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     }
   },

@@ -445,13 +445,23 @@ describe('Prisma SQL Generator - Unit Tests', () => {
           },
         },
       ]);
-      expect(result.inspect().sql).toContain('{items,0}'); // Simplified to first element
+      // Should generate proper MIN aggregation SQL, not simplified first element
+      expect(result.inspect().sql).toContain('SELECT MIN');
+      expect(result.inspect().sql).toContain('jsonb_array_elements');
+      expect(result.inspect().sql).toContain('{items}');
+      expect(result.inspect().sql).toContain('{price}');
     });
 
     it('should handle all aggregation types', () => {
-      const aggregationTypes = ['min', 'max', 'avg', 'first', 'last'];
+      const testCases = [
+        { aggregation: 'min', expectedSql: 'SELECT MIN' },
+        { aggregation: 'max', expectedSql: 'SELECT MAX' },
+        { aggregation: 'avg', expectedSql: 'SELECT AVG' },
+        { aggregation: 'first', expectedSql: '{items,0,value}' }, // Fixed to match actual format
+        { aggregation: 'last', expectedSql: '{items,-1,value}' }, // Fixed to match actual format
+      ];
 
-      aggregationTypes.forEach((aggregation) => {
+      testCases.forEach(({ aggregation, expectedSql }) => {
         const result = generator.generateOrderBy([
           {
             data: {
@@ -462,7 +472,12 @@ describe('Prisma SQL Generator - Unit Tests', () => {
             },
           },
         ]);
-        expect(result.inspect().sql).toContain('::int ASC');
+
+        expect(result.inspect().sql).toContain(expectedSql);
+        expect(result.inspect().sql).toContain('ASC');
+
+        // All should properly cast to int
+        expect(result.inspect().sql).toContain('::int');
       });
     });
   });
