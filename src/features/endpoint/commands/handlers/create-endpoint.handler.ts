@@ -2,12 +2,16 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { CreateEndpointCommand } from 'src/features/endpoint/commands/impl';
+import {
+  CreateEndpointCommand,
+  CreateEndpointCommandReturnType,
+} from 'src/features/endpoint/commands/impl';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 @CommandHandler(CreateEndpointCommand)
 export class CreateEndpointHandler
-  implements ICommandHandler<CreateEndpointCommand>
+  implements
+    ICommandHandler<CreateEndpointCommand, CreateEndpointCommandReturnType>
 {
   constructor(
     private readonly prisma: PrismaService,
@@ -39,7 +43,7 @@ export class CreateEndpointHandler
   private restoreEndpoint(endpointId: string) {
     return this.prisma.endpoint.update({
       where: { id: endpointId },
-      data: { isDeleted: false },
+      data: { isDeleted: false, createdAt: new Date() },
     });
   }
 
