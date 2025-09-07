@@ -15,6 +15,7 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { MigrationContextService } from 'src/features/draft/migration-context.service';
+import { ENDPOINT_COMMANDS } from 'src/features/endpoint/commands/handlers';
 import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
@@ -130,6 +131,7 @@ export const createTestingModule = async () => {
       ...PROJECT_QUERIES,
       ...BRANCH_QUERIES_HANDLERS,
       ...REVISION_QUERIES_HANDLERS,
+      ...ENDPOINT_COMMANDS,
       GetRevisionHandler,
       GetBranchByIdHandler,
       GetTableByIdHandler,

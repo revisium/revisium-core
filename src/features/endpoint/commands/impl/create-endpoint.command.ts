@@ -8,3 +8,7 @@ export class CreateEndpointCommand {
     },
   ) {}
 }
+
+export type CreateEndpointCommandData = CreateEndpointCommand['data'];
+
+export type CreateEndpointCommandReturnType = string;
