@@ -13,7 +13,7 @@ describe('CreateEndpointHandler', () => {
   it('already exist', async () => {
     const { draftRevisionId } = await prepareProject(prismaService);
 
-    await expect(() =>
+    await expect(
       runTransaction(
         new CreateEndpointCommand({
           revisionId: draftRevisionId,
