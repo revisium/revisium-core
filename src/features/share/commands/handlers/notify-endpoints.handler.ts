@@ -19,7 +19,7 @@ export class NotifyEndpointsHandler
   private async notifyEndpoints(revisionId: string) {
     const endpointIds = await this.getEndpointIds(revisionId);
     for (const endpointId of endpointIds) {
-      this.endpointNotification.update(endpointId);
+      await this.endpointNotification.update(endpointId);
     }
   }
 

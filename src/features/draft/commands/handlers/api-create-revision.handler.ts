@@ -51,7 +51,7 @@ export class ApiCreateRevisionHandler
 
   private async notifyEndpoints(endpoints: string[]) {
     for (const endpointId of endpoints) {
-      this.endpointNotificationService.update(endpointId);
+      await this.endpointNotificationService.update(endpointId);
     }
   }
 }

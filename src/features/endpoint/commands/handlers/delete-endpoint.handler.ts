@@ -16,7 +16,7 @@ export class DeleteEndpointHandler
     const endpoint = await this.getEndpoint(data.endpointId);
     await this.deleteEndpoint(data.endpointId);
 
-    this.endpointNotification.delete(endpoint.id, endpoint.type);
+    await this.endpointNotification.delete(endpoint.id);
 
     return true;
   }

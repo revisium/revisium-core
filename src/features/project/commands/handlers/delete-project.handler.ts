@@ -30,7 +30,7 @@ export class DeleteProjectHandler
         isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
       });
 
-    this.notifyEndpoints(endpoints);
+    await this.notifyEndpoints(endpoints);
 
     return true;
   }
@@ -76,9 +76,11 @@ export class DeleteProjectHandler
     });
   }
 
-  private notifyEndpoints(endpoints: { id: string; type: EndpointType }[]) {
+  private async notifyEndpoints(
+    endpoints: { id: string; type: EndpointType }[],
+  ) {
     for (const endpoint of endpoints) {
-      this.endpointNotification.delete(endpoint.id, endpoint.type);
+      await this.endpointNotification.delete(endpoint.id);
     }
   }
 

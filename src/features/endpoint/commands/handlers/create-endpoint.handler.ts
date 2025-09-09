@@ -29,7 +29,7 @@ export class CreateEndpointHandler
       ? await this.restoreEndpoint(existEndpoint.id)
       : await this.createEndpoint(data);
 
-    this.endpointNotification.create(endpoint.id);
+    await this.endpointNotification.create(endpoint.id);
 
     return endpoint.id;
   }
