@@ -7,7 +7,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import { mapToPrismaOrderBy } from 'src/api/graphql-api/share/mapToPrismaOrderBy';
+import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';

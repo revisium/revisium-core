@@ -1,8 +1,15 @@
-import { OrderByDto } from 'src/api/rest-api/share/model/order-by.model';
 import { GetRowsQueryData, JsonOrder } from 'src/features/row/queries/impl';
 
+interface OrderBy {
+  field: 'createdAt' | 'updatedAt' | 'publishedAt' | 'id' | 'data';
+  direction: 'asc' | 'desc';
+  path?: string;
+  type?: 'text' | 'int' | 'float' | 'boolean' | 'timestamp';
+  aggregation?: 'min' | 'max' | 'avg' | 'first' | 'last';
+}
+
 export const mapToPrismaOrderBy = (
-  orderBy?: OrderByDto[],
+  orderBy?: OrderBy[],
 ): GetRowsQueryData['orderBy'] => {
   if (!orderBy) return undefined;
 
