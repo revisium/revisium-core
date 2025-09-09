@@ -87,6 +87,14 @@ describe('CreateRevisionHandler', () => {
       headEndpointId,
       draftEndpointId,
     } = ids;
+    const { createdAt: headEndpointCreatedAt } =
+      await prismaService.endpoint.findUniqueOrThrow({
+        where: { id: headEndpointId },
+      });
+    const { createdAt: draftEndpointCreatedAt } =
+      await prismaService.endpoint.findUniqueOrThrow({
+        where: { id: draftEndpointId },
+      });
     await prismaService.revision.update({
       where: {
         id: draftRevisionId,
@@ -115,7 +123,10 @@ describe('CreateRevisionHandler', () => {
       nextDraftRevisionId: result.nextDraftRevisionId,
     });
     await afterTableRowChecks(ids, result.nextDraftRevisionId);
-    await afterEndpointsChecks(ids, result.nextDraftRevisionId);
+    await afterEndpointsChecks(ids, result.nextDraftRevisionId, {
+      headEndpointCreatedAt,
+      draftEndpointCreatedAt,
+    });
   });
 
   async function beforeEndpointsChecks(ids: PrepareProjectReturnType) {
@@ -142,24 +153,30 @@ describe('CreateRevisionHandler', () => {
   async function afterEndpointsChecks(
     ids: PrepareProjectReturnType,
     nextDraftRevisionId: string,
+    {
+      headEndpointCreatedAt,
+      draftEndpointCreatedAt,
+    }: {
+      headEndpointCreatedAt: Date;
+      draftEndpointCreatedAt: Date;
+    },
   ) {
     const { draftRevisionId, headEndpointId, draftEndpointId } = ids;
+    const headEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: { id: headEndpointId },
+    });
+    const draftEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: { id: draftEndpointId },
+    });
 
-    expect(
-      (
-        await prismaService.endpoint.findUniqueOrThrow({
-          where: { id: headEndpointId },
-        })
-      ).revisionId,
-    ).toEqual(draftRevisionId);
-
-    expect(
-      (
-        await prismaService.endpoint.findUniqueOrThrow({
-          where: { id: draftEndpointId },
-        })
-      ).revisionId,
-    ).toEqual(nextDraftRevisionId);
+    expect(headEndpoint.revisionId).toEqual(draftRevisionId);
+    expect(draftEndpoint.revisionId).toEqual(nextDraftRevisionId);
+    expect(headEndpoint.createdAt.toISOString()).not.toBe(
+      headEndpointCreatedAt.toISOString(),
+    );
+    expect(draftEndpoint.createdAt.toISOString()).not.toBe(
+      draftEndpointCreatedAt.toISOString(),
+    );
   }
 
   async function prepareRevision(ids: PrepareProjectReturnType) {
