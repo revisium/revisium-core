@@ -48,6 +48,19 @@ describe('mapToPrismaOrderBy', () => {
   });
 
   describe('data field mapping', () => {
+    it('should requires path and type', () => {
+      const orderBy: OrderByDto[] = [
+        {
+          field: SortField.data,
+          direction: SortDirection.asc,
+        },
+      ];
+
+      expect(() => mapToPrismaOrderBy(orderBy)).toThrow(
+        "OrderByField.data requires both 'path' and 'type'.",
+      );
+    });
+
     it('should map data field with required properties', () => {
       const orderBy: OrderByDto[] = [
         {

@@ -15,6 +15,10 @@ export const mapToPrismaOrderBy = (
 
   return orderBy.map((item) => {
     if (item.field === 'data') {
+      if (!item.path || !item.type) {
+        throw new Error("OrderByField.data requires both 'path' and 'type'.");
+      }
+
       return {
         data: {
           path: item.path,
