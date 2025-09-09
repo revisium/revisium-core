@@ -1,5 +1,8 @@
 import { registerDecorator, ValidationOptions } from 'class-validator';
-import { OrderByDto } from 'src/api/rest-api/share/model/order-by.model';
+import {
+  OrderByDto,
+  SortField,
+} from 'src/api/rest-api/share/model/order-by.model';
 
 export function IsUniqueOrderByFields(validationOptions?: ValidationOptions) {
   return function (object: object, propertyName: string) {
@@ -12,10 +15,15 @@ export function IsUniqueOrderByFields(validationOptions?: ValidationOptions) {
         validate(value: OrderByDto[]): boolean {
           if (!Array.isArray(value)) return false;
 
-          const seen = new Set();
+          const seen = new Set<string>();
           for (const item of value) {
-            if (seen.has(item.field)) return false;
-            seen.add(item.field);
+            const key =
+              item.field === SortField.data
+                ? `${item.field}:${item.path || ''}`
+                : item.field;
+
+            if (seen.has(key)) return false;
+            seen.add(key);
           }
           return true;
         },

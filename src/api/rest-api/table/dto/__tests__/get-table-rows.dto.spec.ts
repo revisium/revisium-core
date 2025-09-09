@@ -40,6 +40,56 @@ describe('GetTableRowsDto', () => {
     expect(message).toBe('Each orderBy.field must be unique');
   });
 
+  it('should allow duplicate data fields with different paths', async () => {
+    const errors = await getErrors({
+      first: 100,
+      orderBy: [
+        {
+          field: SortField.data,
+          direction: SortDirection.asc,
+          path: 'user.name',
+          type: JsonValueTypeEnum.text,
+        },
+        {
+          field: SortField.data,
+          direction: SortDirection.desc,
+          path: 'user.age',
+          type: JsonValueTypeEnum.int,
+        },
+      ],
+    });
+    expect(errors).toHaveLength(0);
+  });
+
+  it('should fail if data fields have the same path', async () => {
+    const input = {
+      first: 100,
+      orderBy: [
+        {
+          field: SortField.data,
+          direction: SortDirection.asc,
+          path: 'user.name',
+          type: JsonValueTypeEnum.text,
+        },
+        {
+          field: SortField.data,
+          direction: SortDirection.desc,
+          path: 'user.name',
+          type: JsonValueTypeEnum.text,
+        },
+      ],
+    };
+
+    const instance = plainToInstance(GetTableRowsDto, input);
+    const errors = await validate(instance);
+
+    const error = errors.find((e) => e.property === 'orderBy');
+    expect(error).toBeDefined();
+
+    const message = error?.constraints?.isUniqueOrderByFields;
+    expect(message).toBe('Each orderBy.field must be unique');
+  });
+
   it('empty orderBy should fail', async () => {
     const errors = await getErrors({ first: 100, orderBy: [] });
     expect(findConstraint(errors, 'orderBy', 'arrayNotEmpty')).toBeDefined();
