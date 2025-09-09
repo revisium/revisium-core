@@ -1,4 +1,4 @@
-import { GetRowsQueryData, JsonOrder } from 'src/features/row/queries/impl';
+import { GetRowsQueryData } from 'src/features/row/queries/impl';
 
 interface OrderBy {
   field: 'createdAt' | 'updatedAt' | 'publishedAt' | 'id' | 'data';
@@ -26,7 +26,7 @@ export const mapToPrismaOrderBy = (
           direction: item.direction,
           type: item.type,
         },
-      } as JsonOrder;
+      };
     }
 
     return {
