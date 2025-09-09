@@ -15,7 +15,7 @@ describe('EndpointNotificationService', () => {
   it('should emit endpoint_created', () => {
     service.create('endpoint-1');
     expect(mockClient.notify).toHaveBeenCalledWith('endpoint_changes', {
-      action: 'endpoint_created',
+      action: 'created',
       endpointId: 'endpoint-1',
     });
   });
@@ -23,7 +23,7 @@ describe('EndpointNotificationService', () => {
   it('should emit endpoint_updated', () => {
     service.update('endpoint-2');
     expect(mockClient.notify).toHaveBeenCalledWith('endpoint_changes', {
-      action: 'endpoint_updated',
+      action: 'updated',
       endpointId: 'endpoint-2',
     });
   });
@@ -31,7 +31,7 @@ describe('EndpointNotificationService', () => {
   it('should emit endpoint_deleted', () => {
     service.delete('endpoint-3');
     expect(mockClient.notify).toHaveBeenCalledWith('endpoint_changes', {
-      action: 'endpoint_deleted',
+      action: 'deleted',
       endpointId: 'endpoint-3',
     });
   });
