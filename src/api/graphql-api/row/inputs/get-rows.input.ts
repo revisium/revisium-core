@@ -6,6 +6,23 @@ export enum OrderByField {
   createdAt = 'createdAt',
   id = 'id',
   updatedAt = 'updatedAt',
+  data = 'data',
+}
+
+export enum OrderDataType {
+  text = 'text',
+  int = 'int',
+  float = 'float',
+  boolean = 'boolean',
+  timestamp = 'timestamp',
+}
+
+export enum OrderDataAggregation {
+  min = 'min',
+  max = 'max',
+  avg = 'avg',
+  first = 'first',
+  last = 'last',
 }
 
 @InputType()
@@ -15,6 +32,15 @@ export class OrderBy {
 
   @Field(() => Prisma.SortOrder)
   direction: Prisma.SortOrder;
+
+  @Field({ nullable: true })
+  path?: string;
+
+  @Field(() => OrderDataType, { nullable: true })
+  type?: OrderDataType;
+
+  @Field(() => OrderDataAggregation, { nullable: true })
+  aggregation?: OrderDataAggregation;
 }
 
 @InputType()

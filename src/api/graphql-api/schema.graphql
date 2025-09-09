@@ -342,14 +342,34 @@ type Mutation {
 }
 
 input OrderBy {
+  aggregation: OrderDataAggregation
   direction: SortOrder!
   field: OrderByField!
+  path: String
+  type: OrderDataType
 }
 
 enum OrderByField {
   createdAt
+  data
   id
   updatedAt
+}
+
+enum OrderDataAggregation {
+  avg
+  first
+  last
+  max
+  min
+}
+
+enum OrderDataType {
+  boolean
+  float
+  int
+  text
+  timestamp
 }
 
 type PageInfo {
