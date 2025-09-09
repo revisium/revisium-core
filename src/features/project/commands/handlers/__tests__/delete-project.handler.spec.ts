@@ -27,12 +27,10 @@ describe('DeleteProjectHandler', () => {
     expect(endpointNotificationService.delete).toHaveBeenNthCalledWith(
       1,
       headEndpointId,
-      'REST_API',
     );
     expect(endpointNotificationService.delete).toHaveBeenNthCalledWith(
       2,
       draftEndpointId,
-      'GRAPHQL',
     );
 
     const project = await prismaService.project.findFirstOrThrow({
