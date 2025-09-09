@@ -46,6 +46,7 @@ export class MoveEndpointsHandler
       where: { id: endpointId },
       data: {
         revisionId,
+        createdAt: new Date(),
       },
     });
   }
