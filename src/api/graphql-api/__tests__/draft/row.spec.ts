@@ -1,11 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { Prisma } from '@prisma/client';
 import { gql } from 'src/__tests__/utils/gql';
 import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/__tests__/utils/prepareProject';
 import { graphqlQuery, graphqlQueryError } from 'src/__tests__/utils/queryTest';
+import { OrderByField, OrderDataType } from 'src/api/graphql-api/row/inputs';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 
@@ -105,6 +107,14 @@ describe('row', () => {
             revisionId: preparedData.project.draftRevisionId,
             tableId: preparedData.project.tableId,
             first: 1,
+            orderBy: [
+              {
+                field: OrderByField.data,
+                direction: Prisma.SortOrder.desc,
+                path: 'ver',
+                type: OrderDataType.int,
+              },
+            ],
           },
         },
       };
