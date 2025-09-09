@@ -11,17 +11,17 @@ export class EndpointNotificationService {
 
   public async create(endpointId: string) {
     this.logger.log(`endpoint_created id=${endpointId}`);
-    await this.postgresqlNotification('endpoint_created', endpointId);
+    await this.postgresqlNotification('created', endpointId);
   }
 
   public async update(endpointId: string) {
     this.logger.log(`endpoint_updated id=${endpointId}`);
-    await this.postgresqlNotification('endpoint_updated', endpointId);
+    await this.postgresqlNotification('updated', endpointId);
   }
 
   public async delete(endpointId: string) {
     this.logger.log(`endpoint_deleted id=${endpointId}`);
-    await this.postgresqlNotification('endpoint_deleted', endpointId);
+    await this.postgresqlNotification('deleted', endpointId);
   }
 
   private postgresqlNotification(action: string, endpointId: string) {
