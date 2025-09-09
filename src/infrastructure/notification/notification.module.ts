@@ -3,12 +3,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitter2, EventEmitterModule } from '@nestjs/event-emitter';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { APP_OPTIONS_TOKEN, AppOptions } from 'src/app-mode';
+import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { InMemoryNotificationClient } from 'src/infrastructure/notification/in-memory-notification-client';
 import { RedisNotificationClient } from 'src/infrastructure/notification/redis-notification-client';
 
 @Module({
-  imports: [ConfigModule, EventEmitterModule.forRoot()],
+  imports: [ConfigModule, DatabaseModule, EventEmitterModule.forRoot()],
   providers: [
     {
       provide: 'ENDPOINT_MICROSERVICE',

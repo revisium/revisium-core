@@ -1,34 +1,33 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { EndpointType } from '@prisma/client';
-import { NotificationClient } from 'src/infrastructure/notification/notification-client.interface';
+import { Injectable, Logger } from '@nestjs/common';
+import { PostgresqlNotificationService } from 'src/infrastructure/database/postgresql-notification.service';
 
 @Injectable()
 export class EndpointNotificationService {
   private readonly logger = new Logger(EndpointNotificationService.name);
 
   constructor(
-    @Inject('ENDPOINT_MICROSERVICE')
-    private readonly client: NotificationClient,
+    private readonly postgresqlNotificationService: PostgresqlNotificationService,
   ) {}
 
-  public create(endpointId: string) {
+  public async create(endpointId: string) {
     this.logger.log(`endpoint_created id=${endpointId}`);
-    this.client.emit<string>('endpoint_created', endpointId);
+    await this.postgresqlNotification('endpoint_created', endpointId);
   }
 
-  public update(endpointId: string) {
+  public async update(endpointId: string) {
     this.logger.log(`endpoint_updated id=${endpointId}`);
-    this.client.emit<string>('endpoint_updated', endpointId);
+    await this.postgresqlNotification('endpoint_updated', endpointId);
   }
 
-  public delete(endpointId: string, endpointType: EndpointType) {
-    this.logger.log(`endpoint_deleted id=${endpointId} type=${endpointType}`);
-    this.client.emit<{ endpointId: string; endpointType: EndpointType }>(
-      'endpoint_deleted',
-      {
-        endpointId,
-        endpointType,
-      },
-    );
+  public async delete(endpointId: string) {
+    this.logger.log(`endpoint_deleted id=${endpointId}`);
+    await this.postgresqlNotification('endpoint_deleted', endpointId);
+  }
+
+  private postgresqlNotification(action: string, endpointId: string) {
+    return this.postgresqlNotificationService.notify('endpoint_changes', {
+      action,
+      endpointId,
+    });
   }
 }
