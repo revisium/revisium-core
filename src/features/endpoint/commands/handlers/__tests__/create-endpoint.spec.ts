@@ -48,6 +48,7 @@ describe('CreateEndpointHandler', () => {
     expect(endpoint.isDeleted).toBe(false);
     expect(endpoint.type).toBe(EndpointType.GRAPHQL);
     expect(endpoint.versionId).toBe('GRAPHQL-1');
+    expect(endpoint.versionId).toBe('GRAPHQL-1');
   });
 
   it('restore endpoint', async () => {

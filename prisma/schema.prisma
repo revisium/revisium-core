@@ -167,6 +167,7 @@ model EndpointVersion {
 model Endpoint {
   id         String       @id
   createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @default(now())
   type       EndpointType
   revisionId String
   isDeleted  Boolean      @default(false)
@@ -204,9 +205,9 @@ model Row {
 
   readonly Boolean @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now())
-  publishedAt DateTime @default(now()) 
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  publishedAt DateTime @default(now())
 
   data       Json
   meta       Json   @default("{}")

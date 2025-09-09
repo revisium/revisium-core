@@ -1,9 +1,8 @@
 import { EndpointNotificationService } from '../endpoint-notification.service';
-import { EndpointType } from '@prisma/client';
 
 describe('EndpointNotificationService', () => {
   const mockClient = {
-    emit: jest.fn(),
+    notify: jest.fn(),
   };
 
   let service: EndpointNotificationService;
@@ -15,25 +14,25 @@ describe('EndpointNotificationService', () => {
 
   it('should emit endpoint_created', () => {
     service.create('endpoint-1');
-    expect(mockClient.emit).toHaveBeenCalledWith(
-      'endpoint_created',
-      'endpoint-1',
-    );
+    expect(mockClient.notify).toHaveBeenCalledWith('endpoint_changes', {
+      action: 'endpoint_created',
+      endpointId: 'endpoint-1',
+    });
   });
 
   it('should emit endpoint_updated', () => {
     service.update('endpoint-2');
-    expect(mockClient.emit).toHaveBeenCalledWith(
-      'endpoint_updated',
-      'endpoint-2',
-    );
+    expect(mockClient.notify).toHaveBeenCalledWith('endpoint_changes', {
+      action: 'endpoint_updated',
+      endpointId: 'endpoint-2',
+    });
   });
 
   it('should emit endpoint_deleted', () => {
-    service.delete('endpoint-3', EndpointType.GRAPHQL);
-    expect(mockClient.emit).toHaveBeenCalledWith('endpoint_deleted', {
+    service.delete('endpoint-3');
+    expect(mockClient.notify).toHaveBeenCalledWith('endpoint_changes', {
+      action: 'endpoint_deleted',
       endpointId: 'endpoint-3',
-      endpointType: EndpointType.GRAPHQL,
     });
   });
 });
