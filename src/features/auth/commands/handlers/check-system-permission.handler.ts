@@ -23,7 +23,6 @@ export class CheckSystemPermissionHandler
   ) {}
 
   async execute({ data }: CheckSystemPermissionCommand) {
-    console.log('CheckSystemPermissionCommand');
     const systemRole = await this.getSystemRole(data);
 
     const ability = await this.casl.createAbility(systemRole);

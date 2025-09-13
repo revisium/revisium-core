@@ -17,7 +17,6 @@ export class CheckProjectPermissionHandler
   ) {}
 
   async execute({ data }: CheckProjectPermissionCommand): Promise<true> {
-    console.log('CheckProjectPermissionCommand');
     const project = await this.resolveProject(data);
 
     const systemRole = await this.getSystemRole(data);

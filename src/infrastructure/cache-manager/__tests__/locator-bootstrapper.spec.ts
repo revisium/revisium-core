@@ -4,8 +4,10 @@ import { getCacheServiceOrThrow, registerCacheService } from '../cache.locator';
 import { RevisiumCacheModule } from '../revisium-cache.module';
 import { CACHE_SERVICE } from '../services/cache.tokens';
 import { NoopCacheService } from '../services/noop-cache.service';
-import { CacheService } from '../services/cache.service';
-import { InMemoryAdapter } from '../adapters/in-memory.adapter';
+import {
+  BentoCacheFacade,
+  createNoopBentoCacheFacade,
+} from '../services/bentocache.facade';
 
 describe('CacheBootstrapper and Locator', () => {
   beforeEach(() => {
@@ -50,11 +52,11 @@ describe('CacheBootstrapper and Locator', () => {
       const serviceFromDI = moduleRef.get(CACHE_SERVICE);
       const serviceFromLocator = getCacheServiceOrThrow();
 
-      expect(serviceFromDI).toBeInstanceOf(NoopCacheService);
+      expect(serviceFromDI).toBeInstanceOf(BentoCacheFacade);
       expect(serviceFromLocator).toBe(serviceFromDI); // pointer equality
     });
 
-    it('returns CacheService instance when enabled', async () => {
+    it('returns BentoCacheFacade instance when enabled', async () => {
       const moduleRef = await Test.createTestingModule({
         imports: [
           ConfigModule.forRoot({
@@ -70,7 +72,7 @@ describe('CacheBootstrapper and Locator', () => {
       const serviceFromDI = moduleRef.get(CACHE_SERVICE);
       const serviceFromLocator = getCacheServiceOrThrow();
 
-      expect(serviceFromDI).toBeInstanceOf(CacheService);
+      expect(serviceFromDI).toBeInstanceOf(BentoCacheFacade);
       expect(serviceFromLocator).toBe(serviceFromDI); // pointer equality
     });
   });
@@ -86,7 +88,7 @@ describe('CacheBootstrapper and Locator', () => {
 
     it('can replace service via registerCacheService', () => {
       const service1 = new NoopCacheService();
-      const service2 = new CacheService(new InMemoryAdapter());
+      const service2 = createNoopBentoCacheFacade();
 
       registerCacheService(service1);
       expect(getCacheServiceOrThrow()).toBe(service1);
