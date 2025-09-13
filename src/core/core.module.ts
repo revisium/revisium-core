@@ -7,6 +7,7 @@ import { AppOptionsModule } from 'src/core/app-options.module';
 
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
+import { RevisiumCacheModule } from 'src/infrastructure/cache-manager/revisium-cache.module';
 import { CleanModule } from 'src/infrastructure/clean/clean.module';
 import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
@@ -59,6 +60,7 @@ export class CoreModule {
         DraftModule,
         EndpointModule,
         MetricsModule,
+        RevisiumCacheModule.forRootAsync(),
       ],
     };
   }

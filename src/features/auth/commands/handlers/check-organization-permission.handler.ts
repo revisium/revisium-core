@@ -16,6 +16,7 @@ export class CheckOrganizationPermissionHandler
   ) {}
 
   async execute({ data }: CheckOrganizationPermissionCommand): Promise<true> {
+    console.log('CheckOrganizationPermissionCommand');
     const systemRole = await this.getSystemRole(data);
     const organizationRole = await this.getOrganizationRole(data);
 
