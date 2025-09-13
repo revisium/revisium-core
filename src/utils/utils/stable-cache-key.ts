@@ -31,7 +31,7 @@ export function canonicalize(value: unknown): unknown {
 
   for (const key of Object.keys(obj)
     .filter((k) => obj[k] !== undefined)
-    .sort()) {
+    .sort((a, b) => a.localeCompare(b))) {
     out[key] = canonicalize(obj[key]);
   }
   return out;
