@@ -7,6 +7,7 @@ export type MethodCacheOptions<Args = any, Ret = any> = {
   makeKey?: (args: Args[]) => string; // defaults to JSON.stringify(args)
   makeTags?: (args: Args[], result?: Ret) => string[]; // defaults to []
   ttlSec?: number; // 0 = no TTL (persist until explicit invalidation)
+  namespace?: string; // BentoCache namespace for isolation
 };
 
 /**
@@ -21,6 +22,7 @@ export function CachedMethod<Args = any, Ret = any>(
     makeKey = (args) => JSON.stringify(args),
     makeTags = () => [],
     ttlSec = 3600,
+    namespace,
   } = options;
 
   return function (
@@ -33,7 +35,8 @@ export function CachedMethod<Args = any, Ret = any>(
       const cache = getCacheServiceOrThrow();
 
       const key = `${keyPrefix}:${makeKey(args)}`;
-      const cached = await cache.get<Ret>(key);
+
+      const cached = await cache.get<Ret>(key, namespace);
 
       if (cached !== undefined) {
         return cached;
@@ -46,7 +49,7 @@ export function CachedMethod<Args = any, Ret = any>(
       }
 
       const tags = makeTags(args, result);
-      await cache.set(key, result, { ttlSec, tags });
+      await cache.set(key, result, { ttlSec, tags, namespace });
       return result;
     };
     return descriptor;

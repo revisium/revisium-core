@@ -1,28 +1,80 @@
 import { CachedMethod } from '../method-cache.decorator';
 import { registerCacheService, getCacheServiceOrThrow } from '../cache.locator';
-import { CacheService } from '../services/cache.service';
-import { InMemoryAdapter } from '../adapters/in-memory.adapter';
 import { NoopCacheService } from '../services/noop-cache.service';
-import { CacheAdapter } from '../adapters/cache.adapter';
 
-// Mock L2 adapter for testing
-const createMockL2Adapter = (): jest.Mocked<CacheAdapter> => {
-  const storage = new Map<string, any>();
+// Helper to create a working cache facade for testing
+const createTestCacheFacade = () => {
+  // Support for namespaces - each namespace has its own cache and tag index
+  const namespaces = new Map<
+    string,
+    { cache: Map<string, any>; tagIndex: Map<string, Set<string>> }
+  >();
+  const getNamespaceData = (namespace?: string) => {
+    const ns = namespace || '__default__';
+    if (!namespaces.has(ns)) {
+      namespaces.set(ns, {
+        cache: new Map<string, any>(),
+        tagIndex: new Map<string, Set<string>>(),
+      });
+    }
+    return namespaces.get(ns)!;
+  };
 
   return {
-    get: jest.fn().mockImplementation(async (key: string) => storage.get(key)),
-    set: jest.fn().mockImplementation(async (key: string, value: any) => {
-      storage.set(key, value);
-    }),
-    del: jest.fn().mockImplementation(async (key: string) => {
-      storage.delete(key);
-    }),
-    delByTags: jest.fn().mockImplementation(async (_tags: string[]) => {
-      // Simple implementation for testing
-      for (const [key] of storage.entries()) {
-        storage.delete(key);
-      }
-    }),
+    get: jest
+      .fn()
+      .mockImplementation(async (key: string, namespace?: string) => {
+        const { cache } = getNamespaceData(namespace);
+        return cache.get(key);
+      }),
+    set: jest
+      .fn()
+      .mockImplementation(async (key: string, value: any, opts?: any) => {
+        const { cache, tagIndex } = getNamespaceData(opts?.namespace);
+        cache.set(key, value);
+        // Handle tags
+        if (opts?.tags?.length) {
+          opts.tags.forEach((tag: string) => {
+            if (!tagIndex.has(tag)) {
+              tagIndex.set(tag, new Set());
+            }
+            tagIndex.get(tag)!.add(key);
+          });
+        }
+      }),
+    del: jest
+      .fn()
+      .mockImplementation(async (key: string, namespace?: string) => {
+        const { cache, tagIndex } = getNamespaceData(namespace);
+        cache.delete(key);
+        // Clean up tag references
+        for (const [tag, keys] of tagIndex.entries()) {
+          if (keys.has(key)) {
+            keys.delete(key);
+            if (keys.size === 0) {
+              tagIndex.delete(tag);
+            }
+          }
+        }
+      }),
+    delByTags: jest
+      .fn()
+      .mockImplementation(async (tags: string[], namespace?: string) => {
+        const { cache, tagIndex } = getNamespaceData(namespace);
+        const keysToDelete = new Set<string>();
+        tags.forEach((tag) => {
+          const keys = tagIndex.get(tag);
+          if (keys) {
+            keys.forEach((key) => keysToDelete.add(key));
+          }
+        });
+        keysToDelete.forEach((key) => {
+          cache.delete(key);
+        });
+        tags.forEach((tag) => {
+          tagIndex.delete(tag);
+        });
+      }),
   };
 };
 
@@ -108,10 +160,10 @@ describe('@CachedMethod', () => {
     });
   });
 
-  describe('with L1 cache (InMemoryAdapter)', () => {
+  describe('with working cache facade', () => {
     beforeEach(() => {
-      const l1 = new InMemoryAdapter();
-      registerCacheService(new CacheService(l1));
+      const facade = createTestCacheFacade();
+      registerCacheService(facade);
     });
 
     it('caches result on second call', async () => {
@@ -207,59 +259,70 @@ describe('@CachedMethod', () => {
     });
   });
 
-  describe('with L1 + L2 cache', () => {
-    let l2: jest.Mocked<CacheAdapter>;
-
+  describe('with namespace support', () => {
     beforeEach(() => {
-      const l1 = new InMemoryAdapter();
-      l2 = createMockL2Adapter();
-      registerCacheService(new CacheService(l1, l2));
+      const facade = createTestCacheFacade();
+      registerCacheService(facade);
     });
 
-    it('hydrates from L2 when L1 misses', async () => {
-      // Simulate value only in L2
-      l2.get.mockResolvedValueOnce('user:1:data');
+    it('decorator with namespace works correctly', async () => {
+      class NamespaceTestService {
+        public callCount = 0;
 
-      const result = await testService.getUser({ id: 1 });
-      expect(result).toBe('user:1:data');
-      expect(testService.callCount).toBe(0); // served from L2, no method execution
+        @CachedMethod({
+          keyPrefix: 'ns-test',
+          namespace: 'test-namespace',
+        })
+        async getValue(): Promise<string> {
+          this.callCount++;
+          return 'namespaced-value';
+        }
+      }
 
-      // Second call should hit L1 (now hydrated)
-      l2.get.mockClear();
-      const result2 = await testService.getUser({ id: 1 });
-      expect(result2).toBe('user:1:data');
-      expect(testService.callCount).toBe(0); // still no method execution
-      expect(l2.get).not.toHaveBeenCalled(); // L1 hit
+      const service = new NamespaceTestService();
+
+      const result1 = await service.getValue();
+      const result2 = await service.getValue();
+
+      expect(result1).toBe('namespaced-value');
+      expect(result2).toBe('namespaced-value');
+      expect(service.callCount).toBe(1); // cached on second call
     });
 
-    it('writes to both L1 and L2 on cache miss', async () => {
-      const result = await testService.getUser({ id: 1 });
+    it('different namespaces isolate cache entries', async () => {
+      class MultiNamespaceService {
+        public callCount = 0;
 
-      expect(result).toBe('user:1:data');
-      expect(testService.callCount).toBe(1);
+        @CachedMethod({
+          keyPrefix: 'multi',
+          namespace: 'ns1',
+        })
+        async getFromNs1(): Promise<string> {
+          this.callCount++;
+          return 'value-ns1';
+        }
 
-      // L2 should have been written to
-      expect(l2.set).toHaveBeenCalledWith('user:1', 'user:1:data', {
-        ttlSec: 60,
-        tags: ['user:1'],
-      });
-    });
+        @CachedMethod({
+          keyPrefix: 'multi',
+          namespace: 'ns2',
+        })
+        async getFromNs2(): Promise<string> {
+          this.callCount++;
+          return 'value-ns2';
+        }
+      }
 
-    it('tag invalidation clears both layers', async () => {
-      // Cache a value
-      await testService.getUser({ id: 1 });
+      const service = new MultiNamespaceService();
 
-      // Invalidate by tag
-      const cache = getCacheServiceOrThrow();
-      await cache.delByTags(['user:1']);
+      // Cache values in different namespaces
+      await service.getFromNs1();
+      await service.getFromNs2();
+      expect(service.callCount).toBe(2);
 
-      // Should have called L2 delByTags
-      expect(l2.delByTags).toHaveBeenCalledWith(['user:1']);
-
-      // Next call should execute method again
-      const result = await testService.getUser({ id: 1 });
-      expect(result).toBe('user:1:data');
-      expect(testService.callCount).toBe(2); // called twice
+      // Calls should be cached independently
+      await service.getFromNs1();
+      await service.getFromNs2();
+      expect(service.callCount).toBe(2); // no additional calls
     });
   });
 
@@ -292,8 +355,8 @@ describe('@CachedMethod', () => {
 
     beforeEach(() => {
       configService = new ConfigTestService();
-      const l1 = new InMemoryAdapter();
-      registerCacheService(new CacheService(l1));
+      const facade = createTestCacheFacade();
+      registerCacheService(facade);
     });
 
     it('uses custom makeKey function', async () => {
@@ -351,8 +414,8 @@ describe('@CachedMethod', () => {
 
   describe('error scenarios', () => {
     beforeEach(() => {
-      const l1 = new InMemoryAdapter();
-      registerCacheService(new CacheService(l1));
+      const facade = createTestCacheFacade();
+      registerCacheService(facade);
     });
 
     it('undefined results are not cached', async () => {

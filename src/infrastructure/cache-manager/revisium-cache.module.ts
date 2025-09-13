@@ -1,12 +1,16 @@
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BentoCache, bentostore } from 'bentocache';
+import { memoryDriver } from 'bentocache/drivers/memory';
+import { redisDriver } from 'bentocache/drivers/redis';
 import { parseBool } from 'src/utils/utils/parse-bool';
 import { CacheBootstrapper } from './cache.bootstrapper';
-import { InMemoryAdapter } from './adapters/in-memory.adapter';
-import { RedisAdapter } from './adapters/redis.adapter';
-import { CacheService } from './services/cache.service';
-import { NoopCacheService } from './services/noop-cache.service';
+import {
+  BentoCacheFacade,
+  createNoopBentoCacheFacade,
+} from './services/bentocache.facade';
 import { CACHE_SERVICE, CacheLike } from './services/cache.tokens';
+import Redis from 'ioredis';
 
 @Module({})
 export class RevisiumCacheModule {
@@ -16,44 +20,72 @@ export class RevisiumCacheModule {
       global: true,
       imports: [ConfigModule],
       providers: [
-        InMemoryAdapter,
         {
           provide: CACHE_SERVICE,
-          useFactory: async (
-            cfg: ConfigService,
-            l1: InMemoryAdapter,
-          ): Promise<CacheLike> => {
+          useFactory: async (cfg: ConfigService): Promise<CacheLike> => {
             const logger = new Logger('RevisiumCacheModule');
             const enabled = parseBool(cfg.get<string>('EXPERIMENTAL_CACHE'));
 
             if (!enabled) {
               logger.warn(
-                '⚠️ Cache disabled (NoopCacheService). Set EXPERIMENTAL_CACHE=1 to enable.',
+                '⚠️ Cache disabled (BentoCacheFacade noop). Set EXPERIMENTAL_CACHE=1 to enable.',
               );
-              return new NoopCacheService();
+              return createNoopBentoCacheFacade();
             }
 
             const redisUrl =
               cfg.get<string>('EXPERIMENTAL_CACHE_L2_REDIS_URL') || null;
-            if (!redisUrl) {
-              logger.log('✅ Cache enabled: L1 only (InMemoryAdapter).');
-              return new CacheService(l1);
-            }
 
             try {
-              const l2 = await RedisAdapter.connect(redisUrl);
-              logger.log(`✅ Cache enabled: L1 + L2 (Redis @ ${redisUrl}).`);
-              return new CacheService(l1, l2);
+              let bento: BentoCache<any>;
+
+              if (!redisUrl) {
+                // L1 only configuration
+                bento = new BentoCache({
+                  default: 'cache',
+                  stores: {
+                    cache: bentostore().useL1Layer(
+                      memoryDriver({
+                        maxSize: 5000, // Same as our old LRU cache
+                      }),
+                    ),
+                  },
+                });
+                logger.log('✅ Cache enabled: L1 only (BentoCache memory).');
+              } else {
+                // L1 + L2 configuration
+                bento = new BentoCache({
+                  default: 'cache',
+                  stores: {
+                    cache: bentostore()
+                      .useL1Layer(
+                        memoryDriver({
+                          maxSize: 5000,
+                        }),
+                      )
+                      .useL2Layer(
+                        redisDriver({
+                          connection: new Redis(redisUrl),
+                        }),
+                      ),
+                  },
+                });
+                logger.log(
+                  `✅ Cache enabled: L1 + L2 (BentoCache + Redis @ ${redisUrl}).`,
+                );
+              }
+
+              return new BentoCacheFacade(bento);
             } catch (e) {
               const err = e as Error;
               logger.error(
-                `❌ Redis connect failed (${redisUrl}), fallback to L1 only.`,
+                `❌ BentoCache setup failed (${redisUrl || 'memory'}), using noop fallback.`,
                 err?.stack ?? String(err),
               );
-              return new CacheService(l1);
+              return createNoopBentoCacheFacade();
             }
           },
-          inject: [ConfigService, InMemoryAdapter],
+          inject: [ConfigService],
         },
         CacheBootstrapper,
       ],

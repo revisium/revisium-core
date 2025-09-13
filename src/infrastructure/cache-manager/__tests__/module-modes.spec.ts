@@ -1,10 +1,28 @@
+// Mock bentocache imports before importing modules that use them
+jest.mock('bentocache', () => ({
+  BentoCache: jest.fn().mockImplementation(() => ({
+    // Mock BentoCache instance
+  })),
+  bentostore: jest.fn(() => ({
+    useL1Layer: jest.fn().mockReturnThis(),
+    useL2Layer: jest.fn().mockReturnThis(),
+  })),
+}));
+
+jest.mock('bentocache/drivers/memory', () => ({
+  memoryDriver: jest.fn(),
+}));
+
+jest.mock('bentocache/drivers/redis', () => ({
+  redisDriver: jest.fn(),
+}));
+
 import { Test } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
 import { RevisiumCacheModule } from '../revisium-cache.module';
 import { CACHE_SERVICE } from '../services/cache.tokens';
-import { NoopCacheService } from '../services/noop-cache.service';
-import { CacheService } from '../services/cache.service';
+import { BentoCacheFacade } from '../services/bentocache.facade';
 
 describe('RevisiumCacheModule modes', () => {
   let logSpy: jest.SpyInstance,
@@ -43,13 +61,13 @@ describe('RevisiumCacheModule modes', () => {
     await moduleRef.init();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(NoopCacheService);
+    expect(svc).toBeInstanceOf(BentoCacheFacade);
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('Cache disabled'),
     );
   });
 
-  it('L1 only → CacheService + log', async () => {
+  it('L1 only → BentoCacheFacade + log', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -72,7 +90,7 @@ describe('RevisiumCacheModule modes', () => {
     await moduleRef.init();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(CacheService);
+    expect(svc).toBeInstanceOf(BentoCacheFacade);
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('L1 only'));
   });
 
@@ -94,12 +112,18 @@ describe('RevisiumCacheModule modes', () => {
     }).compile();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(CacheService);
+    expect(svc).toBeInstanceOf(BentoCacheFacade);
     // This will either log L1+L2 success or error+L1 fallback
     expect(logSpy).toHaveBeenCalled();
   });
 
-  it('Redis failure → fallback to L1 + error', async () => {
+  it('Redis failure → fallback to noop + error', async () => {
+    // Mock BentoCache constructor to throw error
+    const { BentoCache } = jest.requireMock('bentocache');
+    BentoCache.mockImplementationOnce(() => {
+      throw new Error('Connection failed');
+    });
+
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -128,12 +152,12 @@ describe('RevisiumCacheModule modes', () => {
     await moduleRef.init();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(CacheService);
+    expect(svc).toBeInstanceOf(BentoCacheFacade);
     expect(errorSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Redis connect failed'),
+      expect.stringContaining('BentoCache setup failed'),
       expect.any(String), // stack string
     );
-    // Service should still be created (fallback to L1 only)
+    // Service should still be created (fallback to noop)
     // but Redis error was logged
   });
 
@@ -178,11 +202,9 @@ describe('RevisiumCacheModule modes', () => {
         await moduleRef.init();
 
         const svc = moduleRef.get(CACHE_SERVICE);
-        if (expected) {
-          expect(svc).toBeInstanceOf(CacheService);
-        } else {
-          expect(svc).toBeInstanceOf(NoopCacheService);
-        }
+        expect(svc).toBeInstanceOf(BentoCacheFacade);
+        // The BentoCacheFacade is created in both cases, but internally
+        // it will be noop mode when cache is disabled
       });
     });
 
@@ -205,7 +227,7 @@ describe('RevisiumCacheModule modes', () => {
       await moduleRef.init();
 
       const svc = moduleRef.get(CACHE_SERVICE);
-      expect(svc).toBeInstanceOf(NoopCacheService);
+      expect(svc).toBeInstanceOf(BentoCacheFacade);
     });
   });
 });
