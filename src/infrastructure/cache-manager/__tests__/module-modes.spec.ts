@@ -6,16 +6,12 @@ import { CACHE_SERVICE } from '../services/cache.tokens';
 import { BentoCacheFacade } from '../services/bentocache.facade';
 
 describe('RevisiumCacheModule modes', () => {
-  let logSpy: jest.SpyInstance,
-    warnSpy: jest.SpyInstance,
-    errorSpy: jest.SpyInstance;
+  let logSpy: jest.SpyInstance, warnSpy: jest.SpyInstance;
 
   beforeEach(() => {
     logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation(() => {});
     warnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation(() => {});
-    errorSpy = jest
-      .spyOn(Logger.prototype, 'error')
-      .mockImplementation(() => {});
+    jest.spyOn(Logger.prototype, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
