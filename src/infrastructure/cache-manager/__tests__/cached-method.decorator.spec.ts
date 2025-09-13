@@ -355,6 +355,54 @@ describe('@CachedMethod', () => {
       registerCacheService(new CacheService(l1));
     });
 
+    it('undefined results are not cached', async () => {
+      class TestService {
+        public callCount = 0;
+
+        @CachedMethod({ keyPrefix: 'maybe' })
+        async maybeReturn(id: number): Promise<string | undefined> {
+          this.callCount++;
+          return id > 0 ? `result:${id}` : undefined;
+        }
+      }
+
+      const service = new TestService();
+      const cache = getCacheServiceOrThrow();
+      const setSpy = jest.spyOn(cache, 'set');
+
+      // Call with negative ID - should return undefined
+      const result1 = await service.maybeReturn(-1);
+      expect(result1).toBeUndefined();
+      expect(service.callCount).toBe(1);
+
+      // Verify cache.set was NOT called for undefined result
+      expect(setSpy).not.toHaveBeenCalled();
+
+      // Call again with same args - should execute again (not cached)
+      const result2 = await service.maybeReturn(-1);
+      expect(result2).toBeUndefined();
+      expect(service.callCount).toBe(2); // Called again
+
+      // Call with positive ID - should cache the result
+      const result3 = await service.maybeReturn(1);
+      expect(result3).toBe('result:1');
+      expect(service.callCount).toBe(3);
+
+      // Verify cache.set WAS called for defined result but NOT for undefined
+      expect(setSpy).toHaveBeenCalledWith(
+        'maybe:[1]',
+        'result:1',
+        expect.anything(),
+      );
+      expect(setSpy).not.toHaveBeenCalledWith(
+        'maybe:[-1]',
+        undefined,
+        expect.anything(),
+      );
+
+      setSpy.mockRestore();
+    });
+
     it('method errors are not cached', async () => {
       class ErrorService {
         public callCount = 0;

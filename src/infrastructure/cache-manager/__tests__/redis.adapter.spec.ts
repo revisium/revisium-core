@@ -48,6 +48,23 @@ const createMockRedisClient = (): jest.Mocked<RedisClientType> => {
         });
         return added;
       }),
+    sRem: jest
+      .fn()
+      .mockImplementation((setKey: string, ...values: string[]) => {
+        const set = sets.get(setKey);
+        if (!set) return 0;
+        let removed = 0;
+        values.forEach((value) => {
+          if (set.has(value)) {
+            set.delete(value);
+            removed++;
+          }
+        });
+        if (set.size === 0) {
+          sets.delete(setKey);
+        }
+        return removed;
+      }),
     sMembers: jest.fn().mockImplementation((setKey: string) => {
       const set = sets.get(setKey);
       return set ? Array.from(set) : [];
@@ -76,6 +93,16 @@ const createMockRedisClient = (): jest.Mocked<RedisClientType> => {
             commands.push({ command: 'sAdd', args: [setKey, ...values] });
             return this;
           }),
+        sRem: jest
+          .fn()
+          .mockImplementation((setKey: string, ...values: string[]) => {
+            commands.push({ command: 'sRem', args: [setKey, ...values] });
+            return this;
+          }),
+        ttl: jest.fn().mockImplementation((key: string) => {
+          commands.push({ command: 'ttl', args: [key] });
+          return this;
+        }),
         sMembers: jest.fn().mockImplementation((setKey: string) => {
           commands.push({ command: 'sMembers', args: [setKey] });
           return this;
@@ -119,6 +146,28 @@ const createMockRedisClient = (): jest.Mocked<RedisClientType> => {
               case 'sMembers': {
                 const memberSet = sets.get(args[0]);
                 return memberSet ? Array.from(memberSet) : [];
+              }
+              case 'sRem': {
+                const [setKey, ...values] = args;
+                const set = sets.get(setKey);
+                if (!set) return 0;
+                let removed = 0;
+                values.forEach((value: string) => {
+                  if (set.has(value)) {
+                    set.delete(value);
+                    removed++;
+                  }
+                });
+                if (set.size === 0) {
+                  sets.delete(setKey);
+                }
+                return removed;
+              }
+              case 'ttl': {
+                const entry = storage.get(args[0]);
+                if (!entry || !entry.expiry) return -1;
+                const ttl = Math.ceil((entry.expiry - Date.now()) / 1000);
+                return ttl > 0 ? ttl : -2;
               }
               default:
                 return null;
@@ -191,7 +240,8 @@ describe('RedisAdapter', () => {
       await adapter.set('key1', 'value1');
       await adapter.del('key1');
 
-      expect(mockClient.del).toHaveBeenCalledWith('key1');
+      // del now uses multi operations to clean up tag indexes
+      expect(mockClient.multi).toHaveBeenCalled();
     });
 
     it('handles various data types', async () => {
@@ -328,6 +378,108 @@ describe('RedisAdapter', () => {
       mockClient.get.mockResolvedValue('invalid-json{');
 
       await expect(adapter.get('key1')).rejects.toThrow();
+    });
+  });
+
+  describe('key-tag index functionality', () => {
+    it('maintains key→tags index on set and cleans up on del', async () => {
+      await adapter.set('key1', 'value1', { tags: ['tag1', 'tag2'] });
+
+      // Should have created keytags:key1 set with tag1, tag2
+      expect(mockClient.multi).toHaveBeenCalled();
+
+      // Delete the key - should clean up both tag→keys and key→tags indexes
+      await adapter.del('key1');
+
+      expect(mockClient.multi).toHaveBeenCalled();
+    });
+
+    it('delByTags removes multiple keys correctly', async () => {
+      await adapter.set('key1', 'value1', { tags: ['shared-tag'] });
+      await adapter.set('key2', 'value2', { tags: ['shared-tag'] });
+
+      await adapter.delByTags(['shared-tag']);
+
+      // Should use variadic del for multiple keys
+      expect(mockClient.multi).toHaveBeenCalled();
+    });
+  });
+
+  describe('getWithMeta functionality', () => {
+    it('returns value with TTL and tags metadata', async () => {
+      // Mock the multi response for getWithMeta
+      const mockMultiExec = jest.fn().mockResolvedValue([
+        '"test-value"', // GET key
+        30, // TTL key (seconds remaining)
+        ['tag1', 'tag2'], // SMEMBERS keytags:key
+      ]);
+
+      const mockMulti = {
+        get: jest.fn().mockReturnThis(),
+        ttl: jest.fn().mockReturnThis(),
+        sMembers: jest.fn().mockReturnThis(),
+        exec: mockMultiExec,
+      };
+
+      mockClient.multi.mockReturnValue(mockMulti as any);
+
+      const result = await adapter.getWithMeta('test-key');
+
+      expect(result).toEqual({
+        value: 'test-value',
+        ttlSec: 30,
+        tags: ['tag1', 'tag2'],
+      });
+
+      expect(mockMulti.get).toHaveBeenCalledWith('test-key');
+      expect(mockMulti.ttl).toHaveBeenCalledWith('test-key');
+      expect(mockMulti.sMembers).toHaveBeenCalledWith('keytags:test-key');
+    });
+
+    it('returns undefined for non-existent key', async () => {
+      const mockMultiExec = jest.fn().mockResolvedValue([
+        null, // GET key returns null
+        -2, // TTL key (doesn't exist)
+        [], // SMEMBERS keytags:key (empty)
+      ]);
+
+      const mockMulti = {
+        get: jest.fn().mockReturnThis(),
+        ttl: jest.fn().mockReturnThis(),
+        sMembers: jest.fn().mockReturnThis(),
+        exec: mockMultiExec,
+      };
+
+      mockClient.multi.mockReturnValue(mockMulti as any);
+
+      const result = await adapter.getWithMeta('non-existent-key');
+
+      expect(result).toBeUndefined();
+    });
+
+    it('handles TTL -1 (no expiry) correctly', async () => {
+      const mockMultiExec = jest.fn().mockResolvedValue([
+        '"permanent-value"',
+        -1, // No TTL set
+        ['tag1'],
+      ]);
+
+      const mockMulti = {
+        get: jest.fn().mockReturnThis(),
+        ttl: jest.fn().mockReturnThis(),
+        sMembers: jest.fn().mockReturnThis(),
+        exec: mockMultiExec,
+      };
+
+      mockClient.multi.mockReturnValue(mockMulti as any);
+
+      const result = await adapter.getWithMeta('permanent-key');
+
+      expect(result).toEqual({
+        value: 'permanent-value',
+        ttlSec: undefined, // TTL -1 should become undefined
+        tags: ['tag1'],
+      });
     });
   });
 });

@@ -230,6 +230,47 @@ describe('CacheService (L1 + L2)', () => {
       expect(await l1.get('complex-key')).toEqual(complexValue);
     });
 
+    it('hydrates L1 with metadata from L2 using getWithMeta', async () => {
+      // Mock L2 adapter with getWithMeta capability
+      const mockL2WithMeta = {
+        ...l2,
+        getWithMeta: jest.fn().mockResolvedValue({
+          value: 'cached-value',
+          ttlSec: 30,
+          tags: ['hydration-tag'],
+        }),
+      };
+
+      // Create service with L2 that supports getWithMeta
+      const serviceWithMeta = new CacheService(l1, mockL2WithMeta);
+
+      const result = await serviceWithMeta.get('meta-key');
+
+      expect(result).toBe('cached-value');
+
+      // Verify L1 was hydrated with metadata
+      expect(await l1.get('meta-key')).toBe('cached-value');
+
+      // Most importantly: verify tag-based invalidation works in L1 after hydration
+      await serviceWithMeta.delByTags(['hydration-tag']);
+      expect(await l1.get('meta-key')).toBeUndefined();
+    });
+
+    it('falls back to regular get when getWithMeta is not available', async () => {
+      // Regular L2 without getWithMeta
+      l2.get.mockResolvedValue('fallback-value');
+
+      const result = await service.get('fallback-key');
+      expect(result).toBe('fallback-value');
+
+      // L1 should be hydrated without metadata
+      expect(await l1.get('fallback-key')).toBe('fallback-value');
+
+      // Tag invalidation should NOT work (no metadata was preserved)
+      await service.delByTags(['some-tag']);
+      expect(await l1.get('fallback-key')).toBe('fallback-value'); // still there
+    });
+
     it('hydration without TTL or tags', async () => {
       l2.get.mockResolvedValue('simple-value');
 

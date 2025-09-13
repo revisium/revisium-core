@@ -131,7 +131,7 @@ describe('RevisiumCacheModule modes', () => {
     expect(svc).toBeInstanceOf(CacheService);
     expect(errorSpy).toHaveBeenCalledWith(
       expect.stringContaining('Redis connect failed'),
-      expect.anything(),
+      expect.any(String), // stack string
     );
     // Service should still be created (fallback to L1 only)
     // but Redis error was logged

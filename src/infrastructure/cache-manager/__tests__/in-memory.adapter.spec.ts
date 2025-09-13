@@ -180,5 +180,20 @@ describe('InMemoryAdapter', () => {
       await adapter.delByTags([]);
       expect(await adapter.get('key1')).toBe('value1'); // still exists
     });
+
+    it('properly cleans up tag index when deleting by tags', async () => {
+      // Test case for key with multiple tags - ensures no hanging refs
+      await adapter.set('key1', 'value1', { tags: ['tag1', 'tag2'] });
+
+      // Delete by first tag
+      await adapter.delByTags(['tag1']);
+      expect(await adapter.get('key1')).toBeUndefined();
+
+      // Delete by second tag should not cause issues (no hanging refs)
+      await expect(adapter.delByTags(['tag2'])).resolves.not.toThrow();
+
+      // Verify clean state
+      expect(await adapter.get('key1')).toBeUndefined();
+    });
   });
 });
