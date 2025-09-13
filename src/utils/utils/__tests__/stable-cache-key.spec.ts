@@ -28,7 +28,7 @@ describe('stable-cache-key', () => {
 
   it('respects null vs undefined difference', () => {
     const k1 = makeCacheKey({ a: null });
-    const k2 = makeCacheKey({}); // undefined -> пропущено
+    const k2 = makeCacheKey({});
     expect(k1).not.toBe(k2);
   });
 
@@ -41,7 +41,6 @@ describe('stable-cache-key', () => {
       b: { c: 3 },
     };
     const s = canonicalStringify(obj);
-    // ключи объектов отсортированы
     expect(s).toBe('{"a":[{"y":2,"z":1},{"y":2,"z":1}],"b":{"c":3}}');
   });
 
@@ -57,7 +56,7 @@ describe('stable-cache-key', () => {
     const v2 = makeCacheKey({ a: 1 }, { version: 2 });
 
     expect(prefixed).toMatch(/^authctx:/);
-    expect(prefixed.slice('authctx:'.length)).toHaveLength(base.length); // длина хэша одинакова
+    expect(prefixed.slice('authctx:'.length)).toHaveLength(base.length);
     expect(v2).not.toBe(base);
   });
 
@@ -74,7 +73,6 @@ describe('stable-cache-key', () => {
     const withToJSON = {
       date: new Date('2020-01-01T00:00:00.000Z'),
       toJSON() {
-        // эмулируем пользовательский toJSON
         return { date: '2020-01-01' };
       },
     };
