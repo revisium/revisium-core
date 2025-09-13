@@ -1,16 +1,12 @@
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { parseBool } from 'src/utils/utils/parse-bool';
 import { CacheBootstrapper } from './cache.bootstrapper';
 import { InMemoryAdapter } from './adapters/in-memory.adapter';
 import { RedisAdapter } from './adapters/redis.adapter';
 import { CacheService } from './services/cache.service';
 import { NoopCacheService } from './services/noop-cache.service';
 import { CACHE_SERVICE, CacheLike } from './services/cache.tokens';
-
-function parseBool(v?: string | null): boolean {
-  if (!v) return false;
-  return ['1', 'true', 'on', 'yes'].includes(String(v).toLowerCase());
-}
 
 @Module({})
 export class RevisiumCacheModule {
