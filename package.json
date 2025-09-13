@@ -157,8 +157,10 @@
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
     ],
-    "transformIgnorePatterns": [
-      "node_modules/(?!(bentocache)/)"
-    ]
+    "moduleNameMapper": {
+      "^bentocache$": "<rootDir>/src/infrastructure/cache-manager/__mocks__/bentocache.js",
+      "^bentocache/drivers/memory$": "<rootDir>/src/infrastructure/cache-manager/__mocks__/bentocache-memory.js",
+      "^bentocache/drivers/redis$": "<rootDir>/src/infrastructure/cache-manager/__mocks__/bentocache-redis.js"
+    }
   }
 }

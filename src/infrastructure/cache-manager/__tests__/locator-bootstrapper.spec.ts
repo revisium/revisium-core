@@ -1,20 +1,3 @@
-// Mock bentocache imports before importing modules that use them
-jest.mock('bentocache', () => ({
-  BentoCache: jest.fn(),
-  bentostore: jest.fn(() => ({
-    useL1Layer: jest.fn().mockReturnThis(),
-    useL2Layer: jest.fn().mockReturnThis(),
-  })),
-}));
-
-jest.mock('bentocache/drivers/memory', () => ({
-  memoryDriver: jest.fn(),
-}));
-
-jest.mock('bentocache/drivers/redis', () => ({
-  redisDriver: jest.fn(),
-}));
-
 import { Test } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { getCacheServiceOrThrow, registerCacheService } from '../cache.locator';
