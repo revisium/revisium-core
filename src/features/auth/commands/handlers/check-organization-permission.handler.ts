@@ -1,14 +1,21 @@
 import { ForbiddenError } from '@casl/ability';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
-import { CheckOrganizationPermissionCommand } from 'src/features/auth/commands/impl/check-organization-permission.command';
+import {
+  CheckOrganizationPermissionCommand,
+  CheckOrganizationPermissionCommandReturnType,
+} from 'src/features/auth/commands/impl/check-organization-permission.command';
 import { UserRole } from 'src/features/auth/consts';
 import { getUserRole } from 'src/features/auth/utils';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(CheckOrganizationPermissionCommand)
 export class CheckOrganizationPermissionHandler
-  implements ICommandHandler<CheckOrganizationPermissionCommand, true>
+  implements
+    ICommandHandler<
+      CheckOrganizationPermissionCommand,
+      CheckOrganizationPermissionCommandReturnType
+    >
 {
   constructor(
     private readonly prisma: PrismaService,

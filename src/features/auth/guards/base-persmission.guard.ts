@@ -9,6 +9,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import { CommandBus } from '@nestjs/cqrs';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import {
   PERMISSION_PARAMS_KEY,
   IPermissionParams,
@@ -22,6 +23,7 @@ export abstract class BasePermissionGuard<T = Record<string, never>>
   constructor(
     protected reflector: Reflector,
     protected commandBus: CommandBus,
+    protected authApi: AuthApiService,
   ) {}
 
   protected getFromHttpContext(context: ExecutionContext) {
@@ -48,7 +50,7 @@ export abstract class BasePermissionGuard<T = Record<string, never>>
     params: T;
   };
 
-  protected abstract getCommand(
+  protected abstract executeCommand(
     params: T,
     permissions: IPermissionParams[],
     userId?: string,
@@ -82,8 +84,7 @@ export abstract class BasePermissionGuard<T = Record<string, never>>
     }
 
     try {
-      const command = this.getCommand(params, permissions, user?.userId);
-      await this.commandBus.execute(command);
+      await this.executeCommand(params, permissions, user?.userId);
     } catch (e) {
       if (e instanceof Error) {
         throw new ForbiddenException(e.message);

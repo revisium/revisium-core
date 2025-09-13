@@ -1,15 +1,25 @@
 import { ForbiddenError, subject } from '@casl/ability';
 import { InternalServerErrorException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { createHash } from 'crypto';
 import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
-import { CheckProjectPermissionCommand } from 'src/features/auth/commands/impl';
+import {
+  CheckProjectPermissionCommand,
+  CheckProjectPermissionCommandData,
+  CheckProjectPermissionCommandReturnType,
+} from 'src/features/auth/commands/impl';
 import { PermissionSubject, UserRole } from 'src/features/auth/consts';
 import { getUserRole } from 'src/features/auth/utils';
+import { CachedMethod } from 'src/infrastructure/cache-manager/method-cache.decorator';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(CheckProjectPermissionCommand)
 export class CheckProjectPermissionHandler
-  implements ICommandHandler<CheckProjectPermissionCommand, true>
+  implements
+    ICommandHandler<
+      CheckProjectPermissionCommand,
+      CheckProjectPermissionCommandReturnType
+    >
 {
   constructor(
     private readonly prisma: PrismaService,

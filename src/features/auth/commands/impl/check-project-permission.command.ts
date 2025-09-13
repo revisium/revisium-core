@@ -14,3 +14,8 @@ export class CheckProjectPermissionCommand {
     ),
   ) {}
 }
+
+export type CheckProjectPermissionCommandData =
+  CheckProjectPermissionCommand['data'];
+
+export type CheckProjectPermissionCommandReturnType = boolean;
