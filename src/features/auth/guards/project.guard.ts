@@ -1,5 +1,4 @@
 import { ExecutionContext, NotFoundException } from '@nestjs/common';
-import { CheckProjectPermissionCommand } from 'src/features/auth/commands/impl';
 import { BasePermissionGuard } from 'src/features/auth/guards/base-persmission.guard';
 import { IPermissionParams } from 'src/features/auth/guards/permission-params';
 
@@ -11,7 +10,21 @@ interface Params {
 }
 
 abstract class ProjectGuard extends BasePermissionGuard<Params> {
-  protected getCommand(
+  protected executeCommand(
+    params: {
+      organizationId?: string;
+      projectName?: string;
+      revisionId?: string;
+      endpointId?: string;
+    },
+    permissions: IPermissionParams[],
+    userId?: string,
+  ) {
+    const data = this.getData(params, permissions, userId);
+    return this.authApi.checkProjectPermission(data);
+  }
+
+  protected getData(
     params: {
       organizationId?: string;
       projectName?: string;
@@ -22,24 +35,24 @@ abstract class ProjectGuard extends BasePermissionGuard<Params> {
     userId?: string,
   ) {
     if (params.organizationId && params.projectName) {
-      return new CheckProjectPermissionCommand({
+      return {
         permissions,
         organizationId: params.organizationId,
         projectName: params.projectName,
         userId,
-      });
+      };
     } else if (params.revisionId) {
-      return new CheckProjectPermissionCommand({
+      return {
         permissions,
         revisionId: params.revisionId,
         userId,
-      });
+      };
     } else if (params.endpointId) {
-      return new CheckProjectPermissionCommand({
+      return {
         permissions,
         endpointId: params.endpointId,
         userId,
-      });
+      };
     } else {
       throw new NotFoundException(params);
     }

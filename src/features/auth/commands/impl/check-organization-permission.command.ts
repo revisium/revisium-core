@@ -9,3 +9,8 @@ export class CheckOrganizationPermissionCommand {
     },
   ) {}
 }
+
+export type CheckOrganizationPermissionCommandData =
+  CheckOrganizationPermissionCommand['data'];
+
+export type CheckOrganizationPermissionCommandReturnType = boolean;

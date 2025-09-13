@@ -1,5 +1,4 @@
 import { ExecutionContext, InternalServerErrorException } from '@nestjs/common';
-import { CheckOrganizationPermissionCommand } from 'src/features/auth/commands/impl/check-organization-permission.command';
 import { BasePermissionGuard } from 'src/features/auth/guards/base-persmission.guard';
 import { IPermissionParams } from 'src/features/auth/guards/permission-params';
 
@@ -8,7 +7,7 @@ interface Params {
 }
 
 abstract class OrganizationGuard extends BasePermissionGuard<Params> {
-  protected getCommand(
+  protected executeCommand(
     params: {
       organizationId?: string;
     },
@@ -21,7 +20,7 @@ abstract class OrganizationGuard extends BasePermissionGuard<Params> {
       );
     }
 
-    return new CheckOrganizationPermissionCommand({
+    return this.authApi.checkOrganizationPermission({
       permissions,
       organizationId: params.organizationId,
       userId,

@@ -9,4 +9,7 @@ export class CheckSystemPermissionCommand {
   ) {}
 }
 
+export type CheckSystemPermissionCommandData =
+  CheckSystemPermissionCommand['data'];
+
 export type CheckSystemPermissionCommandReturnType = boolean;

@@ -6,6 +6,7 @@ import { PassportModule } from '@nestjs/passport';
 import { AuthService } from 'src/features/auth/auth.service';
 import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
 import { AUTH_COMMANDS } from 'src/features/auth/commands';
+import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
 import { JwtSecretService } from 'src/features/auth/jwt-secret.service';
@@ -25,6 +26,7 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     EmailModule,
   ],
   providers: [
+    AuthApiService,
     AuthService,
     JwtStrategy,
     JwtSecretService,
@@ -33,6 +35,6 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     CaslAbilityFactory,
     ...AUTH_COMMANDS,
   ],
-  exports: [AuthService, GoogleOauthService, GitHubAuthService],
+  exports: [AuthService, GoogleOauthService, GitHubAuthService, AuthApiService],
 })
 export class AuthModule {}
