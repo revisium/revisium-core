@@ -45,9 +45,10 @@ export class RevisiumCacheModule {
               logger.log(`✅ Cache enabled: L1 + L2 (Redis @ ${redisUrl}).`);
               return new CacheService(l1, l2);
             } catch (e) {
+              const err = e as Error;
               logger.error(
                 `❌ Redis connect failed (${redisUrl}), fallback to L1 only.`,
-                e as any,
+                err?.stack ?? String(err),
               );
               return new CacheService(l1);
             }

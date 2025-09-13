@@ -63,7 +63,7 @@ export class InMemoryAdapter implements CacheAdapter {
         continue;
       }
 
-      for (const key of keys) {
+      for (const key of Array.from(keys)) {
         this.cache.delete(key);
       }
 

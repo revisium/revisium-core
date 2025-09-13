@@ -40,6 +40,11 @@ export function CachedMethod<Args = any, Ret = any>(
       }
 
       const result: Ret = await orig.apply(this, args);
+
+      if (result === undefined) {
+        return result;
+      }
+
       const tags = makeTags(args, result);
       await cache.set(key, result, { ttlSec, tags });
       return result;

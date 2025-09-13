@@ -7,4 +7,8 @@ export interface CacheAdapter {
   ): Promise<void>;
   del(key: string): Promise<void>;
   delByTags(tags: string[]): Promise<void>;
+
+  getWithMeta?<T>(
+    key: string,
+  ): Promise<{ value: T; ttlSec?: number; tags?: string[] } | undefined>;
 }

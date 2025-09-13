@@ -14,6 +14,10 @@ export class RedisAdapter implements CacheAdapter {
     return `tag:${tag}`;
   }
 
+  private keyTags(key: string) {
+    return `keytags:${key}`;
+  }
+
   public async get<T>(key: string): Promise<T | undefined> {
     const raw = await this.redis.get(key);
     return raw ? (JSON.parse(raw) as T) : undefined;
@@ -37,14 +41,32 @@ export class RedisAdapter implements CacheAdapter {
 
       for (const tag of opts.tags) {
         multi.sAdd(this.tagSet(tag), key);
+        multi.sAdd(this.keyTags(key), tag);
       }
 
       await multi.exec();
     }
   }
 
-  public async del(key: string): Promise<void> {
-    await this.redis.del(key);
+  async del(key: string): Promise<void> {
+    const multi = this.redis.multi();
+    multi.del(key);
+    multi.sMembers(this.keyTags(key));
+
+    const result = await multi.exec();
+
+    const tags = (result?.[1] as unknown as string[]) || [];
+
+    if (tags.length) {
+      const m2 = this.redis.multi();
+      for (const tag of tags) {
+        m2.sRem(this.tagSet(tag), key);
+      }
+      m2.del(this.keyTags(key));
+      await m2.exec();
+    } else {
+      await this.redis.del(this.keyTags(key));
+    }
   }
 
   public async delByTags(tags: string[]): Promise<void> {
@@ -53,14 +75,41 @@ export class RedisAdapter implements CacheAdapter {
     const multi = this.redis.multi();
 
     if (keys.length) {
-      multi.del(keys);
+      (multi as any).del(...keys);
     }
 
     for (const tag of tags) {
       multi.del(this.tagSet(tag));
     }
 
+    for (const key of keys) {
+      multi.del(this.keyTags(key));
+    }
+
     await multi.exec();
+  }
+
+  async getWithMeta<T>(
+    key: string,
+  ): Promise<{ value: T; ttlSec?: number; tags?: string[] } | undefined> {
+    const multi = this.redis.multi();
+    multi.get(key);
+    multi.ttl(key);
+    multi.sMembers(this.keyTags(key));
+    const res = await multi.exec();
+
+    const raw = res?.[0] as unknown as string | null;
+    if (!raw) {
+      return undefined;
+    }
+
+    const ttl = (res?.[1] as unknown as number) ?? -1;
+    const tags = (res?.[2] as unknown as string[]) ?? [];
+    return {
+      value: JSON.parse(raw) as T,
+      ttlSec: ttl > 0 ? ttl : undefined,
+      tags,
+    };
   }
 
   private async getKeysByTags(tags: string[]): Promise<string[]> {

@@ -18,11 +18,21 @@ export class CacheService implements CacheLike {
     }
 
     if (this.l2) {
-      const v2 = await this.l2.get<T>(key);
-
-      if (v2 !== undefined) {
-        await this.l1.set(key, v2);
-        return v2;
+      const withMeta = this.l2.getWithMeta
+        ? await this.l2.getWithMeta<T>(key)
+        : undefined;
+      if (withMeta) {
+        await this.l1.set(key, withMeta.value, {
+          ttlSec: withMeta.ttlSec,
+          tags: withMeta.tags,
+        });
+        return withMeta.value;
+      } else {
+        const v2 = await this.l2.get<T>(key);
+        if (v2 !== undefined) {
+          await this.l1.set(key, v2);
+          return v2;
+        }
       }
     }
 
