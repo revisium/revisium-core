@@ -5,7 +5,7 @@ import { CacheLike } from '../cache.locator';
  * Used when caching is disabled
  */
 export class NoopBentoCache implements CacheLike {
-  async get(_options: { key: string }): Promise<any | undefined> {
+  async get(_options: { key: string }): Promise<any> {
     return undefined;
   }
 

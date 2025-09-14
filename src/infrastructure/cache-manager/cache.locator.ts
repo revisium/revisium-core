@@ -1,5 +1,5 @@
 export interface CacheLike {
-  get(options: { key: string }): Promise<any | undefined>;
+  get(options: { key: string }): Promise<any>;
   set(options: {
     key: string;
     value: any;
