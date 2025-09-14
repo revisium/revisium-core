@@ -27,10 +27,10 @@ export class CaslAbilityFactory {
     UserRole,
     Array<{ action: string; subject: string; condition?: object }>
   >({
-    keyPrefix: 'role:permissions',
+    key: 'role:permissions',
     makeKey: ([role]) => role,
     makeTags: ([role]) => ['dict:roles', `role:${role}`],
-    ttlSec: 24 * 60 * 60,
+    ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
   })
   private getPermissions(role: UserRole) {
     return this.prisma.role

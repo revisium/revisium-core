@@ -1,9 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Logger } from '@nestjs/common';
+import { BentoCache } from 'bentocache';
 import { RevisiumCacheModule } from '../revisium-cache.module';
 import { CACHE_SERVICE } from '../services/cache.tokens';
-import { BentoCacheFacade } from '../services/bentocache.facade';
+import { NoopBentoCache } from '../services/noop-bento-cache';
 
 describe('RevisiumCacheModule modes', () => {
   let logSpy: jest.SpyInstance, warnSpy: jest.SpyInstance;
@@ -38,13 +39,13 @@ describe('RevisiumCacheModule modes', () => {
     await moduleRef.init();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(BentoCacheFacade);
+    expect(svc).toBeInstanceOf(NoopBentoCache);
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining('Cache disabled'),
     );
   });
 
-  it('L1 only → BentoCacheFacade + log', async () => {
+  it('L1 only → BentoCache + log', async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
@@ -67,7 +68,7 @@ describe('RevisiumCacheModule modes', () => {
     await moduleRef.init();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(BentoCacheFacade);
+    expect(svc).toBeInstanceOf(BentoCache);
     expect(logSpy).toHaveBeenCalledWith(expect.stringContaining('L1 only'));
   });
 
@@ -89,7 +90,8 @@ describe('RevisiumCacheModule modes', () => {
     }).compile();
 
     const svc = moduleRef.get(CACHE_SERVICE);
-    expect(svc).toBeInstanceOf(BentoCacheFacade);
+    // This will either be BentoCache (L1+L2 success) or NoopBentoCache (fallback)
+    expect(svc).toBeInstanceOf(BentoCache);
     // This will either log L1+L2 success or error+L1 fallback
     expect(logSpy).toHaveBeenCalled();
   });
@@ -140,9 +142,11 @@ describe('RevisiumCacheModule modes', () => {
         await moduleRef.init();
 
         const svc = moduleRef.get(CACHE_SERVICE);
-        expect(svc).toBeInstanceOf(BentoCacheFacade);
-        // The BentoCacheFacade is created in both cases, but internally
-        // it will be noop mode when cache is disabled
+        if (expected) {
+          expect(svc).toBeInstanceOf(BentoCache);
+        } else {
+          expect(svc).toBeInstanceOf(NoopBentoCache);
+        }
       });
     });
 
@@ -165,7 +169,7 @@ describe('RevisiumCacheModule modes', () => {
       await moduleRef.init();
 
       const svc = moduleRef.get(CACHE_SERVICE);
-      expect(svc).toBeInstanceOf(BentoCacheFacade);
+      expect(svc).toBeInstanceOf(NoopBentoCache);
     });
   });
 });

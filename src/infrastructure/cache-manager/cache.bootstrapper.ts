@@ -1,9 +1,6 @@
 import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import {
-  CACHE_SERVICE,
-  CacheLike,
-} from 'src/infrastructure/cache-manager/services/cache.tokens';
-import { registerCacheService } from './cache.locator';
+import { CACHE_SERVICE } from './services/cache.tokens';
+import { CacheLike, registerCacheService } from './cache.locator';
 
 /**
  * On app/module init, capture the CacheService into the global locator.
@@ -11,7 +8,10 @@ import { registerCacheService } from './cache.locator';
  */
 @Injectable()
 export class CacheBootstrapper implements OnModuleInit {
-  constructor(@Inject(CACHE_SERVICE) private readonly cache: CacheLike) {}
+  constructor(
+    @Inject(CACHE_SERVICE)
+    private readonly cache: CacheLike,
+  ) {}
 
   onModuleInit() {
     registerCacheService(this.cache);
