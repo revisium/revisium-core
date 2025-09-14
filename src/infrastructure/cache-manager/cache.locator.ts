@@ -1,7 +1,18 @@
-import { CacheLike } from 'src/infrastructure/cache-manager/services/cache.tokens';
+// Simple cache interface that matches BentoCache API
+export interface CacheLike {
+  get(options: { key: string }): Promise<any | undefined>;
+  set(options: {
+    key: string;
+    value: any;
+    ttl?: number;
+    tags?: string[];
+  }): Promise<boolean>;
+  namespace(name: string): CacheLike;
+  deleteByTag(options: { tags: string[] }): Promise<boolean | void>; // BentoCache returns boolean, NoopBentoCache returns void
+}
 
 /**
- * Tiny global locator for CacheService.
+ * Tiny global locator for cache service.
  * Filled once during module init; read anywhere (incl. decorators).
  * This avoids injecting CacheService into every consumer class.
  */

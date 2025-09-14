@@ -1,68 +1,63 @@
 import { CachedMethod } from '../method-cache.decorator';
-import { registerCacheService, getCacheServiceOrThrow } from '../cache.locator';
-import { NoopCacheService } from '../services/noop-cache.service';
+import {
+  registerCacheService,
+  getCacheServiceOrThrow,
+  CacheLike,
+} from '../cache.locator';
+import { NoopBentoCache } from '../services/noop-bento-cache';
+
+// Global namespace storage shared across facade instances
+const globalNamespaces = new Map<
+  string,
+  { cache: Map<string, any>; tagIndex: Map<string, Set<string>> }
+>();
+
+const getNamespaceData = (namespace?: string) => {
+  const ns = namespace || '__default__';
+  if (!globalNamespaces.has(ns)) {
+    globalNamespaces.set(ns, {
+      cache: new Map<string, any>(),
+      tagIndex: new Map<string, Set<string>>(),
+    });
+  }
+  return globalNamespaces.get(ns)!;
+};
 
 // Helper to create a working cache facade for testing
-const createTestCacheFacade = () => {
-  // Support for namespaces - each namespace has its own cache and tag index
-  const namespaces = new Map<
-    string,
-    { cache: Map<string, any>; tagIndex: Map<string, Set<string>> }
-  >();
-  const getNamespaceData = (namespace?: string) => {
-    const ns = namespace || '__default__';
-    if (!namespaces.has(ns)) {
-      namespaces.set(ns, {
-        cache: new Map<string, any>(),
-        tagIndex: new Map<string, Set<string>>(),
-      });
-    }
-    return namespaces.get(ns)!;
-  };
-
+const createTestCacheFacade = (currentNamespace?: string): CacheLike => {
   return {
-    get: jest
-      .fn()
-      .mockImplementation(async (key: string, namespace?: string) => {
-        const { cache } = getNamespaceData(namespace);
-        return cache.get(key);
-      }),
+    get: jest.fn().mockImplementation(async (options: { key: string }) => {
+      const { cache } = getNamespaceData(currentNamespace);
+      return cache.get(options.key);
+    }),
     set: jest
       .fn()
-      .mockImplementation(async (key: string, value: any, opts?: any) => {
-        const { cache, tagIndex } = getNamespaceData(opts?.namespace);
-        cache.set(key, value);
-        // Handle tags
-        if (opts?.tags?.length) {
-          opts.tags.forEach((tag: string) => {
-            if (!tagIndex.has(tag)) {
-              tagIndex.set(tag, new Set());
-            }
-            tagIndex.get(tag)!.add(key);
-          });
-        }
-      }),
-    del: jest
-      .fn()
-      .mockImplementation(async (key: string, namespace?: string) => {
-        const { cache, tagIndex } = getNamespaceData(namespace);
-        cache.delete(key);
-        // Clean up tag references
-        for (const [tag, keys] of tagIndex.entries()) {
-          if (keys.has(key)) {
-            keys.delete(key);
-            if (keys.size === 0) {
-              tagIndex.delete(tag);
-            }
+      .mockImplementation(
+        async (options: {
+          key: string;
+          value: any;
+          ttl?: number;
+          tags?: string[];
+        }) => {
+          const { cache, tagIndex } = getNamespaceData(currentNamespace);
+          cache.set(options.key, options.value);
+          // Handle tags
+          if (options.tags?.length) {
+            options.tags.forEach((tag: string) => {
+              if (!tagIndex.has(tag)) {
+                tagIndex.set(tag, new Set());
+              }
+              tagIndex.get(tag)!.add(options.key);
+            });
           }
-        }
-      }),
-    delByTags: jest
+        },
+      ),
+    deleteByTag: jest
       .fn()
-      .mockImplementation(async (tags: string[], namespace?: string) => {
-        const { cache, tagIndex } = getNamespaceData(namespace);
+      .mockImplementation(async (options: { tags: string[] }) => {
+        const { cache, tagIndex } = getNamespaceData(currentNamespace);
         const keysToDelete = new Set<string>();
-        tags.forEach((tag) => {
+        options.tags.forEach((tag) => {
           const keys = tagIndex.get(tag);
           if (keys) {
             keys.forEach((key) => keysToDelete.add(key));
@@ -71,10 +66,14 @@ const createTestCacheFacade = () => {
         keysToDelete.forEach((key) => {
           cache.delete(key);
         });
-        tags.forEach((tag) => {
+        options.tags.forEach((tag) => {
           tagIndex.delete(tag);
         });
       }),
+    namespace: jest.fn().mockImplementation((name: string) => {
+      // Return a facade bound to specific namespace
+      return createTestCacheFacade(name);
+    }),
   };
 };
 
@@ -84,10 +83,10 @@ describe('@CachedMethod', () => {
     public callCount = 0;
 
     @CachedMethod({
-      keyPrefix: 'user',
+      key: 'user',
       makeKey: (args: [{ id: number }]) => String(args[0].id),
       makeTags: (args: [{ id: number }]) => [`user:${args[0].id}`],
-      ttlSec: 60,
+      ttl: 60 * 1000, // 60 seconds in milliseconds
     })
     async getUser(arg: { id: number }): Promise<string> {
       this.callCount++;
@@ -95,9 +94,9 @@ describe('@CachedMethod', () => {
     }
 
     @CachedMethod({
-      keyPrefix: 'compute',
+      key: 'compute',
       makeKey: (args) => JSON.stringify(args),
-      ttlSec: 30,
+      ttl: 30 * 1000, // 30 seconds in milliseconds
     })
     async expensiveComputation(
       a: number,
@@ -108,7 +107,7 @@ describe('@CachedMethod', () => {
     }
 
     @CachedMethod({
-      keyPrefix: 'noargs',
+      key: 'noargs',
     })
     async getConstantValue(): Promise<string> {
       this.callCount++;
@@ -116,7 +115,7 @@ describe('@CachedMethod', () => {
     }
 
     @CachedMethod({
-      keyPrefix: 'tagged',
+      key: 'tagged',
       makeTags: ([category]) => [`category:${category}`],
     })
     async getByCategory(category: string): Promise<string[]> {
@@ -134,11 +133,12 @@ describe('@CachedMethod', () => {
   afterEach(() => {
     // Reset call counters and cache state between tests
     testService.callCount = 0;
+    globalNamespaces.clear();
   });
 
   describe('when cache is disabled (NoopCacheService)', () => {
     beforeEach(() => {
-      registerCacheService(new NoopCacheService());
+      registerCacheService(new NoopBentoCache());
     });
 
     it('always executes method (no caching)', async () => {
@@ -194,7 +194,7 @@ describe('@CachedMethod', () => {
 
       // Invalidate by tag
       const cache = getCacheServiceOrThrow();
-      await cache.delByTags(['user:1']);
+      await cache.deleteByTag({ tags: ['user:1'] });
 
       // Should execute again
       const result2 = await testService.getUser({ id: 1 });
@@ -231,9 +231,9 @@ describe('@CachedMethod', () => {
 
       // Key should be based on JSON.stringify([42, 'test'])
       const cache = getCacheServiceOrThrow();
-      const cachedValue = await cache.get(
-        'compute:' + JSON.stringify([42, 'test']),
-      );
+      const cachedValue = await cache.get({
+        key: 'compute:' + JSON.stringify([42, 'test']),
+      });
       expect(cachedValue).toEqual({ result: '42-test-computed' });
     });
 
@@ -250,7 +250,7 @@ describe('@CachedMethod', () => {
 
       // Invalidate one category
       const cache = getCacheServiceOrThrow();
-      await cache.delByTags(['category:electronics']);
+      await cache.deleteByTag({ tags: ['category:electronics'] });
 
       // Electronics should be recomputed, books should be cached
       await testService.getByCategory('electronics');
@@ -270,7 +270,7 @@ describe('@CachedMethod', () => {
         public callCount = 0;
 
         @CachedMethod({
-          keyPrefix: 'ns-test',
+          key: 'ns-test',
           namespace: 'test-namespace',
         })
         async getValue(): Promise<string> {
@@ -294,7 +294,7 @@ describe('@CachedMethod', () => {
         public callCount = 0;
 
         @CachedMethod({
-          keyPrefix: 'multi',
+          key: 'multi',
           namespace: 'ns1',
         })
         async getFromNs1(): Promise<string> {
@@ -303,7 +303,7 @@ describe('@CachedMethod', () => {
         }
 
         @CachedMethod({
-          keyPrefix: 'multi',
+          key: 'multi',
           namespace: 'ns2',
         })
         async getFromNs2(): Promise<string> {
@@ -331,10 +331,10 @@ describe('@CachedMethod', () => {
       public callCount = 0;
 
       @CachedMethod({
-        keyPrefix: 'config-test',
+        key: 'config-test',
         makeKey: (args) => `custom-${args[0]}`,
         makeTags: (args, result) => [`result:${result?.length || 0}`],
-        ttlSec: 120,
+        ttl: 120 * 1000, // 120 seconds in milliseconds
       })
       async getItems(filter: string): Promise<string[]> {
         this.callCount++;
@@ -343,7 +343,7 @@ describe('@CachedMethod', () => {
 
       // Test default values
       @CachedMethod({
-        keyPrefix: 'defaults',
+        key: 'defaults',
       })
       async getWithDefaults(): Promise<string> {
         this.callCount++;
@@ -363,7 +363,7 @@ describe('@CachedMethod', () => {
       await configService.getItems('test');
 
       const cache = getCacheServiceOrThrow();
-      const cachedValue = await cache.get('config-test:custom-test');
+      const cachedValue = await cache.get({ key: 'config-test:custom-test' });
       expect(cachedValue).toEqual(['item-test-1', 'item-test-2']);
     });
 
@@ -373,7 +373,7 @@ describe('@CachedMethod', () => {
       const cache = getCacheServiceOrThrow();
 
       // Tag should be based on result length (2 items)
-      await cache.delByTags(['result:2']);
+      await cache.deleteByTag({ tags: ['result:2'] });
 
       // Should cause re-execution
       await configService.getItems('test');
@@ -387,11 +387,12 @@ describe('@CachedMethod', () => {
 
       await configService.getItems('test');
 
-      expect(setSpy).toHaveBeenCalledWith(
-        'config-test:custom-test',
-        ['item-test-1', 'item-test-2'],
-        { ttlSec: 120, tags: ['result:2'] },
-      );
+      expect(setSpy).toHaveBeenCalledWith({
+        key: 'config-test:custom-test',
+        value: ['item-test-1', 'item-test-2'],
+        ttl: 120 * 1000,
+        tags: ['result:2'],
+      });
 
       setSpy.mockRestore();
     });
@@ -402,11 +403,12 @@ describe('@CachedMethod', () => {
 
       await configService.getWithDefaults();
 
-      expect(setSpy).toHaveBeenCalledWith(
-        'defaults:[]',
-        'default-result',
-        { ttlSec: 3600, tags: [] }, // default TTL and empty tags
-      );
+      expect(setSpy).toHaveBeenCalledWith({
+        key: 'defaults:[]',
+        value: 'default-result',
+        ttl: undefined, // no default TTL set
+        tags: undefined, // no tags
+      });
 
       setSpy.mockRestore();
     });
@@ -422,7 +424,7 @@ describe('@CachedMethod', () => {
       class TestService {
         public callCount = 0;
 
-        @CachedMethod({ keyPrefix: 'maybe' })
+        @CachedMethod({ key: 'maybe' })
         async maybeReturn(id: number): Promise<string | undefined> {
           this.callCount++;
           return id > 0 ? `result:${id}` : undefined;
@@ -452,15 +454,17 @@ describe('@CachedMethod', () => {
       expect(service.callCount).toBe(3);
 
       // Verify cache.set WAS called for defined result but NOT for undefined
-      expect(setSpy).toHaveBeenCalledWith(
-        'maybe:[1]',
-        'result:1',
-        expect.anything(),
-      );
+      expect(setSpy).toHaveBeenCalledWith({
+        key: 'maybe:[1]',
+        value: 'result:1',
+        ttl: undefined,
+        tags: undefined,
+      });
       expect(setSpy).not.toHaveBeenCalledWith(
-        'maybe:[-1]',
-        undefined,
-        expect.anything(),
+        expect.objectContaining({
+          key: 'maybe:[-1]',
+          value: undefined,
+        }),
       );
 
       setSpy.mockRestore();
@@ -470,7 +474,7 @@ describe('@CachedMethod', () => {
       class ErrorService {
         public callCount = 0;
 
-        @CachedMethod({ keyPrefix: 'error' })
+        @CachedMethod({ key: 'error' })
         async maybeError(shouldError: boolean): Promise<string> {
           this.callCount++;
           if (shouldError) {
@@ -503,7 +507,7 @@ describe('@CachedMethod', () => {
       registerCacheService(undefined as any);
 
       class UnregisteredService {
-        @CachedMethod({ keyPrefix: 'unregistered' })
+        @CachedMethod({ key: 'unregistered' })
         async test(): Promise<string> {
           return 'test';
         }

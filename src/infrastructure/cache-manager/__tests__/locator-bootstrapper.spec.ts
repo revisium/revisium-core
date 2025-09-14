@@ -1,13 +1,10 @@
 import { Test } from '@nestjs/testing';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { BentoCache } from 'bentocache';
 import { getCacheServiceOrThrow, registerCacheService } from '../cache.locator';
 import { RevisiumCacheModule } from '../revisium-cache.module';
 import { CACHE_SERVICE } from '../services/cache.tokens';
-import { NoopCacheService } from '../services/noop-cache.service';
-import {
-  BentoCacheFacade,
-  createNoopBentoCacheFacade,
-} from '../services/bentocache.facade';
+import { NoopBentoCache } from '../services/noop-bento-cache';
 
 describe('CacheBootstrapper and Locator', () => {
   beforeEach(() => {
@@ -30,7 +27,7 @@ describe('CacheBootstrapper and Locator', () => {
   });
 
   describe('after module initialization', () => {
-    it('returns NoopCacheService instance when disabled', async () => {
+    it('returns NoopBentoCache instance when disabled', async () => {
       const moduleRef = await Test.createTestingModule({
         imports: [
           ConfigModule.forRoot({
@@ -52,11 +49,11 @@ describe('CacheBootstrapper and Locator', () => {
       const serviceFromDI = moduleRef.get(CACHE_SERVICE);
       const serviceFromLocator = getCacheServiceOrThrow();
 
-      expect(serviceFromDI).toBeInstanceOf(BentoCacheFacade);
+      expect(serviceFromDI).toBeInstanceOf(NoopBentoCache);
       expect(serviceFromLocator).toBe(serviceFromDI); // pointer equality
     });
 
-    it('returns BentoCacheFacade instance when enabled', async () => {
+    it('returns BentoCache instance when enabled', async () => {
       const moduleRef = await Test.createTestingModule({
         imports: [
           ConfigModule.forRoot({
@@ -72,14 +69,14 @@ describe('CacheBootstrapper and Locator', () => {
       const serviceFromDI = moduleRef.get(CACHE_SERVICE);
       const serviceFromLocator = getCacheServiceOrThrow();
 
-      expect(serviceFromDI).toBeInstanceOf(BentoCacheFacade);
+      expect(serviceFromDI).toBeInstanceOf(BentoCache);
       expect(serviceFromLocator).toBe(serviceFromDI); // pointer equality
     });
   });
 
   describe('manual registration (for testing)', () => {
     it('allows manual registration for testing purposes', () => {
-      const mockService = new NoopCacheService();
+      const mockService = new NoopBentoCache();
       registerCacheService(mockService);
 
       const retrieved = getCacheServiceOrThrow();
@@ -87,8 +84,8 @@ describe('CacheBootstrapper and Locator', () => {
     });
 
     it('can replace service via registerCacheService', () => {
-      const service1 = new NoopCacheService();
-      const service2 = createNoopBentoCacheFacade();
+      const service1 = new NoopBentoCache();
+      const service2 = new NoopBentoCache();
 
       registerCacheService(service1);
       expect(getCacheServiceOrThrow()).toBe(service1);

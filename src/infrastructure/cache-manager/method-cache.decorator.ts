@@ -1,13 +1,14 @@
 import 'reflect-metadata';
 import { getCacheServiceOrThrow } from './cache.locator';
 
-// Options for a specific cached method
+// Options for a specific cached method - matches BentoCache .set signature
 export type MethodCacheOptions<Args = any, Ret = any> = {
-  keyPrefix: string; // e.g., 'role:permissions'
-  makeKey?: (args: Args[]) => string; // defaults to JSON.stringify(args)
-  makeTags?: (args: Args[], result?: Ret) => string[]; // defaults to []
-  ttlSec?: number; // 0 = no TTL (persist until explicit invalidation)
+  key: string; // The cache key (replaces keyPrefix + makeKey)
+  ttl?: number; // TTL in milliseconds (matches BentoCache)
+  tags?: string[]; // Cache tags for invalidation
   namespace?: string; // BentoCache namespace for isolation
+  makeKey?: (args: Args[]) => string; // Optional dynamic key generation
+  makeTags?: (args: Args[], result?: Ret) => string[]; // Optional dynamic tags generation
 };
 
 /**
@@ -18,11 +19,12 @@ export function CachedMethod<Args = any, Ret = any>(
   options: MethodCacheOptions<Args, Ret>,
 ) {
   const {
-    keyPrefix,
+    key: baseKey,
+    ttl,
+    tags: staticTags = [],
+    namespace,
     makeKey = (args) => JSON.stringify(args),
     makeTags = () => [],
-    ttlSec = 3600,
-    namespace,
   } = options;
 
   return function (
@@ -34,9 +36,13 @@ export function CachedMethod<Args = any, Ret = any>(
     descriptor.value = async function (...args: Args[]) {
       const cache = getCacheServiceOrThrow();
 
-      const key = `${keyPrefix}:${makeKey(args)}`;
+      // Generate cache key - use baseKey + dynamic key if makeKey provided
+      const key = makeKey ? `${baseKey}:${makeKey(args)}` : baseKey;
 
-      const cached = await cache.get<Ret>(key, namespace);
+      // Get the appropriate driver (namespaced or default)
+      const driver = namespace ? cache.namespace(namespace) : cache;
+
+      const cached = await driver.get({ key });
 
       if (cached !== undefined) {
         return cached;
@@ -48,8 +54,17 @@ export function CachedMethod<Args = any, Ret = any>(
         return result;
       }
 
-      const tags = makeTags(args, result);
-      await cache.set(key, result, { ttlSec, tags, namespace });
+      // Generate tags - combine static + dynamic
+      const dynamicTags = makeTags(args, result);
+      const allTags = [...staticTags, ...dynamicTags];
+
+      // Use BentoCache API
+      await driver.set({
+        key,
+        value: result,
+        ttl, // Already in milliseconds
+        tags: allTags.length > 0 ? allTags : undefined,
+      });
       return result;
     };
     return descriptor;

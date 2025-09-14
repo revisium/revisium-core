@@ -19,12 +19,12 @@ export class AuthApiService {
   constructor(private readonly commandBus: CommandBus) {}
 
   @CachedMethod({
-    keyPrefix: `auth:check-system-permission`,
+    key: 'auth:check-system-permission',
     makeKey: (args) =>
       makeCacheKeyFromArgs(args, {
         version: 1,
       }),
-    ttlSec: 10 * 60,
+    ttl: 10 * 60 * 1000, // 10 minutes in milliseconds
   })
   public checkSystemPermission(data: CheckSystemPermissionCommandData) {
     return this.commandBus.execute<
@@ -34,12 +34,12 @@ export class AuthApiService {
   }
 
   @CachedMethod({
-    keyPrefix: `auth:check-organization-permission`,
+    key: 'auth:check-organization-permission',
     makeKey: (args) =>
       makeCacheKeyFromArgs(args, {
         version: 1,
       }),
-    ttlSec: 10 * 60,
+    ttl: 10 * 60 * 1000, // 10 minutes in milliseconds
   })
   public checkOrganizationPermission(
     data: CheckOrganizationPermissionCommandData,
@@ -51,12 +51,12 @@ export class AuthApiService {
   }
 
   @CachedMethod({
-    keyPrefix: `auth:check-project-permission`,
+    key: 'auth:check-project-permission',
     makeKey: (args) =>
       makeCacheKeyFromArgs(args, {
         version: 1,
       }),
-    ttlSec: 10 * 60,
+    ttl: 10 * 60 * 1000, // 10 minutes in milliseconds
   })
   public checkProjectPermission(data: CheckProjectPermissionCommandData) {
     return this.commandBus.execute<

@@ -5,11 +5,8 @@ import { memoryDriver } from 'bentocache/drivers/memory';
 import { redisDriver } from 'bentocache/drivers/redis';
 import { parseBool } from 'src/utils/utils/parse-bool';
 import { CacheBootstrapper } from './cache.bootstrapper';
-import {
-  BentoCacheFacade,
-  createNoopBentoCacheFacade,
-} from './services/bentocache.facade';
-import { CACHE_SERVICE, CacheLike } from './services/cache.tokens';
+import { NoopBentoCache } from './services/noop-bento-cache';
+import { CACHE_SERVICE } from './services/cache.tokens';
 import Redis from 'ioredis';
 
 @Module({})
@@ -22,15 +19,17 @@ export class RevisiumCacheModule {
       providers: [
         {
           provide: CACHE_SERVICE,
-          useFactory: async (cfg: ConfigService): Promise<CacheLike> => {
+          useFactory: async (
+            cfg: ConfigService,
+          ): Promise<BentoCache<any> | NoopBentoCache> => {
             const logger = new Logger('RevisiumCacheModule');
             const enabled = parseBool(cfg.get<string>('EXPERIMENTAL_CACHE'));
 
             if (!enabled) {
               logger.warn(
-                '⚠️ Cache disabled (BentoCacheFacade noop). Set EXPERIMENTAL_CACHE=1 to enable.',
+                '⚠️ Cache disabled (NoopBentoCache). Set EXPERIMENTAL_CACHE=1 to enable.',
               );
-              return createNoopBentoCacheFacade();
+              return new NoopBentoCache();
             }
 
             const redisUrl =
@@ -75,14 +74,14 @@ export class RevisiumCacheModule {
                 );
               }
 
-              return new BentoCacheFacade(bento);
+              return bento;
             } catch (e) {
               const err = e as Error;
               logger.error(
                 `❌ BentoCache setup failed (${redisUrl || 'memory'}), using noop fallback.`,
                 err?.stack ?? String(err),
               );
-              return createNoopBentoCacheFacade();
+              return new NoopBentoCache();
             }
           },
           inject: [ConfigService],
