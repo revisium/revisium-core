@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BentoCache, bentostore } from 'bentocache';
 import { memoryDriver } from 'bentocache/drivers/memory';
 import { redisDriver } from 'bentocache/drivers/redis';
+import { CacheLike } from 'src/infrastructure/cache-manager/cache.locator';
 import { parseBool } from 'src/utils/utils/parse-bool';
 import { CacheBootstrapper } from './cache.bootstrapper';
 import { NoopBentoCache } from './services/noop-bento-cache';
@@ -19,9 +20,7 @@ export class RevisiumCacheModule {
       providers: [
         {
           provide: CACHE_SERVICE,
-          useFactory: async (
-            cfg: ConfigService,
-          ): Promise<BentoCache<any> | NoopBentoCache> => {
+          useFactory: async (cfg: ConfigService): Promise<CacheLike> => {
             const logger = new Logger('RevisiumCacheModule');
             const enabled = parseBool(cfg.get<string>('EXPERIMENTAL_CACHE'));
 
