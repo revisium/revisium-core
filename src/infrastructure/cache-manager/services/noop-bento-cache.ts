@@ -15,12 +15,11 @@ export class NoopBentoCache implements CacheLike {
     ttl?: number;
     tags?: string[];
   }): Promise<false> {
-    // No-op
     return false;
   }
 
-  async deleteByTag(_options: { tags: string[] }): Promise<void> {
-    // No-op
+  async deleteByTag(_options: { tags: string[] }): Promise<boolean> {
+    return false;
   }
 
   namespace(_name: string): CacheLike {

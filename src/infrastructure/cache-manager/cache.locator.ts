@@ -1,4 +1,3 @@
-// Simple cache interface that matches BentoCache API
 export interface CacheLike {
   get(options: { key: string }): Promise<any | undefined>;
   set(options: {
@@ -8,7 +7,7 @@ export interface CacheLike {
     tags?: string[];
   }): Promise<boolean>;
   namespace(name: string): CacheLike;
-  deleteByTag(options: { tags: string[] }): Promise<boolean | void>; // BentoCache returns boolean, NoopBentoCache returns void
+  deleteByTag(options: { tags: string[] }): Promise<boolean>;
 }
 
 /**
