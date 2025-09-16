@@ -2,20 +2,25 @@ import { AbilityBuilder, createMongoAbility, MongoQuery } from '@casl/ability';
 import { AnyObject } from '@casl/ability/dist/types/types';
 import { Injectable } from '@nestjs/common';
 import { UserRole } from 'src/features/auth/consts';
-import { CachedMethod } from 'src/infrastructure/cache-manager/method-cache.decorator';
+import { CacheService } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @Injectable()
 export class CaslAbilityFactory {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   async createAbility(...roles: UserRole[]) {
     const { can, build } = new AbilityBuilder(createMongoAbility);
 
     for (const role of roles) {
-      for (const { action, subject, condition } of await this.getPermissions(
-        role,
-      )) {
+      for (const {
+        action,
+        subject,
+        condition,
+      } of await this.cachedGetPermissions(role)) {
         can(action, subject, condition as MongoQuery<AnyObject>);
       }
     }
@@ -23,15 +28,6 @@ export class CaslAbilityFactory {
     return build();
   }
 
-  @CachedMethod<
-    UserRole,
-    Array<{ action: string; subject: string; condition?: object }>
-  >({
-    key: 'role:permissions',
-    makeKey: ([role]) => role,
-    makeTags: ([role]) => ['dict:roles', `role:${role}`],
-    ttl: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-  })
   private getPermissions(role: UserRole) {
     return this.prisma.role
       .findUniqueOrThrow({
@@ -40,5 +36,16 @@ export class CaslAbilityFactory {
         },
       })
       .permissions();
+  }
+
+  private cachedGetPermissions(role: UserRole) {
+    return this.cacheService.getOrSet({
+      key: `auth:role:permissions:${role}`,
+      ttl: '1d',
+      tags: ['dictionaries'],
+      factory: () => {
+        return this.getPermissions(role);
+      },
+    });
   }
 }
