@@ -62,6 +62,6 @@ describe('ApiCreateTableHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

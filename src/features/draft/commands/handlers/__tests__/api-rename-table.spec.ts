@@ -70,6 +70,6 @@ describe('ApiRenameTableHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

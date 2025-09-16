@@ -201,6 +201,6 @@ describe('GetProjectsByUserIdHandler', () => {
   };
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

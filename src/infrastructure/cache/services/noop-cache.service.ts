@@ -1,4 +1,8 @@
-import { GetOrSetOptions, GetSetFactoryContext } from 'bentocache/types';
+import {
+  DeleteByTagOptions,
+  GetOrSetOptions,
+  GetSetFactoryContext,
+} from 'bentocache/types';
 
 /**
  * Noop implementation of BentoCache interface
@@ -7,6 +11,10 @@ import { GetOrSetOptions, GetSetFactoryContext } from 'bentocache/types';
 export class NoopCacheService {
   public getOrSet<T>(options: GetOrSetOptions<T>): T | Promise<T> {
     return options.factory(noopGetSetFactory);
+  }
+
+  public deleteByTag(_: DeleteByTagOptions) {
+    return false;
   }
 }
 

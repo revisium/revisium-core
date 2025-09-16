@@ -65,6 +65,6 @@ describe('ApiRevertChangesHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

@@ -4,6 +4,7 @@ import {
   prepareProject,
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
+import { CacheService } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -117,6 +118,8 @@ describe('CreateRevisionHandler', () => {
 
     expect(result.headEndpoints).toEqual([headEndpointId]);
     expect(result.draftEndpoints).toEqual([draftEndpointId]);
+    expect(result.previousDraftRevisionId).toEqual(draftRevisionId);
+    expect(result.nextDraftRevisionId).not.toEqual(draftRevisionId);
     await checkRevisions({
       headRevisionId,
       draftRevisionId,
@@ -126,6 +129,10 @@ describe('CreateRevisionHandler', () => {
     await afterEndpointsChecks(ids, result.nextDraftRevisionId, {
       headEndpointCreatedAt,
       draftEndpointCreatedAt,
+    });
+
+    expect(cacheService.deleteByTag).toHaveBeenCalledWith({
+      tags: [`revision-${draftRevisionId}`],
     });
   });
 
@@ -344,6 +351,7 @@ describe('CreateRevisionHandler', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
   let shareTransactionalQueries: ShareTransactionalQueries;
+  let cacheService: CacheService;
 
   function runTransaction(
     command: CreateRevisionCommand,
@@ -357,9 +365,12 @@ describe('CreateRevisionHandler', () => {
     commandBus = result.commandBus;
     transactionService = result.transactionService;
     shareTransactionalQueries = result.shareTransactionalQueries;
+    cacheService = result.cacheService;
+
+    cacheService.deleteByTag = jest.fn();
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

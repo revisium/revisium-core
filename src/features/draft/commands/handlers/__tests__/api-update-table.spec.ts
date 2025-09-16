@@ -71,6 +71,6 @@ describe('ApiUpdateTableHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

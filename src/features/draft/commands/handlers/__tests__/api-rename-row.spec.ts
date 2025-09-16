@@ -108,6 +108,6 @@ describe('ApiRenameRowHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

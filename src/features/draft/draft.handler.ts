@@ -26,5 +26,5 @@ export abstract class DraftHandler<T extends ICommand, Result = unknown> {
 
   protected abstract handler(value: T): Promise<Result>;
 
-  protected postActions?(value: T, result: Result): Promise<void>;
+  protected postActions?(value: T, result: Result): Promise<void> | void;
 }
