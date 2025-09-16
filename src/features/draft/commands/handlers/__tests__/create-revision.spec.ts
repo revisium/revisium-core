@@ -119,6 +119,7 @@ describe('CreateRevisionHandler', () => {
     expect(result.headEndpoints).toEqual([headEndpointId]);
     expect(result.draftEndpoints).toEqual([draftEndpointId]);
     expect(result.previousDraftRevisionId).toEqual(draftRevisionId);
+    expect(result.previousHeadRevisionId).toEqual(headRevisionId);
     expect(result.nextDraftRevisionId).not.toEqual(draftRevisionId);
     await checkRevisions({
       headRevisionId,
@@ -132,7 +133,7 @@ describe('CreateRevisionHandler', () => {
     });
 
     expect(cacheService.deleteByTag).toHaveBeenCalledWith({
-      tags: [`revision-${draftRevisionId}`],
+      tags: [`revision-${headRevisionId}`, `revision-${draftRevisionId}`],
     });
   });
 

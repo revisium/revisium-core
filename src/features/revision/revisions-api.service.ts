@@ -25,4 +25,10 @@ export class RevisionsApiService {
   public migrations(data: GetMigrationsQueryData) {
     return this.api.migrations(data);
   }
+
+  public async invalidateRevisions(revisionIds: string[]) {
+    await this.cache.deleteByTag({
+      tags: revisionIds.map((revisionId) => `revision-${revisionId}`),
+    });
+  }
 }
