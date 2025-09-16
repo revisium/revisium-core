@@ -64,14 +64,6 @@ export class RevisiumCacheModule {
                         redisDriver({
                           connection: new Redis(redisUrl),
                         }),
-                      )
-                      .useBus(
-                        redisBusDriver({
-                          connection: {
-                            host: 'localhost',
-                            port: 6380,
-                          },
-                        }),
                       ),
                   },
                 });
