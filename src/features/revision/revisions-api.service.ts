@@ -1,28 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { InternalRevisionsApiService } from 'src/features/revision/internal-revisions-api.service';
 import {
-  GetMigrationsQuery,
   GetMigrationsQueryData,
-  GetMigrationsQueryReturnType,
-  GetRevisionQuery,
   GetRevisionQueryData,
-  GetRevisionQueryReturnType,
 } from 'src/features/revision/queries/impl';
+import { CacheService } from 'src/infrastructure/cache';
 
 @Injectable()
 export class RevisionsApiService {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly api: InternalRevisionsApiService,
+    private readonly cache: CacheService,
+  ) {}
 
   public revision(data: GetRevisionQueryData) {
-    return this.queryBus.execute<GetRevisionQuery, GetRevisionQueryReturnType>(
-      new GetRevisionQuery(data),
-    );
+    return this.cache.getOrSet({
+      key: `revision:revision:${data.revisionId}`,
+      tags: [`revision-${data.revisionId}`],
+      ttl: '1d',
+      factory: () => this.api.revision(data),
+    });
   }
 
   public migrations(data: GetMigrationsQueryData) {
-    return this.queryBus.execute<
-      GetMigrationsQuery,
-      GetMigrationsQueryReturnType
-    >(new GetMigrationsQuery(data));
+    return this.api.migrations(data);
   }
 }

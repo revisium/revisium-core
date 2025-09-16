@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { InternalRevisionsApiService } from 'src/features/revision/internal-revisions-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
@@ -8,7 +9,11 @@ import { ShareModule } from 'src/features/share/share.module';
 
 @Module({
   imports: [DatabaseModule, CqrsModule, ShareModule, NotificationModule],
-  providers: [RevisionsApiService, ...REVISION_QUERIES_HANDLERS],
+  providers: [
+    InternalRevisionsApiService,
+    RevisionsApiService,
+    ...REVISION_QUERIES_HANDLERS,
+  ],
   exports: [RevisionsApiService],
 })
 export class RevisionModule {}

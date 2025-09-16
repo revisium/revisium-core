@@ -3,6 +3,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { CacheService } from 'src/infrastructure/cache';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ResolveDraftRevisionCommand } from 'src/features/draft/commands/impl/transactional/resolve-draft-revision.command';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
@@ -14,6 +15,7 @@ export class ResolveDraftRevisionHandler
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly revisionRequestDto: DraftRevisionRequestDto,
+    private readonly cache: CacheService,
   ) {}
 
   public get isAlreadyResolved() {
@@ -37,25 +39,7 @@ export class ResolveDraftRevisionHandler
   }
 
   public async resolve(revisionId: string) {
-    const revision = await this.transaction.revision.findUnique({
-      where: { id: revisionId },
-      select: {
-        id: true,
-        isDraft: true,
-        branchId: true,
-        parentId: true,
-        branch: {
-          select: {
-            project: {
-              select: {
-                id: true,
-                organizationId: true,
-              },
-            },
-          },
-        },
-      },
-    });
+    const revision = await this.cachedGetRevision(revisionId);
 
     if (!revision) {
       throw new BadRequestException('Revision not found');
@@ -75,5 +59,36 @@ export class ResolveDraftRevisionHandler
       throw new InternalServerErrorException('Invalid  parentId');
     }
     this.revisionRequestDto.parentId = revision.parentId;
+  }
+
+  private getRevision(revisionId: string) {
+    return this.transaction.revision.findUnique({
+      where: { id: revisionId },
+      select: {
+        id: true,
+        isDraft: true,
+        branchId: true,
+        parentId: true,
+        branch: {
+          select: {
+            project: {
+              select: {
+                id: true,
+                organizationId: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  private cachedGetRevision(revisionId: string) {
+    return this.cache.getOrSet({
+      key: `draft:get-revision-with-relative:${revisionId}`,
+      tags: [`revision-${revisionId}`],
+      ttl: '1d',
+      factory: () => this.getRevision(revisionId),
+    });
   }
 }
