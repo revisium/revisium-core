@@ -30,6 +30,7 @@ describe('getRowById', () => {
       new GetRowByIdQuery({
         revisionId: draftRevisionId,
         tableId: table.tableId,
+        rowId: rowDraft.id,
         rowVersionId: rowDraft.versionId,
       }),
     );

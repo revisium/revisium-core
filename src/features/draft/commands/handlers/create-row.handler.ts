@@ -1,4 +1,4 @@
-import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { JsonValue } from '@prisma/client/runtime/library';
 import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
 import {
@@ -14,6 +14,7 @@ import { RowPublishedAtPlugin } from 'src/features/plugin/row-published-at/row-p
 import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import { validateRowId } from 'src/features/share/utils/validateUrlLikeId/validateRowId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { RowCreatedEvent } from 'src/infrastructure/cache';
 
 @CommandHandler(CreateRowCommand)
 export class CreateRowHandler extends DraftHandler<
@@ -22,6 +23,7 @@ export class CreateRowHandler extends DraftHandler<
 > {
   constructor(
     protected readonly commandBus: CommandBus,
+    protected readonly eventBus: EventBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
@@ -29,6 +31,12 @@ export class CreateRowHandler extends DraftHandler<
     protected readonly rowPublishedAtPlugin: RowPublishedAtPlugin,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: CreateRowCommand) {
+    await this.eventBus.publishAll([
+      new RowCreatedEvent(data.revisionId, data.tableId, data.rowId),
+    ]);
   }
 
   protected async handler({

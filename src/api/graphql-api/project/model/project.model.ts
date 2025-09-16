@@ -1,4 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { DateTimeResolver } from 'graphql-scalars';
 import {
   BranchesConnection,
   BranchModel,
@@ -12,7 +13,7 @@ export class ProjectModel {
   @Field()
   organizationId: string;
 
-  @Field(() => Date)
+  @Field(() => DateTimeResolver)
   createdAt: Date;
 
   @Field()

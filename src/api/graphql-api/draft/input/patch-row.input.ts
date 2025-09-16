@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import GraphQLJSON from 'graphql-type-json';
+import { JSONResolver } from 'graphql-scalars';
 import { GetRowInput } from 'src/api/graphql-api/row/inputs/get-row.input';
 import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
 
@@ -15,7 +15,7 @@ export class PatchRow {
   @Field()
   path: string;
 
-  @Field(() => GraphQLJSON)
+  @Field(() => JSONResolver)
   value: JsonValue;
 }
 

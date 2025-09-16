@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
+import { RowDeletedEvent } from 'src/infrastructure/cache';
 import { DiffService } from 'src/features/share/diff.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -27,6 +28,7 @@ export class RemoveRowHandler extends DraftHandler<
   constructor(
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
+    protected readonly eventBus: EventBus,
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly rowRequestDto: DraftRowRequestDto,
@@ -37,6 +39,12 @@ export class RemoveRowHandler extends DraftHandler<
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: RemoveRowCommand) {
+    await this.eventBus.publishAll([
+      new RowDeletedEvent(data.revisionId, data.tableId, data.rowId),
+    ]);
   }
 
   protected async handler({

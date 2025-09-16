@@ -5,6 +5,7 @@ export class GetRowByIdQuery {
     public readonly data: {
       readonly revisionId: string;
       readonly tableId: string;
+      readonly rowId: string;
       readonly rowVersionId: string;
     },
   ) {}

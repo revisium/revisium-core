@@ -1,8 +1,9 @@
-import { CommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
+import { RowUpdatedEvent } from 'src/infrastructure/cache';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -23,8 +24,15 @@ export class InternalUpdateRowHandler extends DraftHandler<
     protected readonly rowRequestDto: DraftRowRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly hashService: HashService,
+    protected readonly eventBus: EventBus,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: InternalUpdateRowCommand) {
+    await this.eventBus.publishAll([
+      new RowUpdatedEvent(data.revisionId, data.tableId, data.rowId),
+    ]);
   }
 
   protected async handler({

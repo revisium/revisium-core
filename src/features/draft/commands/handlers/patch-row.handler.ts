@@ -1,4 +1,4 @@
-import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { Prisma, Row } from '@prisma/client';
 import {
   PatchRowCommand,
@@ -10,6 +10,7 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { RowUpdatedEvent } from 'src/infrastructure/cache';
 import {
   createJsonArrayValueItems,
   createJsonObjectRecord,
@@ -33,12 +34,19 @@ export class PatchRowHandler extends DraftHandler<
 > {
   constructor(
     protected readonly commandBus: CommandBus,
+    protected readonly eventBus: EventBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: PatchRowCommand) {
+    await this.eventBus.publishAll([
+      new RowUpdatedEvent(data.revisionId, data.tableId, data.rowId),
+    ]);
   }
 
   protected async handler({

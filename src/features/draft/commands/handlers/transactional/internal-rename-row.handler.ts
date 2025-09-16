@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { Row } from '@prisma/client';
 import {
   InternalRenameRowCommand,
@@ -13,6 +13,7 @@ import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-req
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { RowRenamedEvent } from 'src/infrastructure/cache';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
@@ -43,8 +44,20 @@ export class InternalRenameRowHandler extends DraftHandler<
     protected readonly foreignKeysService: ForeignKeysService,
     protected readonly draftContext: DraftContextService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
+    protected readonly eventBus: EventBus,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: InternalRenameRowCommand) {
+    await this.eventBus.publishAll([
+      new RowRenamedEvent(
+        data.revisionId,
+        data.tableId,
+        data.rowId,
+        data.nextRowId,
+      ),
+    ]);
   }
 
   public async handler({

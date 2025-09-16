@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
+import { RevisionRevertedEvent } from 'src/infrastructure/cache';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RevertChangesCommand } from 'src/features/draft/commands/impl/revert-changes.command';
 import { RevertChangesHandlerReturnType } from 'src/features/draft/commands/types/revert-changes.handler.types';
@@ -16,8 +17,18 @@ export class RevertChangesHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
+    protected readonly eventBus: EventBus,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions(
+    _: RevertChangesCommand,
+    result: RevertChangesHandlerReturnType,
+  ) {
+    await this.eventBus.publishAll([
+      new RevisionRevertedEvent(result.draftRevisionId),
+    ]);
   }
 
   protected async handler({

@@ -3,10 +3,14 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BentoCache, bentostore } from 'bentocache';
 import { memoryDriver } from 'bentocache/drivers/memory';
 import { redisDriver } from 'bentocache/drivers/redis';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
+import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
+import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 import { parseBool } from 'src/utils/utils/parse-bool';
 import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { CACHE_SERVICE } from './services/cache.tokens';
+import { CACHE_EVENT_HANDLERS } from './handlers';
 import Redis from 'ioredis';
 
 @Module({})
@@ -30,6 +34,13 @@ export class RevisiumCacheModule {
               return new NoopCacheService() as unknown as BentoCache<any>;
             }
 
+            const l1MaxSize =
+              cfg.get<string>('EXPERIMENTAL_CACHE_L1_MAX_SIZE') || undefined;
+
+            if (l1MaxSize) {
+              logger.log(`L1_MAX_SIZE: ${l1MaxSize}`);
+            }
+
             const redisUrl =
               cfg.get<string>('EXPERIMENTAL_CACHE_L2_REDIS_URL') || null;
 
@@ -43,7 +54,7 @@ export class RevisiumCacheModule {
                   stores: {
                     cache: bentostore().useL1Layer(
                       memoryDriver({
-                        maxSize: 5000, // Same as our old LRU cache
+                        maxSize: l1MaxSize,
                       }),
                     ),
                   },
@@ -57,7 +68,7 @@ export class RevisiumCacheModule {
                     cache: bentostore()
                       .useL1Layer(
                         memoryDriver({
-                          maxSize: 5000,
+                          maxSize: l1MaxSize,
                         }),
                       )
                       .useL2Layer(
@@ -85,8 +96,18 @@ export class RevisiumCacheModule {
           inject: [ConfigService],
         },
         CacheService,
+        RowCacheService,
+        RevisionCacheService,
+        AuthCacheService,
+        ...CACHE_EVENT_HANDLERS,
       ],
-      exports: [CacheService, CACHE_SERVICE],
+      exports: [
+        RowCacheService,
+        RevisionCacheService,
+        AuthCacheService,
+        CacheService,
+        CACHE_SERVICE,
+      ],
     };
   }
 }

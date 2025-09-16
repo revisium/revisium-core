@@ -22,6 +22,7 @@ import { PluginModule } from 'src/features/plugin/plugin.module';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { RevisionModule } from 'src/features/revision';
 import { REVISION_QUERIES_HANDLERS } from 'src/features/revision/queries/commands';
+import { InternalRowApiService } from 'src/features/row/internal-row-api.service';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { ResolveRowForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-by.handler';
@@ -126,6 +127,7 @@ export const createTestingModule = async () => {
       DraftTransactionalCommands,
       DraftApiService,
       RowApiService,
+      InternalRowApiService,
       DraftContextService,
       MigrationContextService,
       JsonSchemaValidatorService,

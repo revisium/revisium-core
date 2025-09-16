@@ -1,9 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import {
   CreateRemoveMigrationCommand,
   CreateRemoveMigrationCommandReturnType,
 } from 'src/features/draft/commands/impl/migration';
+import { TableDeletedEvent } from 'src/infrastructure/cache';
 import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
@@ -28,6 +29,7 @@ export class RemoveTableHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly commandBus: CommandBus,
+    protected readonly eventBus: EventBus,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
@@ -36,6 +38,12 @@ export class RemoveTableHandler extends DraftHandler<
     protected readonly diffService: DiffService,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: RemoveTableCommand) {
+    await this.eventBus.publishAll([
+      new TableDeletedEvent(data.revisionId, data.tableId),
+    ]);
   }
 
   protected async handler({

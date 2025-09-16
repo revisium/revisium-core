@@ -1,5 +1,6 @@
 import {
   DeleteByTagOptions,
+  DeleteOptions,
   GetOrSetOptions,
   GetSetFactoryContext,
 } from 'bentocache/types';
@@ -14,6 +15,10 @@ export class NoopCacheService {
   }
 
   public deleteByTag(_: DeleteByTagOptions) {
+    return false;
+  }
+
+  public delete(_: DeleteOptions) {
     return false;
   }
 }
