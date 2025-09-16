@@ -2,11 +2,10 @@ import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BentoCache, bentostore } from 'bentocache';
 import { memoryDriver } from 'bentocache/drivers/memory';
-import { redisDriver } from 'bentocache/drivers/redis';
-import { CacheLike } from 'src/infrastructure/cache-manager/cache.locator';
+import { redisBusDriver, redisDriver } from 'bentocache/drivers/redis';
+import { CacheService } from 'src/infrastructure/cache/services/cache.service';
 import { parseBool } from 'src/utils/utils/parse-bool';
-import { CacheBootstrapper } from './cache.bootstrapper';
-import { NoopBentoCache } from './services/noop-bento-cache';
+import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { CACHE_SERVICE } from './services/cache.tokens';
 import Redis from 'ioredis';
 
@@ -20,7 +19,7 @@ export class RevisiumCacheModule {
       providers: [
         {
           provide: CACHE_SERVICE,
-          useFactory: async (cfg: ConfigService): Promise<CacheLike> => {
+          useFactory: async (cfg: ConfigService): Promise<BentoCache<any>> => {
             const logger = new Logger('RevisiumCacheModule');
             const enabled = parseBool(cfg.get<string>('EXPERIMENTAL_CACHE'));
 
@@ -28,7 +27,7 @@ export class RevisiumCacheModule {
               logger.warn(
                 '⚠️ Cache disabled (NoopBentoCache). Set EXPERIMENTAL_CACHE=1 to enable.',
               );
-              return new NoopBentoCache();
+              return new NoopCacheService() as BentoCache<any>;
             }
 
             const redisUrl =
@@ -65,6 +64,14 @@ export class RevisiumCacheModule {
                         redisDriver({
                           connection: new Redis(redisUrl),
                         }),
+                      )
+                      .useBus(
+                        redisBusDriver({
+                          connection: {
+                            host: 'localhost',
+                            port: 6380,
+                          },
+                        }),
                       ),
                   },
                 });
@@ -80,14 +87,14 @@ export class RevisiumCacheModule {
                 `❌ BentoCache setup failed (${redisUrl || 'memory'}), using noop fallback.`,
                 err?.stack ?? String(err),
               );
-              return new NoopBentoCache();
+              return new NoopCacheService() as BentoCache<any>;
             }
           },
           inject: [ConfigService],
         },
-        CacheBootstrapper,
+        CacheService,
       ],
-      exports: [CACHE_SERVICE],
+      exports: [CacheService, CACHE_SERVICE],
     };
   }
 }
