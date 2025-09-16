@@ -47,6 +47,6 @@ describe('ApiRemoveTableHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

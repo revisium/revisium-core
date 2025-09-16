@@ -1,9 +1,5 @@
-import {
-  CommandBus,
-  CommandHandler,
-  ICommandHandler,
-  QueryBus,
-} from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { RevisionsApiService } from 'src/features/revision';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   ApiCreateRevisionCommand,
@@ -12,7 +8,6 @@ import {
 import { CreateRevisionCommand } from 'src/features/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
-import { GetRevisionQuery } from 'src/features/revision/queries/impl';
 
 @CommandHandler(ApiCreateRevisionCommand)
 export class ApiCreateRevisionHandler
@@ -24,9 +19,9 @@ export class ApiCreateRevisionHandler
 {
   constructor(
     private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
     private readonly transactionService: TransactionPrismaService,
     private readonly endpointNotificationService: EndpointNotificationService,
+    private readonly revisionApi: RevisionsApiService,
   ) {}
 
   async execute({ data }: ApiCreateRevisionCommand) {
@@ -44,9 +39,7 @@ export class ApiCreateRevisionHandler
 
     await this.notifyEndpoints([...draftEndpoints, ...headEndpoints]);
 
-    return this.queryBus.execute(
-      new GetRevisionQuery({ revisionId: nextDraftRevisionId }),
-    );
+    return this.revisionApi.revision({ revisionId: nextDraftRevisionId });
   }
 
   private async notifyEndpoints(endpoints: string[]) {

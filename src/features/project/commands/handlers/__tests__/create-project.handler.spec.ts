@@ -210,6 +210,6 @@ describe('CreateProjectHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

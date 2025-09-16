@@ -20,6 +20,7 @@ import { ORGANIZATIONS_QUERIES } from 'src/features/organization/queries';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
+import { RevisionModule } from 'src/features/revision';
 import { REVISION_QUERIES_HANDLERS } from 'src/features/revision/queries/commands';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
@@ -38,6 +39,7 @@ import {
   JsonSchemaTypeName,
 } from 'src/features/share/utils/schema/types/schema.types';
 import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
+import { CacheService, RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { S3Service } from 'src/infrastructure/database/s3.service';
@@ -117,6 +119,8 @@ export const createTestingModule = async () => {
       AppOptionsModule.forRoot({ mode: 'monolith' }),
       NotificationModule,
       CacheModule.register(),
+      RevisionModule,
+      RevisiumCacheModule.forRootAsync(),
     ],
     providers: [
       DraftTransactionalCommands,
@@ -160,6 +164,7 @@ export const createTestingModule = async () => {
   const draftTransactionalCommands = module.get(DraftTransactionalCommands);
   const endpointNotificationService = module.get(EndpointNotificationService);
   const migrationContextService = module.get(MigrationContextService);
+  const cacheService = module.get(CacheService);
   return {
     module,
     prismaService,
@@ -172,6 +177,7 @@ export const createTestingModule = async () => {
     draftTransactionalCommands,
     endpointNotificationService,
     migrationContextService,
+    cacheService,
   };
 };
 

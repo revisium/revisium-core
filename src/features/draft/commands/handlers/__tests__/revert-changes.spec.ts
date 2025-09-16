@@ -147,6 +147,6 @@ describe('RevertChangesHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

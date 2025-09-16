@@ -1,5 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
+import { RevisionsApiService } from 'src/features/revision';
+import { CacheService } from 'src/infrastructure/cache';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';
@@ -15,13 +17,25 @@ export class CreateRevisionHandler extends DraftHandler<
   CreateRevisionHandlerReturnType
 > {
   constructor(
-    protected idService: IdService,
-    protected draftContext: DraftContextService,
-    protected transactionService: TransactionPrismaService,
-    protected shareTransactionalCommands: ShareTransactionalCommands,
-    protected shareTransactionalQueries: ShareTransactionalQueries,
+    protected readonly idService: IdService,
+    protected readonly draftContext: DraftContextService,
+    protected readonly transactionService: TransactionPrismaService,
+    protected readonly shareTransactionalCommands: ShareTransactionalCommands,
+    protected readonly shareTransactionalQueries: ShareTransactionalQueries,
+    protected readonly cache: CacheService,
+    protected readonly revisionApi: RevisionsApiService,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions(
+    _: CreateRevisionCommand,
+    result: CreateRevisionHandlerReturnType,
+  ) {
+    await this.revisionApi.invalidateRevisions([
+      result.previousHeadRevisionId,
+      result.previousDraftRevisionId,
+    ]);
   }
 
   protected async handler({
@@ -78,6 +92,8 @@ export class CreateRevisionHandler extends DraftHandler<
     });
 
     return {
+      previousHeadRevisionId: previousHeadRevision.id,
+      previousDraftRevisionId: previousDraftRevision.id,
       nextDraftRevisionId: nextDraftRevision.id,
       draftEndpoints,
       headEndpoints,

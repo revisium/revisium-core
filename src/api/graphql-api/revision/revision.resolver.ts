@@ -18,6 +18,7 @@ import { CreateRevisionInput } from 'src/api/graphql-api/revision/inputs/create-
 import { GetRevisionTablesInput } from 'src/api/graphql-api/revision/inputs/get-revision-tables.input';
 import { GetRevisionInput } from 'src/api/graphql-api/revision/inputs/get-revision.input';
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
+import { RevisionsApiService } from 'src/features/revision';
 import {
   GetEndpointsByRevisionIdQuery,
   ResolveChildBranchesByRevisionQuery,
@@ -26,7 +27,6 @@ import { ResolveBranchByRevisionQuery } from 'src/features/revision/queries/impl
 import { GetChildrenByRevisionQuery } from 'src/features/revision/queries/impl/get-children-by-revision.query';
 import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/resolve-child-by-revision.query';
 import { ResolveParentByRevisionQuery } from 'src/features/revision/queries/impl/resolve-parent-by-revision.query';
-import { GetRevisionQuery } from 'src/features/revision/queries/impl/get-revision.query';
 import { GetTablesByRevisionIdQuery } from 'src/features/revision/queries/impl/get-tables-by-revision-id.query';
 
 @PermissionParams({
@@ -38,12 +38,13 @@ export class RevisionResolver {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly revisionApi: RevisionsApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RevisionModel)
   revision(@Args('data') data: GetRevisionInput) {
-    return this.queryBus.execute(new GetRevisionQuery(data));
+    return this.revisionApi.revision(data);
   }
 
   @ResolveField()

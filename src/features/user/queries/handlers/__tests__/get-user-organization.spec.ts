@@ -89,6 +89,6 @@ describe('GetUserOrganizationHandler', () => {
   });
 
   afterEach(async () => {
-    prismaService.$disconnect();
+    await prismaService.$disconnect();
   });
 });

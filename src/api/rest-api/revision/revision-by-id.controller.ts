@@ -64,7 +64,6 @@ import {
 import { TablesConnection } from 'src/api/rest-api/table/model/table.model';
 import {
   GetEndpointsByRevisionIdQuery,
-  GetRevisionQuery,
   GetTablesByRevisionIdQuery,
   ResolveChildBranchesByRevisionQuery,
   ResolveParentByRevisionQuery,
@@ -97,7 +96,7 @@ export class RevisionByIdController {
   @ApiOkResponse({ type: RevisionModel })
   async revisionById(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.queryBus.execute(new GetRevisionQuery({ revisionId })),
+      await this.revisionApi.revision({ revisionId }),
     );
   }
 

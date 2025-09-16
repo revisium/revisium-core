@@ -27,7 +27,7 @@ export class RevisiumCacheModule {
               logger.warn(
                 '⚠️ Cache disabled (NoopBentoCache). Set EXPERIMENTAL_CACHE=1 to enable.',
               );
-              return new NoopCacheService() as BentoCache<any>;
+              return new NoopCacheService() as unknown as BentoCache<any>;
             }
 
             const redisUrl =
@@ -79,7 +79,7 @@ export class RevisiumCacheModule {
                 `❌ BentoCache setup failed (${redisUrl || 'memory'}), using noop fallback.`,
                 err?.stack ?? String(err),
               );
-              return new NoopCacheService() as BentoCache<any>;
+              return new NoopCacheService() as unknown as BentoCache<any>;
             }
           },
           inject: [ConfigService],
