@@ -2,7 +2,7 @@ import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { BentoCache, bentostore } from 'bentocache';
 import { memoryDriver } from 'bentocache/drivers/memory';
-import { redisBusDriver, redisDriver } from 'bentocache/drivers/redis';
+import { redisDriver } from 'bentocache/drivers/redis';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
 import { parseBool } from 'src/utils/utils/parse-bool';
 import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
