@@ -129,7 +129,7 @@ describe('row', () => {
         token: preparedData.owner.token,
       });
 
-      expect(result.getRowCountForeignKeysTo).toBe(0);
+      expect(result.getRowCountForeignKeysTo).toBe(1);
     });
 
     it('another owner cannot perform mutation', async () => {

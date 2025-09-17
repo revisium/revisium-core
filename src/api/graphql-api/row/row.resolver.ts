@@ -37,9 +37,11 @@ export class RowResolver {
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
-  @Query(() => Int)
+  @Query(() => Int, {
+    deprecationReason: 'use RowModel.rowForeignKeysBy.totalCount',
+  })
   getRowCountForeignKeysTo(@Args('data') data: GetRowCountForeignKeysByInput) {
-    return this.rowApi.resolveRowCountForeignKeysTo(data);
+    return this.rowApi.resolveRowCountForeignKeysBy(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -68,7 +70,9 @@ export class RowResolver {
     });
   }
 
-  @ResolveField(() => Int)
+  @ResolveField(() => Int, {
+    deprecationReason: 'use RowModel.rowForeignKeysTo.totalCount',
+  })
   countForeignKeysTo(@Parent() row: RowModel) {
     return this.rowApi.resolveRowCountForeignKeysTo({
       revisionId: row.context.revisionId,
