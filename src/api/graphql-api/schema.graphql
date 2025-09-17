@@ -437,7 +437,7 @@ type Query {
   branch(data: GetBranchInput!): BranchModel!
   branches(data: GetBranchesInput!): BranchesConnection!
   configuration: ConfigurationModel!
-  getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int!
+  getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int! @deprecated(reason: "use RowModel.rowForeignKeysBy.totalCount")
   me: UserModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
   project(data: GetProjectInput!): ProjectModel!
