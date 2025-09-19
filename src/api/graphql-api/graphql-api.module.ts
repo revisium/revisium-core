@@ -34,7 +34,6 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
       useFactory: (graphqlMetricsPlugin: GraphqlMetricsPlugin) => ({
         context: ({ res }: { res: any }) => ({ res }),
         path: '/graphql',
-        resolvers: { JSON: JSONResolver },
         playground: false,
         autoSchemaFile: true,
         sortSchema: true,

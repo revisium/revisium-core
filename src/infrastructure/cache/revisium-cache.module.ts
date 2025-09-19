@@ -1,5 +1,6 @@
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CqrsModule } from '@nestjs/cqrs';
 import { BentoCache, bentostore } from 'bentocache';
 import { memoryDriver } from 'bentocache/drivers/memory';
 import { redisDriver } from 'bentocache/drivers/redis';
@@ -19,7 +20,7 @@ export class RevisiumCacheModule {
     return {
       module: RevisiumCacheModule,
       global: true,
-      imports: [ConfigModule],
+      imports: [ConfigModule, CqrsModule],
       providers: [
         {
           provide: CACHE_SERVICE,
