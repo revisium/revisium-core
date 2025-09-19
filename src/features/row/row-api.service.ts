@@ -1,80 +1,54 @@
 import { Injectable } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { InternalRowApiService } from 'src/features/row/internal-row-api.service';
 import {
-  GetRowByIdQuery,
   GetRowByIdQueryData,
-  GetRowByIdQueryReturnType,
-  GetRowQuery,
   GetRowQueryData,
-  GetRowQueryReturnType,
-  GetRowsQuery,
   GetRowsQueryData,
-  GetRowsQueryReturnType,
-  ResolveRowCountForeignKeysByQuery,
   ResolveRowCountForeignKeysByQueryData,
-  ResolveRowCountForeignKeysByQueryReturnType,
-  ResolveRowCountForeignKeysToQuery,
   ResolveRowCountForeignKeysToQueryData,
-  ResolveRowCountForeignKeysToQueryReturnType,
-  ResolveRowForeignKeysByQuery,
   ResolveRowForeignKeysByQueryData,
-  ResolveRowForeignKeysByReturnType,
-  ResolveRowForeignKeysToQuery,
   ResolveRowForeignKeysToQueryData,
-  ResolveRowForeignKeysToReturnType,
 } from 'src/features/row/queries/impl';
+import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 
 @Injectable()
 export class RowApiService {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly api: InternalRowApiService,
+    private readonly rowCache: RowCacheService,
+  ) {}
 
   public getRow(data: GetRowQueryData) {
-    return this.queryBus.execute<GetRowQuery, GetRowQueryReturnType>(
-      new GetRowQuery(data),
-    );
+    return this.rowCache.row(data, () => this.api.getRow(data));
   }
 
   public getRowById(data: GetRowByIdQueryData) {
-    return this.queryBus.execute<GetRowByIdQuery, GetRowByIdQueryReturnType>(
-      new GetRowByIdQuery(data),
-    );
+    return this.rowCache.row(data, () => this.api.getRowById(data));
   }
 
   public getRows(data: GetRowsQueryData) {
-    return this.queryBus.execute<GetRowsQuery, GetRowsQueryReturnType>(
-      new GetRowsQuery(data),
+    return this.rowCache.getRows(data.revisionId, data.tableId, data, () =>
+      this.api.getRows(data),
     );
   }
 
   public resolveRowCountForeignKeysBy(
     data: ResolveRowCountForeignKeysByQueryData,
   ) {
-    return this.queryBus.execute<
-      ResolveRowCountForeignKeysByQuery,
-      ResolveRowCountForeignKeysByQueryReturnType
-    >(new ResolveRowCountForeignKeysByQuery(data));
+    return this.api.resolveRowCountForeignKeysBy(data);
   }
 
   public resolveRowCountForeignKeysTo(
     data: ResolveRowCountForeignKeysToQueryData,
   ) {
-    return this.queryBus.execute<
-      ResolveRowCountForeignKeysToQuery,
-      ResolveRowCountForeignKeysToQueryReturnType
-    >(new ResolveRowCountForeignKeysToQuery(data));
+    return this.api.resolveRowCountForeignKeysTo(data);
   }
 
   public resolveRowForeignKeysBy(data: ResolveRowForeignKeysByQueryData) {
-    return this.queryBus.execute<
-      ResolveRowForeignKeysByQuery,
-      ResolveRowForeignKeysByReturnType
-    >(new ResolveRowForeignKeysByQuery(data));
+    return this.api.resolveRowForeignKeysBy(data);
   }
 
   public resolveRowForeignKeysTo(data: ResolveRowForeignKeysToQueryData) {
-    return this.queryBus.execute<
-      ResolveRowForeignKeysToQuery,
-      ResolveRowForeignKeysToReturnType
-    >(new ResolveRowForeignKeysToQuery(data));
+    return this.api.resolveRowForeignKeysTo(data);
   }
 }

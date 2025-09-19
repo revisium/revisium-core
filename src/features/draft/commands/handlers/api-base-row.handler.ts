@@ -29,11 +29,13 @@ export class ApiBaseRowHandler {
     revisionId,
     tableId,
     tableVersionId,
+    rowId,
     rowVersionId,
   }: {
     revisionId: string;
     tableId: string;
     tableVersionId: string;
+    rowId: string;
     rowVersionId: string;
   }) {
     const [table, row] = await Promise.all([
@@ -43,6 +45,7 @@ export class ApiBaseRowHandler {
       this.rowApi.getRowById({
         revisionId: revisionId,
         tableId: tableId,
+        rowId,
         rowVersionId,
       }),
     ]);

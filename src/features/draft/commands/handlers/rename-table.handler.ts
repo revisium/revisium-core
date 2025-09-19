@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import {
   RenameTableCommand,
   RenameTableCommandReturnType,
@@ -15,6 +15,7 @@ import { DraftTransactionalCommands } from 'src/features/draft/draft.transaction
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { TableRenamedEvent } from 'src/infrastructure/cache';
 
 @CommandHandler(RenameTableCommand)
 export class RenameTableHandler extends DraftHandler<
@@ -26,10 +27,17 @@ export class RenameTableHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly commandBus: CommandBus,
+    protected readonly eventBus: EventBus,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: RenameTableCommand) {
+    await this.eventBus.publishAll([
+      new TableRenamedEvent(data.revisionId, data.tableId, data.nextTableId),
+    ]);
   }
 
   protected async handler({

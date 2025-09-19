@@ -3,7 +3,6 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GraphQLModule } from '@nestjs/graphql';
-import GraphQLJSON from 'graphql-type-json';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { AuthResolver } from 'src/api/graphql-api/auth/auth.resolver';
 import { BranchResolver } from 'src/api/graphql-api/branch/branch.resolver';
@@ -34,7 +33,6 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
       useFactory: (graphqlMetricsPlugin: GraphqlMetricsPlugin) => ({
         context: ({ res }: { res: any }) => ({ res }),
         path: '/graphql',
-        resolvers: { JSON: GraphQLJSON },
         playground: false,
         autoSchemaFile: true,
         sortSchema: true,

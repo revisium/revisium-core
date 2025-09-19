@@ -1,6 +1,6 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
 import { Prisma } from '@prisma/client';
-import GraphQLJSON from 'graphql-type-json';
+import { JSONResolver } from 'graphql-scalars';
 
 export enum OrderByField {
   createdAt = 'createdAt',
@@ -117,7 +117,7 @@ export class JsonFilter {
   @Field(() => Prisma.QueryMode, { nullable: true })
   mode?: Prisma.QueryMode;
 
-  @Field(() => GraphQLJSON, { nullable: true })
+  @Field(() => JSONResolver, { nullable: true })
   equals?: Prisma.InputJsonValue;
 
   @Field({ nullable: true })
@@ -129,13 +129,13 @@ export class JsonFilter {
   @Field({ nullable: true })
   string_ends_with?: string;
 
-  @Field(() => [GraphQLJSON], { nullable: true })
+  @Field(() => [JSONResolver], { nullable: true })
   array_contains?: Prisma.InputJsonValue[];
 
-  @Field(() => GraphQLJSON, { nullable: true })
+  @Field(() => JSONResolver, { nullable: true })
   array_starts_with?: Prisma.InputJsonValue;
 
-  @Field(() => GraphQLJSON, { nullable: true })
+  @Field(() => JSONResolver, { nullable: true })
   array_ends_with?: Prisma.InputJsonValue;
 
   @Field(() => Number, { nullable: true })

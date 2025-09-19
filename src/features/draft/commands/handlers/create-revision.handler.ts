@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { RevisionsApiService } from 'src/features/revision';
-import { CacheService } from 'src/infrastructure/cache';
+import { CacheService, RevisionCommittedEvent } from 'src/infrastructure/cache';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';
@@ -24,6 +24,7 @@ export class CreateRevisionHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly cache: CacheService,
     protected readonly revisionApi: RevisionsApiService,
+    protected readonly eventBus: EventBus,
   ) {
     super(transactionService, draftContext);
   }
@@ -32,9 +33,11 @@ export class CreateRevisionHandler extends DraftHandler<
     _: CreateRevisionCommand,
     result: CreateRevisionHandlerReturnType,
   ) {
-    await this.revisionApi.invalidateRevisions([
-      result.previousHeadRevisionId,
-      result.previousDraftRevisionId,
+    await this.eventBus.publishAll([
+      new RevisionCommittedEvent(
+        result.previousHeadRevisionId,
+        result.previousDraftRevisionId,
+      ),
     ]);
   }
 

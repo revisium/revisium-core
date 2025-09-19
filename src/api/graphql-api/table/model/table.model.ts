@@ -1,6 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { Prisma } from '@prisma/client';
-import GraphQLJSON from 'graphql-type-json';
+import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
@@ -20,10 +20,10 @@ export class TableModel {
   @Field()
   versionId: string;
 
-  @Field(() => Date)
+  @Field(() => DateTimeResolver)
   createdAt: Date;
 
-  @Field(() => Date)
+  @Field(() => DateTimeResolver)
   updatedAt: Date;
 
   @Field(() => Boolean)
@@ -35,7 +35,7 @@ export class TableModel {
   @Field(() => Int)
   count: number;
 
-  @Field(() => GraphQLJSON)
+  @Field(() => JSONResolver)
   schema: Prisma.JsonValue;
 
   @Field(() => TablesConnection)

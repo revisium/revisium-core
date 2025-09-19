@@ -4,31 +4,20 @@ import {
   GetMigrationsQueryData,
   GetRevisionQueryData,
 } from 'src/features/revision/queries/impl';
-import { CacheService } from 'src/infrastructure/cache';
+import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
 
 @Injectable()
 export class RevisionsApiService {
   constructor(
     private readonly api: InternalRevisionsApiService,
-    private readonly cache: CacheService,
+    private readonly cache: RevisionCacheService,
   ) {}
 
   public revision(data: GetRevisionQueryData) {
-    return this.cache.getOrSet({
-      key: `revision:revision:${data.revisionId}`,
-      tags: [`revision-${data.revisionId}`],
-      ttl: '1d',
-      factory: () => this.api.revision(data),
-    });
+    return this.cache.revision(data, () => this.api.revision(data));
   }
 
   public migrations(data: GetMigrationsQueryData) {
     return this.api.migrations(data);
-  }
-
-  public async invalidateRevisions(revisionIds: string[]) {
-    await this.cache.deleteByTag({
-      tags: revisionIds.map((revisionId) => `revision-${revisionId}`),
-    });
   }
 }

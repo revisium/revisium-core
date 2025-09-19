@@ -1,10 +1,10 @@
 import { Field, InputType } from '@nestjs/graphql';
-import GraphQLJSON from 'graphql-type-json';
+import { JSONResolver } from 'graphql-scalars';
 import { Prisma } from '@prisma/client';
 import { GetRowInput } from 'src/api/graphql-api/row/inputs/get-row.input';
 
 @InputType()
 export class CreateRowInput extends GetRowInput {
-  @Field(() => GraphQLJSON)
+  @Field(() => JSONResolver)
   data: Prisma.InputJsonValue;
 }

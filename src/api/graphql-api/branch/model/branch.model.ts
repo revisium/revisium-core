@@ -1,4 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { DateTimeResolver } from 'graphql-scalars';
 import { ParentBranchModel } from 'src/api/graphql-api/branch/model/parent-branch.model';
 import { ProjectModel } from 'src/api/graphql-api/project/model';
 import {
@@ -15,7 +16,7 @@ export class BranchModel {
   @Field()
   projectId: string;
 
-  @Field(() => Date)
+  @Field(() => DateTimeResolver)
   createdAt: Date;
 
   @Field(() => Boolean)

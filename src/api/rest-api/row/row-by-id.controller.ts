@@ -15,7 +15,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CommandBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
@@ -77,7 +77,6 @@ import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/tr
 @ApiTags('Row')
 export class RowByIdController {
   constructor(
-    private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
     private readonly rowApi: RowApiService,
   ) {}

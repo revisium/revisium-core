@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { BentoCache, BentoStore } from 'bentocache';
-import { DeleteByTagOptions, GetOrSetOptions } from 'bentocache/types';
+import {
+  DeleteByTagOptions,
+  DeleteOptions,
+  GetOrSetOptions,
+} from 'bentocache/types';
 import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
 
 @Injectable()
@@ -16,5 +20,9 @@ export class CacheService {
 
   public deleteByTag(options: DeleteByTagOptions) {
     return this.bento.deleteByTag(options);
+  }
+
+  public delete(options: DeleteOptions) {
+    return this.bento.delete(options);
   }
 }

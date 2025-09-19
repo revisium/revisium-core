@@ -53,6 +53,7 @@ export class ApiUploadFileHandler
       revisionId: data.revisionId,
       tableVersionId,
       tableId: data.tableId,
+      rowId: data.rowId,
       rowVersionId,
     });
 

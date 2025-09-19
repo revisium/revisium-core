@@ -1,4 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { DateTimeResolver } from 'graphql-scalars';
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
 
 export enum EndpointType {
@@ -11,7 +12,7 @@ export class EndpointModel {
   @Field()
   id: string;
 
-  @Field(() => Date)
+  @Field(() => DateTimeResolver)
   createdAt: Date;
 
   @Field(() => RevisionModel)

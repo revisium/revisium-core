@@ -1,11 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus, CommandHandler } from '@nestjs/cqrs';
+import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { Prisma, Row } from '@prisma/client';
 import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
 import { PluginService } from 'src/features/plugin/plugin.service';
+import { TableSchemaUpdatedEvent } from 'src/infrastructure/cache';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
@@ -35,6 +36,7 @@ export class UpdateTableHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly commandBus: CommandBus,
+    protected readonly eventBus: EventBus,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
@@ -42,6 +44,12 @@ export class UpdateTableHandler extends DraftHandler<
     protected readonly pluginTable: PluginService,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: UpdateTableCommand) {
+    await this.eventBus.publishAll([
+      new TableSchemaUpdatedEvent(data.revisionId, data.tableId),
+    ]);
   }
 
   protected async validations({ data }: UpdateTableCommand) {

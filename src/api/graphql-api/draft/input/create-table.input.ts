@@ -1,6 +1,6 @@
 import { Field, InputType } from '@nestjs/graphql';
 import { Prisma } from '@prisma/client';
-import GraphQLJSON from 'graphql-type-json';
+import { JSONResolver } from 'graphql-scalars';
 
 @InputType()
 export class CreateTableInput {
@@ -10,6 +10,6 @@ export class CreateTableInput {
   @Field()
   tableId: string;
 
-  @Field(() => GraphQLJSON)
+  @Field(() => JSONResolver)
   schema: Prisma.InputJsonValue;
 }
