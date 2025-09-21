@@ -477,6 +477,38 @@ export class WhereGeneratorPrisma {
       return Prisma.sql`(${fieldRef}#>${arrayPath})::jsonb @> ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
     }
 
+    if (condition.array_starts_with !== undefined) {
+      // Prisma pattern: (field#>ARRAY[path]::text[])::jsonb->0)::jsonb = value
+      const pathArray = path.map((p) => String(p));
+      const arrayPath = Prisma.sql`ARRAY[${Prisma.join(pathArray)}]::text[]`;
+      const jsonValue = JSON.stringify(condition.array_starts_with);
+
+      if (isInsensitive && typeof condition.array_starts_with === 'string') {
+        // Case-insensitive first element comparison
+        // Note: jsonb->0 returns JSON value with quotes, so we need to add quotes to search term
+        const quotedValue = JSON.stringify(condition.array_starts_with);
+        return Prisma.sql`LOWER(((${fieldRef}#>${arrayPath})::jsonb->0)::text) = LOWER(${quotedValue}) AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+      }
+
+      return Prisma.sql`((${fieldRef}#>${arrayPath})::jsonb->0)::jsonb = ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+    }
+
+    if (condition.array_ends_with !== undefined) {
+      // Prisma pattern: (field#>ARRAY[path]::text[])::jsonb->-1)::jsonb = value
+      const pathArray = path.map((p) => String(p));
+      const arrayPath = Prisma.sql`ARRAY[${Prisma.join(pathArray)}]::text[]`;
+      const jsonValue = JSON.stringify(condition.array_ends_with);
+
+      if (isInsensitive && typeof condition.array_ends_with === 'string') {
+        // Case-insensitive last element comparison
+        // Note: jsonb->-1 returns JSON value with quotes, so we need to add quotes to search term
+        const quotedValue = JSON.stringify(condition.array_ends_with);
+        return Prisma.sql`LOWER(((${fieldRef}#>${arrayPath})::jsonb->-1)::text) = LOWER(${quotedValue}) AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+      }
+
+      return Prisma.sql`((${fieldRef}#>${arrayPath})::jsonb->-1)::jsonb = ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+    }
+
     if (condition.in !== undefined) {
       if (Array.isArray(condition.in) && condition.in.length === 0) {
         return Prisma.sql`FALSE`;
