@@ -1,9 +1,7 @@
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
-import { BentoCache, bentostore } from 'bentocache';
-import { memoryDriver } from 'bentocache/drivers/memory';
-import { redisBusDriver, redisDriver } from 'bentocache/drivers/redis';
+import type { BentoCache } from 'bentocache';
 import { pgBusDriver } from 'src/infrastructure/cache/pg-bus/pg-bus.driver';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
@@ -55,6 +53,12 @@ export class RevisiumCacheModule {
                   cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
                 );
 
+                // Dynamic imports for ESM compatibility
+                const { BentoCache, bentostore } = await import('bentocache');
+                const { memoryDriver } = await import(
+                  'bentocache/drivers/memory'
+                );
+
                 // L1 only configuration
                 bento = new BentoCache({
                   default: 'cache',
@@ -90,6 +94,15 @@ export class RevisiumCacheModule {
                 if (redisBusPort) {
                   logger.log(`REDIS_BUS_PORT: ${redisBusPort}`);
                 }
+
+                // Dynamic imports for ESM compatibility
+                const { BentoCache, bentostore } = await import('bentocache');
+                const { memoryDriver } = await import(
+                  'bentocache/drivers/memory'
+                );
+                const { redisBusDriver, redisDriver } = await import(
+                  'bentocache/drivers/redis'
+                );
 
                 // L1 + L2 configuration
                 bento = new BentoCache({
