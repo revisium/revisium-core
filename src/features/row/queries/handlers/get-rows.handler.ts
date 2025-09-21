@@ -29,7 +29,7 @@ export class GetRowsHandler
   }
 
   public async execute({ data }: GetRowsQuery) {
-    const { versionId: tableId } =
+    const { versionId: tableVersionId } =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
         data.tableId,
@@ -38,7 +38,7 @@ export class GetRowsHandler
     return getOffsetPagination({
       pageData: data,
       findMany: async (args) => {
-        const rows = await this.getRows(args, tableId, data);
+        const rows = await this.getRows(args, tableVersionId, data);
 
         await this.pluginService.computeRows({
           revisionId: data.revisionId,
@@ -54,18 +54,18 @@ export class GetRowsHandler
           },
         }));
       },
-      count: () => this.getRowsCount(tableId),
+      count: () => this.getRowsCount(tableVersionId, data),
     });
   }
 
   private getRows(
     args: { take: number; skip: number },
-    tableId: string,
-    data: GetRowsQuery['data'],
+    tableVersionId: string,
+    data: GetRowsQueryData,
   ): Promise<Row[]> {
     if (this.isSimpleOrdering(data.orderBy)) {
       return this.transaction.table
-        .findUniqueOrThrow({ where: { versionId: tableId } })
+        .findUniqueOrThrow({ where: { versionId: tableVersionId } })
         .rows({
           ...args,
           orderBy: data.orderBy ?? {
@@ -76,7 +76,7 @@ export class GetRowsHandler
     } else {
       return this.transaction.$queryRaw(
         generateGetRowsQueryPrisma(
-          tableId,
+          tableVersionId,
           args.take,
           args.skip,
           data.where as unknown as WhereConditions,
@@ -92,10 +92,10 @@ export class GetRowsHandler
     return !order || Boolean(order?.every((orderItem) => !orderItem['data']));
   }
 
-  private async getRowsCount(tableId: string) {
+  private async getRowsCount(tableVersionId: string, data: GetRowsQueryData) {
     const result = await this.transaction.table.findUniqueOrThrow({
-      where: { versionId: tableId },
-      include: { _count: { select: { rows: true } } },
+      where: { versionId: tableVersionId },
+      include: { _count: { select: { rows: { where: data.where } } } },
     });
     return result._count.rows;
   }

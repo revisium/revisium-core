@@ -116,6 +116,44 @@ describe('getRows', () => {
   });
 
   describe('filtering', () => {
+    it('should calculate totalCount', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const result = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: tableId,
+          first: 100,
+          where: {
+            data: {
+              path: ['ver'],
+              equals: 2,
+            },
+          },
+        }),
+      );
+
+      expect(result.edges.length).toEqual(1);
+      expect(result.totalCount).toEqual(1);
+
+      const filteredResult = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: tableId,
+          first: 100,
+          where: {
+            data: {
+              path: ['ver'],
+              equals: 3,
+            },
+          },
+        }),
+      );
+
+      expect(filteredResult.edges.length).toEqual(0);
+      expect(filteredResult.totalCount).toEqual(0);
+    });
+
     it('insensitive mode', async () => {
       const { draftRowVersionId, draftRevisionId, tableId } =
         await prepareProject(prismaService);
