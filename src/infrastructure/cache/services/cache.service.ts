@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { BentoCache, BentoStore } from 'bentocache';
-import {
+import type { BentoCache, BentoStore } from 'bentocache';
+import type {
   DeleteByTagOptions,
   DeleteOptions,
   GetOrSetOptions,
