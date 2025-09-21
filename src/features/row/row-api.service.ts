@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InternalRowApiService } from 'src/features/row/internal-row-api.service';
 import {
   GetRowByIdQueryData,
@@ -14,6 +14,8 @@ import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.ser
 
 @Injectable()
 export class RowApiService {
+  private readonly logger = new Logger(RowApiService.name);
+
   constructor(
     private readonly api: InternalRowApiService,
     private readonly rowCache: RowCacheService,
@@ -34,7 +36,11 @@ export class RowApiService {
       data,
       async () => {
         const result = await this.api.getRows(data);
-        await this.warmRowCache(result.edges.map((edge) => edge.node));
+        void this.warmRowCache(result.edges.map((edge) => edge.node)).catch(
+          (e) => {
+            this.logger.warn(`Row cache warming failed (non-critical)`, e);
+          },
+        );
         return result;
       },
     );
