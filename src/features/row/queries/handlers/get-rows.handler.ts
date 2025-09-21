@@ -29,7 +29,6 @@ export class GetRowsHandler
   }
 
   public async execute({ data }: GetRowsQuery) {
-    console.log('GetRowsQuery', data);
     const { versionId: tableVersionId } =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
