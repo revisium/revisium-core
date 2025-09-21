@@ -1,7 +1,6 @@
 import { DynamicModule, Logger, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
-import type { BentoCache } from 'bentocache';
 import { pgBusDriver } from 'src/infrastructure/cache/pg-bus/pg-bus.driver';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
@@ -13,6 +12,20 @@ import { CACHE_SERVICE } from './services/cache.tokens';
 import { CACHE_EVENT_HANDLERS } from './handlers';
 import Redis from 'ioredis';
 
+// Dynamic imports for ESM compatibility (requires --experimental-require-module in Node.js 22+)
+async function loadBentoCacheCore() {
+  const { BentoCache, bentostore } = await import('bentocache');
+  const { memoryDriver } = await import('bentocache/drivers/memory');
+  return { BentoCache, bentostore, memoryDriver };
+}
+
+async function loadBentoCacheRedis() {
+  const { redisBusDriver, redisDriver } = await import(
+    'bentocache/drivers/redis'
+  );
+  return { redisBusDriver, redisDriver };
+}
+
 @Module({})
 export class RevisiumCacheModule {
   static forRootAsync(): DynamicModule {
@@ -23,7 +36,7 @@ export class RevisiumCacheModule {
       providers: [
         {
           provide: CACHE_SERVICE,
-          useFactory: async (cfg: ConfigService): Promise<BentoCache<any>> => {
+          useFactory: async (cfg: ConfigService): Promise<any> => {
             const logger = new Logger('RevisiumCacheModule');
             const enabled = parseBool(cfg.get<string>('EXPERIMENTAL_CACHE'));
 
@@ -31,7 +44,7 @@ export class RevisiumCacheModule {
               logger.warn(
                 '⚠️ Cache disabled (NoopBentoCache). Set EXPERIMENTAL_CACHE=1 to enable.',
               );
-              return new NoopCacheService() as unknown as BentoCache<any>;
+              return new NoopCacheService() as any;
             }
 
             const l1MaxSize =
@@ -45,7 +58,7 @@ export class RevisiumCacheModule {
               cfg.get<string>('EXPERIMENTAL_CACHE_L2_REDIS_URL') || null;
 
             try {
-              let bento: BentoCache<any>;
+              let bento: any;
 
               if (!redisUrl) {
                 const datebaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
@@ -53,11 +66,8 @@ export class RevisiumCacheModule {
                   cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
                 );
 
-                // Dynamic imports for ESM compatibility
-                const { BentoCache, bentostore } = await import('bentocache');
-                const { memoryDriver } = await import(
-                  'bentocache/drivers/memory'
-                );
+                const { BentoCache, bentostore, memoryDriver } =
+                  await loadBentoCacheCore();
 
                 // L1 only configuration
                 bento = new BentoCache({
@@ -95,14 +105,10 @@ export class RevisiumCacheModule {
                   logger.log(`REDIS_BUS_PORT: ${redisBusPort}`);
                 }
 
-                // Dynamic imports for ESM compatibility
-                const { BentoCache, bentostore } = await import('bentocache');
-                const { memoryDriver } = await import(
-                  'bentocache/drivers/memory'
-                );
-                const { redisBusDriver, redisDriver } = await import(
-                  'bentocache/drivers/redis'
-                );
+                const { BentoCache, bentostore, memoryDriver } =
+                  await loadBentoCacheCore();
+                const { redisBusDriver, redisDriver } =
+                  await loadBentoCacheRedis();
 
                 // L1 + L2 configuration
                 bento = new BentoCache({
@@ -145,7 +151,7 @@ export class RevisiumCacheModule {
                 `❌ BentoCache setup failed (${redisUrl || 'memory'}), using noop fallback.`,
                 err?.stack ?? String(err),
               );
-              return new NoopCacheService() as unknown as BentoCache<any>;
+              return new NoopCacheService() as any;
             }
           },
           inject: [ConfigService],
