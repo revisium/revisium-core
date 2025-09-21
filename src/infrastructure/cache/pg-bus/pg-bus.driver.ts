@@ -6,15 +6,13 @@ import {
   CreateBusDriverResult,
 } from 'bentocache/types';
 
-// Channel name must be a valid PostgreSQL identifier-like string.
-// LISTEN/UNLISTEN cannot be parameterized, so we validate strictly.
-// PostgreSQL identifiers allow: letters, digits, underscores, dollar signs, dots, colons
-// but NOT hyphens, quotes, or other special chars that could cause SQL injection.
-// BentoCache uses patterns like "bentocache.notifications:cache"
 const CHANNEL_NAME_RE = /^[a-z_][a-z0-9_$.:]{0,62}$/i;
 
-// PostgreSQL NOTIFY payload is limited to ~8 KB.
 const MAX_PAYLOAD_BYTES = 8000;
+
+function escapeIdentifier(str: string): string {
+  return '"' + str.replace(/"/g, '""') + '"';
+}
 
 export type PgBusDriverOptions = {
   connectionString: string;
@@ -52,25 +50,19 @@ export class PgBusDriver implements BusDriver {
     this.log = opts.log ?? console;
     this.debug = opts.debug ?? false;
 
-    // A connection pool used for publishing (pg_notify).
     this.publisher = new Pool({
       connectionString: this.cs,
       application_name: `${this.app}:pub`,
     });
   }
 
-  // === BusDriver API ===
-
-  // Publish a JSON message to a channel via pg_notify.
   async publish(channel: string, message: CacheBusMessage): Promise<void> {
     this.assertChannel(channel);
 
-    // Require ID to be set (like RedisTransport)
     if (!this.id) {
       throw new Error('You must set an id before publishing a message');
     }
 
-    // Wrap message with busId (like RedisTransport)
     const wrappedMessage = {
       payload: message ?? {},
       busId: this.id,
@@ -89,7 +81,6 @@ export class PgBusDriver implements BusDriver {
     ]);
   }
 
-  // Subscribe to a channel with a handler callback.
   async subscribe(
     channel: string,
     handler: (m: CacheBusMessage) => void,
@@ -97,24 +88,21 @@ export class PgBusDriver implements BusDriver {
     this.assertChannel(channel);
     this.handlers.set(channel, handler);
     await this.ensureConnected();
+    if (this.handlers.get(channel) !== handler) return;
     await this.listen(channel);
   }
 
-  // Unsubscribe from a channel.
   async unsubscribe(channel: string): Promise<void> {
     this.handlers.delete(channel);
     if (!this.listener) return;
     try {
-      // Safe SQL: channel name is validated and properly escaped
-      await this.listener.query(
-        `UNLISTEN ${this.createSafeSqlIdentifier(channel)}`,
-      );
+      this.assertChannel(channel);
+      await this.listener.query(`UNLISTEN ${escapeIdentifier(channel)}`);
     } catch (e) {
       this.log.warn('[pg-bus] failed to UNLISTEN:', e);
     }
   }
 
-  // Gracefully close all connections.
   async disconnect(): Promise<void> {
     this.destroyed = true;
     if (this.listener) {
@@ -137,34 +125,16 @@ export class PgBusDriver implements BusDriver {
     }
   }
 
-  // Register a callback that fires after reconnect.
   onReconnect(cb: () => void): void {
     this.reconnectCallbacks.push(cb);
   }
 
-  // === Internal helpers ===
-
-  // Ensure channel name is valid and safe to embed in SQL.
   private assertChannel(name: string) {
     if (!CHANNEL_NAME_RE.test(name)) {
       throw new Error(`Invalid channel "${name}"`);
     }
-    // Additional safety: check for SQL injection patterns
-    if (name.includes('"') || name.includes("'") || name.includes('\\')) {
-      throw new Error(`Unsafe characters in channel name "${name}"`);
-    }
   }
 
-  // Create safe SQL identifier by validating and quoting channel name.
-  // LISTEN/UNLISTEN cannot use parameterized queries, so we validate strictly
-  // and use PostgreSQL identifier quoting to prevent SQL injection.
-  private createSafeSqlIdentifier(channel: string): string {
-    this.assertChannel(channel);
-    // Double-quote any existing quotes for PostgreSQL identifier safety
-    return `"${channel.replace(/"/g, '""')}"`;
-  }
-
-  // Ensure we have a connected listener (creates one if missing).
   private async ensureConnected(): Promise<void> {
     if (this.listener || this.destroyed) return;
     if (this.connecting && this.connectingPromise) {
@@ -193,12 +163,10 @@ export class PgBusDriver implements BusDriver {
         );
         this.listener = client;
 
-        // Re-subscribe to all channels after reconnect.
         for (const ch of this.handlers.keys()) {
           await this.listen(ch);
         }
 
-        // Fire reconnect callbacks.
         for (const cb of this.reconnectCallbacks) {
           try {
             cb();
@@ -225,27 +193,22 @@ export class PgBusDriver implements BusDriver {
     }
   }
 
-  // Execute LISTEN for a given channel.
   private async listen(channel: string) {
     if (!this.listener) return;
     try {
-      // Safe SQL: channel name is validated and properly escaped
-      await this.listener.query(
-        `LISTEN ${this.createSafeSqlIdentifier(channel)}`,
-      );
+      this.assertChannel(channel);
+      await this.listener.query(`LISTEN ${escapeIdentifier(channel)}`);
     } catch (e) {
       this.log.warn(`[pg-bus] failed to LISTEN ${channel}:`, e);
     }
   }
 
-  // Handle incoming NOTIFY events.
   private onNotification(channel: string, raw: string) {
     const h = this.handlers.get(channel);
     if (!h) return;
     try {
       const wrappedMsg = raw ? JSON.parse(raw) : { payload: {}, busId: null };
 
-      // Ignore messages from our own bus instance (like RedisTransport)
       if (wrappedMsg.busId === this.id) {
         if (this.debug) {
           this.log?.log?.(
@@ -255,7 +218,6 @@ export class PgBusDriver implements BusDriver {
         return;
       }
 
-      // Extract the actual payload and pass it to handler
       const payload = wrappedMsg.payload as CacheBusMessage;
       h(payload);
     } catch (e) {
@@ -268,7 +230,6 @@ export class PgBusDriver implements BusDriver {
     }
   }
 
-  // Reconnect logic with delay and auto-resubscribe.
   private async reconnectSoon() {
     if (this.destroyed) return;
     try {
