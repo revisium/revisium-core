@@ -459,8 +459,54 @@ export class WhereGeneratorPrisma {
     }
 
     if (condition.array_contains !== undefined) {
+      // Enhanced array_contains implementation with case-insensitive support
+      // This is better than Prisma ORM which ignores mode: 'insensitive' for array_contains
+      const pathArray = path.map((p) => String(p));
+      const arrayPath = Prisma.sql`ARRAY[${Prisma.join(pathArray)}]::text[]`;
+
+      if (isInsensitive && typeof condition.array_contains === 'string') {
+        // Case-insensitive string array_contains using EXISTS with LOWER() comparison
+        return Prisma.sql`EXISTS (
+          SELECT 1 FROM jsonb_array_elements_text((${fieldRef}#>${arrayPath})::jsonb) AS elem
+          WHERE LOWER(elem) = LOWER(${condition.array_contains})
+        ) AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+      }
+
+      // Standard case-sensitive array_contains using @> operator
       const jsonValue = JSON.stringify(condition.array_contains);
-      return Prisma.sql`${fieldRef} @> ${jsonValue}::jsonb`;
+      return Prisma.sql`(${fieldRef}#>${arrayPath})::jsonb @> ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+    }
+
+    if (condition.array_starts_with !== undefined) {
+      // Prisma pattern: (field#>ARRAY[path]::text[])::jsonb->0)::jsonb = value
+      const pathArray = path.map((p) => String(p));
+      const arrayPath = Prisma.sql`ARRAY[${Prisma.join(pathArray)}]::text[]`;
+      const jsonValue = JSON.stringify(condition.array_starts_with);
+
+      if (isInsensitive && typeof condition.array_starts_with === 'string') {
+        // Case-insensitive first element comparison
+        // Note: jsonb->0 returns JSON value with quotes, so we need to add quotes to search term
+        const quotedValue = JSON.stringify(condition.array_starts_with);
+        return Prisma.sql`LOWER(((${fieldRef}#>${arrayPath})::jsonb->0)::text) = LOWER(${quotedValue}) AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+      }
+
+      return Prisma.sql`((${fieldRef}#>${arrayPath})::jsonb->0)::jsonb = ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+    }
+
+    if (condition.array_ends_with !== undefined) {
+      // Prisma pattern: (field#>ARRAY[path]::text[])::jsonb->-1)::jsonb = value
+      const pathArray = path.map((p) => String(p));
+      const arrayPath = Prisma.sql`ARRAY[${Prisma.join(pathArray)}]::text[]`;
+      const jsonValue = JSON.stringify(condition.array_ends_with);
+
+      if (isInsensitive && typeof condition.array_ends_with === 'string') {
+        // Case-insensitive last element comparison
+        // Note: jsonb->-1 returns JSON value with quotes, so we need to add quotes to search term
+        const quotedValue = JSON.stringify(condition.array_ends_with);
+        return Prisma.sql`LOWER(((${fieldRef}#>${arrayPath})::jsonb->-1)::text) = LOWER(${quotedValue}) AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+      }
+
+      return Prisma.sql`((${fieldRef}#>${arrayPath})::jsonb->-1)::jsonb = ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
     }
 
     if (condition.in !== undefined) {

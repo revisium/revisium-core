@@ -2,7 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { Prisma } from '@prisma/client';
-import { createTableWithJsonData } from 'src/utils/prisma-sql-generator/__tests__/test-helpers';
+import {
+  createTableWithJsonData,
+  createTableWithComplexJsonData,
+} from 'src/utils/prisma-sql-generator/__tests__/test-helpers';
 import { WhereGeneratorPrisma } from '../where-generator.prisma';
 import {
   runPrismaOrmRows,
@@ -849,6 +852,64 @@ describe('Prisma SQL Generator - Integration Tests', () => {
       compareByIds(prismaResult, rawResult);
     });
 
+    it('should filter by JSON string_starts_with with case insensitive mode', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: {
+            path: ['title'],
+            string_starts_with: 'SENIOR',
+            mode: 'insensitive' as const,
+          },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
+    it('should filter by JSON string_ends_with with case insensitive mode', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: {
+            path: ['title'],
+            string_ends_with: 'MANAGER',
+            mode: 'insensitive' as const,
+          },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
     it('should filter by meta field', async () => {
       const { table } = await createTableWithJsonData(prismaService);
 
@@ -872,6 +933,237 @@ describe('Prisma SQL Generator - Integration Tests', () => {
       const rawResult = await runViaPrismaRaw(prismaService, query);
 
       compareByIds(prismaResult, rawResult);
+    });
+
+    // JSON Array Operations
+    it('should filter by JSON array_contains string value', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: { path: ['tags'], array_contains: 'typescript' },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
+    it('should filter by JSON array_contains with complex object', async () => {
+      const { table } = await createTableWithComplexJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: {
+            path: ['products'],
+            array_contains: { name: 'Product A', price: 99.99 },
+          },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
+    it('should filter by JSON array_contains with number', async () => {
+      const { table } = await createTableWithComplexJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: { path: ['scores'], array_contains: 90 },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
+    it('should filter by JSON array_contains with case insensitive mode (enhanced functionality)', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      // Our generator supports case-insensitive array_contains (better than Prisma ORM)
+      // Should find 'TYPESCRIPT' matching 'typescript' in the data
+      const options = {
+        take: 10,
+        where: {
+          data: {
+            path: ['tags'],
+            array_contains: 'TYPESCRIPT', // Should match 'typescript' with insensitive mode
+            mode: 'insensitive' as const,
+          },
+        },
+      };
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      // Should find 1 result (json-test-4 has tags: ['typescript', 'react'])
+      expect(rawResult.length).toBe(1);
+      expect(rawResult[0].id).toBe('json-test-4');
+
+      // Also test case-sensitive for comparison
+      const optionsCaseSensitive = {
+        ...options,
+        where: {
+          data: {
+            path: ['tags'],
+            array_contains: 'TYPESCRIPT', // Without mode, should not match
+          },
+        },
+      };
+
+      const queryCaseSensitive = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        optionsCaseSensitive,
+      );
+      const rawResultCaseSensitive = await runViaPrismaRaw(
+        prismaService,
+        queryCaseSensitive,
+      );
+
+      // Should find 0 results in case-sensitive mode
+      expect(rawResultCaseSensitive.length).toBe(0);
+    });
+
+    it('should filter by JSON array_starts_with', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: { path: ['tags'], array_starts_with: 'typescript' },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
+    it('should filter by JSON array_ends_with', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      const options = {
+        take: 10,
+        where: {
+          data: { path: ['tags'], array_ends_with: 'react' },
+        },
+      };
+
+      const prismaResult = await runPrismaOrmRows(prismaService, {
+        tableVersionId: table.versionId,
+        ...options,
+        orderBy: { createdAt: Prisma.SortOrder.desc },
+      });
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      compareByIds(prismaResult, rawResult);
+    });
+
+    it('should filter by JSON array_starts_with with case insensitive mode (enhanced functionality)', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      // Enhanced: case-insensitive array_starts_with
+      const options = {
+        take: 10,
+        where: {
+          data: {
+            path: ['tags'],
+            array_starts_with: 'TYPESCRIPT',
+            mode: 'insensitive' as const,
+          },
+        },
+      };
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      // Should find 1 result (json-test-4 starts with 'typescript')
+      expect(rawResult.length).toBe(1);
+      expect(rawResult[0].id).toBe('json-test-4');
+    });
+
+    it('should filter by JSON array_ends_with with case insensitive mode (enhanced functionality)', async () => {
+      const { table } = await createTableWithJsonData(prismaService);
+
+      // Enhanced: case-insensitive array_ends_with
+      const options = {
+        take: 10,
+        where: {
+          data: {
+            path: ['tags'],
+            array_ends_with: 'REACT',
+            mode: 'insensitive' as const,
+          },
+        },
+      };
+
+      const query = generator.generateGetRowsQueryPrisma(
+        table.versionId,
+        options,
+      );
+      const rawResult = await runViaPrismaRaw(prismaService, query);
+
+      // Should find 1 result (json-test-4 ends with 'react')
+      expect(rawResult.length).toBe(1);
+      expect(rawResult[0].id).toBe('json-test-4');
     });
   });
 
