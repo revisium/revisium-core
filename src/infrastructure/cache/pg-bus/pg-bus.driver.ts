@@ -31,6 +31,7 @@ export class PgBusDriver implements BusDriver {
   private reconnectCallbacks: Array<() => void> = [];
   private connecting = false;
   private destroyed = false;
+  private connectingPromise?: Promise<void>;
 
   private id?: string;
   public setId = (id: string) => {
@@ -104,7 +105,10 @@ export class PgBusDriver implements BusDriver {
     this.handlers.delete(channel);
     if (!this.listener) return;
     try {
-      await this.listener.query(`UNLISTEN "${channel}"`);
+      // Safe SQL: channel name is validated and properly escaped
+      await this.listener.query(
+        `UNLISTEN ${this.createSafeSqlIdentifier(channel)}`,
+      );
     } catch (e) {
       this.log.warn('[pg-bus] failed to UNLISTEN:', e);
     }
@@ -145,56 +149,79 @@ export class PgBusDriver implements BusDriver {
     if (!CHANNEL_NAME_RE.test(name)) {
       throw new Error(`Invalid channel "${name}"`);
     }
+    // Additional safety: check for SQL injection patterns
+    if (name.includes('"') || name.includes("'") || name.includes('\\')) {
+      throw new Error(`Unsafe characters in channel name "${name}"`);
+    }
+  }
+
+  // Create safe SQL identifier by validating and quoting channel name.
+  // LISTEN/UNLISTEN cannot use parameterized queries, so we validate strictly
+  // and use PostgreSQL identifier quoting to prevent SQL injection.
+  private createSafeSqlIdentifier(channel: string): string {
+    this.assertChannel(channel);
+    // Double-quote any existing quotes for PostgreSQL identifier safety
+    return `"${channel.replace(/"/g, '""')}"`;
   }
 
   // Ensure we have a connected listener (creates one if missing).
   private async ensureConnected(): Promise<void> {
-    if (this.listener || this.connecting || this.destroyed) return;
+    if (this.listener || this.destroyed) return;
+    if (this.connecting && this.connectingPromise) {
+      await this.connectingPromise;
+      return;
+    }
     this.connecting = true;
+    this.connectingPromise = (async () => {
+      const client = new Client({
+        connectionString: this.cs,
+        application_name: `${this.app}:listen`,
+      });
+      client.on('error', (err) => {
+        this.log.error('[pg-bus] listener error:', err);
+        this.reconnectSoon();
+      });
+      client.on('end', () => {
+        this.log.warn('[pg-bus] listener ended');
+        this.reconnectSoon();
+      });
 
-    const client = new Client({
-      connectionString: this.cs,
-      application_name: `${this.app}:listen`,
-    });
-    client.on('error', (err) => {
-      this.log.error('[pg-bus] listener error:', err);
-      this.reconnectSoon();
-    });
-    client.on('end', () => {
-      this.log.warn('[pg-bus] listener ended');
-      this.reconnectSoon();
-    });
+      try {
+        await client.connect();
+        client.on('notification', (n) =>
+          this.onNotification(n.channel, n.payload ?? ''),
+        );
+        this.listener = client;
 
-    try {
-      await client.connect();
-      client.on('notification', (n) =>
-        this.onNotification(n.channel, n.payload ?? ''),
-      );
-      this.listener = client;
-
-      // Re-subscribe to all channels after reconnect.
-      for (const ch of this.handlers.keys()) {
-        await this.listen(ch);
-      }
-
-      // Fire reconnect callbacks.
-      for (const cb of this.reconnectCallbacks) {
-        try {
-          cb();
-        } catch (e) {
-          this.log.warn('[pg-bus] onReconnect cb error:', e);
+        // Re-subscribe to all channels after reconnect.
+        for (const ch of this.handlers.keys()) {
+          await this.listen(ch);
         }
-      }
 
-      if (this.debug) {
-        this.log.log('[pg-bus] LISTEN connected');
+        // Fire reconnect callbacks.
+        for (const cb of this.reconnectCallbacks) {
+          try {
+            cb();
+          } catch (e) {
+            this.log.warn('[pg-bus] onReconnect cb error:', e);
+          }
+        }
+
+        if (this.debug) {
+          this.log.log('[pg-bus] LISTEN connected');
+        }
+      } catch (e) {
+        this.log.error('[pg-bus] connect failed:', e);
+        await this.sleep(this.delay);
+        this.reconnectSoon();
+      } finally {
+        this.connecting = false;
       }
-    } catch (e) {
-      this.log.error('[pg-bus] connect failed:', e);
-      await this.sleep(this.delay);
-      this.reconnectSoon();
+    })();
+    try {
+      await this.connectingPromise;
     } finally {
-      this.connecting = false;
+      this.connectingPromise = undefined;
     }
   }
 
@@ -202,7 +229,10 @@ export class PgBusDriver implements BusDriver {
   private async listen(channel: string) {
     if (!this.listener) return;
     try {
-      await this.listener.query(`LISTEN "${channel}"`);
+      // Safe SQL: channel name is validated and properly escaped
+      await this.listener.query(
+        `LISTEN ${this.createSafeSqlIdentifier(channel)}`,
+      );
     } catch (e) {
       this.log.warn(`[pg-bus] failed to LISTEN ${channel}:`, e);
     }
@@ -229,7 +259,12 @@ export class PgBusDriver implements BusDriver {
       const payload = wrappedMsg.payload as CacheBusMessage;
       h(payload);
     } catch (e) {
-      this.log.warn(`[pg-bus] invalid JSON payload on ${channel}:`, raw, e);
+      const rawStr = String(raw ?? '');
+      const preview =
+        rawStr.length > 256
+          ? `${rawStr.slice(0, 256)}…(+${rawStr.length - 256} bytes)`
+          : rawStr;
+      this.log.warn(`[pg-bus] invalid JSON payload on ${channel}:`, preview, e);
     }
   }
 
