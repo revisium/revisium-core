@@ -3,7 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { BentoCache, bentostore } from 'bentocache';
 import { memoryDriver } from 'bentocache/drivers/memory';
-import { redisDriver } from 'bentocache/drivers/redis';
+import { redisBusDriver, redisDriver } from 'bentocache/drivers/redis';
+import { pgBusDriver } from 'src/infrastructure/cache/pg-bus/pg-bus.driver';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
 import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
@@ -49,19 +50,47 @@ export class RevisiumCacheModule {
               let bento: BentoCache<any>;
 
               if (!redisUrl) {
+                const datebaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
+                const debug = parseBool(
+                  cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
+                );
+
                 // L1 only configuration
                 bento = new BentoCache({
                   default: 'cache',
                   stores: {
-                    cache: bentostore().useL1Layer(
-                      memoryDriver({
-                        maxSize: l1MaxSize,
-                      }),
-                    ),
+                    cache: bentostore()
+                      .useL1Layer(
+                        memoryDriver({
+                          maxSize: l1MaxSize,
+                        }),
+                      )
+                      .useBus(
+                        pgBusDriver({
+                          connectionString: datebaseUrl,
+                          debug,
+                        }),
+                      ),
                   },
                 });
                 logger.log('✅ Cache enabled: L1 only (BentoCache memory).');
               } else {
+                const redisBusHost = cfg.getOrThrow<string>(
+                  'EXPERIMENTAL_CACHE_REDIS_BUS_HOST',
+                );
+
+                if (redisBusHost) {
+                  logger.log(`REDIS_BUS_HOST: ${redisBusHost}`);
+                }
+
+                const redisBusPort = cfg.getOrThrow<string>(
+                  'EXPERIMENTAL_CACHE_REDIS_BUS_PORT',
+                );
+
+                if (redisBusPort) {
+                  logger.log(`REDIS_BUS_PORT: ${redisBusPort}`);
+                }
+
                 // L1 + L2 configuration
                 bento = new BentoCache({
                   default: 'cache',
@@ -76,6 +105,18 @@ export class RevisiumCacheModule {
                         redisDriver({
                           connection: new Redis(redisUrl),
                         }),
+                      )
+                      .useBus(
+                        redisBusDriver({
+                          connection: {
+                            host: redisBusHost,
+                            port: parseInt(redisBusPort),
+                          },
+                          retryQueue: {
+                            enabled: true,
+                            maxSize: undefined,
+                          },
+                        }),
                       ),
                   },
                 });
@@ -83,6 +124,14 @@ export class RevisiumCacheModule {
                   `✅ Cache enabled: L1 + L2 (BentoCache + Redis @ ${redisUrl}).`,
                 );
               }
+
+              bento.on('bus:message:published', ({ message }) => {
+                console.log('bus:message:published', message);
+              });
+
+              bento.on('bus:message:received', ({ message }) => {
+                console.log('bus:message:received', message);
+              });
 
               return bento;
             } catch (e) {
