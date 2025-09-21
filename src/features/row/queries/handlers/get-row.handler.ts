@@ -23,6 +23,7 @@ export class GetRowHandler
   }
 
   async execute({ data }: GetRowQuery): Promise<GetRowQueryReturnType> {
+    console.log('GetRowQuery', data);
     return this.transactionService.run(() => this.transactionHandler(data), {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
     });
