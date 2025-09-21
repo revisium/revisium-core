@@ -459,8 +459,22 @@ export class WhereGeneratorPrisma {
     }
 
     if (condition.array_contains !== undefined) {
+      // Enhanced array_contains implementation with case-insensitive support
+      // This is better than Prisma ORM which ignores mode: 'insensitive' for array_contains
+      const pathArray = path.map((p) => String(p));
+      const arrayPath = Prisma.sql`ARRAY[${Prisma.join(pathArray)}]::text[]`;
+
+      if (isInsensitive && typeof condition.array_contains === 'string') {
+        // Case-insensitive string array_contains using EXISTS with LOWER() comparison
+        return Prisma.sql`EXISTS (
+          SELECT 1 FROM jsonb_array_elements_text((${fieldRef}#>${arrayPath})::jsonb) AS elem
+          WHERE LOWER(elem) = LOWER(${condition.array_contains})
+        ) AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
+      }
+
+      // Standard case-sensitive array_contains using @> operator
       const jsonValue = JSON.stringify(condition.array_contains);
-      return Prisma.sql`${fieldRef} @> ${jsonValue}::jsonb`;
+      return Prisma.sql`(${fieldRef}#>${arrayPath})::jsonb @> ${jsonValue}::jsonb AND JSONB_TYPEOF((${fieldRef}#>${arrayPath})::jsonb) = 'array'`;
     }
 
     if (condition.in !== undefined) {
