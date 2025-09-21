@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { GetSetFactory } from 'bentocache/types';
 import { CacheService } from './cache.service';
 import { makeCacheKeyFromArgs } from 'src/utils/utils/stable-cache-key';
 import {
@@ -33,7 +34,7 @@ export class RowCacheService {
     revisionId: string,
     tableId: string,
     query: TQuery,
-    factory: () => Promise<T>,
+    factory: GetSetFactory<T>,
   ) {
     return this.cache.getOrSet({
       key: makeCacheKeyFromArgs([query], {

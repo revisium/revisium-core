@@ -9,6 +9,7 @@ import {
   ResolveRowForeignKeysByQueryData,
   ResolveRowForeignKeysToQueryData,
 } from 'src/features/row/queries/impl';
+import { RowWithContext } from 'src/features/share/types/row-with-context.types';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 
 @Injectable()
@@ -27,8 +28,15 @@ export class RowApiService {
   }
 
   public getRows(data: GetRowsQueryData) {
-    return this.rowCache.getRows(data.revisionId, data.tableId, data, () =>
-      this.api.getRows(data),
+    return this.rowCache.getRows(
+      data.revisionId,
+      data.tableId,
+      data,
+      async () => {
+        const result = await this.api.getRows(data);
+        await this.warmRowCache(result.edges.map((edge) => edge.node));
+        return result;
+      },
     );
   }
 
@@ -50,5 +58,15 @@ export class RowApiService {
 
   public resolveRowForeignKeysTo(data: ResolveRowForeignKeysToQueryData) {
     return this.api.resolveRowForeignKeysTo(data);
+  }
+
+  private async warmRowCache(rows: RowWithContext[]) {
+    await Promise.all(
+      rows.map((row) =>
+        this.rowCache.row({ ...row.context, rowId: row.id }, () =>
+          Promise.resolve(row),
+        ),
+      ),
+    );
   }
 }
