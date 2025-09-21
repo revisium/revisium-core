@@ -125,14 +125,6 @@ export class RevisiumCacheModule {
                 );
               }
 
-              bento.on('bus:message:published', ({ message }) => {
-                console.log('bus:message:published', message);
-              });
-
-              bento.on('bus:message:received', ({ message }) => {
-                console.log('bus:message:received', message);
-              });
-
               return bento;
             } catch (e) {
               const err = e as Error;
