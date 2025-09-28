@@ -14,15 +14,12 @@ export class JsonFilterDto {
   equals?: any;
 
   @ApiPropertyOptional({
-    type: [String],
+    oneOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }],
     description:
-      'Path in JSON (PostgreSQL: array of keys/indexes, e.g. ["pet1","petName"])',
+      'Path in JSON (PostgreSQL: array of keys/indexes, e.g. ["pet1","petName"] or dot notation "pet1.petName")',
   })
   @IsOptional()
-  @IsArray()
-  @ArrayNotEmpty()
-  @IsString({ each: true })
-  path?: string[];
+  path?: string | string[];
 
   @ApiPropertyOptional({
     enum: ['default', 'insensitive'],

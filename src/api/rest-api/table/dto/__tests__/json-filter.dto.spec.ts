@@ -16,10 +16,16 @@ describe('JsonFilterDto', () => {
     expect(errors).toHaveLength(0);
   });
 
-  it('should fail when path contains non-string', async () => {
-    const dto = plainToInstance(JsonFilterDto, { path: ['x', 1 as any] });
+  it('should pass with path as string', async () => {
+    const dto = plainToInstance(JsonFilterDto, { path: 'x.y' });
     const errors = await validate(dto);
-    expect(findConstraint(errors, 'path', 'isString')).toBeDefined();
+    expect(errors).toHaveLength(0);
+  });
+
+  it('should pass with path as string with wildcard', async () => {
+    const dto = plainToInstance(JsonFilterDto, { path: 'products.*.price' });
+    const errors = await validate(dto);
+    expect(errors).toHaveLength(0);
   });
 
   it('should pass with array_contains array of any', async () => {
