@@ -597,11 +597,18 @@
             "type": "string"
           },
           "path": {
-            "description": "Path in JSON (PostgreSQL: array of keys/indexes, e.g. [\"pet1\",\"petName\"])",
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
+            "description": "Path in JSON (PostgreSQL: array of keys/indexes, e.g. [\"pet1\",\"petName\"] or dot notation \"pet1.petName\")",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "string_contains": {
             "description": "Substring match in JSON string value",
