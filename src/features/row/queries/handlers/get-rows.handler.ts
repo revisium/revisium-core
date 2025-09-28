@@ -1,5 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma, Row } from '@prisma/client';
+import { OrderByConditions, WhereConditions } from '@revisium/prisma-pg-json';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -9,10 +10,7 @@ import {
 } from 'src/features/row/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import {
-  generateGetRowsQueryPrisma,
-  WhereConditions,
-} from 'src/utils/prisma-sql-generator';
+import { generateGetRowsQueryPrisma } from 'src/utils/prisma-sql-generator/generate-get-rows';
 
 @QueryHandler(GetRowsQuery)
 export class GetRowsHandler
@@ -80,7 +78,7 @@ export class GetRowsHandler
           args.take,
           args.skip,
           data.where as unknown as WhereConditions,
-          data.orderBy,
+          data.orderBy as unknown as OrderByConditions[],
         ),
       );
     }
