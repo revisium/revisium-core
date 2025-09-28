@@ -82,6 +82,7 @@ describe('getRows', () => {
       }),
     );
 
+    expect(result.totalCount).toEqual(3);
     expect(
       result.edges.map((edge) => (edge.node.data as any).ver),
     ).toStrictEqual([8, 10, 14]);
