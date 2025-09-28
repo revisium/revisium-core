@@ -1,8 +1,11 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma, Row } from '@prisma/client';
+import { Row } from '@prisma/client';
 import { OrderByConditions, WhereConditions } from '@revisium/prisma-pg-json';
 import { PluginService } from 'src/features/plugin/plugin.service';
-import { getRowsSql } from 'src/features/row/utils/get-rows-sql';
+import {
+  getRowsSql,
+  getRowsCountSql,
+} from 'src/features/row/utils/get-rows-sql';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetRowsQuery,
@@ -61,40 +64,21 @@ export class GetRowsHandler
     tableVersionId: string,
     data: GetRowsQueryData,
   ): Promise<Row[]> {
-    if (this.isSimpleOrdering(data.orderBy)) {
-      return this.transaction.table
-        .findUniqueOrThrow({ where: { versionId: tableVersionId } })
-        .rows({
-          ...args,
-          orderBy: data.orderBy ?? {
-            createdAt: Prisma.SortOrder.desc,
-          },
-          where: data.where,
-        });
-    } else {
-      return this.transaction.$queryRaw(
-        getRowsSql(
-          tableVersionId,
-          args.take,
-          args.skip,
-          data.where as unknown as WhereConditions,
-          data.orderBy as unknown as OrderByConditions[],
-        ),
-      );
-    }
-  }
-
-  private isSimpleOrdering(
-    order: GetRowsQueryData['orderBy'],
-  ): order is Prisma.RowOrderByWithRelationInput[] | undefined {
-    return !order || Boolean(order?.every((orderItem) => !orderItem['data']));
+    return this.transaction.$queryRaw(
+      getRowsSql(
+        tableVersionId,
+        args.take,
+        args.skip,
+        data.where as unknown as WhereConditions,
+        data.orderBy as unknown as OrderByConditions[],
+      ),
+    );
   }
 
   private async getRowsCount(tableVersionId: string, data: GetRowsQueryData) {
-    const result = await this.transaction.table.findUniqueOrThrow({
-      where: { versionId: tableVersionId },
-      include: { _count: { select: { rows: { where: data.where } } } },
-    });
-    return result._count.rows;
+    const result = await this.transaction.$queryRaw<[{ count: bigint }]>(
+      getRowsCountSql(tableVersionId, data.where as unknown as WhereConditions),
+    );
+    return Number(result[0].count);
   }
 }
