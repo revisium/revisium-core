@@ -1,6 +1,6 @@
 {
   "name": "@revisium/core",
-  "version": "2.3.0-alpha.1",
+  "version": "2.3.0-alpha.2",
   "description": "Revisium is a tool (UI/API) inspired by JSON (JSON Schema) and Git, designed to provide a flexible and low-level headless CMS solution.",
   "private": false,
   "homepage": "https://revisium.io",
