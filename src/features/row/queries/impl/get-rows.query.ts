@@ -1,5 +1,9 @@
 import { Prisma } from '@prisma/client';
-import { JsonValueType, JsonAggregation } from '@revisium/prisma-pg-json';
+import {
+  JsonValueType,
+  JsonAggregation,
+  OrderByConditions,
+} from '@revisium/prisma-pg-json';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 import { RowWithContext } from 'src/features/share/types/row-with-context.types';
 
@@ -19,7 +23,7 @@ export class GetRowsQuery {
       readonly tableId: string;
       readonly first: number;
       readonly after?: string;
-      readonly orderBy?: (Prisma.RowOrderByWithRelationInput | JsonOrder)[];
+      readonly orderBy?: OrderByConditions[];
       readonly where?: Prisma.RowWhereInput;
     },
   ) {}
