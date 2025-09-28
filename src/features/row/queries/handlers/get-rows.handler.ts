@@ -2,6 +2,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma, Row } from '@prisma/client';
 import { OrderByConditions, WhereConditions } from '@revisium/prisma-pg-json';
 import { PluginService } from 'src/features/plugin/plugin.service';
+import { getRowsSql } from 'src/features/row/utils/get-rows-sql';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetRowsQuery,
@@ -10,7 +11,6 @@ import {
 } from 'src/features/row/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { generateGetRowsQueryPrisma } from 'src/utils/prisma-sql-generator/generate-get-rows';
 
 @QueryHandler(GetRowsQuery)
 export class GetRowsHandler
@@ -73,7 +73,7 @@ export class GetRowsHandler
         });
     } else {
       return this.transaction.$queryRaw(
-        generateGetRowsQueryPrisma(
+        getRowsSql(
           tableVersionId,
           args.take,
           args.skip,

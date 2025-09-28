@@ -21,7 +21,7 @@ export const DEFAULT_ROW_FIELDS: FieldConfig = {
   meta: 'json',
 };
 
-export function generateGetRowsQueryPrisma(
+export function getRowsSql(
   tableId: string,
   take: number,
   skip: number,
