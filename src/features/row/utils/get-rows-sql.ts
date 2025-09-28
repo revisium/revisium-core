@@ -28,13 +28,18 @@ export function getRowsSql(
   whereConditions?: WhereConditions,
   orderBy?: OrderByConditions[],
 ): Prisma.Sql {
-  const whereClause = generateWhere(
-    whereConditions || {},
-    DEFAULT_ROW_FIELDS,
-    'r',
-  );
+  const whereClause = generateWhere({
+    where: whereConditions || {},
+    fieldConfig: DEFAULT_ROW_FIELDS,
+    tableAlias: 'r',
+  });
+
   const orderByClause = (orderBy ?? []).length
-    ? generateOrderBy('r', orderBy || {}, DEFAULT_ROW_FIELDS)
+    ? generateOrderBy({
+        orderBy,
+        fieldConfig: DEFAULT_ROW_FIELDS,
+        tableAlias: 'r',
+      })
     : Prisma.sql`ORDER BY r."createdAt" DESC`;
 
   // Placeholder implementation
@@ -65,11 +70,11 @@ export function getRowsCountSql(
   tableId: string,
   whereConditions?: WhereConditions,
 ): Prisma.Sql {
-  const whereClause = generateWhere(
-    whereConditions || {},
-    DEFAULT_ROW_FIELDS,
-    'r',
-  );
+  const whereClause = generateWhere({
+    where: whereConditions || {},
+    fieldConfig: DEFAULT_ROW_FIELDS,
+    tableAlias: 'r',
+  });
 
   return Prisma.sql`
     SELECT COUNT(*) as count

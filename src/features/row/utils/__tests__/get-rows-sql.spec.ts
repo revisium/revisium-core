@@ -330,7 +330,7 @@ describe('getRowsSql', () => {
     });
 
     it('should filter by AND condition with nested wildcard', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditions<{ data: 'json' }> = {
         AND: [
           {
             data: {
@@ -447,7 +447,7 @@ describe('getRowsSql', () => {
     });
 
     it('should count with complex filter', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditions<{ data: 'json' }> = {
         AND: [
           {
             data: {
