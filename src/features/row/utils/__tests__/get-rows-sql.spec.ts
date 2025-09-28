@@ -136,7 +136,7 @@ describe('getRowsSql', () => {
           meta: {},
           data: {
             priority: 12,
-            tags: ['admin', 'moderator', 'express'],
+            tags: ['admin', 'moderator', 'express', 'user'],
             scores: [90, 95],
             products: [
               {
@@ -265,7 +265,7 @@ describe('getRowsSql', () => {
       const where: WhereConditions = {
         data: {
           path: ['tags'],
-          array_contains: 'admin',
+          array_contains: ['user', 'admin'],
         } as JsonFilter,
       };
       const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
@@ -277,9 +277,9 @@ describe('getRowsSql', () => {
         getRowsCountSql(tableVersionId, where),
       );
 
-      expect(result.length).toBe(3);
-      expect(Number(count[0].count)).toBe(3);
-      expect(result.map((r) => r.id)).toEqual([ids.row1, ids.row3, ids.row5]);
+      expect(result.length).toBe(2);
+      expect(Number(count[0].count)).toBe(2);
+      expect(result.map((r) => r.id)).toEqual([ids.row1, ids.row3]);
     });
 
     it('should filter by wildcard path with numeric comparison', async () => {
@@ -403,7 +403,7 @@ describe('getRowsSql', () => {
       const where: WhereConditions = {
         data: {
           path: ['tags'],
-          array_contains: 'admin',
+          array_contains: ['admin'],
         } as JsonFilter,
       };
       const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
@@ -435,7 +435,7 @@ describe('getRowsSql', () => {
       const where: WhereConditions = {
         data: {
           path: ['tags'],
-          array_contains: 'user',
+          array_contains: ['user'],
         } as JsonFilter,
       };
 
@@ -443,7 +443,7 @@ describe('getRowsSql', () => {
         getRowsCountSql(tableVersionId, where),
       );
 
-      expect(Number(count[0].count)).toBe(3);
+      expect(Number(count[0].count)).toBe(4);
     });
 
     it('should count with complex filter', async () => {
