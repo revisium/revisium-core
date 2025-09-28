@@ -86,9 +86,37 @@ describe('getRows', () => {
     expect(Number(count[0].count)).toBe(1);
   });
 
+  it('#4', async () => {
+    const where: WhereConditions = {
+      AND: [
+        {
+          data: {
+            path: ['steps', '*', 'coordinates', 'y'],
+            equals: 480,
+          } as JsonFilter,
+        },
+      ],
+    };
+    const orderBy: OrderByConditions[] = [
+      {
+        createdAt: 'asc',
+      },
+    ];
+
+    const result = await prisma.$queryRaw<Row[]>(
+      getRowsSql(tableVersionId, 10, 0, where, orderBy),
+    );
+    const count = await prisma.$queryRaw<[{ count: bigint }]>(
+      getRowsCountSql(tableVersionId, where),
+    );
+
+    expect(result.length).toBe(1);
+    expect(Number(count[0].count)).toBe(1);
+  });
+
   let prisma: PrismaService;
   let tableVersionId: string;
-  let ids = { row1: '', row2: '', row3: '', row4: '', row5: '' };
+  let ids = { row1: '', row2: '', row3: '', row4: '', row5: '', row6: '' };
 
   beforeAll(async () => {
     const module = await Test.createTestingModule({
@@ -115,6 +143,7 @@ describe('getRows', () => {
       row3: nanoid(),
       row4: nanoid(),
       row5: nanoid(),
+      row6: nanoid(),
     };
 
     const versionIds = {
@@ -123,6 +152,7 @@ describe('getRows', () => {
       row3: nanoid(),
       row4: nanoid(),
       row5: nanoid(),
+      row6: nanoid(),
     };
 
     await prisma.row.createMany({
@@ -257,6 +287,59 @@ describe('getRows', () => {
                 tags: ['budget', 'exclusive'],
               },
             ],
+          },
+          createdAt: new Date('2025-01-05T00:00:00.000Z'),
+        },
+        {
+          id: ids.row6,
+          versionId: versionIds.row6,
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          meta: {},
+          data: {
+            name: 'Defense of the Crystal Labyrinth',
+            steps: [
+              {
+                items: [],
+                npc_id: 'crystal_keeper',
+                coordinates: { x: 640, y: 480 },
+                description:
+                  'Help the Crystal Keeper defend the labyrinth from attackers.',
+                location_id: 'crystal_maze',
+                step_number: 1,
+                objective_type: 'defend',
+              },
+            ],
+            preview: {
+              url: '/4096ecadbfe7ef524b6949997e72027e175ad293',
+              hash: '4096ecadbfe7ef524b6949997e72027e175ad293',
+              size: 2045900,
+              width: 1024,
+              fileId: 'iVdfUzO-YJj4yy8ukt4xP',
+              height: 1024,
+              status: 'uploaded',
+              fileName: 'ChatGPT Image 1 Ð¸ÑÐ½. 2025 Ð³., 17_34_45.png',
+              mimeType: 'image/png',
+              extension: 'png',
+            },
+            rewards: {
+              items: [{ item_id: 'crystal_armor', quantity: 1 }],
+              currency: { gold: 200, silver: 100 },
+              abilities: ['crystal_shield'],
+              experience: 800,
+            },
+            description: 'Help defend the Crystal Labyrinth from enemies.',
+            requirements: {
+              required_items: [{ item_id: 'healing_potion', quantity: 2 }],
+              required_level: 12,
+              required_skills: ['blok_shhitom'],
+              required_factions: [
+                { faction_id: 'black_order', reputation: 'ally' },
+              ],
+            },
+            is_repeatable: false,
+            quest_type_id: 'escort_quest',
           },
           createdAt: new Date('2025-01-05T00:00:00.000Z'),
         },
