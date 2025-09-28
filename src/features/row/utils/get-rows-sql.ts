@@ -39,24 +39,43 @@ export function getRowsSql(
 
   // Placeholder implementation
   return Prisma.sql`
-    SELECT 
+    SELECT
       r."versionId",
-      r."createdId", 
+      r."createdId",
       r."id",
       r."readonly",
       r."createdAt",
-      r."updatedAt", 
+      r."updatedAt",
       r."publishedAt",
       r."data",
       r."meta",
       r."hash",
       r."schemaHash"
     FROM "Row" r
-    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A" 
+    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     WHERE rt."B" = ${tableId}
       AND (${whereClause})
     ${orderByClause}
     LIMIT ${take}
     OFFSET ${skip}
+  `;
+}
+
+export function getRowsCountSql(
+  tableId: string,
+  whereConditions?: WhereConditions,
+): Prisma.Sql {
+  const whereClause = generateWhere(
+    whereConditions || {},
+    DEFAULT_ROW_FIELDS,
+    'r',
+  );
+
+  return Prisma.sql`
+    SELECT COUNT(*) as count
+    FROM "Row" r
+    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
+    WHERE rt."B" = ${tableId}
+      AND (${whereClause})
   `;
 }
