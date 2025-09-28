@@ -13,107 +13,7 @@ import {
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
-describe('getRows', () => {
-  it('#1', async () => {
-    const where: WhereConditions = {
-      data: {
-        path: ['tags'],
-        array_contains: 'admin',
-      } as JsonFilter,
-    };
-    const orderBy: OrderByConditions[] = [
-      {
-        createdAt: 'asc',
-      },
-    ];
-
-    const result = await prisma.$queryRaw<Row[]>(
-      getRowsSql(tableVersionId, 10, 0, where, orderBy),
-    );
-    const count = await prisma.$queryRaw<[{ count: bigint }]>(
-      getRowsCountSql(tableVersionId, where),
-    );
-
-    expect(result.length).toBe(3);
-    expect(Number(count[0].count)).toBe(3);
-  });
-
-  it('#2', async () => {
-    const where: WhereConditions = {
-      data: {
-        path: ['products', '*', 'price'],
-        gt: 100,
-      } as JsonFilter,
-    };
-    const orderBy: OrderByConditions[] = [
-      {
-        createdAt: 'asc',
-      },
-    ];
-
-    const result = await prisma.$queryRaw<Row[]>(
-      getRowsSql(tableVersionId, 10, 0, where, orderBy),
-    );
-    const count = await prisma.$queryRaw<[{ count: bigint }]>(
-      getRowsCountSql(tableVersionId, where),
-    );
-
-    expect(result.length).toBe(4);
-    expect(Number(count[0].count)).toBe(4);
-  });
-
-  it('#3', async () => {
-    const where: WhereConditions = {
-      data: {
-        path: ['products', '*', 'relatedItems', '*', 'price'],
-        equals: 19.99,
-      } as JsonFilter,
-    };
-    const orderBy: OrderByConditions[] = [
-      {
-        createdAt: 'asc',
-      },
-    ];
-
-    const result = await prisma.$queryRaw<Row[]>(
-      getRowsSql(tableVersionId, 10, 0, where, orderBy),
-    );
-    const count = await prisma.$queryRaw<[{ count: bigint }]>(
-      getRowsCountSql(tableVersionId, where),
-    );
-
-    expect(result.length).toBe(1);
-    expect(Number(count[0].count)).toBe(1);
-  });
-
-  it('#4', async () => {
-    const where: WhereConditions = {
-      AND: [
-        {
-          data: {
-            path: ['steps', '*', 'coordinates', 'y'],
-            equals: 480,
-          } as JsonFilter,
-        },
-      ],
-    };
-    const orderBy: OrderByConditions[] = [
-      {
-        createdAt: 'asc',
-      },
-    ];
-
-    const result = await prisma.$queryRaw<Row[]>(
-      getRowsSql(tableVersionId, 10, 0, where, orderBy),
-    );
-    const count = await prisma.$queryRaw<[{ count: bigint }]>(
-      getRowsCountSql(tableVersionId, where),
-    );
-
-    expect(result.length).toBe(1);
-    expect(Number(count[0].count)).toBe(1);
-  });
-
+describe('getRowsSql', () => {
   let prisma: PrismaService;
   let tableVersionId: string;
   let ids = { row1: '', row2: '', row3: '', row4: '', row5: '', row6: '' };
@@ -319,7 +219,7 @@ describe('getRows', () => {
               fileId: 'iVdfUzO-YJj4yy8ukt4xP',
               height: 1024,
               status: 'uploaded',
-              fileName: 'ChatGPT Image 1 Ð¸ÑÐ½. 2025 Ð³., 17_34_45.png',
+              fileName: '17_34_45.png',
               mimeType: 'image/png',
               extension: 'png',
             },
@@ -341,7 +241,7 @@ describe('getRows', () => {
             is_repeatable: false,
             quest_type_id: 'escort_quest',
           },
-          createdAt: new Date('2025-01-05T00:00:00.000Z'),
+          createdAt: new Date('2025-01-06T00:00:00.000Z'),
         },
       ],
     });
@@ -358,5 +258,211 @@ describe('getRows', () => {
         },
       });
     }
+  });
+
+  describe('Filtering', () => {
+    it('should filter by array_contains on tags', async () => {
+      const where: WhereConditions = {
+        data: {
+          path: ['tags'],
+          array_contains: 'admin',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, where),
+      );
+
+      expect(result.length).toBe(3);
+      expect(Number(count[0].count)).toBe(3);
+      expect(result.map((r) => r.id)).toEqual([ids.row1, ids.row3, ids.row5]);
+    });
+
+    it('should filter by wildcard path with numeric comparison', async () => {
+      const where: WhereConditions = {
+        data: {
+          path: ['products', '*', 'price'],
+          gt: 100,
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, where),
+      );
+
+      expect(result.length).toBe(4);
+      expect(Number(count[0].count)).toBe(4);
+      expect(result.map((r) => r.id)).toEqual([
+        ids.row2,
+        ids.row3,
+        ids.row4,
+        ids.row5,
+      ]);
+    });
+
+    it('should filter by nested wildcard path with equals', async () => {
+      const where: WhereConditions = {
+        data: {
+          path: ['products', '*', 'relatedItems', '*', 'price'],
+          equals: 19.99,
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, where),
+      );
+
+      expect(result.length).toBe(1);
+      expect(Number(count[0].count)).toBe(1);
+      expect(result[0].id).toBe(ids.row1);
+    });
+
+    it('should filter by AND condition with nested wildcard', async () => {
+      const where: WhereConditions = {
+        AND: [
+          {
+            data: {
+              path: ['steps', '*', 'coordinates', 'y'],
+              equals: 480,
+            } as JsonFilter,
+          },
+        ],
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, where),
+      );
+
+      expect(result.length).toBe(1);
+      expect(Number(count[0].count)).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+  });
+
+  describe('Pagination', () => {
+    it('should return first page with limit 2', async () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 2, 0, {}, orderBy),
+      );
+
+      expect(result.length).toBe(2);
+      expect(result.map((r) => r.id)).toEqual([ids.row1, ids.row2]);
+    });
+
+    it('should return second page with limit 2 and offset 2', async () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 2, 2, {}, orderBy),
+      );
+
+      expect(result.length).toBe(2);
+      expect(result.map((r) => r.id)).toEqual([ids.row3, ids.row4]);
+    });
+
+    it('should return third page with limit 2 and offset 4', async () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 2, 4, {}, orderBy),
+      );
+
+      expect(result.length).toBe(2);
+      expect(result.map((r) => r.id)).toEqual([ids.row5, ids.row6]);
+    });
+
+    it('should return last page when offset exceeds data', async () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 2, 10, {}, orderBy),
+      );
+
+      expect(result.length).toBe(0);
+    });
+
+    it('should paginate filtered results', async () => {
+      const where: WhereConditions = {
+        data: {
+          path: ['tags'],
+          array_contains: 'admin',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const page1 = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 2, 0, where, orderBy),
+      );
+      const page2 = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 2, 2, where, orderBy),
+      );
+
+      expect(page1.length).toBe(2);
+      expect(page1.map((r) => r.id)).toEqual([ids.row1, ids.row3]);
+      expect(page2.length).toBe(1);
+      expect(page2.map((r) => r.id)).toEqual([ids.row5]);
+    });
+  });
+
+  describe('Count', () => {
+    it('should count all rows without filter', async () => {
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, {}),
+      );
+
+      expect(Number(count[0].count)).toBe(6);
+    });
+
+    it('should count filtered rows', async () => {
+      const where: WhereConditions = {
+        data: {
+          path: ['tags'],
+          array_contains: 'user',
+        } as JsonFilter,
+      };
+
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, where),
+      );
+
+      expect(Number(count[0].count)).toBe(3);
+    });
+
+    it('should count with complex filter', async () => {
+      const where: WhereConditions = {
+        AND: [
+          {
+            data: {
+              path: ['priority'],
+              gt: 10,
+            } as JsonFilter,
+          },
+        ],
+      };
+
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(tableVersionId, where),
+      );
+
+      expect(Number(count[0].count)).toBe(2);
+    });
   });
 });
