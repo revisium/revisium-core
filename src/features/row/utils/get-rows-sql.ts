@@ -4,7 +4,7 @@ import {
   generateOrderBy,
   generateWhere,
   OrderByConditions,
-  WhereConditions,
+  WhereConditionsTyped,
 } from '@revisium/prisma-pg-json';
 
 export const DEFAULT_ROW_FIELDS: FieldConfig = {
@@ -25,7 +25,7 @@ export function getRowsSql(
   tableId: string,
   take: number,
   skip: number,
-  whereConditions?: WhereConditions,
+  whereConditions?: WhereConditionsTyped<typeof DEFAULT_ROW_FIELDS>,
   orderBy?: OrderByConditions[],
 ): Prisma.Sql {
   const whereClause = generateWhere({
@@ -68,7 +68,7 @@ export function getRowsSql(
 
 export function getRowsCountSql(
   tableId: string,
-  whereConditions?: WhereConditions,
+  whereConditions?: WhereConditionsTyped<typeof DEFAULT_ROW_FIELDS>,
 ): Prisma.Sql {
   const whereClause = generateWhere({
     where: whereConditions || {},
