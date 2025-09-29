@@ -3,7 +3,7 @@ import { Row } from '@prisma/client';
 import {
   JsonFilter,
   OrderByConditions,
-  WhereConditions,
+  WhereConditionsTyped,
 } from '@revisium/prisma-pg-json';
 import { nanoid } from 'nanoid';
 import {
@@ -262,7 +262,7 @@ describe('getRowsSql', () => {
 
   describe('Filtering', () => {
     it('should filter by array_contains on tags', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         data: {
           path: ['tags'],
           array_contains: ['user', 'admin'],
@@ -283,7 +283,7 @@ describe('getRowsSql', () => {
     });
 
     it('should filter by wildcard path with numeric comparison', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         data: {
           path: ['products', '*', 'price'],
           gt: 100,
@@ -309,7 +309,7 @@ describe('getRowsSql', () => {
     });
 
     it('should filter by nested wildcard path with equals', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         data: {
           path: ['products', '*', 'relatedItems', '*', 'price'],
           equals: 19.99,
@@ -330,7 +330,7 @@ describe('getRowsSql', () => {
     });
 
     it('should filter by AND condition with nested wildcard', async () => {
-      const where: WhereConditions<{ data: 'json' }> = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         AND: [
           {
             data: {
@@ -400,7 +400,7 @@ describe('getRowsSql', () => {
     });
 
     it('should paginate filtered results', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         data: {
           path: ['tags'],
           array_contains: ['admin'],
@@ -432,7 +432,7 @@ describe('getRowsSql', () => {
     });
 
     it('should count filtered rows', async () => {
-      const where: WhereConditions = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         data: {
           path: ['tags'],
           array_contains: ['user'],
@@ -447,7 +447,7 @@ describe('getRowsSql', () => {
     });
 
     it('should count with complex filter', async () => {
-      const where: WhereConditions<{ data: 'json' }> = {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
         AND: [
           {
             data: {
