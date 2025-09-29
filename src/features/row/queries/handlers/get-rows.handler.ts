@@ -1,6 +1,9 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Row } from '@prisma/client';
-import { OrderByConditions, WhereConditions } from '@revisium/prisma-pg-json';
+import {
+  OrderByConditions,
+  WhereConditionsTyped,
+} from '@revisium/prisma-pg-json';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import {
   getRowsSql,
@@ -69,7 +72,7 @@ export class GetRowsHandler
         tableVersionId,
         args.take,
         args.skip,
-        data.where as unknown as WhereConditions,
+        data.where as unknown as WhereConditionsTyped<{ id: 'string' }>,
         data.orderBy as unknown as OrderByConditions[],
       ),
     );
@@ -77,7 +80,10 @@ export class GetRowsHandler
 
   private async getRowsCount(tableVersionId: string, data: GetRowsQueryData) {
     const result = await this.transaction.$queryRaw<[{ count: bigint }]>(
-      getRowsCountSql(tableVersionId, data.where as unknown as WhereConditions),
+      getRowsCountSql(
+        tableVersionId,
+        data.where as unknown as WhereConditionsTyped<{ id: 'string' }>,
+      ),
     );
     return Number(result[0].count);
   }
