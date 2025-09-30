@@ -14,9 +14,7 @@ describe('ApiCreateTableHandler', () => {
     const { branchId, draftRevisionId, draftEndpointId } =
       await prepareProject(prismaService);
 
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const newTableId = 'newTableId';
     const command = new ApiCreateTableCommand({

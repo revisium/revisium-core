@@ -11,9 +11,7 @@ describe('ApiRemoveTableHandler', () => {
     const { draftRevisionId, draftEndpointId, tableId, branchId } =
       await prepareProject(prismaService);
 
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRemoveTableCommand({
       revisionId: draftRevisionId,

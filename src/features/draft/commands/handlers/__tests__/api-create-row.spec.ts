@@ -10,9 +10,7 @@ describe('ApiCreateRowHandler', () => {
   it('should create a new row', async () => {
     const { draftRevisionId, tableId, draftTableVersionId } =
       await prepareProject(prismaService);
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const newRowId = 'newRowId';
     const command = new ApiCreateRowCommand({
@@ -58,9 +56,7 @@ describe('ApiCreateRowHandler', () => {
         readonly: true,
       },
     });
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const newRowId = 'newRowId';
     const command = new ApiCreateRowCommand({

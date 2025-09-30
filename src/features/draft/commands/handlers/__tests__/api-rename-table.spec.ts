@@ -15,9 +15,7 @@ describe('ApiRenameTableHandler', () => {
     const { draftRevisionId, draftEndpointId, draftTableVersionId, tableId } =
       await prepareProject(prismaService);
 
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRenameTableCommand({
       revisionId: draftRevisionId,

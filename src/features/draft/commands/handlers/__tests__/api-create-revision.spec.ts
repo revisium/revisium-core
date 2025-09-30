@@ -27,9 +27,7 @@ describe('ApiCreateRevisionHandler', () => {
       },
     });
 
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiCreateRevisionCommand({
       organizationId,

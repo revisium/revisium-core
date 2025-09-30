@@ -10,9 +10,7 @@ describe('ApiRemoveRowHandler', () => {
   it('should remove the row', async () => {
     const { branchId, draftRevisionId, tableId, draftTableVersionId, rowId } =
       await prepareProject(prismaService);
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRemoveRowCommand({
       revisionId: draftRevisionId,
@@ -56,9 +54,7 @@ describe('ApiRemoveRowHandler', () => {
         readonly: true,
       },
     });
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRemoveRowCommand({
       revisionId: draftRevisionId,

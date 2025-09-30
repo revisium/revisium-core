@@ -14,9 +14,7 @@ describe('ApiRenameRowHandler', () => {
   it('should update the row', async () => {
     const { draftRevisionId, tableId, draftTableVersionId, rowId } =
       await prepareProject(prismaService);
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRenameRowCommand({
       revisionId: draftRevisionId,
@@ -71,9 +69,7 @@ describe('ApiRenameRowHandler', () => {
         readonly: true,
       },
     });
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRenameRowCommand({
       revisionId: draftRevisionId,

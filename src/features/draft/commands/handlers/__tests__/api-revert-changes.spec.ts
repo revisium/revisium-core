@@ -27,9 +27,7 @@ describe('ApiRevertChangesHandler', () => {
       },
     });
 
-    jest
-      .spyOn(endpointNotificationService, 'update')
-      .mockResolvedValue(void 0);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
 
     const command = new ApiRevertChangesCommand({
       organizationId,
