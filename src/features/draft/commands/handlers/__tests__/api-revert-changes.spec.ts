@@ -5,10 +5,7 @@ import {
   ApiRevertChangesCommandReturnType,
 } from 'src/features/draft/commands/impl/api-revert-changes.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 describe('ApiRevertChangesHandler', () => {
@@ -30,7 +27,9 @@ describe('ApiRevertChangesHandler', () => {
       },
     });
 
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiRevertChangesCommand({
       organizationId,
@@ -57,14 +56,18 @@ describe('ApiRevertChangesHandler', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

@@ -3,17 +3,16 @@ import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 describe('ApiRemoveRowHandler', () => {
   it('should remove the row', async () => {
     const { branchId, draftRevisionId, tableId, draftTableVersionId, rowId } =
       await prepareProject(prismaService);
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiRemoveRowCommand({
       revisionId: draftRevisionId,
@@ -57,7 +56,9 @@ describe('ApiRemoveRowHandler', () => {
         readonly: true,
       },
     });
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiRemoveRowCommand({
       revisionId: draftRevisionId,
@@ -84,14 +85,18 @@ describe('ApiRemoveRowHandler', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

@@ -3,17 +3,16 @@ import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 describe('ApiUpdateRowHandler', () => {
   it('should update the row', async () => {
     const { draftRevisionId, tableId, draftTableVersionId, rowId } =
       await prepareProject(prismaService);
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiUpdateRowCommand({
       revisionId: draftRevisionId,
@@ -64,7 +63,9 @@ describe('ApiUpdateRowHandler', () => {
         readonly: true,
       },
     });
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiUpdateRowCommand({
       revisionId: draftRevisionId,
@@ -92,14 +93,18 @@ describe('ApiUpdateRowHandler', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

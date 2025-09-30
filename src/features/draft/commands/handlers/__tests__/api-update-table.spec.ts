@@ -4,10 +4,7 @@ import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-upda
 import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
 import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 describe('ApiUpdateTableHandler', () => {
@@ -15,7 +12,9 @@ describe('ApiUpdateTableHandler', () => {
     const { draftRevisionId, draftEndpointId, draftTableVersionId, tableId } =
       await prepareProject(prismaService);
 
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiUpdateTableCommand({
       revisionId: draftRevisionId,
@@ -63,14 +62,18 @@ describe('ApiUpdateTableHandler', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

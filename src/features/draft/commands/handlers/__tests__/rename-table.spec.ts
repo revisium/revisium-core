@@ -5,10 +5,7 @@ import {
   prepareProject,
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   RenameTableCommand,
   RenameTableCommandReturnType,
@@ -43,9 +40,9 @@ describe('RenameTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
     const { tableId } = await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Revision not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new RenameTableCommand({
       revisionId: 'unreal',
@@ -59,9 +56,9 @@ describe('RenameTableHandler', () => {
   it('should throw an error if findTableInRevisionOrThrow fails', async () => {
     const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Table not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Table not found'));
 
     const command = new RenameTableCommand({
       revisionId: draftRevisionId,
@@ -266,7 +263,7 @@ describe('RenameTableHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -274,7 +271,11 @@ describe('RenameTableHandler', () => {
     draftTransactionalCommands = result.draftTransactionalCommands;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

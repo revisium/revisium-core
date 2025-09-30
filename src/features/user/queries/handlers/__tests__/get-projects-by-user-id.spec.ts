@@ -107,7 +107,7 @@ describe('GetProjectsByUserIdHandler', () => {
   let prismaService: PrismaService;
   let queryBus: QueryBus;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
       providers: [
@@ -200,7 +200,7 @@ describe('GetProjectsByUserIdHandler', () => {
     });
   };
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

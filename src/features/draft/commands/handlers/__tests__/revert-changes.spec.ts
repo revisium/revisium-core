@@ -6,10 +6,7 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { RevertChangesCommand } from 'src/features/draft/commands/impl/revert-changes.command';
 import { RevertChangesHandlerReturnType } from 'src/features/draft/commands/types/revert-changes.handler.types';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -43,9 +40,9 @@ describe('RevertChangesHandler', () => {
     const { organizationId, projectName, branchName } =
       await prepareProject(prismaService);
 
-    shareTransactionalQueries.findProjectInOrganizationOrThrow = createMock(
-      new Error('Project not found'),
-    );
+    jest
+      .spyOn(shareTransactionalQueries, 'findProjectInOrganizationOrThrow')
+      .mockRejectedValue(new Error('Project not found'));
 
     const command = new RevertChangesCommand({
       organizationId,
@@ -60,9 +57,9 @@ describe('RevertChangesHandler', () => {
     const { organizationId, projectName, branchName } =
       await prepareProject(prismaService);
 
-    shareTransactionalQueries.findBranchInProjectOrThrow = createMock(
-      new Error('Branch not found'),
-    );
+    jest
+      .spyOn(shareTransactionalQueries, 'findBranchInProjectOrThrow')
+      .mockRejectedValue(new Error('Branch not found'));
 
     const command = new RevertChangesCommand({
       organizationId,
@@ -138,7 +135,7 @@ describe('RevertChangesHandler', () => {
     return transactionService.run(async () => commandBus.execute(command));
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -146,7 +143,11 @@ describe('RevertChangesHandler', () => {
     shareTransactionalQueries = result.shareTransactionalQueries;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

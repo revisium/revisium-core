@@ -43,7 +43,7 @@ describe('GetUserHandler', () => {
   let queryBus: QueryBus;
   let prismaService: PrismaService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
       providers: [PrismaService, GetUserHandler],
@@ -55,7 +55,7 @@ describe('GetUserHandler', () => {
     queryBus = module.get(QueryBus);
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

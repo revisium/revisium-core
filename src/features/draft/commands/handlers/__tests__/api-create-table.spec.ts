@@ -4,7 +4,6 @@ import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-crea
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
-  createMock,
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
@@ -15,7 +14,9 @@ describe('ApiCreateTableHandler', () => {
     const { branchId, draftRevisionId, draftEndpointId } =
       await prepareProject(prismaService);
 
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const newTableId = 'newTableId';
     const command = new ApiCreateTableCommand({
@@ -54,14 +55,18 @@ describe('ApiCreateTableHandler', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

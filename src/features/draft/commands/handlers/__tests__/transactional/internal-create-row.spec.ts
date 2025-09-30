@@ -12,7 +12,6 @@ import {
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
-  createMock,
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
@@ -40,9 +39,9 @@ describe('InternalCreateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
     await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Revision not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new InternalCreateRowCommand({
       revisionId: 'unreal',
@@ -239,7 +238,7 @@ describe('InternalCreateRowHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -247,7 +246,11 @@ describe('InternalCreateRowHandler', () => {
     draftTransactionalCommands = result.draftTransactionalCommands;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

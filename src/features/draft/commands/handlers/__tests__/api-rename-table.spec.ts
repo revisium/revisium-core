@@ -5,10 +5,7 @@ import {
   ApiRenameTableCommandReturnType,
 } from 'src/features/draft/commands/impl/api-rename-table.command';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 describe('ApiRenameTableHandler', () => {
@@ -18,7 +15,9 @@ describe('ApiRenameTableHandler', () => {
     const { draftRevisionId, draftEndpointId, draftTableVersionId, tableId } =
       await prepareProject(prismaService);
 
-    endpointNotificationService.update = createMock(void 0);
+    jest
+      .spyOn(endpointNotificationService, 'update')
+      .mockResolvedValue(void 0);
 
     const command = new ApiRenameTableCommand({
       revisionId: draftRevisionId,
@@ -62,14 +61,18 @@ describe('ApiRenameTableHandler', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

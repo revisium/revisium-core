@@ -4,10 +4,7 @@ import {
   prepareProject,
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   RenameRowCommand,
   RenameRowCommandReturnType,
@@ -57,9 +54,9 @@ describe('RenameRowHandler', () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Revision not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -357,7 +354,7 @@ describe('RenameRowHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -365,7 +362,11 @@ describe('RenameRowHandler', () => {
     draftTransactionalCommands = result.draftTransactionalCommands;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });
