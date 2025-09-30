@@ -846,7 +846,7 @@ describe('DiffService', () => {
     };
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [DatabaseModule],
       providers: [DiffService],
@@ -856,7 +856,7 @@ describe('DiffService', () => {
     prismaService = module.get(PrismaService);
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await module.close();
   });
 });

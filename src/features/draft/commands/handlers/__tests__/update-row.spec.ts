@@ -16,7 +16,6 @@ import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
-  createMock,
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
@@ -32,9 +31,9 @@ describe('UpdateRowHandler', () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Revision not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new UpdateRowCommand({
       revisionId: draftRevisionId,
@@ -388,7 +387,7 @@ describe('UpdateRowHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -396,7 +395,11 @@ describe('UpdateRowHandler', () => {
     draftTransactionalCommands = result.draftTransactionalCommands;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

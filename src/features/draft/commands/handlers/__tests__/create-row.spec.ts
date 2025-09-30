@@ -15,7 +15,6 @@ import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
-  createMock,
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
@@ -46,9 +45,9 @@ describe('CreateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
     await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Revision not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new CreateRowCommand({
       revisionId: 'unreal',
@@ -160,16 +159,23 @@ describe('CreateRowHandler', () => {
 
   it('should create a new row with refs', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, schemaRowVersionId } = ids;
+    const {
+      draftRevisionId,
+      headRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
 
-    await prismaService.row.update({
-      where: { versionId: schemaRowVersionId },
-      data: {
-        data: getObjectSchema({
-          file: getRefSchema(SystemSchemaIds.File),
-          files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
-        }),
-      },
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+      schema: getObjectSchema({
+        file: getRefSchema(SystemSchemaIds.File),
+        files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
+      }),
     });
 
     const file = {
@@ -187,7 +193,7 @@ describe('CreateRowHandler', () => {
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
-      tableId: tableId,
+      tableId: table.tableId,
       rowId: 'newRowId',
       data: { file, files: [file, file, file] },
     });
@@ -333,7 +339,7 @@ describe('CreateRowHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -341,7 +347,11 @@ describe('CreateRowHandler', () => {
     draftTransactionalCommands = result.draftTransactionalCommands;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

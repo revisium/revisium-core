@@ -204,14 +204,18 @@ describe('PatchRowHandler', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

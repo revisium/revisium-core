@@ -23,7 +23,6 @@ import {
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
-  createMock,
   createTestingModule,
   testSchema,
   testSchemaString,
@@ -38,9 +37,9 @@ describe('UpdateTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
     const { tableId } = await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Revision not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new UpdateTableCommand({
       revisionId: 'unreal',
@@ -132,9 +131,9 @@ describe('UpdateTableHandler', () => {
   it('should throw an error if findTableInRevisionOrThrow fails', async () => {
     const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
-    draftTransactionalCommands.resolveDraftRevision = createMock(
-      new Error('Table not found'),
-    );
+    jest
+      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
+      .mockRejectedValue(new Error('Table not found'));
 
     const command = new UpdateTableCommand({
       revisionId: draftRevisionId,
@@ -600,7 +599,7 @@ describe('UpdateTableHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -608,7 +607,11 @@ describe('UpdateTableHandler', () => {
     draftTransactionalCommands = result.draftTransactionalCommands;
   });
 
-  afterEach(async () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

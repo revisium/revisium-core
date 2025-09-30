@@ -112,16 +112,18 @@ describe('RemoveUserFromProject', () => {
     return commandBus.execute(command);
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+  });
 
+  beforeEach(() => {
     endpointNotificationService.delete = jest.fn();
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

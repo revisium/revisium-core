@@ -195,14 +195,14 @@ describe('ApplyMigration', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

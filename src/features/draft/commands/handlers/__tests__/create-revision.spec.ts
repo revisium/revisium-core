@@ -7,10 +7,7 @@ import {
 import { CacheService } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createMock,
-  createTestingModule,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { CreateRevisionCommand } from 'src/features/draft/commands/impl/create-revision.command';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -46,9 +43,9 @@ describe('CreateRevisionHandler', () => {
     const { organizationId, projectName, branchName } = ids;
     await prepareRevision(ids);
 
-    shareTransactionalQueries.findProjectInOrganizationOrThrow = createMock(
-      new Error('Project not found'),
-    );
+    jest
+      .spyOn(shareTransactionalQueries, 'findProjectInOrganizationOrThrow')
+      .mockRejectedValue(new Error('Project not found'));
 
     const command = new CreateRevisionCommand({
       organizationId,
@@ -64,9 +61,9 @@ describe('CreateRevisionHandler', () => {
     const { organizationId, projectName, branchName } = ids;
     await prepareRevision(ids);
 
-    shareTransactionalQueries.findBranchInProjectOrThrow = createMock(
-      new Error('Branch not found'),
-    );
+    jest
+      .spyOn(shareTransactionalQueries, 'findBranchInProjectOrThrow')
+      .mockRejectedValue(new Error('Branch not found'));
 
     const command = new CreateRevisionCommand({
       organizationId,
@@ -360,18 +357,21 @@ describe('CreateRevisionHandler', () => {
     return transactionService.run(async () => commandBus.execute(command));
   }
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
     shareTransactionalQueries = result.shareTransactionalQueries;
     cacheService = result.cacheService;
+  });
 
+  beforeEach(() => {
+    jest.restoreAllMocks();
     cacheService.deleteByTag = jest.fn();
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });

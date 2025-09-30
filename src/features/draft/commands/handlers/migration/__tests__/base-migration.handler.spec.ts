@@ -364,7 +364,7 @@ describe('Migrations', () => {
   let transactionService: TransactionPrismaService;
   let migrationContextService: MigrationContextService;
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
@@ -372,7 +372,7 @@ describe('Migrations', () => {
     migrationContextService = result.migrationContextService;
   });
 
-  afterEach(async () => {
+  afterAll(async () => {
     await prismaService.$disconnect();
   });
 });
