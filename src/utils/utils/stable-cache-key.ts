@@ -1,4 +1,4 @@
-import { createHash } from 'crypto';
+import { createHash } from 'node:crypto';
 
 export type HashAlg = 'sha256' | 'sha1' | 'md5';
 export type HashEncoding = 'base64url' | 'hex';

@@ -7,7 +7,7 @@ export class GetRowForeignKeysByDto {
   foreignKeyByTableId: string;
 
   @ApiProperty({ default: 100 })
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }) => Number.parseInt(value, 10))
   @IsInt()
   @Min(0)
   first: number;

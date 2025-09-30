@@ -31,26 +31,24 @@ export enum UserProjectRoles {
   reader = 'reader',
 }
 
-const systemRoles = Object.values(UserSystemRoles).map((role) =>
-  role.toString(),
+const systemRoles = new Set(
+  Object.values(UserSystemRoles).map((role) => role.toString()),
 );
 
-const organizationRoles = Object.values(UserOrganizationRoles).map((role) =>
-  role.toString(),
+const organizationRoles = new Set(
+  Object.values(UserOrganizationRoles).map((role) => role.toString()),
 );
 
-const projectRoles = Object.values(UserProjectRoles).map((role) =>
-  role.toString(),
+const projectRoles = new Set(
+  Object.values(UserProjectRoles).map((role) => role.toString()),
 );
 
-export const isValidSystemRole = (roleId: string) =>
-  systemRoles.includes(roleId);
+export const isValidSystemRole = (roleId: string) => systemRoles.has(roleId);
 
 export const isValidOrganizationRole = (roleId: string) =>
-  organizationRoles.includes(roleId);
+  organizationRoles.has(roleId);
 
-export const isValidProjectRole = (roleId: string) =>
-  projectRoles.includes(roleId);
+export const isValidProjectRole = (roleId: string) => projectRoles.has(roleId);
 
 export enum PermissionAction {
   create = 'create',

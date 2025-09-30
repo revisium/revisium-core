@@ -23,7 +23,10 @@ import { RedisNotificationClient } from 'src/infrastructure/notification/redis-n
         }
 
         const host = configService.getOrThrow('ENDPOINT_HOST');
-        const port = parseInt(configService.getOrThrow('ENDPOINT_PORT'), 10);
+        const port = Number.parseInt(
+          configService.getOrThrow('ENDPOINT_PORT'),
+          10,
+        );
 
         const client = ClientProxyFactory.create({
           transport: Transport.REDIS,
