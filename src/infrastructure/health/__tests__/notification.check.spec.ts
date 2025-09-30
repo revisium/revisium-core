@@ -55,7 +55,7 @@ describe('NotificationCheck', () => {
       const mockHost = '127.0.0.1';
       const expectedOptions: RedisOptions = {
         transport: Transport.REDIS,
-        options: { host: mockHost, port: parseInt(mockPort) },
+        options: { host: mockHost, port: Number.parseInt(mockPort) },
       };
       const mockResult = { status: 'up' };
 

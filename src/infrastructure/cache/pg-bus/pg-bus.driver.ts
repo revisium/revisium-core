@@ -24,9 +24,9 @@ export type PgBusDriverOptions = {
 
 export class PgBusDriver implements BusDriver {
   private listener?: Client;
-  private publisher: Pool;
-  private handlers = new Map<string, (m: CacheBusMessage) => void>();
-  private reconnectCallbacks: Array<() => void> = [];
+  private readonly publisher: Pool;
+  private readonly handlers = new Map<string, (m: CacheBusMessage) => void>();
+  private readonly reconnectCallbacks: Array<() => void> = [];
   private connecting = false;
   private destroyed = false;
   private connectingPromise?: Promise<void>;

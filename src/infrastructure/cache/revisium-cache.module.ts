@@ -129,7 +129,7 @@ export class RevisiumCacheModule {
                         redisBusDriver({
                           connection: {
                             host: redisBusHost,
-                            port: parseInt(redisBusPort),
+                            port: Number.parseInt(redisBusPort),
                           },
                           retryQueue: {
                             enabled: true,

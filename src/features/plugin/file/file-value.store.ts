@@ -1,4 +1,4 @@
-import { extname } from 'path';
+import { extname } from 'node:path';
 import * as sharp from 'sharp';
 import * as hash from 'object-hash';
 import { FileStatus } from 'src/features/plugin/file/consts';

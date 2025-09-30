@@ -17,7 +17,7 @@ import { RowWhereInputDto } from 'src/api/rest-api/table/dto/row/row-where-input
 
 export class GetTableRowsDto {
   @ApiProperty({ default: 100 })
-  @Transform(({ value }) => parseInt(value, 10))
+  @Transform(({ value }) => Number.parseInt(value, 10))
   @IsInt()
   @Min(0)
   first: number;
