@@ -8,8 +8,11 @@ import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-tabl
 import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/remove-table.handler.types';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { InitMigration, RemoveMigration } from '@revisium/schema-toolkit/types';
-import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import {
+  InitMigration,
+  RemoveMigration,
+  JsonSchemaTypeName,
+} from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

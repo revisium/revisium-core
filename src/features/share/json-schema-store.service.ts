@@ -11,8 +11,10 @@ import {
   rowUpdatedAtSchema,
   rowVersionIdSchema,
 } from 'src/features/share/schema/plugins';
-import { createJsonSchemaStore } from '@revisium/schema-toolkit/lib';
-import { getInvalidFieldNamesInSchema } from '@revisium/schema-toolkit/lib';
+import {
+  createJsonSchemaStore,
+  getInvalidFieldNamesInSchema,
+} from '@revisium/schema-toolkit/lib';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @Injectable()

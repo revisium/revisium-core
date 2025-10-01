@@ -10,8 +10,10 @@ import {
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { getDBJsonPathByJsonSchemaStore } from '@revisium/schema-toolkit/lib';
-import { traverseStore } from '@revisium/schema-toolkit/lib';
+import {
+  getDBJsonPathByJsonSchemaStore,
+  traverseStore,
+} from '@revisium/schema-toolkit/lib';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(ResolveRowForeignKeysByQuery)

@@ -1,5 +1,4 @@
-import { JsonPatch } from '@revisium/schema-toolkit/types';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { JsonPatch, JsonSchema } from '@revisium/schema-toolkit/types';
 
 export class UpdateSchemaCommand {
   constructor(

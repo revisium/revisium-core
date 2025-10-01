@@ -10,8 +10,10 @@ import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { getDBJsonPathByJsonSchemaStore } from '@revisium/schema-toolkit/lib';
-import { traverseStore } from '@revisium/schema-toolkit/lib';
+import {
+  getDBJsonPathByJsonSchemaStore,
+  traverseStore,
+} from '@revisium/schema-toolkit/lib';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(ResolveRowCountForeignKeysByQuery)

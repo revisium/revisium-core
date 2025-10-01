@@ -9,13 +9,12 @@ import {
 } from 'src/features/row/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import {
+  createJsonValueStore,
   getForeignKeysFromValue,
   GetForeignKeysFromValueType,
 } from '@revisium/schema-toolkit/lib';
-import { JsonValue } from '@revisium/schema-toolkit/types';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { JsonValue, JsonSchema } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(ResolveRowForeignKeysToQuery)
 export class ResolveRowForeignKeysToHandler

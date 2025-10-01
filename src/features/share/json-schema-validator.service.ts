@@ -19,8 +19,7 @@ import {
   ajvRowVersionIdSchema,
 } from 'src/features/share/schema/plugins';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
-import { Migration } from '@revisium/schema-toolkit/types';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { Migration, JsonSchema } from '@revisium/schema-toolkit/types';
 
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;
 

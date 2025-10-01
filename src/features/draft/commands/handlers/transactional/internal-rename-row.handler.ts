@@ -19,10 +19,12 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
-import { getDBJsonPathByJsonSchemaStore } from '@revisium/schema-toolkit/lib';
-import { replaceForeignKeyValue } from '@revisium/schema-toolkit/lib';
-import { traverseStore } from '@revisium/schema-toolkit/lib';
+import {
+  createJsonValueStore,
+  getDBJsonPathByJsonSchemaStore,
+  replaceForeignKeyValue,
+  traverseStore,
+} from '@revisium/schema-toolkit/lib';
 import {
   JsonSchemaStore,
   JsonValueStore,

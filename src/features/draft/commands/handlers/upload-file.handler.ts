@@ -17,8 +17,7 @@ import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
-import { JsonValue } from '@revisium/schema-toolkit/types';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { JsonValue, JsonSchema } from '@revisium/schema-toolkit/types';
 import { S3Service } from 'src/infrastructure/database/s3.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

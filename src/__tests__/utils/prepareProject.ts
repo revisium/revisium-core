@@ -17,9 +17,11 @@ import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonPatchAdd } from '@revisium/schema-toolkit/types';
-import { InitMigration } from '@revisium/schema-toolkit/types';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import {
+  JsonPatchAdd,
+  InitMigration,
+  JsonSchema,
+} from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 export type PrepareDataReturnType = Awaited<ReturnType<typeof prepareData>>;

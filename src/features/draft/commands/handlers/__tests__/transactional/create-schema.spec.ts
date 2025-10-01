@@ -12,8 +12,7 @@ import {
 } from 'src/features/draft/commands/impl/transactional/create-schema.command';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonPatchAdd } from '@revisium/schema-toolkit/types';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { JsonPatchAdd, JsonSchema } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

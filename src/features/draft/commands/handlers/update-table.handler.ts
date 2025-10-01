@@ -18,10 +18,12 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { SchemaTable } from '@revisium/schema-toolkit/lib';
-import { traverseStore } from '@revisium/schema-toolkit/lib';
-import { JsonPatch } from '@revisium/schema-toolkit/types';
-import { JsonSchema, JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import { SchemaTable, traverseStore } from '@revisium/schema-toolkit/lib';
+import {
+  JsonPatch,
+  JsonSchema,
+  JsonSchemaTypeName,
+} from '@revisium/schema-toolkit/types';
 
 @CommandHandler(UpdateTableCommand)
 export class UpdateTableHandler extends DraftHandler<

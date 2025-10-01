@@ -7,8 +7,10 @@ import {
   IPluginService,
 } from 'src/features/plugin/types';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
-import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
-import { traverseValue } from '@revisium/schema-toolkit/lib';
+import {
+  createJsonValueStore,
+  traverseValue,
+} from '@revisium/schema-toolkit/lib';
 import {
   JsonStringValueStore,
   JsonValueStore,
