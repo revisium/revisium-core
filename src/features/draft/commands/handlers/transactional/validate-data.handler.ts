@@ -8,8 +8,8 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import {
+  createJsonValueStore,
   getForeignKeysFromValue,
   GetForeignKeysFromValueType,
 } from '@revisium/schema-toolkit/lib';
