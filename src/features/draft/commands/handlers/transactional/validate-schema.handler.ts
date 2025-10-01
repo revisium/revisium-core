@@ -5,8 +5,8 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { getForeignKeysFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeysFromSchema';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { getForeignKeysFromSchema } from '@revisium/schema-toolkit/lib';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @CommandHandler(ValidateSchemaCommand)
 export class ValidateSchemaHandler

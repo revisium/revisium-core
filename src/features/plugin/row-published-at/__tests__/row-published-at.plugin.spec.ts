@@ -4,16 +4,13 @@ import {
   prepareRow,
   prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
-import {
-  getObjectSchema,
-  getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+import { getObjectSchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { RowPublishedAtPlugin } from '../row-published-at.plugin';
 

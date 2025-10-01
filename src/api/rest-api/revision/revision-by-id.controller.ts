@@ -30,7 +30,7 @@ import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/typ
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { ApiCreateEndpointCommand } from 'src/features/endpoint/commands/impl';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { Migration } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from '@revisium/schema-toolkit/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto';
 import { BranchModel } from 'src/api/rest-api/branch/model';

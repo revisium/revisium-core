@@ -1,4 +1,4 @@
-import { Migration } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from '@revisium/schema-toolkit/types';
 
 export class GetMigrationsQuery {
   constructor(

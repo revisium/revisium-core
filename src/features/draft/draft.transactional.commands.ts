@@ -11,7 +11,7 @@ import {
 } from 'src/features/draft/commands/impl/transactional/validate-data.command';
 import { ValidateNotSystemTableCommand } from 'src/features/draft/commands/impl/transactional/validate-not-system-table.command';
 import { ValidateSchemaCommand } from 'src/features/draft/commands/impl/transactional/validate-schema.command';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @Injectable()
 export class DraftTransactionalCommands {

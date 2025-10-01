@@ -5,7 +5,7 @@ import {
   getArraySchema,
   getObjectSchema,
   getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+} from '@revisium/schema-toolkit/mocks';
 import { AuthService } from 'src/features/auth/auth.service';
 import { UserRole } from 'src/features/auth/consts';
 import {
@@ -13,13 +13,13 @@ import {
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
-import { InitMigration } from 'src/features/share/utils/schema/types/migration';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonPatchAdd } from '@revisium/schema-toolkit/types';
+import { InitMigration } from '@revisium/schema-toolkit/types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 export type PrepareDataReturnType = Awaited<ReturnType<typeof prepareData>>;

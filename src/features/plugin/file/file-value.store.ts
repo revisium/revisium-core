@@ -2,9 +2,11 @@ import { extname } from 'node:path';
 import * as sharp from 'sharp';
 import * as hash from 'object-hash';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { JsonNumberValueStore } from 'src/features/share/utils/schema/model/value/json-number-value.store';
-import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
-import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
+import {
+  JsonNumberValueStore,
+  JsonObjectValueStore,
+  JsonStringValueStore,
+} from '@revisium/schema-toolkit/model';
 
 export enum FileValueKeys {
   status = 'status',

@@ -16,18 +16,15 @@ import {
   CreateUpdateMigrationCommand,
 } from 'src/features/draft/commands/impl/migration';
 import { MigrationContextService } from 'src/features/draft/migration-context.service';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
   InitMigration,
   RemoveMigration,
   RenameMigration,
   UpdateMigration,
-} from 'src/features/share/utils/schema/types/migration';
-import {
-  JsonSchema,
-  JsonSchemaTypeName,
-} from 'src/features/share/utils/schema/types/schema.types';
+} from '@revisium/schema-toolkit/types';
+import { JsonSchema, JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

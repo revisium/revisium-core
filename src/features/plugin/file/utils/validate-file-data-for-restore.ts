@@ -1,6 +1,6 @@
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { validateFileIdUniqueness } from 'src/features/plugin/file/utils/validate-file-id-uniqueness';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import { JsonValueStore } from '@revisium/schema-toolkit/model';
 import { FileValueStore } from '../file-value.store';
 
 /**

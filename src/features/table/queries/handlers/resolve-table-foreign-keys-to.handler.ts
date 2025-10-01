@@ -7,7 +7,7 @@ import { getEmptyPaginatedResponse } from 'src/features/share/const';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { findSchemaForSystemTables } from 'src/features/share/system-tables.consts';
 import { TableWithContext } from 'src/features/share/types/table-with-context.types';
-import { getForeignKeysFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeysFromSchema';
+import { getForeignKeysFromSchema } from '@revisium/schema-toolkit/lib';
 import { ResolveTableForeignKeysToQuery } from 'src/features/table/queries/impl';
 import { ResolveTableForeignKeysToReturnType } from 'src/features/table/queries/types';
 

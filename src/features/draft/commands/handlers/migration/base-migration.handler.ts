@@ -10,7 +10,7 @@ import {
 } from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { Migration } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 export abstract class BaseMigrationHandler<

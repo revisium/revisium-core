@@ -10,9 +10,9 @@ import {
   getArraySchema,
   getObjectSchema,
   getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+} from '@revisium/schema-toolkit/mocks';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -24,7 +24,7 @@ import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/up
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 describe('UpdateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {

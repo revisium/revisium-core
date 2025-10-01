@@ -16,9 +16,9 @@ import { DraftTransactionalCommands } from 'src/features/draft/draft.transaction
 import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
+import { JsonValue } from '@revisium/schema-toolkit/types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { S3Service } from 'src/infrastructure/database/s3.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

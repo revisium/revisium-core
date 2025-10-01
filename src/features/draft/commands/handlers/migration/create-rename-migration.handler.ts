@@ -8,7 +8,7 @@ import {
 import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 
-import { RenameMigration } from 'src/features/share/utils/schema/types/migration';
+import { RenameMigration } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(CreateRenameMigrationCommand)

@@ -6,12 +6,14 @@ import {
   InternalComputeRowsOptions,
   IPluginService,
 } from 'src/features/plugin/types';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
-import { JsonStringValueStore } from 'src/features/share/utils/schema/model/value/json-string-value.store';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
+import { traverseValue } from '@revisium/schema-toolkit/lib';
+import {
+  JsonStringValueStore,
+  JsonValueStore,
+} from '@revisium/schema-toolkit/model';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 @Injectable()
 export class RowVersionIdPlugin implements IPluginService {

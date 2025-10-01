@@ -12,9 +12,9 @@ import {
   getArraySchema,
   getObjectSchema,
   getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+} from '@revisium/schema-toolkit/mocks';
 import { CoreModule } from 'src/core/core.module';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { S3Service } from 'src/infrastructure/database/s3.service';
 import * as request from 'supertest';

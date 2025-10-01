@@ -4,7 +4,7 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { findSchemaForSystemTables } from 'src/features/share/system-tables.consts';
-import { getForeignKeysFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeysFromSchema';
+import { getForeignKeysFromSchema } from '@revisium/schema-toolkit/lib';
 import { ResolveTableCountForeignKeysToQuery } from 'src/features/table/queries/impl';
 
 @QueryHandler(ResolveTableCountForeignKeysToQuery)

@@ -12,19 +12,18 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { RowUpdatedEvent } from 'src/infrastructure/cache';
 import {
-  createJsonArrayValueItems,
-  createJsonObjectRecord,
   createJsonValueStore,
-} from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { getJsonValueStoreByPath } from 'src/features/share/utils/schema/lib/getJsonValueByPath';
-import { JsonArrayValueStore } from 'src/features/share/utils/schema/model/value/json-array-value.store';
-import { JsonBooleanValueStore } from 'src/features/share/utils/schema/model/value/json-boolean-value.store';
-import { JsonNumberValueStore } from 'src/features/share/utils/schema/model/value/json-number-value.store';
-import { JsonObjectValueStore } from 'src/features/share/utils/schema/model/value/json-object-value.store';
+  getJsonValueStoreByPath,
+  createJsonArrayValueStore,
+  createJsonObjectValueStore,
+} from '@revisium/schema-toolkit/lib';
 import {
-  JsonArray,
-  JsonObject,
-} from 'src/features/share/utils/schema/types/json.types';
+  JsonArrayValueStore,
+  JsonBooleanValueStore,
+  JsonNumberValueStore,
+  JsonObjectValueStore,
+} from '@revisium/schema-toolkit/model';
+import { JsonArray, JsonObject } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(PatchRowCommand)
@@ -65,17 +64,19 @@ export class PatchRowHandler extends DraftHandler<
       const valueStore = getJsonValueStoreByPath(rootStore, patch.path);
 
       if (valueStore instanceof JsonObjectValueStore) {
-        valueStore.value = createJsonObjectRecord(
+        const tempStore = createJsonObjectValueStore(
           valueStore.schema,
           row.id,
           patch.value as JsonObject,
         );
+        valueStore.value = tempStore.value;
       } else if (valueStore instanceof JsonArrayValueStore) {
-        valueStore.value = createJsonArrayValueItems(
+        const tempStore = createJsonArrayValueStore(
           valueStore.schema,
           row.id,
           patch.value as JsonArray,
         );
+        valueStore.value = tempStore.value;
       } else if (valueStore instanceof JsonBooleanValueStore) {
         valueStore.value = patch.value as boolean;
       } else if (valueStore instanceof JsonNumberValueStore) {

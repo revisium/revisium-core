@@ -12,9 +12,9 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { RowPublishedAtPlugin } from 'src/features/plugin/row-published-at/row-published-at.plugin';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
-import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
+import { JsonValue } from '@revisium/schema-toolkit/types';
 
 @CommandHandler(UpdateRowCommand)
 export class UpdateRowHandler extends DraftHandler<

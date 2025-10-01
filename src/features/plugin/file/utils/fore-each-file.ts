@@ -1,7 +1,7 @@
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
-import { traverseValue } from 'src/features/share/utils/schema/lib/traverseValue';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
+import { traverseValue } from '@revisium/schema-toolkit/lib';
+import { JsonValueStore } from '@revisium/schema-toolkit/model';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { FileValueStore } from '../file-value.store';
 
 export const forEachFile = (

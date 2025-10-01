@@ -13,10 +13,7 @@ import {
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import {
-  InitMigration,
-  RenameMigration,
-} from 'src/features/share/utils/schema/types/migration';
+import { InitMigration, RenameMigration } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

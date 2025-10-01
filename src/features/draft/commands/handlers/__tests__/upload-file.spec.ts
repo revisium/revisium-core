@@ -11,14 +11,14 @@ import {
   getArraySchema,
   getObjectSchema,
   getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+} from '@revisium/schema-toolkit/mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   UploadFileCommand,
   UploadFileCommandReturnType,
 } from 'src/features/draft/commands/impl/update-file.command';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

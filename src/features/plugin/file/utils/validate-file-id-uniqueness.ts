@@ -1,5 +1,5 @@
 import { forEachFile } from 'src/features/plugin/file/utils/fore-each-file';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import { JsonValueStore } from '@revisium/schema-toolkit/model';
 
 export const validateFileIdUniqueness = (
   fileId: string,

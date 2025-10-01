@@ -1,6 +1,8 @@
 import { Prisma, Row } from '@prisma/client';
-import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import {
+  JsonSchemaStore,
+  JsonValueStore,
+} from '@revisium/schema-toolkit/model';
 
 export type AfterCreateRowOptions = {
   revisionId: string;

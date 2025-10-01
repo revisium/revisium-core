@@ -1,6 +1,6 @@
 import { Field, InputType } from '@nestjs/graphql';
 import { JSONResolver } from 'graphql-scalars';
-import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
+import { JsonPatch } from '@revisium/schema-toolkit/types';
 
 @InputType()
 export class UpdateTableInput {
