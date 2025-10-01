@@ -8,7 +8,7 @@ import {
 import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 
-import { InitMigration } from 'src/features/share/utils/schema/types/migration';
+import { InitMigration } from '@revisium/schema-toolkit/types';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

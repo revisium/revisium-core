@@ -1,9 +1,9 @@
 import { Schema } from 'ajv/dist/2020';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import {
   JsonSchemaTypeName,
   JsonStringSchema,
-} from 'src/features/share/utils/schema/types/schema.types';
+} from '@revisium/schema-toolkit/types';
 
 export const rowUpdatedAtSchema: JsonStringSchema = {
   type: JsonSchemaTypeName.String,

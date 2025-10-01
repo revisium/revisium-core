@@ -6,7 +6,7 @@ import {
   getNumberSchema,
   getObjectSchema,
   getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+} from '@revisium/schema-toolkit/mocks';
 import { BRANCH_QUERIES_HANDLERS } from 'src/features/branch/quieries/handlers';
 import { GetBranchByIdHandler } from 'src/features/branch/quieries/handlers/get-branch-by-id.handler';
 import { DRAFT_COMMANDS_HANDLERS } from 'src/features/draft/commands/handlers/index';
@@ -31,14 +31,14 @@ import { RowApiService } from 'src/features/row/row-api.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
-} from 'src/features/share/utils/schema/types/schema.types';
+} from '@revisium/schema-toolkit/types';
 import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
 import { CacheService, RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';

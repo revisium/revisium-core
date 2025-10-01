@@ -8,8 +8,7 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
-import { JsonPatchAdd } from 'src/features/share/utils/schema/types/json-patch.types';
-import { InitMigration } from 'src/features/share/utils/schema/types/migration';
+import { JsonPatchAdd, InitMigration } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {

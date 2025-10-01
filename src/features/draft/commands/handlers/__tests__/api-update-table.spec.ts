@@ -2,7 +2,7 @@ import { CommandBus } from '@nestjs/cqrs';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
 import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';

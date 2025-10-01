@@ -5,7 +5,7 @@ import {
   GetMigrationsQueryData,
 } from 'src/features/revision/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { Migration } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @QueryHandler(GetMigrationsQuery)

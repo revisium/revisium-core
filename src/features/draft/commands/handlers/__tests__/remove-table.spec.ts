@@ -11,8 +11,8 @@ import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
   InitMigration,
   RemoveMigration,
-} from 'src/features/share/utils/schema/types/migration';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+  JsonSchemaTypeName,
+} from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

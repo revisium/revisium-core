@@ -19,7 +19,7 @@ import { JsonSchemaValidatorService } from 'src/features/share/json-schema-valid
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { HistoryPatches } from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { VALIDATE_JSON_FIELD_NAME_ERROR_MESSAGE } from 'src/features/share/utils/validateUrlLikeId/validateJsonFieldName';
 import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';

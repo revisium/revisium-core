@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonPatch, JsonSchema } from '@revisium/schema-toolkit/types';
 
 export class InitMigrationDto {
   @ApiProperty({

@@ -8,12 +8,12 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
+  createJsonValueStore,
   getForeignKeysFromValue,
   GetForeignKeysFromValueType,
-} from 'src/features/share/utils/schema/lib/getForeignKeysFromValue';
-import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
+} from '@revisium/schema-toolkit/lib';
+import { JsonValue } from '@revisium/schema-toolkit/types';
 
 @CommandHandler(ValidateDataCommand)
 export class ValidateDataHandler

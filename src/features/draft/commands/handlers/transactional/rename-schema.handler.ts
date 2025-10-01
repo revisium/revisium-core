@@ -22,9 +22,11 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { getForeignKeyPatchesFromSchema } from 'src/features/share/utils/schema/lib/getForeignKeyPatchesFromSchema';
-import { SchemaTable } from 'src/features/share/utils/schema/lib/schema-table';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import {
+  getForeignKeyPatchesFromSchema,
+  SchemaTable,
+} from '@revisium/schema-toolkit/lib';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(RenameSchemaCommand)

@@ -1,4 +1,4 @@
-import { JsonPatch } from 'src/features/share/utils/schema/types/json-patch.types';
+import { JsonPatch } from '@revisium/schema-toolkit/types';
 
 export class ApiUpdateTableCommand {
   constructor(

@@ -11,7 +11,7 @@ import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { RowPublishedAtPlugin } from 'src/features/plugin/row-published-at/row-published-at.plugin';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { validateRowId } from 'src/features/share/utils/validateUrlLikeId/validateRowId';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RowCreatedEvent } from 'src/infrastructure/cache';

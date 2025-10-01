@@ -19,13 +19,17 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { getDBJsonPathByJsonSchemaStore } from 'src/features/share/utils/schema/lib/getDBJsonPathByJsonSchemaStore';
-import { replaceForeignKeyValue } from 'src/features/share/utils/schema/lib/replaceForeignKeyValue';
-import { traverseStore } from 'src/features/share/utils/schema/lib/traverseStore';
-import { JsonSchemaStore } from 'src/features/share/utils/schema/model/schema/json-schema.store';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import {
+  createJsonValueStore,
+  getDBJsonPathByJsonSchemaStore,
+  replaceForeignKeyValue,
+  traverseStore,
+} from '@revisium/schema-toolkit/lib';
+import {
+  JsonSchemaStore,
+  JsonValueStore,
+} from '@revisium/schema-toolkit/model';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(InternalRenameRowCommand)

@@ -5,21 +5,15 @@ import {
   prepareProject,
   PrepareProjectReturnType,
 } from 'src/__tests__/utils/prepareProject';
-import {
-  getArraySchema,
-  getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { getArraySchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
-import {
-  InitMigration,
-  UpdateMigration,
-} from 'src/features/share/utils/schema/types/migration';
+import { InitMigration, UpdateMigration } from '@revisium/schema-toolkit/types';
 import {
   JsonSchemaTypeName,
   JsonStringSchema,
-} from 'src/features/share/utils/schema/types/schema.types';
+} from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {

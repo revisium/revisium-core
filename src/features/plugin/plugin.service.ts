@@ -14,9 +14,8 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { systemTablesIds } from 'src/features/share/system-tables.consts';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
+import { JsonValue, JsonSchema } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

@@ -1,4 +1,4 @@
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 export class CreateInitMigrationCommand {
   constructor(

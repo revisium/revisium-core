@@ -6,7 +6,7 @@ import {
   getNumberSchema,
   getObjectSchema,
   getStringSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
+} from '@revisium/schema-toolkit/mocks';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   PatchRowCommand,

@@ -1,5 +1,5 @@
 import { GetRowByIdQueryReturnType } from 'src/features/row/queries/impl';
-import { JsonValuePatchReplace } from 'src/features/share/utils/schema/types/json-value-patch.types';
+import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 export class ApiPatchRowCommand {

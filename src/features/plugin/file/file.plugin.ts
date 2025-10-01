@@ -12,8 +12,8 @@ import {
   InternalComputeRowsOptions,
   IPluginService,
 } from 'src/features/plugin/types';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
-import { JsonValueStore } from 'src/features/share/utils/schema/model/value/json-value.store';
+import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
+import { JsonValueStore } from '@revisium/schema-toolkit/model';
 import { S3Service } from 'src/infrastructure/database/s3.service';
 
 @Injectable()

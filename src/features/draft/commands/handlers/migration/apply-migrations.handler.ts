@@ -9,7 +9,7 @@ import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { Migration } from 'src/features/share/utils/schema/types/migration';
+import { Migration } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(ApplyMigrationsCommand)

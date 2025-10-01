@@ -1,4 +1,4 @@
-import { JsonValuePatchReplace } from 'src/features/share/utils/schema/types/json-value-patch.types';
+import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 
 export class PatchRowCommand {
   constructor(

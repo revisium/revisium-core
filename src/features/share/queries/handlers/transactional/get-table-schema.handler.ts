@@ -8,7 +8,7 @@ import {
   HistoryPatches,
 } from 'src/features/share/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(GetTableSchemaQuery)
 export class GetTableSchemaHandler

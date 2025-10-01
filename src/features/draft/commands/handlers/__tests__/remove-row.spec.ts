@@ -8,7 +8,7 @@ import { createTestingModule } from 'src/features/draft/commands/handlers/__test
 import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
 import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

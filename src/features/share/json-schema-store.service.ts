@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import {
   fileSchema,
   rowCreatedAtSchema,
@@ -11,9 +11,11 @@ import {
   rowUpdatedAtSchema,
   rowVersionIdSchema,
 } from 'src/features/share/schema/plugins';
-import { createJsonSchemaStore } from 'src/features/share/utils/schema/lib/createJsonSchemaStore';
-import { getInvalidFieldNamesInSchema } from 'src/features/share/utils/schema/lib/getInvalidFieldNamesInSchema';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+import {
+  createJsonSchemaStore,
+  getInvalidFieldNamesInSchema,
+} from '@revisium/schema-toolkit/lib';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @Injectable()
 export class JsonSchemaStoreService {

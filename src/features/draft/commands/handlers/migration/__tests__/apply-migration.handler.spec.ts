@@ -13,7 +13,7 @@ import {
   ApplyMigrationsCommand,
 } from 'src/features/draft/commands/impl/migration';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { RemoveMigration } from 'src/features/share/utils/schema/types/migration';
+import { RemoveMigration } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 

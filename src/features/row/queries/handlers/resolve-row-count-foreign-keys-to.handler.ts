@@ -7,13 +7,12 @@ import {
   ResolveRowCountForeignKeysToQueryReturnType,
 } from 'src/features/row/queries/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { createJsonValueStore } from 'src/features/share/utils/schema/lib/createJsonValueStore';
 import {
+  createJsonValueStore,
   getForeignKeysFromValue,
   GetForeignKeysFromValueType,
-} from 'src/features/share/utils/schema/lib/getForeignKeysFromValue';
-import { JsonValue } from 'src/features/share/utils/schema/types/json.types';
-import { JsonSchema } from 'src/features/share/utils/schema/types/schema.types';
+} from '@revisium/schema-toolkit/lib';
+import { JsonValue, JsonSchema } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(ResolveRowCountForeignKeysToQuery)
 export class ResolveRowCountForeignKeysToHandler

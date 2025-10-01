@@ -10,8 +10,8 @@ import {
   getArraySchema,
   getObjectSchema,
   getRefSchema,
-} from 'src/__tests__/utils/schema/schema.mocks';
-import { SystemSchemaIds } from 'src/features/share/schema-ids.consts';
+} from '@revisium/schema-toolkit/mocks';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -23,7 +23,7 @@ import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/cr
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import * as objectHash from 'object-hash';
-import { JsonSchemaTypeName } from 'src/features/share/utils/schema/types/schema.types';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 describe('CreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
