@@ -286,6 +286,10 @@ input JsonFilter {
   lte: Float
   mode: QueryMode
   path: [String!]
+  search: String
+  searchIn: SearchIn
+  searchLanguage: String
+  searchType: SearchType
   string_contains: String
   string_ends_with: String
   string_starts_with: String
@@ -575,6 +579,20 @@ type RowsConnection {
   edges: [RowModelEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
+}
+
+enum SearchIn {
+  all
+  booleans
+  keys
+  numbers
+  strings
+  values
+}
+
+enum SearchType {
+  phrase
+  plain
 }
 
 input SetUsernameInput {

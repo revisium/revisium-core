@@ -5,6 +5,8 @@ import {
   OrderByField,
   OrderDataAggregation,
   OrderDataType,
+  SearchIn,
+  SearchType,
 } from 'src/api/graphql-api/row/inputs';
 import {
   UserOrganizationRoles,
@@ -17,6 +19,8 @@ export const registerGraphqlEnums = () => {
   registerEnumType(OrderByField, { name: 'OrderByField' });
   registerEnumType(OrderDataType, { name: 'OrderDataType' });
   registerEnumType(OrderDataAggregation, { name: 'OrderDataAggregation' });
+  registerEnumType(SearchType, { name: 'SearchType' });
+  registerEnumType(SearchIn, { name: 'SearchIn' });
   registerEnumType(Prisma.SortOrder, { name: 'SortOrder' });
   registerEnumType(Prisma.QueryMode, { name: 'QueryMode' });
   registerEnumType(PatchRowOp, { name: 'PatchRowOp' });
