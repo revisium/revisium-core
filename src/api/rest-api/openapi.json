@@ -610,6 +610,34 @@
               }
             ]
           },
+          "search": {
+            "description": "Full-text search string for JSON content",
+            "type": "string"
+          },
+          "searchIn": {
+            "description": "Scope of search within JSON structure",
+            "enum": [
+              "all",
+              "values",
+              "keys",
+              "strings",
+              "numbers",
+              "booleans"
+            ],
+            "type": "string"
+          },
+          "searchLanguage": {
+            "description": "Language for full-text search (e.g., \"english\", \"russian\")",
+            "type": "string"
+          },
+          "searchType": {
+            "description": "Search type: plain (individual words) or phrase (exact phrase)",
+            "enum": [
+              "plain",
+              "phrase"
+            ],
+            "type": "string"
+          },
           "string_contains": {
             "description": "Substring match in JSON string value",
             "type": "string"

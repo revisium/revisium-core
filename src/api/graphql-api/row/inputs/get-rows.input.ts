@@ -25,6 +25,20 @@ export enum OrderDataAggregation {
   last = 'last',
 }
 
+export enum SearchType {
+  plain = 'plain',
+  phrase = 'phrase',
+}
+
+export enum SearchIn {
+  all = 'all',
+  values = 'values',
+  keys = 'keys',
+  strings = 'strings',
+  numbers = 'numbers',
+  booleans = 'booleans',
+}
+
 @InputType()
 export class OrderBy {
   @Field(() => OrderByField)
@@ -116,6 +130,18 @@ export class JsonFilter {
 
   @Field(() => Prisma.QueryMode, { nullable: true })
   mode?: Prisma.QueryMode;
+
+  @Field({ nullable: true })
+  search?: string;
+
+  @Field({ nullable: true })
+  searchLanguage?: string;
+
+  @Field(() => SearchType, { nullable: true })
+  searchType?: SearchType;
+
+  @Field(() => SearchIn, { nullable: true })
+  searchIn?: SearchIn;
 
   @Field(() => JSONResolver, { nullable: true })
   equals?: Prisma.InputJsonValue;

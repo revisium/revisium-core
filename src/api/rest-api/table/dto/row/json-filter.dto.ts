@@ -99,4 +99,35 @@ export class JsonFilterDto {
   @IsOptional()
   @IsNumber()
   gte?: number;
+
+  @ApiPropertyOptional({
+    description: 'Full-text search string for JSON content',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiPropertyOptional({
+    description: 'Language for full-text search (e.g., "english", "russian")',
+  })
+  @IsOptional()
+  @IsString()
+  searchLanguage?: string;
+
+  @ApiPropertyOptional({
+    enum: ['plain', 'phrase'],
+    description:
+      'Search type: plain (individual words) or phrase (exact phrase)',
+  })
+  @IsOptional()
+  @IsIn(['plain', 'phrase'])
+  searchType?: 'plain' | 'phrase';
+
+  @ApiPropertyOptional({
+    enum: ['all', 'values', 'keys', 'strings', 'numbers', 'booleans'],
+    description: 'Scope of search within JSON structure',
+  })
+  @IsOptional()
+  @IsIn(['all', 'values', 'keys', 'strings', 'numbers', 'booleans'])
+  searchIn?: 'all' | 'values' | 'keys' | 'strings' | 'numbers' | 'booleans';
 }

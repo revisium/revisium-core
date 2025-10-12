@@ -70,4 +70,124 @@ describe('JsonFilterDto', () => {
     const errors = await validate(dto);
     expect(errors).toHaveLength(0);
   });
+
+  describe('search fields', () => {
+    it('should pass with search string', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test query',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with searchLanguage', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchLanguage: 'english',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchType plain', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchType: 'plain',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchType phrase', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test phrase',
+        searchType: 'phrase',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should fail with invalid searchType', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchType: 'invalid' as any,
+      });
+      const errors = await validate(dto);
+      expect(findConstraint(errors, 'searchType', 'isIn')).toBeDefined();
+    });
+
+    it('should pass with valid searchIn all', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchIn: 'all',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchIn values', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchIn: 'values',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchIn keys', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchIn: 'keys',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchIn strings', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchIn: 'strings',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchIn numbers', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: '42',
+        searchIn: 'numbers',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchIn booleans', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'true',
+        searchIn: 'booleans',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should fail with invalid searchIn', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test',
+        searchIn: 'invalid' as any,
+      });
+      const errors = await validate(dto);
+      expect(findConstraint(errors, 'searchIn', 'isIn')).toBeDefined();
+    });
+
+    it('should pass with all search fields combined', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test query',
+        searchLanguage: 'english',
+        searchType: 'phrase',
+        searchIn: 'values',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+  });
 });
