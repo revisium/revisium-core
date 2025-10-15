@@ -764,6 +764,62 @@
         ],
         "type": "object"
       },
+      "PatchRow": {
+        "properties": {
+          "op": {
+            "enum": [
+              "replace"
+            ],
+            "example": "replace",
+            "type": "string"
+          },
+          "path": {
+            "example": "/name",
+            "type": "string"
+          },
+          "value": {
+            "example": "New Value",
+            "type": "object"
+          }
+        },
+        "required": [
+          "op",
+          "path",
+          "value"
+        ],
+        "type": "object"
+      },
+      "PatchRowDto": {
+        "properties": {
+          "patches": {
+            "items": {
+              "$ref": "#/components/schemas/PatchRow"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "patches"
+        ],
+        "type": "object"
+      },
+      "PatchRowResponse": {
+        "properties": {
+          "previousVersionRowId": {
+            "type": "string"
+          },
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "row": {
+            "$ref": "#/components/schemas/RowModel"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "type": "object"
+      },
       "ProjectModel": {
         "properties": {
           "createdAt": {
@@ -4145,6 +4201,66 @@
               }
             },
             "description": "Row not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "",
+        "tags": [
+          "Row"
+        ]
+      },
+      "patch": {
+        "operationId": "patchRow",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tableId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "rowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchRowDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PatchRowResponse"
+                }
+              }
+            },
+            "description": ""
           }
         },
         "security": [
