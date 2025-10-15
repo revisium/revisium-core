@@ -31,6 +31,10 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
+import {
+  ApiPatchRowCommand,
+  ApiPatchRowCommandReturnType,
+} from 'src/features/draft/commands/impl/api-patch-row.command';
 import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
 import {
   ApiRenameRowCommand,
@@ -47,11 +51,13 @@ import { RowApiService } from 'src/features/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   GetRowForeignKeysByDto,
+  PatchRowDto,
   RenameRowDto,
   UpdateRowDto,
 } from 'src/api/rest-api/row/dto';
 import { GetRowForeignKeysToDto } from 'src/api/rest-api/row/dto/get-row-foreign-keys-to.dto';
 import {
+  PatchRowResponse,
   RemoveRowResponse,
   RenameRowResponse,
   RowModel,
@@ -231,6 +237,43 @@ export class RowByIdController {
         tableId,
         rowId,
         data: data.data,
+      }),
+    );
+
+    return {
+      table: result.table
+        ? transformFromPrismaToTableModel(result.table)
+        : undefined,
+      previousVersionTableId: result.previousVersionTableId,
+      row: result.row ? transformFromPrismaToRowModel(result.row) : undefined,
+      previousVersionRowId: result.previousVersionRowId,
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @Patch()
+  @ApiOperation({ operationId: 'patchRow' })
+  @ApiBody({ type: PatchRowDto })
+  @ApiOkResponse({ type: PatchRowResponse })
+  async patchRow(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Param('rowId') rowId: string,
+    @Body() data: PatchRowDto,
+  ): Promise<PatchRowResponse> {
+    const result = await this.commandBus.execute<
+      ApiPatchRowCommand,
+      ApiPatchRowCommandReturnType
+    >(
+      new ApiPatchRowCommand({
+        revisionId,
+        tableId,
+        rowId,
+        patches: data.patches,
       }),
     );
 
