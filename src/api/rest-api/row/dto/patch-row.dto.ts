@@ -2,6 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsDefined,
   IsEnum,
   IsNotEmpty,
   IsString,
@@ -24,6 +25,7 @@ export class PatchRow {
   path: string;
 
   @ApiProperty({ example: 'New Value' })
+  @IsDefined()
   value: JsonValue;
 }
 
