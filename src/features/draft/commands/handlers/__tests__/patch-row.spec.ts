@@ -58,6 +58,26 @@ describe('PatchRowHandler', () => {
     );
   });
 
+  it('should throw an error if the row does not exist', async () => {
+    const ids = await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = ids;
+
+    const command = new PatchRowCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId: 'invalid',
+      patches: [
+        {
+          op: 'replace',
+          path: 'test',
+          value: true,
+        },
+      ],
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow('Row not found');
+  });
+
   it('should patch the row if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
     const {

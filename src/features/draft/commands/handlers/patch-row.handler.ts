@@ -1,5 +1,7 @@
+import { NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Prisma, Row } from '@prisma/client';
+import { Prisma } from '@prisma/client';
+import { JsonValue } from '@prisma/client/runtime/library';
 import {
   PatchRowCommand,
   PatchRowCommandReturnType,
@@ -8,6 +10,7 @@ import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.co
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
+import { RowApiService } from 'src/features/row';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { RowUpdatedEvent } from 'src/infrastructure/cache';
@@ -38,6 +41,7 @@ export class PatchRowHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
+    protected readonly rowApiService: RowApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -51,14 +55,23 @@ export class PatchRowHandler extends DraftHandler<
   protected async handler({
     data,
   }: PatchRowCommand): Promise<PatchRowCommandReturnType> {
-    const row = await this.getRow(data);
-    const patchedData = await this.patchRow(data, row);
+    const row = await this.rowApiService.getRow({
+      revisionId: data.revisionId,
+      tableId: data.tableId,
+      rowId: data.rowId,
+    });
+
+    if (!row) {
+      throw new NotFoundException(`Row not found`);
+    }
+
+    const patchedData = await this.patchRow(data, row.data);
     return this.saveRow(data, patchedData);
   }
 
-  private async patchRow(data: PatchRowCommand['data'], row: Row) {
+  private async patchRow(data: PatchRowCommand['data'], rowData: JsonValue) {
     const schemaStore = await this.getSchemaStore(data);
-    const rootStore = createJsonValueStore(schemaStore, data.rowId, row.data);
+    const rootStore = createJsonValueStore(schemaStore, data.rowId, rowData);
 
     for (const patch of data.patches) {
       const valueStore = getJsonValueStoreByPath(rootStore, patch.path);
@@ -66,14 +79,14 @@ export class PatchRowHandler extends DraftHandler<
       if (valueStore instanceof JsonObjectValueStore) {
         const tempStore = createJsonObjectValueStore(
           valueStore.schema,
-          row.id,
+          data.rowId,
           patch.value as JsonObject,
         );
         valueStore.value = tempStore.value;
       } else if (valueStore instanceof JsonArrayValueStore) {
         const tempStore = createJsonArrayValueStore(
           valueStore.schema,
-          row.id,
+          data.rowId,
           patch.value as JsonArray,
         );
         valueStore.value = tempStore.value;
@@ -113,23 +126,5 @@ export class PatchRowHandler extends DraftHandler<
         data,
       }),
     );
-  }
-
-  private async getRow(data: PatchRowCommand['data']) {
-    const { versionId: tableVersionId } =
-      await this.shareTransactionalQueries.findTableInRevisionOrThrow(
-        data.revisionId,
-        data.tableId,
-      );
-
-    const { versionId: rowVersionId } =
-      await this.shareTransactionalQueries.findRowInTableOrThrow(
-        tableVersionId,
-        data.rowId,
-      );
-
-    return this.transaction.row.findUniqueOrThrow({
-      where: { versionId: rowVersionId },
-    });
   }
 }
