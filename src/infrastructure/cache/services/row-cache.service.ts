@@ -88,4 +88,10 @@ export class RowCacheService {
       tags: [ROW_CACHE_TAGS.TABLE_GET_ROWS(revisionId, tableId)],
     });
   }
+
+  public async invalidateRevisionRelatives(revisionId: string): Promise<void> {
+    await this.cache.deleteByTag({
+      tags: [ROW_CACHE_TAGS.REVISION_RELATIVES(revisionId)],
+    });
+  }
 }
