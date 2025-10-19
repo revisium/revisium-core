@@ -13,11 +13,6 @@ export class RevisionCommittedEventHandler
   ) {}
 
   async handle(event: RevisionCommittedEvent) {
-    await this.revisionCache.invalidateRevisions([
-      event.previousHeadRevisionId,
-      event.previousDraftRevisionId,
-    ]);
-
     await Promise.all([
       this.revisionCache.invalidateRevisions([
         event.previousHeadRevisionId,
