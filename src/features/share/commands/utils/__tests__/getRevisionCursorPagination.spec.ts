@@ -270,6 +270,42 @@ describe('getRevisionCursorPagination', () => {
     });
   });
 
+  describe('sorting', () => {
+    it('should handle ascending order by default', async () => {
+      const result = await getRevisionCursorPagination({
+        pageData: { first: 3 },
+        findMany: mockFindMany,
+        resolveSequenceById: mockResolveSequenceById,
+        count: mockCount,
+      });
+
+      expect(result.edges[0].node.sequence).toBe(1);
+      expect(result.edges[1].node.sequence).toBe(2);
+      expect(result.edges[2].node.sequence).toBe(3);
+    });
+
+    it('should handle descending order when specified', async () => {
+      // Mock descending order
+      const descendingMockFindMany = jest
+        .fn()
+        .mockImplementation(async ({ take }: CursorPaginationFindManyArgs) => {
+          const reversed = [...mockNodes].reverse();
+          return reversed.slice(0, Math.abs(take));
+        });
+
+      const result = await getRevisionCursorPagination({
+        pageData: { first: 3 },
+        findMany: descendingMockFindMany,
+        resolveSequenceById: mockResolveSequenceById,
+        count: mockCount,
+      });
+
+      expect(result.edges[0].node.sequence).toBe(5);
+      expect(result.edges[1].node.sequence).toBe(4);
+      expect(result.edges[2].node.sequence).toBe(3);
+    });
+  });
+
   const mockNodes: TestNode[] = [
     { id: '1', sequence: 1 },
     { id: '2', sequence: 2 },

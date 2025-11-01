@@ -6,6 +6,7 @@ export class GetRevisionsByBranchIdQuery {
       readonly after?: string;
       readonly before?: string;
       readonly inclusive?: boolean;
+      readonly sort?: 'asc' | 'desc';
       readonly comment?: string;
     },
   ) {}
