@@ -11,6 +11,9 @@ export class GetBranchRevisionsInput {
   @Field({ nullable: true })
   before?: string;
 
+  @Field(() => Boolean, { nullable: true })
+  inclusive?: boolean;
+
   @Field({ nullable: true })
   comment?: string;
 }

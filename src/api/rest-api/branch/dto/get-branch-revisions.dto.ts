@@ -14,4 +14,7 @@ export class GetBranchRevisionsDto {
 
   @ApiProperty({ required: false })
   before?: string;
+
+  @ApiProperty({ required: false })
+  inclusive?: boolean;
 }

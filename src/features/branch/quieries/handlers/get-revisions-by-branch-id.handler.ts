@@ -17,7 +17,12 @@ export class GetRevisionsByBranchIdHandler
     }
 
     return getRevisionCursorPagination({
-      pageData: data,
+      pageData: {
+        first: data.first,
+        after: data.after,
+        before: data.before,
+        inclusive: data.inclusive,
+      },
       findMany: (args) => this.getRevisions(args, data.branchId),
       resolveSequenceById: (id) => this.resolveSequenceById(id),
       count: () => this.getRevisionsCount(data.branchId),
