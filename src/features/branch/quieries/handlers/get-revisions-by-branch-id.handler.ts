@@ -17,8 +17,13 @@ export class GetRevisionsByBranchIdHandler
     }
 
     return getRevisionCursorPagination({
-      pageData: data,
-      findMany: (args) => this.getRevisions(args, data.branchId),
+      pageData: {
+        first: data.first,
+        after: data.after,
+        before: data.before,
+        inclusive: data.inclusive,
+      },
+      findMany: (args) => this.getRevisions(args, data.branchId, data.sort),
       resolveSequenceById: (id) => this.resolveSequenceById(id),
       count: () => this.getRevisionsCount(data.branchId),
     });
@@ -36,13 +41,14 @@ export class GetRevisionsByBranchIdHandler
   private getRevisions(
     args: { take: number; skip: number; cursor?: { sequence: number } },
     branchId: string,
+    sort: Prisma.SortOrder = Prisma.SortOrder.asc,
   ) {
     return this.prisma.branch
       .findUniqueOrThrow({ where: { id: branchId } })
       .revisions({
         ...args,
         orderBy: {
-          sequence: Prisma.SortOrder.asc,
+          sequence: sort,
         },
       });
   }

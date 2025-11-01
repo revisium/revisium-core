@@ -9,7 +9,12 @@ type CursorType =
     }
   | undefined;
 
-type PageDataType = { readonly first: number; after?: string; before?: string };
+type PageDataType = {
+  readonly first: number;
+  after?: string;
+  before?: string;
+  inclusive?: boolean;
+};
 
 export type CursorPaginationFindManyArgs = {
   take: number;
@@ -118,11 +123,11 @@ const resolveArgs = async (
   let cursor: CursorType = undefined;
 
   if (pageData.after) {
-    skip = 1;
+    skip = pageData.inclusive ? 0 : 1;
     cursor = { sequence: await resolveSequenceById(pageData.after) };
   } else if (pageData.before) {
     take = -pageData.first;
-    skip = 1;
+    skip = pageData.inclusive ? 0 : 1;
     cursor = { sequence: await resolveSequenceById(pageData.before) };
   }
 

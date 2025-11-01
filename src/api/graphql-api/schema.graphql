@@ -160,6 +160,10 @@ input GetBranchRevisionsInput {
   before: String
   comment: String
   first: Int!
+  inclusive: Boolean
+
+  """Sort order: asc (default) or desc"""
+  sort: SortOrder
 }
 
 input GetBranchesInput {

@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Prisma } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsInt, Min } from 'class-validator';
+import { IsEnum, IsInt, Min, IsOptional } from 'class-validator';
 
 export class GetBranchRevisionsDto {
   @ApiProperty({ default: 100 })
@@ -10,8 +11,23 @@ export class GetBranchRevisionsDto {
   first: number;
 
   @ApiProperty({ required: false })
+  @IsOptional()
   after?: string;
 
   @ApiProperty({ required: false })
+  @IsOptional()
   before?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  inclusive?: boolean;
+
+  @ApiProperty({
+    enum: Prisma.SortOrder,
+    required: false,
+    description: 'Sort order: asc (default) or desc',
+  })
+  @IsOptional()
+  @IsEnum(Prisma.SortOrder)
+  sort?: Prisma.SortOrder;
 }
