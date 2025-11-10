@@ -545,6 +545,7 @@ type RevisionModel {
   isDraft: Boolean!
   isHead: Boolean!
   isStart: Boolean!
+  migrations: [JSON!]!
   parent: RevisionModel
   sequence: Int!
   tables(data: GetRevisionTablesInput!): TablesConnection!

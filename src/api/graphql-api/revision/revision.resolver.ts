@@ -91,6 +91,11 @@ export class RevisionResolver {
     );
   }
 
+  @ResolveField()
+  async migrations(@Parent() revision: RevisionModel) {
+    return this.revisionApi.migrations({ revisionId: revision.id });
+  }
+
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
   @PermissionParams({
     action: PermissionAction.create,
