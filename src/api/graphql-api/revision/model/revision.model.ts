@@ -1,5 +1,6 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { DateTimeResolver } from 'graphql-scalars';
+import { Prisma } from '@prisma/client';
+import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 import { BranchModel } from 'src/api/graphql-api/branch/model/branch.model';
 import { EndpointModel } from 'src/api/graphql-api/endpoint/model';
 import { ChildBranchModel } from 'src/api/graphql-api/revision/model/child-branch.model';
@@ -49,6 +50,9 @@ export class RevisionModel {
 
   @Field(() => [EndpointModel])
   endpoints: EndpointModel[];
+
+  @Field(() => [JSONResolver])
+  migrations: Prisma.JsonValue[];
 }
 
 @ObjectType()
