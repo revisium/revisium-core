@@ -15,16 +15,37 @@ export enum PatchRowOp {
 }
 
 export class PatchRow {
-  @ApiProperty({ enum: PatchRowOp, example: 'replace' })
+  @ApiProperty({
+    enum: PatchRowOp,
+    example: 'replace',
+    description:
+      'The operation to perform. Currently only "replace" is supported',
+  })
   @IsEnum(PatchRowOp)
   op: PatchRowOp;
 
-  @ApiProperty({ example: '/name' })
+  @ApiProperty({
+    example: 'list[0].nestedList[2].name',
+    description:
+      'JSON path using dot notation for objects and [index] for arrays. Examples: "name", "user.email", "items[0]", "data.list[2].value"',
+  })
   @IsString()
   @IsNotEmpty()
   path: string;
 
-  @ApiProperty({ example: 'New Value' })
+  @ApiProperty({
+    description:
+      'The value to set at the specified path. Can be any valid JSON value (string, number, boolean, object, array, or null)',
+    oneOf: [
+      { type: 'string' },
+      { type: 'number' },
+      { type: 'boolean' },
+      { type: 'object' },
+      { type: 'array' },
+      { type: 'null' },
+    ],
+    example: '{ "key": "value" }',
+  })
   @IsDefined()
   value: JsonValue;
 }
