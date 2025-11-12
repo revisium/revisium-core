@@ -44,7 +44,7 @@ export class PatchRow {
       { type: 'array' },
       { type: 'null' },
     ],
-    example: '{ key: "value" }',
+    example: '{ "key": "value" }',
   })
   @IsDefined()
   value: JsonValue;

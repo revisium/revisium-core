@@ -781,7 +781,7 @@
           },
           "value": {
             "description": "The value to set at the specified path. Can be any valid JSON value (string, number, boolean, object, array, or null)",
-            "example": "{ key: \"value\" }",
+            "example": "{ \"key\": \"value\" }",
             "oneOf": [
               {
                 "type": "string"
