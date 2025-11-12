@@ -16,6 +16,7 @@ import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { ChildBranchResolver } from 'src/api/graphql-api/revision/child-branch.resolver';
 import { RevisionResolver } from 'src/api/graphql-api/revision/revision.resolver';
 import { RowResolver } from 'src/api/graphql-api/row/row.resolver';
+import { SearchRowsResolver } from 'src/api/graphql-api/row/resolver/search-rows.resolver';
 import { TableResolver } from 'src/api/graphql-api/table/table.resolver';
 import { UserResolver } from 'src/api/graphql-api/user/user.resolver';
 import { RevisionModule } from 'src/features/revision';
@@ -67,6 +68,7 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
     EndpointResolver,
     RevisionResolver,
     RowResolver,
+    SearchRowsResolver,
     TableResolver,
   ],
 })
