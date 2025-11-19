@@ -27,6 +27,9 @@ import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { ResolveRowForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-by.handler';
 import { ResolveRowForeignKeysToHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-to.handler';
+import { SearchRowsHandler } from 'src/features/row/queries/handlers/search-rows.handler';
+import { ResolveRowCountForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-count-foreign-keys-by.handler';
+import { ResolveRowCountForeignKeysToHandler } from 'src/features/row/queries/handlers/resolve-row-count-foreign-keys-to.handler';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
@@ -146,6 +149,9 @@ export const createTestingModule = async () => {
       GetRowHandler,
       ResolveRowForeignKeysByHandler,
       ResolveRowForeignKeysToHandler,
+      ResolveRowCountForeignKeysByHandler,
+      ResolveRowCountForeignKeysToHandler,
+      SearchRowsHandler,
     ],
   })
     .overrideProvider(S3Service)

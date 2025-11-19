@@ -5,6 +5,7 @@ import { ResolveRowCountForeignKeysByHandler } from 'src/features/row/queries/ha
 import { ResolveRowCountForeignKeysToHandler } from 'src/features/row/queries/handlers/resolve-row-count-foreign-keys-to.handler';
 import { ResolveRowForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-by.handler';
 import { ResolveRowForeignKeysToHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-to.handler';
+import { SearchRowsHandler } from 'src/features/row/queries/handlers/search-rows.handler';
 
 export const ROW_QUERIES_HANDLERS = [
   GetRowHandler,
@@ -14,4 +15,5 @@ export const ROW_QUERIES_HANDLERS = [
   ResolveRowCountForeignKeysByHandler,
   ResolveRowForeignKeysByHandler,
   ResolveRowForeignKeysToHandler,
+  SearchRowsHandler,
 ];
