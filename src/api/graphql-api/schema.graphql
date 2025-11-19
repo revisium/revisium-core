@@ -453,6 +453,7 @@ type Query {
   revision(data: GetRevisionInput!): RevisionModel!
   row(data: GetRowInput!): RowModel
   rows(data: GetRowsInput!): RowsConnection!
+  searchRows(data: SearchRowsInput!): SearchResultsConnection!
   table(data: GetTableInput!): TableModel
   tables(data: GetTablesInput!): TablesConnection!
   usersOrganization(data: GetUsersOrganizationInput!): UsersOrganizationConnection!
@@ -593,6 +594,36 @@ enum SearchIn {
   numbers
   strings
   values
+}
+
+type SearchMatch {
+  highlight: String
+  path: String!
+  value: JSON!
+}
+
+type SearchResult {
+  matches: [SearchMatch!]!
+  row: RowModel!
+  table: TableModel!
+}
+
+type SearchResultEdge {
+  cursor: String!
+  node: SearchResult!
+}
+
+type SearchResultsConnection {
+  edges: [SearchResultEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input SearchRowsInput {
+  after: String
+  first: Int = 20
+  query: String!
+  revisionId: String!
 }
 
 enum SearchType {
