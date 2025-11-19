@@ -274,6 +274,57 @@ describe('extractMatchesFallback', () => {
         highlight: 'user<mark>@example</mark>.com',
       });
     });
+
+    it('should safely handle regex metacharacters in query', () => {
+      const data = {
+        formula: 'a + b * c',
+        pattern: 'test.txt',
+        bracket: 'items[0]',
+      };
+
+      const matches1 = extractMatchesFallback(data, '+');
+      expect(matches1).toHaveLength(1);
+      expect(matches1[0]).toEqual({
+        path: 'formula',
+        value: 'a + b * c',
+        highlight: 'a <mark>+</mark> b * c',
+      });
+
+      const matches2 = extractMatchesFallback(data, '*');
+      expect(matches2).toHaveLength(1);
+      expect(matches2[0]).toEqual({
+        path: 'formula',
+        value: 'a + b * c',
+        highlight: 'a + b <mark>*</mark> c',
+      });
+
+      const matches3 = extractMatchesFallback(data, '.');
+      expect(matches3).toHaveLength(1);
+      expect(matches3[0]).toEqual({
+        path: 'pattern',
+        value: 'test.txt',
+        highlight: 'test<mark>.</mark>txt',
+      });
+
+      const matches4 = extractMatchesFallback(data, '[0]');
+      expect(matches4).toHaveLength(1);
+      expect(matches4[0]).toEqual({
+        path: 'bracket',
+        value: 'items[0]',
+        highlight: 'items<mark>[0]</mark>',
+      });
+    });
+
+    it('should prevent ReDoS attacks with malicious patterns', () => {
+      const data = {
+        content: 'normal text content',
+      };
+
+      const maliciousPattern = '(a+)+$';
+      const matches = extractMatchesFallback(data, maliciousPattern);
+
+      expect(matches).toHaveLength(0);
+    });
   });
 
   describe('sorting and relevance', () => {

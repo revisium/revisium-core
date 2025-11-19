@@ -89,10 +89,15 @@ export function extractMatchesFallback(
     .map((item) => item.match);
 }
 
+function escapeRegExp(string: string): string {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function highlightText(text: string, terms: string[]): string {
   let highlighted = text;
   terms.forEach((term) => {
-    const regex = new RegExp(`(${term})`, 'gi');
+    const escapedTerm = escapeRegExp(term);
+    const regex = new RegExp(`(${escapedTerm})`, 'gi');
     highlighted = highlighted.replace(regex, '<mark>$1</mark>');
   });
   return highlighted;
