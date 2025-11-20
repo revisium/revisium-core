@@ -44,7 +44,7 @@ module.exports = [
     },
   },
   {
-    ignores: ['src/__generated__/sql/**'],
+    ignores: ['src/__generated__/**'],
   },
   {
     ignores: ['*.spec.ts', '*.e2e-spec.ts'],
