@@ -18,6 +18,7 @@
     "create-endpoint",
     "delete-endpoint",
     "add-user",
+    "update-user",
     "delete-user",
     "read-user",
     "read-project-private",

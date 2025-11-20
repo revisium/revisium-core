@@ -88,7 +88,7 @@ export class SearchRowsHandler
     await this.computeRowsForTables(rows, data.revisionId);
 
     return rows.map(({ row, table }) => ({
-      matches: extractMatchesFallback(row.data as Prisma.JsonValue, data.query),
+      matches: extractMatchesFallback(row.data, data.query),
       row,
       table,
     }));

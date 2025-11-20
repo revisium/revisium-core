@@ -4,3 +4,4 @@ export * from 'src/features/project/commands/impl/delete-project.command';
 export * from 'src/features/project/commands/impl/add-user-to-project.command';
 export * from 'src/features/project/commands/impl/remove-user-from-project.command';
 export * from 'src/features/project/commands/impl/update-project.command';
+export * from 'src/features/project/commands/impl/update-user-project-role.command';

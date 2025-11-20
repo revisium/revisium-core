@@ -5,3 +5,4 @@ export * from 'src/api/graphql-api/project/inputs/add-user-to-project.input';
 export * from 'src/api/graphql-api/project/inputs/remove-user-from-project.input';
 export * from 'src/api/graphql-api/project/inputs/get-users-project.input';
 export * from 'src/api/graphql-api/project/inputs/update-project.input';
+export * from 'src/api/graphql-api/project/inputs/update-user-project-role.input';

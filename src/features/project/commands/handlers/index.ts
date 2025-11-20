@@ -4,6 +4,7 @@ import { DeleteProjectHandler } from 'src/features/project/commands/handlers/del
 import { AddUserToProjectHandler } from 'src/features/project/commands/handlers/add-user-to-project.handler';
 import { RemoveUserFromProjectHandler } from 'src/features/project/commands/handlers/remove-user-from-project.handler';
 import { UpdateProjectHandler } from 'src/features/project/commands/handlers/update-project.handler';
+import { UpdateUserProjectRoleHandler } from 'src/features/project/commands/handlers/update-user-project-role.handler';
 
 export const PROJECT_HANDLERS = [
   CreateProjectHandler,
@@ -12,4 +13,5 @@ export const PROJECT_HANDLERS = [
   AddUserToProjectHandler,
   RemoveUserFromProjectHandler,
   UpdateProjectHandler,
+  UpdateUserProjectRoleHandler,
 ];
