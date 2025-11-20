@@ -1,5 +1,6 @@
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client'; type JsonValue = Prisma.JsonValue;
+import { Prisma } from 'src/__generated__/client';
+type JsonValue = Prisma.JsonValue;
 import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
 import {
   InternalCreateRowCommand,
