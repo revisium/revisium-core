@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';

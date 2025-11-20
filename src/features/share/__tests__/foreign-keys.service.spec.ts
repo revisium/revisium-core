@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
-import * as hash from 'object-hash';
+import hash from 'object-hash';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';

@@ -1,7 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
-import { JsonValue } from '@prisma/client/runtime/library';
+import { Prisma } from 'src/__generated__/client';
+
+type JsonValue = Prisma.JsonValue;
 import {
   PatchRowCommand,
   PatchRowCommandReturnType,

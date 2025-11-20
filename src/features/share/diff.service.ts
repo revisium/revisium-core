@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  getTableDiffsPaginatedBetweenRevisions,
-  hasTableDiffsBetweenRevisions,
-  countTableDiffsBetweenRevisions,
-  hasRowDiffsBetweenRevisions,
-} from 'src/__generated__/sql';
+import { getTableDiffsPaginatedBetweenRevisions } from 'src/__generated__/client/sql/getTableDiffsPaginatedBetweenRevisions';
+import { hasTableDiffsBetweenRevisions } from 'src/__generated__/client/sql/hasTableDiffsBetweenRevisions';
+import { countTableDiffsBetweenRevisions } from 'src/__generated__/client/sql/countTableDiffsBetweenRevisions';
+import { hasRowDiffsBetweenRevisions } from 'src/__generated__/client/sql/hasRowDiffsBetweenRevisions';
 
 export enum TableDiffChangeType {
   Modified = 'modified',

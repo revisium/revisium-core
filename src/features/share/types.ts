@@ -1,7 +1,3 @@
-import { PrismaClient } from '@prisma/client';
-import * as runtime from '@prisma/client/runtime/library';
+import { Prisma } from 'src/__generated__/client';
 
-export type TransactionPrismaClient = Omit<
-  PrismaClient,
-  runtime.ITXClientDenyList
->;
+export type TransactionPrismaClient = Prisma.TransactionClient;

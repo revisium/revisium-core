@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { Paginated } from 'src/api/rest-api/share/model/paginated.model';
 
 export class RowModel {

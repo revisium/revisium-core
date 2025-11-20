@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { EndpointType } from '@prisma/client';
+import { EndpointType } from 'src/__generated__/client';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {

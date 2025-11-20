@@ -5,7 +5,7 @@ import {
   GetUsersProjectQueryReturnType,
 } from 'src/features/project/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 
 @QueryHandler(GetUsersProjectQuery)
 export class GetUsersProjectHandler

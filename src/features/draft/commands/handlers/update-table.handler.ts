@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Prisma, Row } from '@prisma/client';
+import { Prisma, Row } from 'src/__generated__/client';
 import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,

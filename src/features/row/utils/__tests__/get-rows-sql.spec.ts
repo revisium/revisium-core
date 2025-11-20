@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { Row } from '@prisma/client';
+import { Row } from 'src/__generated__/client';
 import {
   JsonFilter,
   OrderByConditions,

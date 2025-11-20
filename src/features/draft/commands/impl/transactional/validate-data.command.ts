@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 export class ValidateDataCommand {

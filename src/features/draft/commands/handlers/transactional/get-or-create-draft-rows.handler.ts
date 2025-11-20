@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { GetOrCreateDraftRowsCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-rows.command';

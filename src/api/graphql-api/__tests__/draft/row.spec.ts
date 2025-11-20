@@ -1,6 +1,6 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { gql } from 'src/__tests__/utils/gql';
 import {
   prepareData,

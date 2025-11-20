@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
-import * as objectHash from 'object-hash';
+import { Prisma } from 'src/__generated__/client';
+import objectHash from 'object-hash';
 import {
   prepareProject,
   PrepareProjectReturnType,

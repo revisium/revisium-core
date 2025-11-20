@@ -1,4 +1,4 @@
-import { Revision } from '@prisma/client';
+import { Revision } from 'src/__generated__/client';
 
 export class GetRevisionQuery {
   constructor(public data: { revisionId: string }) {}

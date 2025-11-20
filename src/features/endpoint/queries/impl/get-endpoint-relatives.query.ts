@@ -1,4 +1,4 @@
-import { Branch, Endpoint, Project, Revision } from '@prisma/client';
+import { Branch, Endpoint, Project, Revision } from 'src/__generated__/client';
 
 export class GetEndpointRelativesQuery {
   constructor(public readonly data: { readonly endpointId: string }) {}

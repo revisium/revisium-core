@@ -1,4 +1,4 @@
-import { Table } from '@prisma/client';
+import { Table } from 'src/__generated__/client';
 import { TableModel } from 'src/api/rest-api/table/model/table.model';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 

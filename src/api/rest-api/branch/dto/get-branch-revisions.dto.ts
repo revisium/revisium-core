@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsInt, Min, IsOptional } from 'class-validator';
 

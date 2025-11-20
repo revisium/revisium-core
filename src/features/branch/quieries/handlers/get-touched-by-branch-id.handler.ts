@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { GetTouchedByBranchIdQuery } from 'src/features/branch/quieries/impl';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';

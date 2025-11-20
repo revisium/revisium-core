@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
+import request from 'supertest';
 
 const STATUS = 200;
 const GRAPHQL_URL = '/graphql';

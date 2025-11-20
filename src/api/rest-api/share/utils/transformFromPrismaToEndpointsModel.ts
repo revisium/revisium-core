@@ -1,4 +1,4 @@
-import { Endpoint } from '@prisma/client';
+import { Endpoint } from 'src/__generated__/client';
 import { EndpointModel } from 'src/api/rest-api/endpoint/model';
 
 export const transformFromPrismaToEndpointModel = (

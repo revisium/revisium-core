@@ -1,6 +1,6 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
-import * as hash from 'object-hash';
+import hash from 'object-hash';
 import { createExpressImageFile } from 'src/__tests__/utils/file';
 import {
   prepareProject,

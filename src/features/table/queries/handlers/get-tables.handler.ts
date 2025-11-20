@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { GetTablesQuery } from 'src/features/table/queries/impl/get-tables.query';

@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { EndpointType, Prisma } from '@prisma/client';
+import { EndpointType, Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import {

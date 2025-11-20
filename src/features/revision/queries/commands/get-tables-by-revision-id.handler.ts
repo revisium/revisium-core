@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { GetTablesByRevisionIdQuery } from 'src/features/revision/queries/impl/get-tables-by-revision-id.query';
 import { GetRevisionTablesReturnType } from 'src/features/revision/queries/types';

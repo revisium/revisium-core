@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { initSwagger } from 'src/api/rest-api/init-swagger';
 import { CoreModule } from 'src/core/core.module';
-import * as request from 'supertest';
+import request from 'supertest';
 import * as fs from 'fs';
 import * as path from 'path';
 

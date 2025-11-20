@@ -1,4 +1,4 @@
-import { Project } from '@prisma/client';
+import { Project } from 'src/__generated__/client';
 
 export class GetProjectByIdQuery {
   constructor(

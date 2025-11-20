@@ -1,4 +1,4 @@
-import { Prisma, Row } from '@prisma/client';
+import { Prisma, Row } from 'src/__generated__/client';
 import {
   JsonSchemaStore,
   JsonValueStore,

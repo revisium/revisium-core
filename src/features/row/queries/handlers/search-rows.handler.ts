@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma, Row, Table } from '@prisma/client';
+import { Prisma, Row, Table } from 'src/__generated__/client';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import {
   SearchRowResult,

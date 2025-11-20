@@ -1,6 +1,6 @@
 import { extname } from 'node:path';
-import * as sharp from 'sharp';
-import * as hash from 'object-hash';
+import sharp from 'sharp';
+import hash from 'object-hash';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import {
   JsonNumberValueStore,

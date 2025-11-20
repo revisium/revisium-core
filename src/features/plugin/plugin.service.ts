@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import {
   ComputeRowsOptions,

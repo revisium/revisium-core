@@ -1,6 +1,6 @@
 import { QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
-import * as hash from 'object-hash';
+import hash from 'object-hash';
 import {
   getObjectSchema,
   getStringSchema,

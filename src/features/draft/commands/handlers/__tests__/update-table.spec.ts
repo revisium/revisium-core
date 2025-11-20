@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma, Row } from '@prisma/client';
+import { Prisma, Row } from 'src/__generated__/client';
 import {
   prepareProject,
   PrepareProjectReturnType,
@@ -25,7 +25,7 @@ import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-tabl
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 
 describe('UpdateTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {

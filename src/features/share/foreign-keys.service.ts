@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma, Row } from '@prisma/client';
+import { Prisma, Row } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 // Using parameterized queries with $queryRaw for security
