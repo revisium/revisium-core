@@ -1,5 +1,5 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { JSONResolver, DateTimeResolver } from 'graphql-scalars';
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
 

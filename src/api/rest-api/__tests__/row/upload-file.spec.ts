@@ -17,7 +17,7 @@ import { CoreModule } from 'src/core/core.module';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { S3Service } from 'src/infrastructure/database/s3.service';
-import * as request from 'supertest';
+import request from 'supertest';
 
 describe('restapi - row - upload file', () => {
   let preparedData: PrepareDataReturnType;

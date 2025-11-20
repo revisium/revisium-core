@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -22,7 +22,7 @@ import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.co
 import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/create-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 describe('CreateRowHandler', () => {

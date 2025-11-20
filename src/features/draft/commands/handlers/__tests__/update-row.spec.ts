@@ -23,7 +23,7 @@ import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.co
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 describe('UpdateRowHandler', () => {

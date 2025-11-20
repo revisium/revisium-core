@@ -1,6 +1,6 @@
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { Prisma, UserOrganization } from '@prisma/client';
+import { Prisma, UserOrganization } from 'src/__generated__/client';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/__tests__/create-models';
 import { UserOrganizationRoles } from 'src/features/auth/consts';

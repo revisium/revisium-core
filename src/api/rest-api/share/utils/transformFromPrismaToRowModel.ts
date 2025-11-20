@@ -1,4 +1,4 @@
-import { Row } from '@prisma/client';
+import { Row } from 'src/__generated__/client';
 import { RowModel } from 'src/api/rest-api/row/model';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 

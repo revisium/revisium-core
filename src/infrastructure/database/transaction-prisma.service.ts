@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaClient } from 'src/features/share/types';

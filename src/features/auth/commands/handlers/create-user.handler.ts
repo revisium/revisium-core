@@ -9,7 +9,7 @@ import { isValidSystemRole, UserRole } from 'src/features/auth/consts';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 
 @CommandHandler(CreateUserCommand)
 export class CreateUserHandler

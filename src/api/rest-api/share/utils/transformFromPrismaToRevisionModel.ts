@@ -1,4 +1,4 @@
-import { Revision } from '@prisma/client';
+import { Revision } from 'src/__generated__/client';
 import { RevisionModel } from 'src/api/rest-api/revision/model';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 

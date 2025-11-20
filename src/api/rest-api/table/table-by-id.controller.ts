@@ -22,7 +22,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Table } from '@prisma/client';
+import { Table } from 'src/__generated__/client';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';

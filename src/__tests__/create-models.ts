@@ -1,4 +1,4 @@
-import { Prisma, User } from '@prisma/client';
+import { Prisma, User } from 'src/__generated__/client';
 import { UserSystemRoles } from 'src/features/auth/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 

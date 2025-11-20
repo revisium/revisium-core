@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UpdateProjectCommand } from 'src/features/project/commands/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';

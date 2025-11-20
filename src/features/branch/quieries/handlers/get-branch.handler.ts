@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { GetBranchQuery } from 'src/features/branch/quieries/impl/get-branch.query';
 import { GetBranchReturnType } from 'src/features/branch/quieries/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';

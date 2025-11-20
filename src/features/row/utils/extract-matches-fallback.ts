@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { SearchMatch } from 'src/features/row/queries/impl';
 
 export function extractMatchesFallback(

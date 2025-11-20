@@ -1,4 +1,4 @@
-import { EndpointType } from '@prisma/client';
+import { EndpointType } from 'src/__generated__/client';
 
 export class ApiCreateEndpointCommand {
   constructor(

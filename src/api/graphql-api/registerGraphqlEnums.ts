@@ -1,5 +1,5 @@
 import { registerEnumType } from '@nestjs/graphql';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { PatchRowOp } from 'src/api/graphql-api/draft/input/patch-row.input';
 import {
   OrderByField,

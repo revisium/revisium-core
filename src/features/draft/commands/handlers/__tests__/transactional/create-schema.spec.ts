@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,

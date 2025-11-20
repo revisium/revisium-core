@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { GetOrCreateDraftRowCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-row.command';
 import { GetOrCreateDraftRowsCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-rows.command';
 import { GetOrCreateDraftTableCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-table.command';

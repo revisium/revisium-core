@@ -1,4 +1,4 @@
-import { Role, User } from '@prisma/client';
+import { Role, User } from 'src/__generated__/client';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 
 export class GetUsersOrganizationQuery {

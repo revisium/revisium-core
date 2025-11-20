@@ -1,4 +1,4 @@
-import { Prisma, Row, Table } from '@prisma/client';
+import { Prisma, Row, Table } from 'src/__generated__/client';
 import {
   generateWhere,
   WhereConditionsTyped,

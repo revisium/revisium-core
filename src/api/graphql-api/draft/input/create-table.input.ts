@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { JSONResolver } from 'graphql-scalars';
 
 @InputType()

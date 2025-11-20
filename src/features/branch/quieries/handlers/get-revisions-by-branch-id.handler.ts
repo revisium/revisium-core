@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { GetRevisionsByBranchIdQuery } from 'src/features/branch/quieries/impl/get-revisions-by-branch-id.query';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { getRevisionCursorPagination } from 'src/features/share/commands/utils/getRevisionCursorPagination';

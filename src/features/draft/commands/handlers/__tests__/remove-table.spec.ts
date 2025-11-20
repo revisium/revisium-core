@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { nanoid } from 'nanoid';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';

@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Row } from '@prisma/client';
+import { Row } from 'src/__generated__/client';
 import {
   OrderByConditions,
   WhereConditionsTyped,

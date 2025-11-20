@@ -9,7 +9,7 @@ import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { UserProjectRoles } from 'src/features/auth/consts';
 import { nanoid } from 'nanoid';
-import * as request from 'supertest';
+import request from 'supertest';
 
 describe('restapi - project', () => {
   let app: INestApplication;

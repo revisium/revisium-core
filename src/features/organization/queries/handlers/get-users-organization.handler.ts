@@ -5,7 +5,7 @@ import {
   GetUsersOrganizationQueryReturnType,
 } from 'src/features/organization/queries/impl';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 
 @QueryHandler(GetUsersOrganizationQuery)
 export class GetUsersOrganizationHandler

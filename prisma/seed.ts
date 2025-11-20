@@ -4,12 +4,20 @@ import * as fs from 'fs/promises';
 import { nanoid } from 'nanoid';
 import * as process from 'node:process';
 import { join } from 'path';
-import { EndpointType, PrismaClient, RoleLevel } from '@prisma/client';
+import { EndpointType, PrismaClient, RoleLevel } from 'src/__generated__/client';
 import { UserRole } from '../src/features/auth/consts';
 import { Permission, Role } from './seed/__generated__/seed';
 import { SystemOrganizations } from '../src/features/share/system-organizations.consts';
+import { PrismaPg } from '@prisma/adapter-pg';
+import pg from 'pg';
 
-const prisma = new PrismaClient();
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+});
+
+const adapter = new PrismaPg(pool);
+
+const prisma = new PrismaClient({ adapter });
 
 async function instance() {
   const instance = await prisma.instance.findFirst();

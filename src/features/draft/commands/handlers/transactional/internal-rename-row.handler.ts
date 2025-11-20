@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Row } from '@prisma/client';
+import { Row } from 'src/__generated__/client';
 import {
   InternalRenameRowCommand,
   InternalRenameRowCommandData,

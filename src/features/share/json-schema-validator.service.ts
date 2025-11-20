@@ -1,8 +1,8 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import Ajv, { ErrorObject, Schema, ValidateFunction } from 'ajv/dist/2020';
-import * as hash from 'object-hash';
+import hash from 'object-hash';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { historyPatchesSchema } from 'src/features/share/schema/history-patches-schema';
 import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';

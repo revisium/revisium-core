@@ -13,15 +13,10 @@ export class MetricsController {
 
   @Get()
   async getMetrics(@Res() response: Response) {
-    const metrics = await Promise.all([
-      client.register.metrics(),
-      this.prismaService.$metrics.prometheus(),
-    ]);
-
-    const combinedMetrics = metrics.join('\n');
+    const metrics = await client.register.metrics();
 
     response.set('Content-Type', client.register.contentType);
 
-    response.end(combinedMetrics);
+    response.end(metrics);
   }
 }

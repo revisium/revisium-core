@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
@@ -16,7 +16,7 @@ import {
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 
 describe('InternalCreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {

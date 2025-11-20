@@ -8,7 +8,7 @@ import {
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import * as request from 'supertest';
+import request from 'supertest';
 
 describe('restapi - branch-by-name', () => {
   let app: INestApplication;

@@ -11,7 +11,7 @@ import {
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import * as objectHash from 'object-hash';
+import objectHash from 'object-hash';
 
 describe('InternalUpdateRowHandler', () => {
   it('should throw an error if the revision does not exist', async () => {

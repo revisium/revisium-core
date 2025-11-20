@@ -1,5 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,

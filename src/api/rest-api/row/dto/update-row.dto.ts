@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Prisma } from '@prisma/client';
+import { Prisma } from 'src/__generated__/client';
 
 export class UpdateRowDto {
   @ApiProperty({ type: 'object', additionalProperties: true })

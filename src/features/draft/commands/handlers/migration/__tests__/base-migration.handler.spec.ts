@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { ICommand } from '@nestjs/cqrs/dist/interfaces/commands/command.interface';
-import { Prisma } from '@prisma/client';
-import * as objectHash from 'object-hash';
+import { Prisma } from 'src/__generated__/client';
+import objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
