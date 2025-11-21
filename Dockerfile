@@ -19,6 +19,8 @@ ENV NODE_ENV=production
 
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
 COPY --from=builder /home/app/package*.json ./
 COPY --from=builder /home/app/prisma/ ./prisma/
 COPY --from=builder /home/app/prisma.config.ts ./
@@ -26,6 +28,9 @@ COPY --from=builder /home/app/dist/ ./dist/
 COPY --from=builder /home/app/prisma/seed/permissions ./dist/prisma/seed/permissions
 COPY --from=builder /home/app/prisma/seed/roles ./dist/prisma/seed/roles
 COPY --from=builder /home/app/node_modules/ ./node_modules/
+
+RUN chown -R appuser:appuser /home/node
+USER appuser
 
 CMD ["npm", "run", "start:prod"]
 
