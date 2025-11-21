@@ -1716,7 +1716,7 @@
     "contact": {},
     "description": "",
     "title": "Revisium API",
-    "version": "2.5.0-alpha.4"
+    "version": "2.5.0-alpha.5"
   },
   "openapi": "3.0.0",
   "paths": {
