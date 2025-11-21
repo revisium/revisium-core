@@ -3,6 +3,7 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GraphQLModule } from '@nestjs/graphql';
+import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { AuthResolver } from 'src/api/graphql-api/auth/auth.resolver';
 import { BranchResolver } from 'src/api/graphql-api/branch/branch.resolver';
@@ -38,6 +39,7 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
         autoSchemaFile: true,
         sortSchema: true,
         introspection: true,
+        resolvers: { DateTime: DateTimeResolver, JSON: JSONResolver },
         formatError: (error) => {
           if (error.extensions?.stacktrace) {
             error.extensions.stacktrace = [];
