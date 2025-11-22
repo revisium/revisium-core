@@ -9,7 +9,6 @@ import {
 export const USER_QUERIES = [
   GetUserHandler,
   DeprecatedGetOwnedUserOrganizationHandler,
-  DeprecatedGetOwnedUserOrganizationHandler,
   GetUserProjectHandler,
   GetProjectsByUserIdHandler,
   SearchUsersHandler,
