@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import {
   GetRolePermissionsQuery,
@@ -5,6 +6,7 @@ import {
   GetRolePermissionsQueryReturnType,
 } from 'src/features/role/queries/impl';
 
+@Injectable()
 export class RoleApiService {
   constructor(private readonly queryBus: QueryBus) {}
 
