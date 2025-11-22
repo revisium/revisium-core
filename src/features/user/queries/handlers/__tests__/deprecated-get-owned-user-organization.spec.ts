@@ -5,19 +5,24 @@ import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/__tests__/create-models';
 import { UserOrganizationRoles } from 'src/features/auth/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { GetUserOrganizationQuery } from 'src/features/user/queries/impl';
-import { GetUserOrganizationHandler } from 'src/features/user/queries/handlers/get-user-organization.handler';
+import { DeprecatedGetOwnedUserOrganizationQuery } from 'src/features/user/queries/impl';
+import { DeprecatedGetOwnedUserOrganizationHandler } from 'src/features/user/queries/handlers/deprecated-get-owned-user-organization.handler';
 
 describe('GetUserOrganizationHandler', () => {
   it('should return organizationId if user is an owner', async () => {
+    const userOrganizationId = nanoid();
     const organizationId = nanoid();
     const userId = nanoid();
-    await setupTestEntities(organizationId, userId);
+    await setupTestEntities(userOrganizationId, organizationId, userId);
 
     const query = createQuery({ userId });
     const result = await queryBus.execute(query);
 
-    expect(result).toEqual(organizationId);
+    expect(result).toEqual(
+      await prismaService.userOrganization.findUniqueOrThrow({
+        where: { id: userOrganizationId },
+      }),
+    );
   });
 
   it('should return undefined if user is not an owner', async () => {
@@ -26,26 +31,27 @@ describe('GetUserOrganizationHandler', () => {
     const query = createQuery({ userId });
     const result = await queryBus.execute(query);
 
-    expect(result).toBeUndefined();
+    expect(result).toBeNull();
   });
 
   const createQuery = (
-    data: Partial<GetUserOrganizationQuery['data']> = {},
+    data: Partial<DeprecatedGetOwnedUserOrganizationQuery['data']> = {},
   ) => {
-    return new GetUserOrganizationQuery({
+    return new DeprecatedGetOwnedUserOrganizationQuery({
       userId: 'userId',
       ...data,
     });
   };
 
   const setupTestEntities = async (
+    userOrganizationId: string,
     organizationId: string,
     userId: string,
   ): Promise<UserOrganization> => {
     await testCreateUser(prismaService, { id: userId });
 
     const data: Prisma.UserOrganizationCreateInput = {
-      id: nanoid(),
+      id: userOrganizationId,
       role: {
         connect: {
           id: UserOrganizationRoles.organizationOwner,
@@ -76,9 +82,9 @@ describe('GetUserOrganizationHandler', () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
       providers: [
-        GetUserOrganizationHandler,
+        DeprecatedGetOwnedUserOrganizationHandler,
         PrismaService,
-        GetUserOrganizationHandler,
+        DeprecatedGetOwnedUserOrganizationHandler,
       ],
     }).compile();
 
