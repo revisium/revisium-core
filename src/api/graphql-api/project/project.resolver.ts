@@ -8,6 +8,7 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
@@ -25,6 +26,8 @@ import {
 import { GetProjectBranchesInput } from 'src/api/graphql-api/project/inputs/get-project-branches.input';
 import { ProjectModel } from 'src/api/graphql-api/project/model';
 import { UsersProjectConnection } from 'src/api/graphql-api/project/model/users-project.connection';
+import { IAuthUser } from 'src/features/auth/types';
+import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import {
   AddUserToProjectCommand,
   DeleteProjectCommand,
@@ -38,6 +41,7 @@ import {
   GetRootBranchByProjectQuery,
   GetUsersProjectQuery,
 } from 'src/features/project/queries/impl';
+import { UserApiService } from 'src/features/user/user-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -48,6 +52,8 @@ export class ProjectResolver {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly organizationApi: OrganizationApiService,
+    private readonly userApi: UserApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -79,6 +85,13 @@ export class ProjectResolver {
     return this.queryBus.execute(
       new GetAllBranchesByProjectQuery({ projectId: parent.id, ...data }),
     );
+  }
+
+  @ResolveField()
+  organization(@Parent() parent: ProjectModel) {
+    return this.organizationApi.organization({
+      organizationId: parent.organizationId,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -139,5 +152,13 @@ export class ProjectResolver {
     return this.commandBus.execute<UpdateUserProjectRoleCommand, boolean>(
       new UpdateUserProjectRoleCommand(data),
     );
+  }
+
+  @ResolveField()
+  userProject(@Parent() parent: ProjectModel, @CurrentUser() user: IAuthUser) {
+    return this.userApi.userProject({
+      projectId: parent.id,
+      userId: user.userId,
+    });
   }
 }

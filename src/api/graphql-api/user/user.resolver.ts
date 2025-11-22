@@ -29,13 +29,12 @@ import {
 import {
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryReturnType,
-  GetUserOrganizationQuery,
-  GetUserOrganizationQueryReturnType,
   GetUserQuery,
   GetUserQueryReturnType,
   SearchUsersQuery,
   SearchUsersQueryReturnType,
 } from 'src/features/user/queries/impl';
+import { UserApiService } from 'src/features/user/user-api.service';
 
 @UseGuards(GqlJwtAuthGuard)
 @Resolver(() => UserModel)
@@ -43,6 +42,7 @@ export class UserResolver {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly userApiService: UserApiService,
   ) {}
 
   @Query(() => UserModel)
@@ -111,9 +111,11 @@ export class UserResolver {
 
   @ResolveField()
   async organizationId(@Parent() parent: UserModel) {
-    return this.queryBus.execute<
-      GetUserOrganizationQuery,
-      GetUserOrganizationQueryReturnType
-    >(new GetUserOrganizationQuery({ userId: parent.id }));
+    const ownerRole =
+      await this.userApiService.deprecatedGetOwnedUserOrganization({
+        userId: parent.id,
+      });
+
+    return ownerRole?.organizationId;
   }
 }

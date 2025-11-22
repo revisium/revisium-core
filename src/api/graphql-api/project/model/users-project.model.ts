@@ -12,4 +12,6 @@ export class UsersProjectModel {
 
   @Field()
   role: RoleModel;
+
+  roleId: string;
 }

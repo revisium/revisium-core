@@ -1,12 +1,20 @@
 import { UseGuards } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import { OrganizationModel } from 'src/api/graphql-api/organization/model/organization.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { GQLOrganizationGuard } from 'src/features/auth/guards/organization.guard';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
-import { IOptionalAuthUser } from 'src/features/auth/types';
+import { IAuthUser, IOptionalAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import {
   AddUserToOrganizationInput,
@@ -27,16 +35,18 @@ import {
   GetProjectsByOrganizationIdQuery,
   GetUsersOrganizationQuery,
 } from 'src/features/organization/queries/impl';
+import { UserApiService } from 'src/features/user/user-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Organization,
 })
-@Resolver()
+@Resolver(() => OrganizationModel)
 export class OrganizationResolver {
   constructor(
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
+    private readonly userApi: UserApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLOrganizationGuard)
@@ -100,5 +110,16 @@ export class OrganizationResolver {
     return this.commandBus.execute<RemoveUserFromOrganizationCommand, boolean>(
       new RemoveUserFromOrganizationCommand(data),
     );
+  }
+
+  @ResolveField()
+  userOrganization(
+    @Parent() parent: OrganizationModel,
+    @CurrentUser() user: IAuthUser,
+  ) {
+    return this.userApi.userOrganization({
+      organizationId: parent.id,
+      userId: user.userId,
+    });
   }
 }
