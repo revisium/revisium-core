@@ -4,6 +4,7 @@ import {
   DeprecatedGetOwnedUserOrganizationHandler,
   GetUserProjectHandler,
   SearchUsersHandler,
+  GetUserOrganizationHandler,
 } from 'src/features/user/queries/handlers';
 
 export const USER_QUERIES = [
@@ -12,4 +13,5 @@ export const USER_QUERIES = [
   GetUserProjectHandler,
   GetProjectsByUserIdHandler,
   SearchUsersHandler,
+  GetUserOrganizationHandler,
 ];
