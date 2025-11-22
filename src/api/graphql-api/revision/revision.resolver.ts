@@ -28,6 +28,7 @@ import { GetChildrenByRevisionQuery } from 'src/features/revision/queries/impl/g
 import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/resolve-child-by-revision.query';
 import { ResolveParentByRevisionQuery } from 'src/features/revision/queries/impl/resolve-parent-by-revision.query';
 import { GetTablesByRevisionIdQuery } from 'src/features/revision/queries/impl/get-tables-by-revision-id.query';
+import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -39,6 +40,7 @@ export class RevisionResolver {
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
     private readonly revisionApi: RevisionsApiService,
+    private readonly revisionChangesApi: RevisionChangesApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -94,6 +96,13 @@ export class RevisionResolver {
   @ResolveField()
   async migrations(@Parent() revision: RevisionModel) {
     return this.revisionApi.migrations({ revisionId: revision.id });
+  }
+
+  @ResolveField()
+  async changes(@Parent() revision: RevisionModel) {
+    return this.revisionChangesApi.revisionChanges({
+      revisionId: revision.id,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)

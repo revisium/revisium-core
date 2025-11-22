@@ -1,0 +1,42 @@
+import { registerEnumType } from '@nestjs/graphql';
+
+export enum ChangeTypeEnum {
+  ADDED = 'ADDED',
+  MODIFIED = 'MODIFIED',
+  REMOVED = 'REMOVED',
+  RENAMED = 'RENAMED',
+}
+
+export enum ChangeSourceEnum {
+  DATA = 'DATA',
+  SCHEMA = 'SCHEMA',
+}
+
+export enum JsonPatchOpEnum {
+  ADD = 'ADD',
+  REMOVE = 'REMOVE',
+  REPLACE = 'REPLACE',
+  MOVE = 'MOVE',
+  COPY = 'COPY',
+}
+
+export enum MigrationTypeEnum {
+  INIT = 'INIT',
+  UPDATE = 'UPDATE',
+  RENAME = 'RENAME',
+  REMOVE = 'REMOVE',
+}
+
+export enum RowChangeDetailTypeEnum {
+  FIELD_ADDED = 'FIELD_ADDED',
+  FIELD_REMOVED = 'FIELD_REMOVED',
+  FIELD_MODIFIED = 'FIELD_MODIFIED',
+  FIELD_MOVED = 'FIELD_MOVED',
+  SCHEMA_MIGRATION = 'SCHEMA_MIGRATION',
+}
+
+registerEnumType(ChangeTypeEnum, { name: 'ChangeType' });
+registerEnumType(ChangeSourceEnum, { name: 'ChangeSource' });
+registerEnumType(JsonPatchOpEnum, { name: 'JsonPatchOp' });
+registerEnumType(MigrationTypeEnum, { name: 'MigrationType' });
+registerEnumType(RowChangeDetailTypeEnum, { name: 'RowChangeDetailType' });
