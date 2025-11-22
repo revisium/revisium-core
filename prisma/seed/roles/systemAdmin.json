@@ -3,6 +3,7 @@
   "level": "System",
   "permissions": [
     "read-organization",
-    "create-user"
+    "create-user",
+    "update-user"
   ]
 }

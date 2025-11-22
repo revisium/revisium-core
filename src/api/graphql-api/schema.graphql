@@ -347,6 +347,7 @@ type Mutation {
   updateProject(data: UpdateProjectInput!): Boolean!
   updateRow(data: UpdateRowInput!): UpdateRowResultModel!
   updateTable(data: UpdateTableInput!): UpdateTableResultModel!
+  updateUserProjectRole(data: UpdateUserProjectRoleInput!): Boolean!
 }
 
 input OrderBy {
@@ -454,6 +455,7 @@ type Query {
   row(data: GetRowInput!): RowModel
   rows(data: GetRowsInput!): RowsConnection!
   searchRows(data: SearchRowsInput!): SearchResultsConnection!
+  searchUsers(data: SearchUsersInput!): UsersConnection!
   table(data: GetTableInput!): TableModel
   tables(data: GetTablesInput!): TablesConnection!
   usersOrganization(data: GetUsersOrganizationInput!): UsersOrganizationConnection!
@@ -631,6 +633,12 @@ enum SearchType {
   plain
 }
 
+input SearchUsersInput {
+  after: String
+  first: Int!
+  search: String
+}
+
 input SetUsernameInput {
   username: String!
 }
@@ -722,11 +730,23 @@ type UpdateTableResultModel {
   table: TableModel!
 }
 
+input UpdateUserProjectRoleInput {
+  organizationId: String!
+  projectName: String!
+  roleId: UserProjectRoles!
+  userId: String!
+}
+
 type UserModel {
   email: String
   id: String!
   organizationId: String
   username: String
+}
+
+type UserModelEdge {
+  cursor: String!
+  node: UserModel!
 }
 
 enum UserOrganizationRoles {
@@ -747,6 +767,12 @@ enum UserSystemRole {
   systemAdmin
   systemFullApiRead
   systemUser
+}
+
+type UsersConnection {
+  edges: [UserModelEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type UsersOrganizationConnection {

@@ -1,5 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma, Row, Table } from 'src/__generated__/client';
+import { Row, Table } from 'src/__generated__/client';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import {
   SearchRowResult,
@@ -88,7 +88,7 @@ export class SearchRowsHandler
     await this.computeRowsForTables(rows, data.revisionId);
 
     return rows.map(({ row, table }) => ({
-      matches: extractMatchesFallback(row.data as Prisma.JsonValue, data.query),
+      matches: extractMatchesFallback(row.data, data.query),
       row,
       table,
     }));

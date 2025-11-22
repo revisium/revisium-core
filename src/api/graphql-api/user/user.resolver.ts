@@ -14,10 +14,12 @@ import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ProjectsConnection } from 'src/api/graphql-api/project/model/projects.connection';
 import {
   GetMeProjectsInput,
+  SearchUsersInput,
   SetUsernameInput,
   UpdatePasswordInput,
 } from 'src/api/graphql-api/user/inputs';
 import { UserModel } from 'src/api/graphql-api/user/model/user.model';
+import { UsersConnection } from 'src/api/graphql-api/user/model/users.connection';
 import {
   SetUsernameCommand,
   SetUsernameCommandReturnType,
@@ -31,6 +33,8 @@ import {
   GetUserOrganizationQueryReturnType,
   GetUserQuery,
   GetUserQueryReturnType,
+  SearchUsersQuery,
+  SearchUsersQueryReturnType,
 } from 'src/features/user/queries/impl';
 
 @UseGuards(GqlJwtAuthGuard)
@@ -60,6 +64,14 @@ export class UserResolver {
         ...data,
         userId: user.userId,
       }),
+    );
+  }
+
+  @UseGuards(GqlJwtAuthGuard)
+  @Query(() => UsersConnection)
+  async searchUsers(@Args('data') data: SearchUsersInput) {
+    return this.queryBus.execute<SearchUsersQuery, SearchUsersQueryReturnType>(
+      new SearchUsersQuery(data),
     );
   }
 

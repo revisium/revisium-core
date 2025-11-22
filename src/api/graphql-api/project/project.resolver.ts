@@ -20,6 +20,7 @@ import {
   GetUsersProjectInput,
   RemoveUserFromProjectInput,
   UpdateProjectInput,
+  UpdateUserProjectRoleInput,
 } from 'src/api/graphql-api/project/inputs';
 import { GetProjectBranchesInput } from 'src/api/graphql-api/project/inputs/get-project-branches.input';
 import { ProjectModel } from 'src/api/graphql-api/project/model';
@@ -29,6 +30,7 @@ import {
   DeleteProjectCommand,
   RemoveUserFromProjectCommand,
   UpdateProjectCommand,
+  UpdateUserProjectRoleCommand,
 } from 'src/features/project/commands/impl';
 import {
   GetAllBranchesByProjectQuery,
@@ -124,6 +126,18 @@ export class ProjectResolver {
   removeUserFromProject(@Args('data') data: RemoveUserFromProjectInput) {
     return this.commandBus.execute<RemoveUserFromProjectCommand, boolean>(
       new RemoveUserFromProjectCommand(data),
+    );
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.User,
+  })
+  @Mutation(() => Boolean)
+  updateUserProjectRole(@Args('data') data: UpdateUserProjectRoleInput) {
+    return this.commandBus.execute<UpdateUserProjectRoleCommand, boolean>(
+      new UpdateUserProjectRoleCommand(data),
     );
   }
 }
