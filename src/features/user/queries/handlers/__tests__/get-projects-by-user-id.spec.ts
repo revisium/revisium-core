@@ -12,7 +12,7 @@ import {
   UserProjectRoles,
 } from 'src/features/auth/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { GetUserOrganizationHandler } from 'src/features/user/queries/handlers/get-user-organization.handler';
+import { DeprecatedGetOwnedUserOrganizationHandler } from 'src/features/user/queries/handlers/deprecated-get-owned-user-organization.handler';
 import {
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryReturnType,
@@ -117,7 +117,7 @@ describe('GetProjectsByUserIdHandler', () => {
       providers: [
         PrismaService,
         GetProjectsByUserIdHandler,
-        GetUserOrganizationHandler,
+        DeprecatedGetOwnedUserOrganizationHandler,
       ],
     }).compile();
 

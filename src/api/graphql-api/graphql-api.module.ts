@@ -12,16 +12,22 @@ import { ConfigurationResolver } from 'src/api/graphql-api/configuration/configu
 import { DraftResolver } from 'src/api/graphql-api/draft/draft.resolver';
 import { EndpointResolver } from 'src/api/graphql-api/endpoint/endpoint.resolver';
 import { OrganizationResolver } from 'src/api/graphql-api/organization/organization.resolver';
+import { UsersOrganizationResolver } from 'src/api/graphql-api/organization/users-organization.resolver';
 import { ProjectResolver } from 'src/api/graphql-api/project/project.resolver';
+import { UsersProjectResolver } from 'src/api/graphql-api/project/users-project.resolver';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { ChildBranchResolver } from 'src/api/graphql-api/revision/child-branch.resolver';
 import { RevisionResolver } from 'src/api/graphql-api/revision/revision.resolver';
+import { RoleResolver } from 'src/api/graphql-api/role/role.resolver';
 import { RowResolver } from 'src/api/graphql-api/row/row.resolver';
 import { SearchRowsResolver } from 'src/api/graphql-api/row/resolver/search-rows.resolver';
 import { TableResolver } from 'src/api/graphql-api/table/table.resolver';
 import { UserResolver } from 'src/api/graphql-api/user/user.resolver';
+import { OrganizationModule } from 'src/features/organization/organization.module';
 import { RevisionModule } from 'src/features/revision';
+import { RoleModule } from 'src/features/role/role.module';
 import { RowModule } from 'src/features/row/row.module';
+import { UserModule } from 'src/features/user/user.module';
 import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql-metrics.plugin';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 
@@ -56,13 +62,19 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
     AuthModule,
     RowModule,
     RevisionModule,
+    UserModule,
+    OrganizationModule,
+    RoleModule,
   ],
   providers: [
     ConfigurationResolver,
     AuthResolver,
     UserResolver,
     OrganizationResolver,
+    UsersOrganizationResolver,
     ProjectResolver,
+    UsersProjectResolver,
+    RoleResolver,
     BranchResolver,
     ParentBranchResolver,
     ChildBranchResolver,

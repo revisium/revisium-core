@@ -12,4 +12,6 @@ export class UsersOrganizationModel {
 
   @Field()
   role: RoleModel;
+
+  roleId: string;
 }
