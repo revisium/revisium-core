@@ -22,6 +22,7 @@ import { OrganizationModule } from 'src/features/organization/organization.modul
 import { ProjectModule } from 'src/features/project/project.module';
 import { RestApiModule } from 'src/api/rest-api/rest-api.module';
 import { RevisionModule } from 'src/features/revision/revision.module';
+import { RoleModule } from 'src/features/role/role.module';
 import { RowModule } from 'src/features/row/row.module';
 import { TableModule } from 'src/features/table/table.module';
 import { UserModule } from 'src/features/user/user.module';
@@ -55,6 +56,7 @@ export class CoreModule {
         ProjectModule,
         BranchModule,
         RevisionModule,
+        RoleModule,
         TableModule,
         RowModule,
         DraftModule,
