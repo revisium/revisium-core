@@ -381,6 +381,12 @@ enum OrderDataType {
   timestamp
 }
 
+type OrganizationModel {
+  createdId: String!
+  id: String!
+  userOrganization: UsersOrganizationModel
+}
+
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
@@ -417,6 +423,13 @@ type PatchRowResultModel {
   table: TableModel!
 }
 
+type PermissionModel {
+  action: String!
+  condition: JSON
+  id: String!
+  subject: String!
+}
+
 type PluginsModel {
   file: Boolean!
 }
@@ -427,8 +440,10 @@ type ProjectModel {
   id: String!
   isPublic: Boolean!
   name: String!
+  organization: OrganizationModel!
   organizationId: String!
   rootBranch: BranchModel!
+  userProject: UsersProjectModel
 }
 
 type ProjectModelEdge {
@@ -562,6 +577,7 @@ type RevisionModelEdge {
 type RoleModel {
   id: String!
   name: String!
+  permissions: [PermissionModel!]!
 }
 
 type RowModel {
