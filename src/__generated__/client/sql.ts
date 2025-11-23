@@ -15,6 +15,8 @@ export * from "./sql/getRowChangesStatsBetweenRevisions"
 
 export * from "./sql/getTableDiffsPaginatedBetweenRevisions"
 
+export * from "./sql/getTableDiffsStatsBetweenRevisions"
+
 export * from "./sql/hasRowDiffsBetweenRevisions"
 
 export * from "./sql/hasTableDiffsBetweenRevisions"

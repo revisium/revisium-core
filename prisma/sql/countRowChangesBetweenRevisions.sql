@@ -1,7 +1,7 @@
 -- @param {String} $1:fromRevisionId
 -- @param {String} $2:toRevisionId
--- @param {String} $3:tableCreatedId (optional, NULL для всех таблиц)
--- @param {Boolean} $4:includeSystem (optional, включать ли системные таблицы, по умолчанию FALSE)
+-- @param {String} $3:tableCreatedId (optional, NULL for all tables)
+-- @param {Boolean} $4:includeSystem (optional, whether to include system tables, default FALSE)
 
 WITH parent_rows AS (
     SELECT

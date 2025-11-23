@@ -1,10 +1,10 @@
 -- @param {String} $1:fromRevisionId
 -- @param {String} $2:toRevisionId
--- @param {String} $3:tableCreatedId (optional, для фильтрации, NULL для всех таблиц)
--- @param {String} $4:searchTerm (optional, для поиска по rowId, NULL для отключения)
+-- @param {String} $3:tableCreatedId (optional, for filtering, NULL for all tables)
+-- @param {String} $4:searchTerm (optional, for searching by rowId, NULL to disable)
 -- @param {Int} $5:limit
 -- @param {Int} $6:offset
--- @param {Boolean} $7:includeSystem (optional, включать ли системные таблицы, по умолчанию FALSE)
+-- @param {Boolean} $7:includeSystem (optional, whether to include system tables, default FALSE)
 
 WITH parent_rows AS (
     SELECT
@@ -93,7 +93,7 @@ all_changes AS (
 )
 SELECT * FROM all_changes
 WHERE
-    -- Поиск по rowId
+    -- Search by rowId
     ($4::text IS NULL OR
      "fromRowId" ILIKE '%' || $4 || '%' OR
      "toRowId" ILIKE '%' || $4 || '%')

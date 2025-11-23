@@ -16,7 +16,12 @@ WITH parent_tables AS (SELECT "id", "createdId", "versionId"
                                                                INNER JOIN "Revision" AS "j1" ON ("j1"."id") = ("t1"."A")
                                                       WHERE ("j1"."id" = $2 AND "t1"."B" IS NOT NULL))
                       AND ($3::boolean IS TRUE OR "Table"."system" = FALSE))
-SELECT COUNT(*) ::integer AS count
+SELECT
+    COUNT(*) ::integer AS total,
+    COUNT(*) FILTER (WHERE pt."createdId" IS NULL) ::integer AS added,
+    COUNT(*) FILTER (WHERE ct."createdId" IS NULL) ::integer AS removed,
+    COUNT(*) FILTER (WHERE pt."id" != ct."id" AND pt."createdId" IS NOT NULL AND ct."createdId" IS NOT NULL) ::integer AS renamed,
+    COUNT(*) FILTER (WHERE pt."id" = ct."id" AND ct."versionId" != pt."versionId") ::integer AS modified
 FROM
     child_tables ct
     FULL OUTER JOIN parent_tables pt USING ("createdId")
@@ -28,4 +33,3 @@ WHERE
     pt."id" != ct."id"
    OR
     ct."versionId" != pt."versionId"
-

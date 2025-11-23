@@ -8,8 +8,8 @@ import * as $runtime from "@prisma/client/runtime/client"
 /**
  * @param fromRevisionId
  * @param toRevisionId
- * @param tableCreatedId (optional, NULL для всех таблиц)
- * @param includeSystem (optional, включать ли системные таблицы, по умолчанию FALSE)
+ * @param tableCreatedId (optional, NULL for all tables)
+ * @param includeSystem (optional, whether to include system tables, default FALSE)
  */
 export const countRowChangesBetweenRevisions = $runtime.makeTypedQueryFactory("\nWITH parent_rows AS (\nSELECT\nr.\"id\",\nr.\"createdId\",\nr.\"hash\"\nFROM \"Row\" r\nINNER JOIN \"_RowToTable\" rt ON r.\"versionId\" = rt.\"A\"\nINNER JOIN \"Table\" t ON t.\"versionId\" = rt.\"B\"\nINNER JOIN \"_RevisionToTable\" revt ON t.\"versionId\" = revt.\"B\"\nWHERE revt.\"A\" = $1\nAND ($3::text IS NULL OR t.\"createdId\" = $3)\nAND ($4::boolean IS TRUE OR t.\"system\" = FALSE)\n),\nchild_rows AS (\nSELECT\nr.\"id\",\nr.\"createdId\",\nr.\"hash\"\nFROM \"Row\" r\nINNER JOIN \"_RowToTable\" rt ON r.\"versionId\" = rt.\"A\"\nINNER JOIN \"Table\" t ON t.\"versionId\" = rt.\"B\"\nINNER JOIN \"_RevisionToTable\" revt ON t.\"versionId\" = revt.\"B\"\nWHERE revt.\"A\" = $2\nAND ($3::text IS NULL OR t.\"createdId\" = $3)\nAND ($4::boolean IS TRUE OR t.\"system\" = FALSE)\n)\nSELECT\nCOUNT(*) AS \"count\"\nFROM child_rows cr\nFULL OUTER JOIN parent_rows pr USING (\"createdId\")\nWHERE\npr.\"createdId\" IS NULL OR\ncr.\"createdId\" IS NULL OR\npr.\"id\" != cr.\"id\" OR\ncr.\"hash\" != pr.\"hash\"") as (fromRevisionId: string, toRevisionId: string, tableCreatedId: string, includeSystem: boolean) => $runtime.TypedSql<countRowChangesBetweenRevisions.Parameters, countRowChangesBetweenRevisions.Result>
 

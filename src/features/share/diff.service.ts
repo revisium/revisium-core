@@ -4,6 +4,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { getTableDiffsPaginatedBetweenRevisions } from 'src/__generated__/client/sql/getTableDiffsPaginatedBetweenRevisions';
 import { hasTableDiffsBetweenRevisions } from 'src/__generated__/client/sql/hasTableDiffsBetweenRevisions';
 import { countTableDiffsBetweenRevisions } from 'src/__generated__/client/sql/countTableDiffsBetweenRevisions';
+import { getTableDiffsStatsBetweenRevisions } from 'src/__generated__/client/sql/getTableDiffsStatsBetweenRevisions';
 import { hasRowDiffsBetweenRevisions } from 'src/__generated__/client/sql/hasRowDiffsBetweenRevisions';
 
 export enum TableDiffChangeType {
@@ -130,40 +131,33 @@ export class DiffService {
     removed: number;
     renamed: number;
   }> {
-    const diffs = await this.tableDiffs({
-      fromRevisionId: options.fromRevisionId,
-      toRevisionId: options.toRevisionId,
-      limit: 10000, // большой лимит для получения всех изменений
-      offset: 0,
-      includeSystem: options.includeSystem ?? false,
-    });
+    const result = await this.prisma.$queryRawTyped(
+      getTableDiffsStatsBetweenRevisions(
+        options.fromRevisionId,
+        options.toRevisionId,
+        options.includeSystem ?? false,
+      ),
+    );
 
-    const stats = {
-      total: diffs.length,
-      added: 0,
-      modified: 0,
-      removed: 0,
-      renamed: 0,
-    };
+    const row = result[0];
 
-    for (const diff of diffs) {
-      switch (diff.changeType) {
-        case TableDiffChangeType.Added:
-          stats.added++;
-          break;
-        case TableDiffChangeType.Modified:
-          stats.modified++;
-          break;
-        case TableDiffChangeType.Removed:
-          stats.removed++;
-          break;
-        case TableDiffChangeType.Renamed:
-          stats.renamed++;
-          break;
-      }
+    if (!row) {
+      return {
+        total: 0,
+        added: 0,
+        modified: 0,
+        removed: 0,
+        renamed: 0,
+      };
     }
 
-    return stats;
+    return {
+      total: row.total ?? 0,
+      added: row.added ?? 0,
+      modified: row.modified ?? 0,
+      removed: row.removed ?? 0,
+      renamed: row.renamed ?? 0,
+    };
   }
 
   public async hasRowDiffs(options: {
