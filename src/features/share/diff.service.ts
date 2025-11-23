@@ -41,17 +41,22 @@ export class DiffService {
     limit = 1,
     offset = 0,
     includeSystem = false,
+    changeTypes,
   }: {
     fromRevisionId: string;
     toRevisionId: string;
     limit?: number;
     offset?: number;
     includeSystem?: boolean;
+    changeTypes?: string[];
   }): Promise<TableDiff[]> {
+    const changeTypesJson = changeTypes ? JSON.stringify(changeTypes) : null;
+
     const result = await this.prisma.$queryRawTyped(
       getTableDiffsPaginatedBetweenRevisions(
         fromRevisionId,
         toRevisionId,
+        changeTypesJson as any,
         limit,
         offset,
         includeSystem,
@@ -108,11 +113,17 @@ export class DiffService {
     fromRevisionId: string;
     toRevisionId: string;
     includeSystem?: boolean;
+    changeTypes?: string[];
   }): Promise<number> {
+    const changeTypesJson = options.changeTypes
+      ? JSON.stringify(options.changeTypes)
+      : null;
+
     const result = await this.prisma.$queryRawTyped(
       countTableDiffsBetweenRevisions(
         options.fromRevisionId,
         options.toRevisionId,
+        changeTypesJson as any,
         options.includeSystem ?? false,
       ),
     );

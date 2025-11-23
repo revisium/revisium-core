@@ -53,6 +53,7 @@ export class GetTableChangesHandler
           limit: args.take,
           offset: args.skip,
           includeSystem,
+          changeTypes: filters?.changeTypes,
         });
 
         return Promise.all(
@@ -71,6 +72,7 @@ export class GetTableChangesHandler
           fromRevisionId,
           toRevisionId: revisionId,
           includeSystem,
+          changeTypes: filters?.changeTypes,
         }),
     });
   }
