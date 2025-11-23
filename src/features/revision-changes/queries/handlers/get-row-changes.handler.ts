@@ -104,12 +104,14 @@ export class GetRowChangesHandler
     includeSystem = false,
   ): Promise<number> {
     const tableCreatedId = filters?.tableCreatedId ?? filters?.tableId;
+    const searchTerm = filters?.search;
 
     const result = await this.prisma.$queryRawTyped(
       countRowChangesBetweenRevisions(
         fromRevisionId,
         toRevisionId,
         (tableCreatedId ?? null) as any,
+        (searchTerm ?? null) as any,
         includeSystem,
       ),
     );

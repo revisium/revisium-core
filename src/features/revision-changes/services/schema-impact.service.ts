@@ -37,7 +37,7 @@ export class SchemaImpactService {
     };
   }
 
-  private extractMigrationDetails(
+  public extractMigrationDetails(
     migrations: Prisma.JsonValue[],
   ): SchemaMigrationDetail[] {
     return migrations.map((migration) => {

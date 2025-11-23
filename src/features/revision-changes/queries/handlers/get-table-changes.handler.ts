@@ -57,7 +57,12 @@ export class GetTableChangesHandler
 
         return Promise.all(
           tableDiffs.map((diff) =>
-            this.mapToTableChange(diff, revisionId, includeSystem),
+            this.mapToTableChange(
+              diff,
+              revisionId,
+              fromRevisionId,
+              includeSystem,
+            ),
           ),
         );
       },
@@ -73,6 +78,7 @@ export class GetTableChangesHandler
   private async mapToTableChange(
     diff: TableDiff,
     revisionId: string,
+    fromRevisionId: string,
     includeSystem = false,
   ): Promise<TableChange> {
     const migrations =
@@ -81,17 +87,12 @@ export class GetTableChangesHandler
         diff.createdId,
       );
 
-    const fromRevisionId =
-      await this.revisionComparisonService.getParentRevisionId(revisionId);
-
-    const rowStats = fromRevisionId
-      ? await this.getRowsStatsForTable(
-          fromRevisionId,
-          revisionId,
-          diff.createdId,
-          includeSystem,
-        )
-      : null;
+    const rowStats = await this.getRowsStatsForTable(
+      fromRevisionId,
+      revisionId,
+      diff.createdId,
+      includeSystem,
+    );
 
     return this.tableChangeMapper.mapTableDiffToTableChange(
       diff,

@@ -56,7 +56,7 @@ export class RowDiffService {
     const diff = jsonpatch.compare(fromData, toData);
 
     for (const operation of diff) {
-      const fieldPath = operation.path.slice(1);
+      const fieldPath = this.normalizeFieldPath(operation.path);
 
       if (operation.op === 'add') {
         changes.push({
@@ -84,7 +84,7 @@ export class RowDiffService {
           changeType: RowChangeDetailType.FieldModified,
         });
       } else if (operation.op === 'move') {
-        const fromPath = (operation as any).from.slice(1);
+        const fromPath = this.normalizeFieldPath((operation as any).from);
         changes.push({
           fieldPath,
           oldValue: this.getValueAtPath(fromData, fromPath),
@@ -96,6 +96,10 @@ export class RowDiffService {
     }
 
     return changes;
+  }
+
+  private normalizeFieldPath(jsonPointerPath: string): string {
+    return jsonPointerPath.slice(1).replace(/\//g, '.');
   }
 
   private flattenObject(
@@ -120,7 +124,7 @@ export class RowDiffService {
   }
 
   private getValueAtPath(obj: Record<string, unknown>, path: string): unknown {
-    const parts = path.split('/').filter(Boolean);
+    const parts = path.split('.');
     let current: any = obj;
 
     for (const part of parts) {

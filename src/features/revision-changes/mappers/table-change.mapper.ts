@@ -34,11 +34,7 @@ export class TableChangeMapper {
       toVersionId: diff.toVersionId,
       changeType,
       ...this.mapRenamedFields(changeType, diff.fromId, diff.toId),
-      schemaMigrations: this.extractSchemaMigrations(
-        migrations,
-        diff.fromVersionId,
-        diff.toVersionId,
-      ),
+      schemaMigrations: this.extractSchemaMigrations(migrations),
       rowChangesCount: Number(rowStats?.total ?? 0),
       addedRowsCount: Number(rowStats?.added ?? 0),
       modifiedRowsCount: Number(rowStats?.modified ?? 0),
@@ -79,21 +75,7 @@ export class TableChangeMapper {
 
   private extractSchemaMigrations(
     migrations: Prisma.JsonValue[],
-    fromVersionId: string | null,
-    toVersionId: string | null,
   ): SchemaMigrationDetail[] {
-    return migrations
-      .map(
-        (migration) =>
-          this.schemaImpactService.analyzeSchemaImpact(
-            fromVersionId,
-            toVersionId,
-            [migration],
-          )?.migrationDetails,
-      )
-      .filter(
-        (migration): migration is NonNullable<typeof migration> =>
-          migration !== undefined,
-      );
+    return this.schemaImpactService.extractMigrationDetails(migrations);
   }
 }
