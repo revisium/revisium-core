@@ -10,7 +10,8 @@ WITH parent_rows AS (
     SELECT
         r."id",
         r."createdId",
-        r."hash"
+        r."hash",
+        r."schemaHash"
     FROM "Row" r
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     INNER JOIN "Table" t ON t."versionId" = rt."B"
@@ -23,7 +24,8 @@ child_rows AS (
     SELECT
         r."id",
         r."createdId",
-        r."hash"
+        r."hash",
+        r."schemaHash"
     FROM "Row" r
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     INNER JOIN "Table" t ON t."versionId" = rt."B"
@@ -41,8 +43,8 @@ all_changes AS (
             WHEN cr."hash" != pr."hash" THEN 'MODIFIED'
         END AS "changeType",
         CASE
-            WHEN pr."hash" IS NULL OR cr."hash" IS NULL THEN 'DATA'
-            WHEN cr."hash" != pr."hash" THEN 'SCHEMA'
+            WHEN pr."schemaHash" IS NULL OR cr."schemaHash" IS NULL THEN 'DATA'
+            WHEN cr."schemaHash" != pr."schemaHash" THEN 'SCHEMA'
             ELSE 'DATA'
         END AS "changeSource",
         pr."id" AS "fromRowId",
