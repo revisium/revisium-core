@@ -10,6 +10,7 @@ export enum TableDiffChangeType {
   Modified = 'modified',
   Added = 'added',
   Removed = 'removed',
+  Renamed = 'renamed',
 }
 
 export interface TableDiff {
@@ -38,11 +39,13 @@ export class DiffService {
     toRevisionId,
     limit = 1,
     offset = 0,
+    includeSystem = false,
   }: {
     fromRevisionId: string;
     toRevisionId: string;
     limit?: number;
     offset?: number;
+    includeSystem?: boolean;
   }): Promise<TableDiff[]> {
     const result = await this.prisma.$queryRawTyped(
       getTableDiffsPaginatedBetweenRevisions(
@@ -50,6 +53,7 @@ export class DiffService {
         toRevisionId,
         limit,
         offset,
+        includeSystem,
       ),
     );
 
@@ -102,15 +106,64 @@ export class DiffService {
   public async countTableDiffs(options: {
     fromRevisionId: string;
     toRevisionId: string;
+    includeSystem?: boolean;
   }): Promise<number> {
     const result = await this.prisma.$queryRawTyped(
       countTableDiffsBetweenRevisions(
         options.fromRevisionId,
         options.toRevisionId,
+        options.includeSystem ?? false,
       ),
     );
 
     return result[0]?.count || 0;
+  }
+
+  public async getTableDiffsStats(options: {
+    fromRevisionId: string;
+    toRevisionId: string;
+    includeSystem?: boolean;
+  }): Promise<{
+    total: number;
+    added: number;
+    modified: number;
+    removed: number;
+    renamed: number;
+  }> {
+    const diffs = await this.tableDiffs({
+      fromRevisionId: options.fromRevisionId,
+      toRevisionId: options.toRevisionId,
+      limit: 10000, // большой лимит для получения всех изменений
+      offset: 0,
+      includeSystem: options.includeSystem ?? false,
+    });
+
+    const stats = {
+      total: diffs.length,
+      added: 0,
+      modified: 0,
+      removed: 0,
+      renamed: 0,
+    };
+
+    for (const diff of diffs) {
+      switch (diff.changeType) {
+        case TableDiffChangeType.Added:
+          stats.added++;
+          break;
+        case TableDiffChangeType.Modified:
+          stats.modified++;
+          break;
+        case TableDiffChangeType.Removed:
+          stats.removed++;
+          break;
+        case TableDiffChangeType.Renamed:
+          stats.renamed++;
+          break;
+      }
+    }
+
+    return stats;
   }
 
   public async hasRowDiffs(options: {

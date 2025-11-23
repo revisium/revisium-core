@@ -99,7 +99,7 @@ describe('DiffService', () => {
         createdId: fromTable.createdId,
         fromVersionId: fromTable.versionId,
         toVersionId: toTable.versionId,
-        changeType: TableDiffChangeType.Modified,
+        changeType: TableDiffChangeType.Renamed,
       });
     });
 
@@ -376,6 +376,231 @@ describe('DiffService', () => {
       });
 
       expect(result).toEqual(1);
+    });
+  });
+
+  describe('getTableDiffsStats', () => {
+    it('complex stats', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      // Added table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      // Removed table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: fromRevision.id },
+          },
+        },
+      });
+
+      // Modified table
+      const modifiedTable = await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: fromRevision.id },
+          },
+        },
+      });
+
+      await prismaService.table.create({
+        data: {
+          id: modifiedTable.id,
+          createdId: modifiedTable.createdId,
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      // Renamed table
+      const renamedTable = await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: fromRevision.id },
+          },
+        },
+      });
+
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: renamedTable.createdId,
+          versionId: nanoid(),
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      const result = await diffService.getTableDiffsStats({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
+
+      expect(result).toEqual({
+        total: 4,
+        added: 1,
+        removed: 1,
+        modified: 1,
+        renamed: 1,
+      });
+    });
+
+    it('empty revision', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      const result = await diffService.getTableDiffsStats({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+      });
+
+      expect(result).toEqual({
+        total: 0,
+        added: 0,
+        removed: 0,
+        modified: 0,
+        renamed: 0,
+      });
+    });
+  });
+
+  describe('includeSystem filter', () => {
+    it('excludes system tables by default', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      // Create system table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          system: true,
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      // Create regular table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          system: false,
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      const result = await diffService.tableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+        includeSystem: false,
+      });
+
+      expect(result.length).toEqual(1);
+      expect(result[0].changeType).toEqual(TableDiffChangeType.Added);
+    });
+
+    it('includes system tables when includeSystem is true', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      // Create system table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          system: true,
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      // Create regular table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          system: false,
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      const result = await diffService.tableDiffs({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+        includeSystem: true,
+        limit: 10,
+      });
+
+      expect(result.length).toEqual(2);
+    });
+
+    it('getTableDiffsStats excludes system tables by default', async () => {
+      const { fromRevision, toRevision } = await prepareRevisions();
+
+      // Create system table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          system: true,
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      // Create regular table
+      await prismaService.table.create({
+        data: {
+          id: nanoid(),
+          createdId: nanoid(),
+          versionId: nanoid(),
+          system: false,
+          revisions: {
+            connect: { id: toRevision.id },
+          },
+        },
+      });
+
+      const result = await diffService.getTableDiffsStats({
+        fromRevisionId: fromRevision.id,
+        toRevisionId: toRevision.id,
+        includeSystem: false,
+      });
+
+      expect(result.total).toEqual(1);
+      expect(result.added).toEqual(1);
     });
   });
 
