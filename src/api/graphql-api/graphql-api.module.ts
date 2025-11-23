@@ -4,6 +4,10 @@ import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { GraphQLModule } from '@nestjs/graphql';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
+import { UsersOrganizationResolver } from 'src/api/graphql-api/organization/users-organization.resolver';
+import { UsersProjectResolver } from 'src/api/graphql-api/project/users-project.resolver';
+import { RevisionChangesResolver } from 'src/api/graphql-api/revision-changes/revision-changes.resolver';
+import { RoleResolver } from 'src/api/graphql-api/role/role.resolver';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { AuthResolver } from 'src/api/graphql-api/auth/auth.resolver';
 import { BranchResolver } from 'src/api/graphql-api/branch/branch.resolver';
@@ -12,24 +16,22 @@ import { ConfigurationResolver } from 'src/api/graphql-api/configuration/configu
 import { DraftResolver } from 'src/api/graphql-api/draft/draft.resolver';
 import { EndpointResolver } from 'src/api/graphql-api/endpoint/endpoint.resolver';
 import { OrganizationResolver } from 'src/api/graphql-api/organization/organization.resolver';
-import { UsersOrganizationResolver } from 'src/api/graphql-api/organization/users-organization.resolver';
 import { ProjectResolver } from 'src/api/graphql-api/project/project.resolver';
-import { UsersProjectResolver } from 'src/api/graphql-api/project/users-project.resolver';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { ChildBranchResolver } from 'src/api/graphql-api/revision/child-branch.resolver';
 import { RevisionResolver } from 'src/api/graphql-api/revision/revision.resolver';
-import { RoleResolver } from 'src/api/graphql-api/role/role.resolver';
 import { RowResolver } from 'src/api/graphql-api/row/row.resolver';
 import { SearchRowsResolver } from 'src/api/graphql-api/row/resolver/search-rows.resolver';
 import { TableResolver } from 'src/api/graphql-api/table/table.resolver';
 import { UserResolver } from 'src/api/graphql-api/user/user.resolver';
-import { OrganizationModule } from 'src/features/organization/organization.module';
 import { RevisionModule } from 'src/features/revision';
 import { RoleModule } from 'src/features/role/role.module';
 import { RowModule } from 'src/features/row/row.module';
 import { UserModule } from 'src/features/user/user.module';
+import { OrganizationModule } from 'src/features/organization/organization.module';
 import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql-metrics.plugin';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
+import { RevisionChangesModule } from 'src/features/revision-changes/revision-changes.module';
 
 @Module({
   imports: [
@@ -60,11 +62,12 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
     }),
     CqrsModule,
     AuthModule,
-    RowModule,
-    RevisionModule,
     UserModule,
     OrganizationModule,
     RoleModule,
+    RowModule,
+    RevisionModule,
+    RevisionChangesModule,
   ],
   providers: [
     ConfigurationResolver,
@@ -84,6 +87,7 @@ import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
     RowResolver,
     SearchRowsResolver,
     TableResolver,
+    RevisionChangesResolver,
   ],
 })
 export class GraphqlApiModule {}
