@@ -5,9 +5,17 @@
 // @ts-nocheck 
 export { type $DbEnums } from "./sql/$DbEnums"
 
+export * from "./sql/countRowChangesBetweenRevisions"
+
 export * from "./sql/countTableDiffsBetweenRevisions"
 
+export * from "./sql/getRowChangesPaginatedBetweenRevisions"
+
+export * from "./sql/getRowChangesStatsBetweenRevisions"
+
 export * from "./sql/getTableDiffsPaginatedBetweenRevisions"
+
+export * from "./sql/getTableDiffsStatsBetweenRevisions"
 
 export * from "./sql/hasRowDiffsBetweenRevisions"
 

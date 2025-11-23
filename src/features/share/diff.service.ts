@@ -4,12 +4,14 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { getTableDiffsPaginatedBetweenRevisions } from 'src/__generated__/client/sql/getTableDiffsPaginatedBetweenRevisions';
 import { hasTableDiffsBetweenRevisions } from 'src/__generated__/client/sql/hasTableDiffsBetweenRevisions';
 import { countTableDiffsBetweenRevisions } from 'src/__generated__/client/sql/countTableDiffsBetweenRevisions';
+import { getTableDiffsStatsBetweenRevisions } from 'src/__generated__/client/sql/getTableDiffsStatsBetweenRevisions';
 import { hasRowDiffsBetweenRevisions } from 'src/__generated__/client/sql/hasRowDiffsBetweenRevisions';
 
 export enum TableDiffChangeType {
   Modified = 'modified',
   Added = 'added',
   Removed = 'removed',
+  Renamed = 'renamed',
 }
 
 export interface TableDiff {
@@ -38,11 +40,13 @@ export class DiffService {
     toRevisionId,
     limit = 1,
     offset = 0,
+    includeSystem = false,
   }: {
     fromRevisionId: string;
     toRevisionId: string;
     limit?: number;
     offset?: number;
+    includeSystem?: boolean;
   }): Promise<TableDiff[]> {
     const result = await this.prisma.$queryRawTyped(
       getTableDiffsPaginatedBetweenRevisions(
@@ -50,6 +54,7 @@ export class DiffService {
         toRevisionId,
         limit,
         offset,
+        includeSystem,
       ),
     );
 
@@ -102,15 +107,57 @@ export class DiffService {
   public async countTableDiffs(options: {
     fromRevisionId: string;
     toRevisionId: string;
+    includeSystem?: boolean;
   }): Promise<number> {
     const result = await this.prisma.$queryRawTyped(
       countTableDiffsBetweenRevisions(
         options.fromRevisionId,
         options.toRevisionId,
+        options.includeSystem ?? false,
       ),
     );
 
     return result[0]?.count || 0;
+  }
+
+  public async getTableDiffsStats(options: {
+    fromRevisionId: string;
+    toRevisionId: string;
+    includeSystem?: boolean;
+  }): Promise<{
+    total: number;
+    added: number;
+    modified: number;
+    removed: number;
+    renamed: number;
+  }> {
+    const result = await this.prisma.$queryRawTyped(
+      getTableDiffsStatsBetweenRevisions(
+        options.fromRevisionId,
+        options.toRevisionId,
+        options.includeSystem ?? false,
+      ),
+    );
+
+    const row = result[0];
+
+    if (!row) {
+      return {
+        total: 0,
+        added: 0,
+        modified: 0,
+        removed: 0,
+        renamed: 0,
+      };
+    }
+
+    return {
+      total: row.total ?? 0,
+      added: row.added ?? 0,
+      modified: row.modified ?? 0,
+      removed: row.removed ?? 0,
+      renamed: row.renamed ?? 0,
+    };
   }
 
   public async hasRowDiffs(options: {
