@@ -1,0 +1,14 @@
+import { RowChangeDetailType } from './enums';
+
+export interface FieldMove {
+  from: string;
+  to: string;
+}
+
+export interface FieldChange {
+  fieldPath: string;
+  oldValue: unknown | null;
+  newValue: unknown | null;
+  changeType: RowChangeDetailType;
+  movedFrom?: string;
+}
