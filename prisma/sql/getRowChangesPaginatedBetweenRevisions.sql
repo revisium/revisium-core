@@ -57,7 +57,7 @@ all_changes AS (
         pr."hash" AS "fromHash",
         pr."schemaHash" AS "fromSchemaHash",
         pr."tableId" AS "fromTableId",
-        pr."tableCreatedId" AS "tableCreatedId",
+        COALESCE(cr."tableCreatedId", pr."tableCreatedId") AS "tableCreatedId",
         pr."createdAt" AS "fromCreatedAt",
 
         cr."id" AS "toRowId",

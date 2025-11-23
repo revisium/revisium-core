@@ -1,7 +1,8 @@
 -- @param {String} $1:fromRevisionId
 -- @param {String} $2:toRevisionId
 -- @param {String} $3:tableCreatedId (optional, NULL for all tables)
--- @param {Boolean} $4:includeSystem (optional, whether to include system tables, default FALSE)
+-- @param {String} $4:searchTerm (optional, for searching by rowId, NULL to disable)
+-- @param {Boolean} $5:includeSystem (optional, whether to include system tables, default FALSE)
 
 WITH parent_rows AS (
     SELECT
@@ -14,7 +15,7 @@ WITH parent_rows AS (
     INNER JOIN "_RevisionToTable" revt ON t."versionId" = revt."B"
     WHERE revt."A" = $1
         AND ($3::text IS NULL OR t."createdId" = $3)
-        AND ($4::boolean IS TRUE OR t."system" = FALSE)
+        AND ($5::boolean IS TRUE OR t."system" = FALSE)
 ),
 child_rows AS (
     SELECT
@@ -27,14 +28,17 @@ child_rows AS (
     INNER JOIN "_RevisionToTable" revt ON t."versionId" = revt."B"
     WHERE revt."A" = $2
         AND ($3::text IS NULL OR t."createdId" = $3)
-        AND ($4::boolean IS TRUE OR t."system" = FALSE)
+        AND ($5::boolean IS TRUE OR t."system" = FALSE)
 )
 SELECT
     COUNT(*) AS "count"
 FROM child_rows cr
 FULL OUTER JOIN parent_rows pr USING ("createdId")
 WHERE
-    pr."createdId" IS NULL OR
-    cr."createdId" IS NULL OR
-    pr."id" != cr."id" OR
-    cr."hash" != pr."hash"
+    (pr."createdId" IS NULL OR
+     cr."createdId" IS NULL OR
+     pr."id" != cr."id" OR
+     cr."hash" != pr."hash")
+    AND ($4::text IS NULL OR
+         pr."id" ILIKE '%' || $4 || '%' OR
+         cr."id" ILIKE '%' || $4 || '%')
