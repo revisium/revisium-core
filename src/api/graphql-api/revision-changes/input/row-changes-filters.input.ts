@@ -7,9 +7,6 @@ export class RowChangesFiltersInput {
   @Field({ nullable: true })
   tableId?: string;
 
-  @Field({ nullable: true })
-  tableCreatedId?: string;
-
   @Field(() => [ChangeTypeEnum], { nullable: true })
   changeTypes?: ChangeTypeEnum[];
 

@@ -727,7 +727,6 @@ input RowChangesFiltersInput {
   fieldValue: JSON
   includeSystem: Boolean = false
   search: String
-  tableCreatedId: String
   tableId: String
 }
 

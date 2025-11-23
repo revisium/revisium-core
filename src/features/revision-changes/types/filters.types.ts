@@ -9,7 +9,6 @@ export interface TableChangesFilters {
 
 export interface RowChangesFilters {
   tableId?: string;
-  tableCreatedId?: string;
   changeTypes?: ChangeType[];
   changeSources?: ChangeSource[];
   search?: string;
