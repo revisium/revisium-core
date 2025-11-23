@@ -80,26 +80,7 @@ describe('GetRowChangesHandler', () => {
           revisionId: toRevision.id,
           first: 10,
           filters: {
-            tableId: table1.createdId,
-          },
-        }),
-      );
-
-      // Should only return rows from table1
-      result.edges.forEach((edge) => {
-        expect(edge.node.tableCreatedId).toBe(table1.createdId);
-      });
-    });
-
-    it('filters by tableCreatedId', async () => {
-      const { toRevision, table1 } = await prepareMultipleTables();
-
-      const result = await handler.execute(
-        new GetRowChangesQuery({
-          revisionId: toRevision.id,
-          first: 10,
-          filters: {
-            tableCreatedId: table1.createdId,
+            tableId: table1.id,
           },
         }),
       );

@@ -81,7 +81,10 @@ export class GetRowChangesHandler
     filters?: GetRowChangesQuery['data']['filters'],
     includeSystem = false,
   ) {
-    const tableCreatedId = filters?.tableCreatedId ?? filters?.tableId;
+    const tableCreatedId = await this.resolveTableCreatedId(
+      toRevisionId,
+      filters,
+    );
     const searchTerm = filters?.search;
 
     return this.prisma.$queryRawTyped(
@@ -103,7 +106,10 @@ export class GetRowChangesHandler
     filters?: GetRowChangesQuery['data']['filters'],
     includeSystem = false,
   ): Promise<number> {
-    const tableCreatedId = filters?.tableCreatedId ?? filters?.tableId;
+    const tableCreatedId = await this.resolveTableCreatedId(
+      toRevisionId,
+      filters,
+    );
     const searchTerm = filters?.search;
 
     const result = await this.prisma.$queryRawTyped(
@@ -117,6 +123,31 @@ export class GetRowChangesHandler
     );
 
     return Number(result[0]?.count ?? 0);
+  }
+
+  private async resolveTableCreatedId(
+    revisionId: string,
+    filters?: GetRowChangesQuery['data']['filters'],
+  ): Promise<string | undefined> {
+    if (!filters?.tableId) {
+      return undefined;
+    }
+
+    const table = await this.prisma.table.findFirst({
+      where: {
+        id: filters.tableId,
+        revisions: {
+          some: {
+            id: revisionId,
+          },
+        },
+      },
+      select: {
+        createdId: true,
+      },
+    });
+
+    return table?.createdId ?? undefined;
   }
 
   private async mapToRowChange(
