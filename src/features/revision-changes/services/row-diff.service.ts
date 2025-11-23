@@ -30,21 +30,25 @@ export class RowDiffService {
   }
 
   private getAllFieldsAsAdded(data: Record<string, unknown>): FieldChange[] {
-    return this.flattenObject(data).map(({ path, value }) => ({
-      fieldPath: path,
-      oldValue: null,
-      newValue: value,
-      changeType: RowChangeDetailType.FieldAdded,
-    }));
+    return [
+      {
+        fieldPath: '',
+        oldValue: null,
+        newValue: data,
+        changeType: RowChangeDetailType.FieldAdded,
+      },
+    ];
   }
 
   private getAllFieldsAsRemoved(data: Record<string, unknown>): FieldChange[] {
-    return this.flattenObject(data).map(({ path, value }) => ({
-      fieldPath: path,
-      oldValue: value,
-      newValue: null,
-      changeType: RowChangeDetailType.FieldRemoved,
-    }));
+    return [
+      {
+        fieldPath: '',
+        oldValue: data,
+        newValue: null,
+        changeType: RowChangeDetailType.FieldRemoved,
+      },
+    ];
   }
 
   private computeFieldDiff(
@@ -100,27 +104,6 @@ export class RowDiffService {
 
   private normalizeFieldPath(jsonPointerPath: string): string {
     return jsonPointerPath.slice(1).replace(/\//g, '.');
-  }
-
-  private flattenObject(
-    obj: Record<string, unknown>,
-    prefix = '',
-  ): Array<{ path: string; value: unknown }> {
-    const result: Array<{ path: string; value: unknown }> = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-      const path = prefix ? `${prefix}.${key}` : key;
-
-      if (value && typeof value === 'object' && !Array.isArray(value)) {
-        result.push(
-          ...this.flattenObject(value as Record<string, unknown>, path),
-        );
-      } else {
-        result.push({ path, value });
-      }
-    }
-
-    return result;
   }
 
   private getValueAtPath(obj: Record<string, unknown>, path: string): unknown {
