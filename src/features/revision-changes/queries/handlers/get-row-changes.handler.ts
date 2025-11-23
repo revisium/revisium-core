@@ -86,6 +86,12 @@ export class GetRowChangesHandler
       filters,
     );
     const searchTerm = filters?.search;
+    const changeTypes = filters?.changeTypes
+      ? JSON.stringify(filters.changeTypes)
+      : null;
+    const changeSources = filters?.changeSources
+      ? JSON.stringify(filters.changeSources)
+      : null;
 
     return this.prisma.$queryRawTyped(
       getRowChangesPaginatedBetweenRevisions(
@@ -93,6 +99,8 @@ export class GetRowChangesHandler
         toRevisionId,
         (tableCreatedId ?? null) as any,
         (searchTerm ?? null) as any,
+        changeTypes as any,
+        changeSources as any,
         limit,
         offset,
         includeSystem,
@@ -111,6 +119,12 @@ export class GetRowChangesHandler
       filters,
     );
     const searchTerm = filters?.search;
+    const changeTypes = filters?.changeTypes
+      ? JSON.stringify(filters.changeTypes)
+      : null;
+    const changeSources = filters?.changeSources
+      ? JSON.stringify(filters.changeSources)
+      : null;
 
     const result = await this.prisma.$queryRawTyped(
       countRowChangesBetweenRevisions(
@@ -118,6 +132,8 @@ export class GetRowChangesHandler
         toRevisionId,
         (tableCreatedId ?? null) as any,
         (searchTerm ?? null) as any,
+        changeTypes as any,
+        changeSources as any,
         includeSystem,
       ),
     );
