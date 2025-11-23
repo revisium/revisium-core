@@ -174,6 +174,51 @@ describe('GetTableChangesHandler', () => {
       expect(tableChange.rowChangesCount).toBeDefined();
       expect(tableChange.addedRowsCount).toBeDefined();
     });
+
+    it('filters by changeTypes', async () => {
+      const { toRevision, addedTable } = await prepareTableChanges();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+          filters: {
+            changeTypes: [ChangeType.Added],
+          },
+        }),
+      );
+
+      result.edges.forEach((edge) => {
+        expect(edge.node.changeType).toBe(ChangeType.Added);
+      });
+      expect(result.edges.length).toBeGreaterThan(0);
+
+      const addedChange = result.edges.find(
+        (e) => e.node.tableCreatedId === addedTable.createdId,
+      );
+      expect(addedChange).toBeDefined();
+    });
+
+    it('filters by multiple changeTypes', async () => {
+      const { toRevision } = await prepareTableChanges();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+          filters: {
+            changeTypes: [ChangeType.Added, ChangeType.Modified],
+          },
+        }),
+      );
+
+      result.edges.forEach((edge) => {
+        expect([ChangeType.Added, ChangeType.Modified]).toContain(
+          edge.node.changeType,
+        );
+      });
+      expect(result.edges.length).toBeGreaterThan(0);
+    });
   });
 
   // Helper functions
