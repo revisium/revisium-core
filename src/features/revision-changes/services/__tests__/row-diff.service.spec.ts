@@ -19,39 +19,27 @@ describe('RowDiffService', () => {
       expect(result).toEqual([]);
     });
 
-    it('detects all fields as added when fromData is null', () => {
+    it('detects entire object as added when fromData is null', () => {
       const toData = { name: 'John', age: 30 };
       const result = service.analyzeFieldChanges(null, toData);
 
-      expect(result).toHaveLength(2);
-      expect(result).toContainEqual({
-        fieldPath: 'name',
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        fieldPath: '',
         oldValue: null,
-        newValue: 'John',
-        changeType: RowChangeDetailType.FieldAdded,
-      });
-      expect(result).toContainEqual({
-        fieldPath: 'age',
-        oldValue: null,
-        newValue: 30,
+        newValue: toData,
         changeType: RowChangeDetailType.FieldAdded,
       });
     });
 
-    it('detects all fields as removed when toData is null', () => {
+    it('detects entire object as removed when toData is null', () => {
       const fromData = { name: 'John', age: 30 };
       const result = service.analyzeFieldChanges(fromData, null);
 
-      expect(result).toHaveLength(2);
-      expect(result).toContainEqual({
-        fieldPath: 'name',
-        oldValue: 'John',
-        newValue: null,
-        changeType: RowChangeDetailType.FieldRemoved,
-      });
-      expect(result).toContainEqual({
-        fieldPath: 'age',
-        oldValue: 30,
+      expect(result).toHaveLength(1);
+      expect(result[0]).toEqual({
+        fieldPath: '',
+        oldValue: fromData,
         newValue: null,
         changeType: RowChangeDetailType.FieldRemoved,
       });
