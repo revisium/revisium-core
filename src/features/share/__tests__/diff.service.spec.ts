@@ -57,7 +57,7 @@ describe('DiffService', () => {
       });
     });
 
-    it('renamed table', async () => {
+    it('renamed and modified table', async () => {
       const { fromRevision, toRevision } = await prepareRevisions();
 
       const fromTable = await prismaService.table.create({
@@ -99,7 +99,7 @@ describe('DiffService', () => {
         createdId: fromTable.createdId,
         fromVersionId: fromTable.versionId,
         toVersionId: toTable.versionId,
-        changeType: TableDiffChangeType.Renamed,
+        changeType: TableDiffChangeType.RenamedAndModified,
       });
     });
 
@@ -430,7 +430,7 @@ describe('DiffService', () => {
         },
       });
 
-      // Renamed table
+      // Renamed and modified table
       const renamedTable = await prismaService.table.create({
         data: {
           id: nanoid(),
@@ -463,7 +463,8 @@ describe('DiffService', () => {
         added: 1,
         removed: 1,
         modified: 1,
-        renamed: 1,
+        renamed: 0,
+        renamedAndModified: 1,
       });
     });
 
@@ -481,6 +482,7 @@ describe('DiffService', () => {
         removed: 0,
         modified: 0,
         renamed: 0,
+        renamedAndModified: 0,
       });
     });
   });
