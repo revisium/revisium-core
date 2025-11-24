@@ -75,6 +75,7 @@ all_changes AS (
         CASE
             WHEN pr."createdId" IS NULL THEN 'ADDED'
             WHEN cr."createdId" IS NULL THEN 'REMOVED'
+            WHEN pr."id" != cr."id" AND cr."hash" != pr."hash" THEN 'RENAMED_AND_MODIFIED'
             WHEN pr."id" != cr."id" THEN 'RENAMED'
             WHEN cr."hash" != pr."hash" THEN 'MODIFIED'
         END AS "changeType",

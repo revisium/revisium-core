@@ -127,7 +127,7 @@ describe('GetTableChangesHandler', () => {
       expect(result.totalCount).toBe(2);
     });
 
-    it('handles renamed table correctly', async () => {
+    it('handles renamed and modified table correctly', async () => {
       const { toRevision, fromTable, toTable } = await prepareRenamedTable();
 
       const result = await handler.execute(
@@ -139,7 +139,7 @@ describe('GetTableChangesHandler', () => {
 
       expect(result.edges.length).toBe(1);
       const change = result.edges[0].node;
-      expect(change.changeType).toBe(ChangeType.Renamed);
+      expect(change.changeType).toBe(ChangeType.RenamedAndModified);
       expect(change.oldTableId).toBe(fromTable.id);
       expect(change.newTableId).toBe(toTable.id);
     });
@@ -489,9 +489,9 @@ describe('GetTableChangesHandler', () => {
 
     const toTable = await prismaService.table.create({
       data: {
-        id: nanoid(), // Different id
+        id: nanoid(), // Different id (renamed)
         createdId: fromTable.createdId, // Same createdId
-        versionId: nanoid(),
+        versionId: nanoid(), // Different versionId (modified)
         revisions: {
           connect: { id: toRevision.id },
         },

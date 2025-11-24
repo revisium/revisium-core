@@ -37,8 +37,9 @@ SELECT
     COUNT(*) AS "total",
     COUNT(*) FILTER (WHERE pr."createdId" IS NULL) AS "added",
     COUNT(*) FILTER (WHERE cr."createdId" IS NULL) AS "removed",
-    COUNT(*) FILTER (WHERE pr."id" != cr."id" AND pr."createdId" IS NOT NULL AND cr."createdId" IS NOT NULL) AS "renamed",
+    COUNT(*) FILTER (WHERE pr."id" != cr."id" AND cr."hash" = pr."hash" AND pr."createdId" IS NOT NULL AND cr."createdId" IS NOT NULL) AS "renamed",
     COUNT(*) FILTER (WHERE pr."id" = cr."id" AND cr."hash" != pr."hash") AS "modified",
+    COUNT(*) FILTER (WHERE pr."id" != cr."id" AND cr."hash" != pr."hash" AND pr."createdId" IS NOT NULL AND cr."createdId" IS NOT NULL) AS "renamed_and_modified",
     COUNT(*) FILTER (WHERE cr."schemaHash" IS NOT NULL AND pr."schemaHash" IS NOT NULL AND cr."schemaHash" != pr."schemaHash") AS "schemaChanges",
     COUNT(*) FILTER (WHERE (cr."schemaHash" IS NULL OR pr."schemaHash" IS NULL OR cr."schemaHash" = pr."schemaHash") AND cr."hash" != pr."hash") AS "dataChanges"
 FROM child_rows cr

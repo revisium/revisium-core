@@ -64,7 +64,10 @@ export class RowChangeMapper {
     fromRowId: string | null,
     toRowId: string | null,
   ): { oldRowId?: string; newRowId?: string } {
-    if (changeType !== ChangeType.Renamed) {
+    if (
+      changeType !== ChangeType.Renamed &&
+      changeType !== ChangeType.RenamedAndModified
+    ) {
       return {};
     }
 

@@ -52,6 +52,7 @@ enum ChangeType {
   MODIFIED
   REMOVED
   RENAMED
+  RENAMED_AND_MODIFIED
 }
 
 type ChildBranchModel {
@@ -627,6 +628,7 @@ type RevisionChangeSummaryModel {
   modified: Int!
   removed: Int!
   renamed: Int!
+  renamedAndModified: Int!
   total: Int!
 }
 

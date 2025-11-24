@@ -5,6 +5,7 @@ export enum ChangeTypeEnum {
   MODIFIED = 'MODIFIED',
   REMOVED = 'REMOVED',
   RENAMED = 'RENAMED',
+  RENAMED_AND_MODIFIED = 'RENAMED_AND_MODIFIED',
 }
 
 export enum ChangeSourceEnum {
