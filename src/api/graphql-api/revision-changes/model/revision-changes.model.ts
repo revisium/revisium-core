@@ -16,6 +16,9 @@ export class RevisionChangeSummaryModel {
 
   @Field(() => Int)
   renamed: number;
+
+  @Field(() => Int)
+  renamedAndModified: number;
 }
 
 @ObjectType()

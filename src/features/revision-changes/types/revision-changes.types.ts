@@ -4,6 +4,7 @@ export interface RevisionChangeSummary {
   modified: number;
   removed: number;
   renamed: number;
+  renamedAndModified: number;
 }
 
 export interface RevisionChanges {

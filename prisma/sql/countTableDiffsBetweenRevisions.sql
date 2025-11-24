@@ -29,6 +29,7 @@ WHERE
    AND ($3::jsonb IS NULL OR LOWER(CASE
            WHEN pt."createdId" IS NULL THEN 'added'
            WHEN ct."createdId" IS NULL THEN 'removed'
+           WHEN pt."id" != ct."id" AND ct."versionId" != pt."versionId" THEN 'renamed_and_modified'
            WHEN pt."id" != ct."id" THEN 'renamed'
            WHEN ct."versionId" != pt."versionId" THEN 'modified'
            END) = ANY(ARRAY(SELECT LOWER(jsonb_array_elements_text($3::jsonb)))))

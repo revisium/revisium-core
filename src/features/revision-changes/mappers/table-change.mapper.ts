@@ -53,6 +53,8 @@ export class TableChangeMapper {
         return ChangeType.Removed;
       case TableDiffChangeType.Renamed:
         return ChangeType.Renamed;
+      case TableDiffChangeType.RenamedAndModified:
+        return ChangeType.RenamedAndModified;
       default:
         return ChangeType.Modified;
     }
@@ -63,7 +65,10 @@ export class TableChangeMapper {
     fromId?: string | null,
     toId?: string | null,
   ): { oldTableId?: string; newTableId?: string } {
-    if (changeType !== ChangeType.Renamed) {
+    if (
+      changeType !== ChangeType.Renamed &&
+      changeType !== ChangeType.RenamedAndModified
+    ) {
       return {};
     }
 

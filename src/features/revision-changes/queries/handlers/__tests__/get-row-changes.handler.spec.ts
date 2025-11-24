@@ -826,6 +826,10 @@ describe('GetRowChangesHandler', () => {
       },
     });
 
+    const sameHash = nanoid();
+    const sameSchemaHash = nanoid();
+    const sameData = { name: 'test' };
+
     const fromRow = await prismaService.row.create({
       data: {
         id: nanoid(),
@@ -834,23 +838,23 @@ describe('GetRowChangesHandler', () => {
         tables: {
           connect: { versionId: fromTable.versionId },
         },
-        data: { name: 'old' },
-        hash: nanoid(),
-        schemaHash: nanoid(),
+        data: sameData,
+        hash: sameHash,
+        schemaHash: sameSchemaHash,
       },
     });
 
     const toRow = await prismaService.row.create({
       data: {
-        id: nanoid(), // Different id
+        id: nanoid(), // Different id (renamed)
         createdId: fromRow.createdId, // Same createdId
         versionId: nanoid(),
         tables: {
           connect: { versionId: toTable.versionId },
         },
-        data: { name: 'new' },
-        hash: nanoid(),
-        schemaHash: nanoid(),
+        data: sameData, // Same data
+        hash: sameHash, // Same hash
+        schemaHash: sameSchemaHash, // Same schemaHash
       },
     });
 

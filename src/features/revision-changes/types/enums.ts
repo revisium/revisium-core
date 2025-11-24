@@ -3,6 +3,7 @@ export enum ChangeType {
   Modified = 'MODIFIED',
   Removed = 'REMOVED',
   Renamed = 'RENAMED',
+  RenamedAndModified = 'RENAMED_AND_MODIFIED',
 }
 
 export enum ChangeSource {
