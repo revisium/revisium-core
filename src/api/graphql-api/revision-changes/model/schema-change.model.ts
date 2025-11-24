@@ -1,7 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { JSONResolver } from 'graphql-scalars';
 import { JsonPatchOpEnum, MigrationTypeEnum } from './enums.model';
-import { FieldMoveModel } from './field-change.model';
 
 @ObjectType()
 export class JsonPatchOperationModel {
@@ -52,12 +51,30 @@ export class SchemaMigrationDetailModel {
 }
 
 @ObjectType()
+export class SchemaFieldChangeModel {
+  @Field()
+  fieldPath: string;
+
+  @Field(() => String)
+  changeType: string;
+
+  @Field(() => JSONResolver, { nullable: true })
+  oldSchema?: unknown;
+
+  @Field(() => JSONResolver, { nullable: true })
+  newSchema?: unknown;
+
+  @Field(() => String, { nullable: true })
+  movedFrom?: string;
+
+  @Field(() => String, { nullable: true })
+  movedTo?: string;
+}
+
+@ObjectType()
 export class SchemaChangeImpactModel {
   @Field()
   schemaHashChanged: boolean;
-
-  @Field(() => [String])
-  affectedFields: string[];
 
   @Field()
   migrationApplied: boolean;
@@ -65,15 +82,6 @@ export class SchemaChangeImpactModel {
   @Field(() => SchemaMigrationDetailModel, { nullable: true })
   migrationDetails?: SchemaMigrationDetailModel;
 
-  @Field(() => [String])
-  addedFields: string[];
-
-  @Field(() => [String])
-  removedFields: string[];
-
-  @Field(() => [String])
-  modifiedFields: string[];
-
-  @Field(() => [FieldMoveModel])
-  movedFields: FieldMoveModel[];
+  @Field(() => [SchemaFieldChangeModel])
+  fieldSchemaChanges: SchemaFieldChangeModel[];
 }

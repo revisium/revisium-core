@@ -170,11 +170,6 @@ type FieldChangeModel {
   oldValue: JSON
 }
 
-type FieldMoveModel {
-  from: String!
-  to: String!
-}
-
 input GetBranchInput {
   branchName: String!
   organizationId: String!
@@ -758,14 +753,19 @@ type RowsConnection {
 }
 
 type SchemaChangeImpactModel {
-  addedFields: [String!]!
-  affectedFields: [String!]!
+  fieldSchemaChanges: [SchemaFieldChangeModel!]!
   migrationApplied: Boolean!
   migrationDetails: SchemaMigrationDetailModel
-  modifiedFields: [String!]!
-  movedFields: [FieldMoveModel!]!
-  removedFields: [String!]!
   schemaHashChanged: Boolean!
+}
+
+type SchemaFieldChangeModel {
+  changeType: String!
+  fieldPath: String!
+  movedFrom: String
+  movedTo: String
+  newSchema: JSON
+  oldSchema: JSON
 }
 
 type SchemaMigrationDetailModel {

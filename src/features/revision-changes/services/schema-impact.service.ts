@@ -3,7 +3,8 @@ import {
   SchemaChangeImpact,
   SchemaMigrationDetail,
   JsonPatchOperation,
-  FieldMove,
+  SchemaFieldChange,
+  SchemaFieldChangeType,
   MigrationType,
   JsonPatchOp,
 } from '../types';
@@ -22,18 +23,13 @@ export class SchemaImpactService {
     }
 
     const migrationDetails = this.extractMigrationDetails(migrations);
-    const affectedFields = this.extractAffectedFields(migrationDetails);
 
     return {
       schemaHashChanged: true,
-      affectedFields,
       migrationApplied: migrations.length > 0,
       migrationDetails:
         migrationDetails.length > 0 ? migrationDetails[0] : undefined,
-      addedFields: this.extractAddedFields(migrationDetails),
-      removedFields: this.extractRemovedFields(migrationDetails),
-      modifiedFields: this.extractModifiedFields(migrationDetails),
-      movedFields: this.extractMovedFields(migrationDetails),
+      fieldSchemaChanges: this.extractFieldSchemaChanges(migrationDetails),
     };
   }
 
@@ -102,98 +98,50 @@ export class SchemaImpactService {
     }
   }
 
-  private extractAffectedFields(migrations: SchemaMigrationDetail[]): string[] {
-    const fields = new Set<string>();
+  private extractFieldSchemaChanges(
+    migrations: SchemaMigrationDetail[],
+  ): SchemaFieldChange[] {
+    const changes: SchemaFieldChange[] = [];
 
     for (const migration of migrations) {
       if (migration.patches) {
         for (const patch of migration.patches) {
           const fieldPath = this.extractFieldPath(patch.path);
-          if (fieldPath) {
-            fields.add(fieldPath);
-          }
-        }
-      }
-    }
+          if (!fieldPath) continue;
 
-    return Array.from(fields);
-  }
-
-  private extractAddedFields(migrations: SchemaMigrationDetail[]): string[] {
-    const fields = new Set<string>();
-
-    for (const migration of migrations) {
-      if (migration.patches) {
-        for (const patch of migration.patches) {
           if (patch.op === JsonPatchOp.Add) {
-            const fieldPath = this.extractFieldPath(patch.path);
-            if (fieldPath) {
-              fields.add(fieldPath);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(fields);
-  }
-
-  private extractRemovedFields(migrations: SchemaMigrationDetail[]): string[] {
-    const fields = new Set<string>();
-
-    for (const migration of migrations) {
-      if (migration.patches) {
-        for (const patch of migration.patches) {
-          if (patch.op === JsonPatchOp.Remove) {
-            const fieldPath = this.extractFieldPath(patch.path);
-            if (fieldPath) {
-              fields.add(fieldPath);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(fields);
-  }
-
-  private extractModifiedFields(migrations: SchemaMigrationDetail[]): string[] {
-    const fields = new Set<string>();
-
-    for (const migration of migrations) {
-      if (migration.patches) {
-        for (const patch of migration.patches) {
-          if (patch.op === JsonPatchOp.Replace) {
-            const fieldPath = this.extractFieldPath(patch.path);
-            if (fieldPath) {
-              fields.add(fieldPath);
-            }
-          }
-        }
-      }
-    }
-
-    return Array.from(fields);
-  }
-
-  private extractMovedFields(migrations: SchemaMigrationDetail[]): FieldMove[] {
-    const moves: FieldMove[] = [];
-
-    for (const migration of migrations) {
-      if (migration.patches) {
-        for (const patch of migration.patches) {
-          if (patch.op === JsonPatchOp.Move && patch.from) {
+            changes.push({
+              fieldPath,
+              changeType: SchemaFieldChangeType.Added,
+              newSchema: patch.value,
+            });
+          } else if (patch.op === JsonPatchOp.Remove) {
+            changes.push({
+              fieldPath,
+              changeType: SchemaFieldChangeType.Removed,
+            });
+          } else if (patch.op === JsonPatchOp.Replace) {
+            changes.push({
+              fieldPath,
+              changeType: SchemaFieldChangeType.Modified,
+              newSchema: patch.value,
+            });
+          } else if (patch.op === JsonPatchOp.Move && patch.from) {
             const fromPath = this.extractFieldPath(patch.from);
-            const toPath = this.extractFieldPath(patch.path);
-            if (fromPath && toPath) {
-              moves.push({ from: fromPath, to: toPath });
+            if (fromPath) {
+              changes.push({
+                fieldPath,
+                changeType: SchemaFieldChangeType.Moved,
+                movedFrom: fromPath,
+                movedTo: fieldPath,
+              });
             }
           }
         }
       }
     }
 
-    return moves;
+    return changes;
   }
 
   private extractFieldPath(jsonPath: string): string | null {

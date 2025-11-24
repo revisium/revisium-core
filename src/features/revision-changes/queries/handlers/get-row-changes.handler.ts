@@ -60,7 +60,9 @@ export class GetRowChangesHandler
         );
 
         return Promise.all(
-          rows.map((row) => this.mapToRowChange(row, revisionId)),
+          rows.map((row) =>
+            this.mapToRowChange(row, fromRevisionId, revisionId),
+          ),
         );
       },
       count: () =>
@@ -168,11 +170,12 @@ export class GetRowChangesHandler
 
   private async mapToRowChange(
     row: any,
-    revisionId: string,
+    fromRevisionId: string,
+    toRevisionId: string,
   ): Promise<RowChange> {
     const migrations =
       await this.revisionComparisonService.getMigrationsForTable(
-        revisionId,
+        toRevisionId,
         row.tableCreatedId,
       );
 

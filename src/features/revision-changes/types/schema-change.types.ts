@@ -1,5 +1,4 @@
 import { JsonPatchOp, MigrationType } from './enums';
-import { FieldMove } from './field-change.types';
 
 export interface JsonPatchOperation {
   op: JsonPatchOp;
@@ -27,14 +26,25 @@ export interface SchemaMigrationDetail {
   historyPatches?: HistoryPatch[];
 }
 
+export enum SchemaFieldChangeType {
+  Added = 'ADDED',
+  Removed = 'REMOVED',
+  Modified = 'MODIFIED',
+  Moved = 'MOVED',
+}
+
+export interface SchemaFieldChange {
+  fieldPath: string;
+  changeType: SchemaFieldChangeType;
+  oldSchema?: unknown;
+  newSchema?: unknown;
+  movedFrom?: string;
+  movedTo?: string;
+}
+
 export interface SchemaChangeImpact {
   schemaHashChanged: boolean;
-  affectedFields: string[];
   migrationApplied: boolean;
   migrationDetails?: SchemaMigrationDetail;
-
-  addedFields: string[];
-  removedFields: string[];
-  modifiedFields: string[];
-  movedFields: FieldMove[];
+  fieldSchemaChanges: SchemaFieldChange[];
 }
