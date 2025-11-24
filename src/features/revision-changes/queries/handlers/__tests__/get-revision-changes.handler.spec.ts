@@ -66,6 +66,52 @@ describe('GetRevisionChangesHandler', () => {
       });
     });
 
+    it('detects and counts renamed and modified changes without double-counting', async () => {
+      const { toRevision } = await prepareRenamedAndModifiedChanges();
+
+      const result = await handler.execute(
+        new GetRevisionChangesQuery({
+          revisionId: toRevision.id,
+        }),
+      );
+
+      // Tables: 1 renamed+modified, 1 "pure renamed" (becomes renamed+modified due to versionId),
+      // 1 pure modified, 1 common table (modified for row changes), 1 added, 1 removed = 6 total
+      expect(result.tablesSummary.total).toBe(6);
+      expect(result.tablesSummary.renamedAndModified).toBe(2); // Both "renamed" cases become renamed+modified
+      expect(result.tablesSummary.modified).toBe(2); // Pure modified + common table
+      expect(result.tablesSummary.renamed).toBe(0); // No pure renamed (impossible for tables)
+      expect(result.tablesSummary.added).toBe(1);
+      expect(result.tablesSummary.removed).toBe(1);
+
+      // Verify total = sum of all change types (no double-counting)
+      expect(result.tablesSummary.total).toBe(
+        result.tablesSummary.added +
+          result.tablesSummary.removed +
+          result.tablesSummary.modified +
+          result.tablesSummary.renamed +
+          result.tablesSummary.renamedAndModified,
+      );
+
+      // Rows: 1 renamed+modified (different id AND hash), 1 pure renamed (different id, same hash),
+      // 1 pure modified (same id, different hash), 1 added, 1 removed = 5 total
+      expect(result.rowsSummary.total).toBe(5);
+      expect(result.rowsSummary.renamedAndModified).toBe(1); // Only the combined case
+      expect(result.rowsSummary.renamed).toBe(1); // Pure renamed
+      expect(result.rowsSummary.modified).toBe(1); // Pure modified
+      expect(result.rowsSummary.added).toBe(1);
+      expect(result.rowsSummary.removed).toBe(1);
+
+      // Verify total = sum of all change types (no double-counting)
+      expect(result.rowsSummary.total).toBe(
+        result.rowsSummary.added +
+          result.rowsSummary.removed +
+          result.rowsSummary.modified +
+          result.rowsSummary.renamed +
+          result.rowsSummary.renamedAndModified,
+      );
+    });
+
     it('returns stats for revision with changes', async () => {
       const { fromRevision, toRevision } = await prepareRevisionsWithChanges();
 
@@ -425,6 +471,290 @@ describe('GetRevisionChangesHandler', () => {
         data: { name: 'test' },
         hash: nanoid(),
         schemaHash: nanoid(),
+      },
+    });
+
+    return { fromRevision, toRevision };
+  }
+
+  async function prepareRenamedAndModifiedChanges() {
+    const branch = await prismaService.branch.create({
+      data: {
+        id: nanoid(),
+        name: nanoid(),
+        project: {
+          create: {
+            id: nanoid(),
+            name: nanoid(),
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const fromRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        branchId: branch.id,
+      },
+    });
+
+    const toRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        parentId: fromRevision.id,
+        branchId: branch.id,
+      },
+    });
+
+    // TABLE CHANGES
+    // 1. Added table
+    const addedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // 2. Removed table
+    await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    // 3. Pure modified table (same id, different versionId)
+    const modifiedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    await prismaService.table.create({
+      data: {
+        id: modifiedTable.id, // Same id
+        createdId: modifiedTable.createdId,
+        versionId: nanoid(), // Different versionId = modified
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // 4. Renamed and modified table (different id AND different versionId)
+    const renamedAndModifiedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    await prismaService.table.create({
+      data: {
+        id: nanoid(), // Different id = renamed
+        createdId: renamedAndModifiedTable.createdId,
+        versionId: nanoid(), // Different versionId = modified
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // 5. "Pure renamed" table (different id, but different versionId too due to constraint)
+    // This will actually be counted as renamed+modified because versionId must be unique
+    const renamedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    await prismaService.table.create({
+      data: {
+        id: nanoid(), // Different id = renamed
+        createdId: renamedTable.createdId,
+        versionId: nanoid(), // Must be different due to unique constraint
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // We need a table for row changes that exists in both revisions
+    const commonTableFrom = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    const commonTableTo = await prismaService.table.create({
+      data: {
+        id: commonTableFrom.id,
+        createdId: commonTableFrom.createdId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // ROW CHANGES
+    // 1. Added row
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: addedTable.versionId },
+        },
+        data: { value: 'added' },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    // 2. Removed row (exists in fromRevision, not in toRevision)
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableFrom.versionId },
+        },
+        data: { value: 'removed' },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    // 3. Pure modified row (same id, different hash)
+    const sameRowId = nanoid();
+    const sameRowCreatedId = nanoid();
+
+    await prismaService.row.create({
+      data: {
+        id: sameRowId,
+        createdId: sameRowCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableFrom.versionId },
+        },
+        data: { value: 'old' },
+        hash: 'hash1',
+        schemaHash: 'schema1',
+      },
+    });
+
+    await prismaService.row.create({
+      data: {
+        id: sameRowId, // Same id
+        createdId: sameRowCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableTo.versionId },
+        },
+        data: { value: 'new' },
+        hash: 'hash2', // Different hash = modified
+        schemaHash: 'schema1',
+      },
+    });
+
+    // 4. Pure renamed row (different id, same hash)
+    const renamedRowCreatedId = nanoid();
+    const sameHash = 'sameHash123';
+    const sameSchemaHash = 'sameSchemaHash456';
+    const sameData = { value: 'unchanged' };
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        createdId: renamedRowCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableFrom.versionId },
+        },
+        data: sameData,
+        hash: sameHash, // Same hash
+        schemaHash: sameSchemaHash,
+      },
+    });
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(), // Different id = renamed
+        createdId: renamedRowCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableTo.versionId },
+        },
+        data: sameData,
+        hash: sameHash, // Same hash = not modified
+        schemaHash: sameSchemaHash,
+      },
+    });
+
+    // 5. Renamed AND modified row (different id AND different hash)
+    const renamedModifiedCreatedId = nanoid();
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        createdId: renamedModifiedCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableFrom.versionId },
+        },
+        data: { value: 'before' },
+        hash: 'hashA',
+        schemaHash: 'schemaA',
+      },
+    });
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(), // Different id = renamed
+        createdId: renamedModifiedCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: commonTableTo.versionId },
+        },
+        data: { value: 'after' },
+        hash: 'hashB', // Different hash = modified
+        schemaHash: 'schemaA',
       },
     });
 
