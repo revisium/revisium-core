@@ -618,16 +618,13 @@ type RevisionChangeSummaryModel {
   modified: Int!
   removed: Int!
   renamed: Int!
-  renamedAndModified: Int!
   total: Int!
 }
 
 type RevisionChangesModel {
-  dataChangesCount: Int!
   parentRevisionId: String
   revisionId: String!
   rowsSummary: RevisionChangeSummaryModel!
-  schemaChangesCount: Int!
   tablesSummary: RevisionChangeSummaryModel!
   totalChanges: Int!
 }

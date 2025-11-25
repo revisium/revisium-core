@@ -4,7 +4,6 @@ export interface RevisionChangeSummary {
   modified: number;
   removed: number;
   renamed: number;
-  renamedAndModified: number;
 }
 
 export interface RevisionChanges {
@@ -15,7 +14,4 @@ export interface RevisionChanges {
 
   tablesSummary: RevisionChangeSummary;
   rowsSummary: RevisionChangeSummary;
-
-  schemaChangesCount: number;
-  dataChangesCount: number;
 }

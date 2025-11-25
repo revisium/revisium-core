@@ -462,9 +462,8 @@ describe('DiffService', () => {
         total: 4,
         added: 1,
         removed: 1,
-        modified: 1,
-        renamed: 0,
-        renamedAndModified: 1,
+        modified: 2, // modified + renamedAndModified
+        renamed: 1, // renamed + renamedAndModified
       });
     });
 
@@ -482,7 +481,6 @@ describe('DiffService', () => {
         removed: 0,
         modified: 0,
         renamed: 0,
-        renamedAndModified: 0,
       });
     });
   });

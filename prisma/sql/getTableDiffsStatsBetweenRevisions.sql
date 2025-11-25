@@ -20,9 +20,14 @@ SELECT
     COUNT(*) ::integer AS total,
     COUNT(*) FILTER (WHERE pt."createdId" IS NULL) ::integer AS added,
     COUNT(*) FILTER (WHERE ct."createdId" IS NULL) ::integer AS removed,
-    COUNT(*) FILTER (WHERE pt."id" != ct."id" AND ct."versionId" = pt."versionId" AND pt."createdId" IS NOT NULL AND ct."createdId" IS NOT NULL) ::integer AS renamed,
-    COUNT(*) FILTER (WHERE pt."id" = ct."id" AND ct."versionId" != pt."versionId") ::integer AS modified,
-    COUNT(*) FILTER (WHERE pt."id" != ct."id" AND ct."versionId" != pt."versionId" AND pt."createdId" IS NOT NULL AND ct."createdId" IS NOT NULL) ::integer AS renamed_and_modified
+    COUNT(*) FILTER (
+        WHERE (pt."id" != ct."id" AND ct."versionId" = pt."versionId" AND pt."createdId" IS NOT NULL AND ct."createdId" IS NOT NULL)
+           OR (pt."id" != ct."id" AND ct."versionId" != pt."versionId" AND pt."createdId" IS NOT NULL AND ct."createdId" IS NOT NULL)
+    ) ::integer AS renamed,
+    COUNT(*) FILTER (
+        WHERE (pt."id" = ct."id" AND ct."versionId" != pt."versionId")
+           OR (pt."id" != ct."id" AND ct."versionId" != pt."versionId" AND pt."createdId" IS NOT NULL AND ct."createdId" IS NOT NULL)
+    ) ::integer AS modified
 FROM
     child_tables ct
     FULL OUTER JOIN parent_tables pt USING ("createdId")

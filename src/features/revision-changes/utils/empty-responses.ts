@@ -14,7 +14,6 @@ export function createEmptyRevisionChangesResponse(
       modified: 0,
       removed: 0,
       renamed: 0,
-      renamedAndModified: 0,
     },
     rowsSummary: {
       total: 0,
@@ -22,10 +21,7 @@ export function createEmptyRevisionChangesResponse(
       modified: 0,
       removed: 0,
       renamed: 0,
-      renamedAndModified: 0,
     },
-    schemaChangesCount: 0,
-    dataChangesCount: 0,
   };
 }
 

@@ -142,7 +142,6 @@ export class DiffService {
     modified: number;
     removed: number;
     renamed: number;
-    renamedAndModified: number;
   }> {
     const result = await this.prisma.$queryRawTyped(
       getTableDiffsStatsBetweenRevisions(
@@ -161,7 +160,6 @@ export class DiffService {
         modified: 0,
         removed: 0,
         renamed: 0,
-        renamedAndModified: 0,
       };
     }
 
@@ -171,7 +169,6 @@ export class DiffService {
       modified: row.modified ?? 0,
       removed: row.removed ?? 0,
       renamed: row.renamed ?? 0,
-      renamedAndModified: row.renamed_and_modified ?? 0,
     };
   }
 
