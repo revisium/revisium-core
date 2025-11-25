@@ -59,4 +59,10 @@ WHERE
     ($4::text IS NULL OR
      "fromRowId" ILIKE '%' || $4 || '%' OR
      "toRowId" ILIKE '%' || $4 || '%')
-    AND ($5::jsonb IS NULL OR "changeType" = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb))))
+    AND ($5::jsonb IS NULL OR (
+        "changeType" = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))
+        OR ("changeType" = 'RENAMED_AND_MODIFIED' AND (
+            'RENAMED' = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))
+            OR 'MODIFIED' = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))
+        ))
+    ))
