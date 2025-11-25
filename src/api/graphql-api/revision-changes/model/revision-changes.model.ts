@@ -16,9 +16,6 @@ export class RevisionChangeSummaryModel {
 
   @Field(() => Int)
   renamed: number;
-
-  @Field(() => Int)
-  renamedAndModified: number;
 }
 
 @ObjectType()
@@ -37,10 +34,4 @@ export class RevisionChangesModel {
 
   @Field(() => RevisionChangeSummaryModel)
   rowsSummary: RevisionChangeSummaryModel;
-
-  @Field(() => Int)
-  schemaChangesCount: number;
-
-  @Field(() => Int)
-  dataChangesCount: number;
 }

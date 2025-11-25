@@ -57,8 +57,6 @@ export class GetRevisionChangesHandler
       totalChanges: tablesStats.total + rowsStats.total,
       tablesSummary: tablesStats,
       rowsSummary: rowsStats,
-      schemaChangesCount: rowsStats.schemaChanges,
-      dataChangesCount: rowsStats.dataChanges,
     };
   }
 
@@ -84,9 +82,6 @@ export class GetRevisionChangesHandler
       removed: Number(row?.removed ?? 0),
       renamed: Number(row?.renamed ?? 0),
       modified: Number(row?.modified ?? 0),
-      renamedAndModified: Number(row?.renamed_and_modified ?? 0),
-      schemaChanges: Number(row?.schemaChanges ?? 0),
-      dataChanges: Number(row?.dataChanges ?? 0),
     };
   }
 }

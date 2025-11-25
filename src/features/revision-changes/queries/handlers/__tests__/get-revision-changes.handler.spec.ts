@@ -51,7 +51,6 @@ describe('GetRevisionChangesHandler', () => {
           modified: 0,
           removed: 0,
           renamed: 0,
-          renamedAndModified: 0,
         },
         rowsSummary: {
           total: 0,
@@ -59,10 +58,7 @@ describe('GetRevisionChangesHandler', () => {
           modified: 0,
           removed: 0,
           renamed: 0,
-          renamedAndModified: 0,
         },
-        schemaChangesCount: 0,
-        dataChangesCount: 0,
       });
     });
 
@@ -78,38 +74,22 @@ describe('GetRevisionChangesHandler', () => {
       // Tables: 1 renamed+modified, 1 "pure renamed" (becomes renamed+modified due to versionId),
       // 1 pure modified, 1 common table (modified for row changes), 1 added, 1 removed = 6 total
       expect(result.tablesSummary.total).toBe(6);
-      expect(result.tablesSummary.renamedAndModified).toBe(2); // Both "renamed" cases become renamed+modified
-      expect(result.tablesSummary.modified).toBe(2); // Pure modified + common table
-      expect(result.tablesSummary.renamed).toBe(0); // No pure renamed (impossible for tables)
+      // renamed count includes both pure renamed AND renamed+modified (2 + 0 = 2)
+      expect(result.tablesSummary.renamed).toBe(2);
+      // modified count includes pure modified, common table AND renamed+modified (2 + 2 = 4)
+      expect(result.tablesSummary.modified).toBe(4);
       expect(result.tablesSummary.added).toBe(1);
       expect(result.tablesSummary.removed).toBe(1);
-
-      // Verify total = sum of all change types (no double-counting)
-      expect(result.tablesSummary.total).toBe(
-        result.tablesSummary.added +
-          result.tablesSummary.removed +
-          result.tablesSummary.modified +
-          result.tablesSummary.renamed +
-          result.tablesSummary.renamedAndModified,
-      );
 
       // Rows: 1 renamed+modified (different id AND hash), 1 pure renamed (different id, same hash),
       // 1 pure modified (same id, different hash), 1 added, 1 removed = 5 total
       expect(result.rowsSummary.total).toBe(5);
-      expect(result.rowsSummary.renamedAndModified).toBe(1); // Only the combined case
-      expect(result.rowsSummary.renamed).toBe(1); // Pure renamed
-      expect(result.rowsSummary.modified).toBe(1); // Pure modified
+      // renamed count includes pure renamed AND renamed+modified (1 + 1 = 2)
+      expect(result.rowsSummary.renamed).toBe(2);
+      // modified count includes pure modified AND renamed+modified (1 + 1 = 2)
+      expect(result.rowsSummary.modified).toBe(2);
       expect(result.rowsSummary.added).toBe(1);
       expect(result.rowsSummary.removed).toBe(1);
-
-      // Verify total = sum of all change types (no double-counting)
-      expect(result.rowsSummary.total).toBe(
-        result.rowsSummary.added +
-          result.rowsSummary.removed +
-          result.rowsSummary.modified +
-          result.rowsSummary.renamed +
-          result.rowsSummary.renamedAndModified,
-      );
     });
 
     it('returns stats for revision with changes', async () => {
