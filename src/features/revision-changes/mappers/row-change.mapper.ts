@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { RowChange, ChangeType, ChangeSource } from '../types';
+import { RowChange, ChangeType } from '../types';
 import { FieldChange } from '../types/field-change.types';
-import { SchemaChangeImpact } from '../types/schema-change.types';
 
 export interface RawRowChangeData {
   toRowId: string | null;
@@ -10,7 +9,6 @@ export interface RawRowChangeData {
   fromVersionId: string | null;
   toVersionId: string | null;
   changeType: string;
-  changeSource: string;
   fromData: unknown;
   toData: unknown;
   fromHash: string;
@@ -30,10 +28,8 @@ export class RowChangeMapper {
   mapRawDataToRowChange(
     row: RawRowChangeData,
     fieldChanges: FieldChange[],
-    schemaImpact: SchemaChangeImpact | null,
   ): RowChange {
     const changeType = row.changeType as ChangeType;
-    const changeSource = row.changeSource as ChangeSource;
 
     return {
       rowId: row.toRowId ?? row.fromRowId ?? '',
@@ -41,7 +37,6 @@ export class RowChangeMapper {
       fromVersionId: row.fromVersionId,
       toVersionId: row.toVersionId,
       changeType,
-      changeSource,
       ...this.mapRenamedRowIds(changeType, row.fromRowId, row.toRowId),
       fromData: row.fromData,
       toData: row.toData,
@@ -50,7 +45,6 @@ export class RowChangeMapper {
       fromSchemaHash: row.fromSchemaHash,
       toSchemaHash: row.toSchemaHash,
       fieldChanges,
-      schemaImpact,
       updatedAt: row.updatedAt,
       publishedAt: row.publishedAt,
       createdAt: row.createdAt,

@@ -7,8 +7,6 @@ export class RowDiffService {
   public analyzeFieldChanges(
     fromData: Record<string, unknown> | null,
     toData: Record<string, unknown> | null,
-    fromSchemaHash?: string,
-    toSchemaHash?: string,
   ): FieldChange[] {
     if (!fromData && !toData) {
       return [];
@@ -22,11 +20,7 @@ export class RowDiffService {
       return this.getAllFieldsAsRemoved(fromData);
     }
 
-    const schemaChanged = Boolean(
-      fromSchemaHash && toSchemaHash && fromSchemaHash !== toSchemaHash,
-    );
-
-    return this.computeFieldDiff(fromData!, toData!, schemaChanged);
+    return this.computeFieldDiff(fromData!, toData!);
   }
 
   private getAllFieldsAsAdded(data: Record<string, unknown>): FieldChange[] {
@@ -54,7 +48,6 @@ export class RowDiffService {
   private computeFieldDiff(
     fromData: Record<string, unknown>,
     toData: Record<string, unknown>,
-    schemaChanged: boolean,
   ): FieldChange[] {
     const changes: FieldChange[] = [];
     const diff = jsonpatch.compare(fromData, toData);
@@ -67,18 +60,14 @@ export class RowDiffService {
           fieldPath,
           oldValue: null,
           newValue: (operation as any).value,
-          changeType: schemaChanged
-            ? RowChangeDetailType.SchemaMigration
-            : RowChangeDetailType.FieldAdded,
+          changeType: RowChangeDetailType.FieldAdded,
         });
       } else if (operation.op === 'remove') {
         changes.push({
           fieldPath,
           oldValue: this.getValueAtPath(fromData, fieldPath),
           newValue: null,
-          changeType: schemaChanged
-            ? RowChangeDetailType.SchemaMigration
-            : RowChangeDetailType.FieldRemoved,
+          changeType: RowChangeDetailType.FieldRemoved,
         });
       } else if (operation.op === 'replace') {
         changes.push({

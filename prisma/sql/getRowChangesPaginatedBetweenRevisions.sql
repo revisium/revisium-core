@@ -3,10 +3,9 @@
 -- @param {String} $3:tableCreatedId (optional, for filtering, NULL for all tables)
 -- @param {String} $4:searchTerm (optional, for searching by rowId, NULL to disable)
 -- @param {Json} $5:changeTypes (optional, array of change types to filter, NULL for all)
--- @param {Json} $6:changeSources (optional, array of change sources to filter, NULL for all)
--- @param {Int} $7:limit
--- @param {Int} $8:offset
--- @param {Boolean} $9:includeSystem (optional, whether to include system tables, default FALSE)
+-- @param {Int} $6:limit
+-- @param {Int} $7:offset
+-- @param {Boolean} $8:includeSystem (optional, whether to include system tables, default FALSE)
 
 WITH parent_rows AS (
     SELECT
@@ -27,7 +26,7 @@ WITH parent_rows AS (
     INNER JOIN "_RevisionToTable" revt ON t."versionId" = revt."B"
     WHERE revt."A" = $1
         AND ($3::text IS NULL OR t."createdId" = $3)
-        AND ($9::boolean IS TRUE OR t."system" = FALSE)
+        AND ($8::boolean IS TRUE OR t."system" = FALSE)
 ),
 child_rows AS (
     SELECT
@@ -48,7 +47,7 @@ child_rows AS (
     INNER JOIN "_RevisionToTable" revt ON t."versionId" = revt."B"
     WHERE revt."A" = $2
         AND ($3::text IS NULL OR t."createdId" = $3)
-        AND ($9::boolean IS TRUE OR t."system" = FALSE)
+        AND ($8::boolean IS TRUE OR t."system" = FALSE)
 ),
 all_changes AS (
     SELECT
@@ -78,13 +77,7 @@ all_changes AS (
             WHEN pr."id" != cr."id" AND cr."hash" != pr."hash" THEN 'RENAMED_AND_MODIFIED'
             WHEN pr."id" != cr."id" THEN 'RENAMED'
             WHEN cr."hash" != pr."hash" THEN 'MODIFIED'
-        END AS "changeType",
-
-        CASE
-            WHEN pr."schemaHash" IS NULL OR cr."schemaHash" IS NULL THEN 'DATA'
-            WHEN cr."schemaHash" != pr."schemaHash" THEN 'SCHEMA'
-            ELSE 'DATA'
-        END AS "changeSource"
+        END AS "changeType"
 
     FROM child_rows cr
     FULL OUTER JOIN parent_rows pr USING ("createdId")
@@ -102,10 +95,8 @@ WHERE
      "toRowId" ILIKE '%' || $4 || '%')
     -- Filter by changeTypes
     AND ($5::jsonb IS NULL OR "changeType" = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb))))
-    -- Filter by changeSources
-    AND ($6::jsonb IS NULL OR "changeSource" = ANY(ARRAY(SELECT jsonb_array_elements_text($6::jsonb))))
 ORDER BY
     "updatedAt" DESC,
     "rowCreatedId" ASC
-LIMIT $7
-OFFSET $8
+LIMIT $6
+OFFSET $7

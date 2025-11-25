@@ -42,11 +42,6 @@ type BranchesConnection {
   totalCount: Int!
 }
 
-enum ChangeSource {
-  DATA
-  SCHEMA
-}
-
 enum ChangeType {
   ADDED
   MODIFIED
@@ -168,11 +163,6 @@ type FieldChangeModel {
   movedFrom: String
   newValue: JSON
   oldValue: JSON
-}
-
-type FieldMoveModel {
-  from: String!
-  to: String!
 }
 
 input GetBranchInput {
@@ -683,11 +673,9 @@ enum RowChangeDetailType {
   FIELD_MODIFIED
   FIELD_MOVED
   FIELD_REMOVED
-  SCHEMA_MIGRATION
 }
 
 type RowChangeModel {
-  changeSource: ChangeSource!
   changeType: ChangeType!
   createdAt: DateTime!
   fieldChanges: [FieldChangeModel!]!
@@ -700,7 +688,6 @@ type RowChangeModel {
   publishedAt: DateTime!
   rowCreatedId: String!
   rowId: String!
-  schemaImpact: SchemaChangeImpactModel
   tableCreatedId: String!
   tableId: String!
   toData: JSON
@@ -722,11 +709,7 @@ type RowChangesConnection {
 }
 
 input RowChangesFiltersInput {
-  affectedBySchema: Boolean
-  changeSources: [ChangeSource!]
   changeTypes: [ChangeType!]
-  fieldPath: String
-  fieldValue: JSON
   includeSystem: Boolean = false
   search: String
   tableId: String
@@ -757,15 +740,13 @@ type RowsConnection {
   totalCount: Int!
 }
 
-type SchemaChangeImpactModel {
-  addedFields: [String!]!
-  affectedFields: [String!]!
-  migrationApplied: Boolean!
-  migrationDetails: SchemaMigrationDetailModel
-  modifiedFields: [String!]!
-  movedFields: [FieldMoveModel!]!
-  removedFields: [String!]!
-  schemaHashChanged: Boolean!
+type SchemaFieldChangeModel {
+  changeType: String!
+  fieldPath: String!
+  movedFrom: String
+  movedTo: String
+  newSchema: JSON
+  oldSchema: JSON
 }
 
 type SchemaMigrationDetailModel {

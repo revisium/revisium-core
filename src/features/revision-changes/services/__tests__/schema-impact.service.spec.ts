@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SchemaImpactService } from '../schema-impact.service';
-import { MigrationType, JsonPatchOp } from '../../types';
+import { MigrationType, JsonPatchOp, SchemaFieldChangeType } from '../../types';
 
 describe('SchemaImpactService', () => {
   let service: SchemaImpactService;
@@ -165,9 +165,17 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.addedFields).toContain('email');
-      expect(result?.addedFields).toContain('age');
-      expect(result?.addedFields).toHaveLength(2);
+      expect(result?.fieldSchemaChanges).toHaveLength(2);
+      expect(result?.fieldSchemaChanges[0]).toEqual({
+        fieldPath: 'email',
+        changeType: SchemaFieldChangeType.Added,
+        newSchema: { type: 'string' },
+      });
+      expect(result?.fieldSchemaChanges[1]).toEqual({
+        fieldPath: 'age',
+        changeType: SchemaFieldChangeType.Added,
+        newSchema: { type: 'number' },
+      });
     });
 
     it('extracts removed fields', () => {
@@ -190,8 +198,11 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.removedFields).toContain('deprecated');
-      expect(result?.removedFields).toHaveLength(1);
+      expect(result?.fieldSchemaChanges).toHaveLength(1);
+      expect(result?.fieldSchemaChanges[0]).toEqual({
+        fieldPath: 'deprecated',
+        changeType: SchemaFieldChangeType.Removed,
+      });
     });
 
     it('extracts modified fields', () => {
@@ -215,8 +226,12 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.modifiedFields).toContain('name');
-      expect(result?.modifiedFields).toHaveLength(1);
+      expect(result?.fieldSchemaChanges).toHaveLength(1);
+      expect(result?.fieldSchemaChanges[0]).toEqual({
+        fieldPath: 'name',
+        changeType: SchemaFieldChangeType.Modified,
+        newSchema: { type: 'string', maxLength: 100 },
+      });
     });
 
     it('extracts moved fields', () => {
@@ -240,10 +255,12 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.movedFields).toHaveLength(1);
-      expect(result?.movedFields[0]).toEqual({
-        from: 'oldName',
-        to: 'newName',
+      expect(result?.fieldSchemaChanges).toHaveLength(1);
+      expect(result?.fieldSchemaChanges[0]).toEqual({
+        fieldPath: 'newName',
+        changeType: SchemaFieldChangeType.Moved,
+        movedFrom: 'oldName',
+        movedTo: 'newName',
       });
     });
 
@@ -277,10 +294,16 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.affectedFields).toContain('email');
-      expect(result?.affectedFields).toContain('deprecated');
-      expect(result?.affectedFields).toContain('name');
-      expect(result?.affectedFields).toHaveLength(3);
+      expect(result?.fieldSchemaChanges).toHaveLength(3);
+      expect(result?.fieldSchemaChanges.map((c) => c.fieldPath)).toContain(
+        'email',
+      );
+      expect(result?.fieldSchemaChanges.map((c) => c.fieldPath)).toContain(
+        'deprecated',
+      );
+      expect(result?.fieldSchemaChanges.map((c) => c.fieldPath)).toContain(
+        'name',
+      );
     });
 
     it('handles multiple migrations', () => {
@@ -315,9 +338,13 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.addedFields).toContain('field1');
-      expect(result?.addedFields).toContain('field2');
-      expect(result?.affectedFields).toHaveLength(2);
+      expect(result?.fieldSchemaChanges).toHaveLength(2);
+      expect(result?.fieldSchemaChanges.map((c) => c.fieldPath)).toContain(
+        'field1',
+      );
+      expect(result?.fieldSchemaChanges.map((c) => c.fieldPath)).toContain(
+        'field2',
+      );
     });
 
     it('handles empty migrations array', () => {
@@ -328,11 +355,7 @@ describe('SchemaImpactService', () => {
       );
 
       expect(result?.migrationApplied).toBe(false);
-      expect(result?.addedFields).toEqual([]);
-      expect(result?.removedFields).toEqual([]);
-      expect(result?.modifiedFields).toEqual([]);
-      expect(result?.movedFields).toEqual([]);
-      expect(result?.affectedFields).toEqual([]);
+      expect(result?.fieldSchemaChanges).toEqual([]);
     });
 
     it('handles remove migration type', () => {
@@ -399,8 +422,11 @@ describe('SchemaImpactService', () => {
         migrations,
       );
 
-      expect(result?.addedFields).toEqual(['name']);
-      expect(result?.addedFields).not.toContain('type');
+      expect(result?.fieldSchemaChanges).toHaveLength(1);
+      expect(result?.fieldSchemaChanges[0].fieldPath).toBe('name');
+      expect(result?.fieldSchemaChanges.map((c) => c.fieldPath)).not.toContain(
+        'type',
+      );
     });
 
     it('handles copy operation', () => {

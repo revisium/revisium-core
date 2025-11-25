@@ -6,11 +6,6 @@ export enum ChangeType {
   RenamedAndModified = 'RENAMED_AND_MODIFIED',
 }
 
-export enum ChangeSource {
-  Data = 'DATA',
-  Schema = 'SCHEMA',
-}
-
 export enum JsonPatchOp {
   Add = 'ADD',
   Remove = 'REMOVE',
@@ -31,5 +26,4 @@ export enum RowChangeDetailType {
   FieldRemoved = 'FIELD_REMOVED',
   FieldModified = 'FIELD_MODIFIED',
   FieldMoved = 'FIELD_MOVED',
-  SchemaMigration = 'SCHEMA_MIGRATION',
 }
