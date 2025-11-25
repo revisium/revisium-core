@@ -6,13 +6,12 @@ import {
 } from '../impl/get-row-changes.query';
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { RowDiffService } from '../../services/row-diff.service';
-import { SchemaImpactService } from '../../services/schema-impact.service';
 import { RowChange } from '../../types';
 import { getRowChangesPaginatedBetweenRevisions } from 'src/__generated__/client/sql/getRowChangesPaginatedBetweenRevisions';
 import { countRowChangesBetweenRevisions } from 'src/__generated__/client/sql/countRowChangesBetweenRevisions';
-import { RevisionComparisonService } from '../../services/revision-comparison.service';
 import { createEmptyPaginatedResponse } from '../../utils/empty-responses';
 import { RowChangeMapper } from '../../mappers/row-change.mapper';
+import { RevisionComparisonService } from '../../services/revision-comparison.service';
 
 @QueryHandler(GetRowChangesQuery)
 export class GetRowChangesHandler
@@ -21,7 +20,6 @@ export class GetRowChangesHandler
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly rowDiffService: RowDiffService,
-    private readonly schemaImpactService: SchemaImpactService,
     private readonly revisionComparisonService: RevisionComparisonService,
     private readonly rowChangeMapper: RowChangeMapper,
   ) {}
@@ -59,11 +57,7 @@ export class GetRowChangesHandler
           includeSystem,
         );
 
-        return Promise.all(
-          rows.map((row) =>
-            this.mapToRowChange(row, fromRevisionId, revisionId),
-          ),
-        );
+        return Promise.all(rows.map((row) => this.mapToRowChange(row)));
       },
       count: () =>
         this.countRowChanges(
@@ -91,9 +85,6 @@ export class GetRowChangesHandler
     const changeTypes = filters?.changeTypes
       ? JSON.stringify(filters.changeTypes)
       : null;
-    const changeSources = filters?.changeSources
-      ? JSON.stringify(filters.changeSources)
-      : null;
 
     return this.prisma.$queryRawTyped(
       getRowChangesPaginatedBetweenRevisions(
@@ -102,7 +93,6 @@ export class GetRowChangesHandler
         (tableCreatedId ?? null) as any,
         (searchTerm ?? null) as any,
         changeTypes as any,
-        changeSources as any,
         limit,
         offset,
         includeSystem,
@@ -124,9 +114,6 @@ export class GetRowChangesHandler
     const changeTypes = filters?.changeTypes
       ? JSON.stringify(filters.changeTypes)
       : null;
-    const changeSources = filters?.changeSources
-      ? JSON.stringify(filters.changeSources)
-      : null;
 
     const result = await this.prisma.$queryRawTyped(
       countRowChangesBetweenRevisions(
@@ -135,7 +122,6 @@ export class GetRowChangesHandler
         (tableCreatedId ?? null) as any,
         (searchTerm ?? null) as any,
         changeTypes as any,
-        changeSources as any,
         includeSystem,
       ),
     );
@@ -168,34 +154,12 @@ export class GetRowChangesHandler
     return table?.createdId ?? undefined;
   }
 
-  private async mapToRowChange(
-    row: any,
-    fromRevisionId: string,
-    toRevisionId: string,
-  ): Promise<RowChange> {
-    const migrations =
-      await this.revisionComparisonService.getMigrationsForTable(
-        toRevisionId,
-        row.tableCreatedId,
-      );
-
+  private async mapToRowChange(row: any): Promise<RowChange> {
     const fieldChanges = this.rowDiffService.analyzeFieldChanges(
       row.fromData as Record<string, unknown> | null,
       row.toData as Record<string, unknown> | null,
-      row.fromSchemaHash,
-      row.toSchemaHash,
     );
 
-    const schemaImpact = this.schemaImpactService.analyzeSchemaImpact(
-      row.fromSchemaHash,
-      row.toSchemaHash,
-      migrations,
-    );
-
-    return this.rowChangeMapper.mapRawDataToRowChange(
-      row,
-      fieldChanges,
-      schemaImpact,
-    );
+    return this.rowChangeMapper.mapRawDataToRowChange(row, fieldChanges);
   }
 }

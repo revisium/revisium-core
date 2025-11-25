@@ -42,11 +42,6 @@ type BranchesConnection {
   totalCount: Int!
 }
 
-enum ChangeSource {
-  DATA
-  SCHEMA
-}
-
 enum ChangeType {
   ADDED
   MODIFIED
@@ -678,11 +673,9 @@ enum RowChangeDetailType {
   FIELD_MODIFIED
   FIELD_MOVED
   FIELD_REMOVED
-  SCHEMA_MIGRATION
 }
 
 type RowChangeModel {
-  changeSource: ChangeSource!
   changeType: ChangeType!
   createdAt: DateTime!
   fieldChanges: [FieldChangeModel!]!
@@ -695,7 +688,6 @@ type RowChangeModel {
   publishedAt: DateTime!
   rowCreatedId: String!
   rowId: String!
-  schemaImpact: SchemaChangeImpactModel
   tableCreatedId: String!
   tableId: String!
   toData: JSON
@@ -717,11 +709,7 @@ type RowChangesConnection {
 }
 
 input RowChangesFiltersInput {
-  affectedBySchema: Boolean
-  changeSources: [ChangeSource!]
   changeTypes: [ChangeType!]
-  fieldPath: String
-  fieldValue: JSON
   includeSystem: Boolean = false
   search: String
   tableId: String
@@ -750,13 +738,6 @@ type RowsConnection {
   edges: [RowModelEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
-}
-
-type SchemaChangeImpactModel {
-  fieldSchemaChanges: [SchemaFieldChangeModel!]!
-  migrationApplied: Boolean!
-  migrationDetails: SchemaMigrationDetailModel
-  schemaHashChanged: Boolean!
 }
 
 type SchemaFieldChangeModel {

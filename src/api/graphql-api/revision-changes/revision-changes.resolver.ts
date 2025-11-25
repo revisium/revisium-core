@@ -41,7 +41,6 @@ export class RevisionChangesResolver {
         ? {
             ...data.filters,
             changeTypes: data.filters.changeTypes as any,
-            changeSources: data.filters.changeSources as any,
           }
         : undefined,
     });

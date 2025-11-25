@@ -84,7 +84,8 @@ export class GetTableChangesHandler
     includeSystem = false,
   ): Promise<TableChange> {
     const migrations =
-      await this.revisionComparisonService.getMigrationsForTable(
+      await this.revisionComparisonService.getMigrationsForTableBetweenRevisions(
+        fromRevisionId,
         revisionId,
         diff.createdId,
       );

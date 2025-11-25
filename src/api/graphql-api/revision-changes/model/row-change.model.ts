@@ -1,8 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
-import { ChangeTypeEnum, ChangeSourceEnum } from './enums.model';
+import { ChangeTypeEnum } from './enums.model';
 import { FieldChangeModel } from './field-change.model';
-import { SchemaChangeImpactModel } from './schema-change.model';
 import { Paginated } from 'src/api/graphql-api/share/model/paginated.model';
 
 @ObjectType()
@@ -21,9 +20,6 @@ export class RowChangeModel {
 
   @Field(() => ChangeTypeEnum)
   changeType: ChangeTypeEnum;
-
-  @Field(() => ChangeSourceEnum)
-  changeSource: ChangeSourceEnum;
 
   @Field(() => String, { nullable: true })
   oldRowId?: string;
@@ -51,9 +47,6 @@ export class RowChangeModel {
 
   @Field(() => [FieldChangeModel])
   fieldChanges: FieldChangeModel[];
-
-  @Field(() => SchemaChangeImpactModel, { nullable: true })
-  schemaImpact: SchemaChangeImpactModel | null;
 
   @Field(() => DateTimeResolver)
   updatedAt: Date;

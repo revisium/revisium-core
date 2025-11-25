@@ -8,11 +8,6 @@ export enum ChangeTypeEnum {
   RENAMED_AND_MODIFIED = 'RENAMED_AND_MODIFIED',
 }
 
-export enum ChangeSourceEnum {
-  DATA = 'DATA',
-  SCHEMA = 'SCHEMA',
-}
-
 export enum JsonPatchOpEnum {
   ADD = 'ADD',
   REMOVE = 'REMOVE',
@@ -33,11 +28,9 @@ export enum RowChangeDetailTypeEnum {
   FIELD_REMOVED = 'FIELD_REMOVED',
   FIELD_MODIFIED = 'FIELD_MODIFIED',
   FIELD_MOVED = 'FIELD_MOVED',
-  SCHEMA_MIGRATION = 'SCHEMA_MIGRATION',
 }
 
 registerEnumType(ChangeTypeEnum, { name: 'ChangeType' });
-registerEnumType(ChangeSourceEnum, { name: 'ChangeSource' });
 registerEnumType(JsonPatchOpEnum, { name: 'JsonPatchOp' });
 registerEnumType(MigrationTypeEnum, { name: 'MigrationType' });
 registerEnumType(RowChangeDetailTypeEnum, { name: 'RowChangeDetailType' });

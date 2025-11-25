@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { Prisma } from 'src/__generated__/client';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @Injectable()
 export class RevisionComparisonService {
@@ -65,5 +65,25 @@ export class RevisionComparisonService {
     });
 
     return migrationRows.map((row) => row.data);
+  }
+
+  async getMigrationsForTableBetweenRevisions(
+    fromRevisionId: string,
+    toRevisionId: string,
+    tableCreatedId: string,
+  ): Promise<Prisma.JsonValue[]> {
+    const toMigrations = await this.getMigrationsForTable(
+      toRevisionId,
+      tableCreatedId,
+    );
+
+    const fromMigrations = await this.getMigrationsForTable(
+      fromRevisionId,
+      tableCreatedId,
+    );
+
+    const fromMigrationIds = new Set(fromMigrations.map((m: any) => m.id));
+
+    return toMigrations.filter((m: any) => !fromMigrationIds.has(m.id));
   }
 }

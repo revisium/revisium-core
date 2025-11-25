@@ -9,7 +9,7 @@ import { RowDiffService } from '../../../services/row-diff.service';
 import { SchemaImpactService } from '../../../services/schema-impact.service';
 import { RevisionComparisonService } from '../../../services/revision-comparison.service';
 import { RowChangeMapper } from '../../../mappers/row-change.mapper';
-import { ChangeType, ChangeSource } from '../../../types';
+import { ChangeType } from '../../../types';
 
 describe('GetRowChangesHandler', () => {
   let module: TestingModule;
@@ -125,26 +125,6 @@ describe('GetRowChangesHandler', () => {
       // Should only return added rows
       result.edges.forEach((edge) => {
         expect(edge.node.changeType).toBe(ChangeType.Added);
-      });
-      expect(result.edges.length).toBeGreaterThan(0);
-    });
-
-    it('filters by changeSources', async () => {
-      const { toRevision } = await prepareRowChanges();
-
-      const result = await handler.execute(
-        new GetRowChangesQuery({
-          revisionId: toRevision.id,
-          first: 10,
-          filters: {
-            changeSources: [ChangeSource.Data],
-          },
-        }),
-      );
-
-      // Should only return data changes
-      result.edges.forEach((edge) => {
-        expect(edge.node.changeSource).toBe(ChangeSource.Data);
       });
       expect(result.edges.length).toBeGreaterThan(0);
     });

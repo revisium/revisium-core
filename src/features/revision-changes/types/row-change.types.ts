@@ -1,6 +1,5 @@
-import { ChangeSource, ChangeType } from './enums';
+import { ChangeType } from './enums';
 import { FieldChange } from './field-change.types';
-import { SchemaChangeImpact } from './schema-change.types';
 
 export interface RowChange {
   rowId: string;
@@ -8,7 +7,6 @@ export interface RowChange {
   fromVersionId: string | null;
   toVersionId: string | null;
   changeType: ChangeType;
-  changeSource: ChangeSource;
 
   oldRowId?: string;
   newRowId?: string;
@@ -21,7 +19,6 @@ export interface RowChange {
   toSchemaHash?: string;
 
   fieldChanges: FieldChange[];
-  schemaImpact: SchemaChangeImpact | null;
 
   updatedAt: Date;
   publishedAt: Date;

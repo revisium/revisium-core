@@ -98,22 +98,17 @@ describe('RowDiffService', () => {
       expect(result[0].newValue).toBe('Jane');
     });
 
-    it('detects schema migration changes when schema hash differs', () => {
+    it('detects field additions', () => {
       const fromData = { name: 'John' };
       const toData = { name: 'John', age: 30 };
-      const result = service.analyzeFieldChanges(
-        fromData,
-        toData,
-        'schema-hash-1',
-        'schema-hash-2',
-      );
+      const result = service.analyzeFieldChanges(fromData, toData);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toEqual({
         fieldPath: 'age',
         oldValue: null,
         newValue: 30,
-        changeType: RowChangeDetailType.SchemaMigration,
+        changeType: RowChangeDetailType.FieldAdded,
       });
     });
 
