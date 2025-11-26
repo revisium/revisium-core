@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma } from 'src/__generated__/client';
+import { SystemTables } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @Injectable()
@@ -39,11 +40,16 @@ export class RevisionComparisonService {
     revisionId: string,
     tableCreatedId: string,
   ): Promise<Prisma.JsonValue[]> {
+    const tableId = await this.resolveTableId(revisionId, tableCreatedId);
+    if (!tableId) {
+      return [];
+    }
+
     const migrationRows = await this.prisma.row.findMany({
       where: {
         tables: {
           some: {
-            id: 'migration',
+            id: SystemTables.Migration,
             revisions: {
               some: {
                 id: revisionId,
@@ -53,7 +59,7 @@ export class RevisionComparisonService {
         },
         data: {
           path: ['tableId'],
-          equals: tableCreatedId,
+          equals: tableId,
         },
       },
       select: {
@@ -85,5 +91,26 @@ export class RevisionComparisonService {
     const fromMigrationIds = new Set(fromMigrations.map((m: any) => m.id));
 
     return toMigrations.filter((m: any) => !fromMigrationIds.has(m.id));
+  }
+
+  private async resolveTableId(
+    revisionId: string,
+    tableCreatedId: string,
+  ): Promise<string | null> {
+    const table = await this.prisma.table.findFirst({
+      where: {
+        createdId: tableCreatedId,
+        revisions: {
+          some: {
+            id: revisionId,
+          },
+        },
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return table?.id ?? null;
   }
 }

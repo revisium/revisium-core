@@ -1,6 +1,6 @@
 {
   "name": "@revisium/core",
-  "version": "2.5.0-alpha.5",
+  "version": "2.5.0-alpha.6",
   "description": "Revisium is a tool (UI/API) inspired by JSON (JSON Schema) and Git, designed to provide a flexible and low-level headless CMS solution.",
   "private": false,
   "homepage": "https://revisium.io",
@@ -132,6 +132,9 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.32.1"
+  },
+  "overrides": {
+    "hono": "^4.10.3"
   },
   "jest": {
     "modulePaths": [
