@@ -9,7 +9,8 @@ import { DiffService } from 'src/features/share/diff.service';
 import { SchemaImpactService } from '../../../services/schema-impact.service';
 import { RevisionComparisonService } from '../../../services/revision-comparison.service';
 import { TableChangeMapper } from '../../../mappers/table-change.mapper';
-import { ChangeType } from '../../../types';
+import { ChangeType, MigrationType } from '../../../types';
+import { SystemTables } from 'src/features/share/system-tables.consts';
 
 describe('GetTableChangesHandler', () => {
   let module: TestingModule;
@@ -218,6 +219,26 @@ describe('GetTableChangesHandler', () => {
         );
       });
       expect(result.edges.length).toBeGreaterThan(0);
+    });
+
+    it('returns schemaMigrations for tables with migrations', async () => {
+      const { toRevision, addedTable } = await prepareTableWithMigration();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      const tableChange = result.edges.find(
+        (e) => e.node.tableCreatedId === addedTable.createdId,
+      );
+      expect(tableChange).toBeDefined();
+      expect(tableChange?.node.schemaMigrations).toHaveLength(1);
+      expect(tableChange?.node.schemaMigrations[0]).toMatchObject({
+        migrationType: MigrationType.Init,
+      });
     });
   });
 
@@ -621,5 +642,106 @@ describe('GetTableChangesHandler', () => {
     });
 
     return { fromRevision, toRevision, table };
+  }
+
+  async function prepareTableWithMigration() {
+    const branch = await prismaService.branch.create({
+      data: {
+        id: nanoid(),
+        name: nanoid(),
+        project: {
+          create: {
+            id: nanoid(),
+            name: nanoid(),
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const fromRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        branchId: branch.id,
+      },
+    });
+
+    // Create migration table in fromRevision
+    const fromMigrationTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Migration,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        system: true,
+        readonly: true,
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    const toRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        parentId: fromRevision.id,
+        branchId: branch.id,
+      },
+    });
+
+    // Create new version of migration table for toRevision
+    const toMigrationTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Migration,
+        createdId: fromMigrationTable.createdId,
+        versionId: nanoid(),
+        system: true,
+        readonly: true,
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create a table that will have a migration
+    const addedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create migration row for the added table
+    // Migration stores human-readable tableId, not createdId
+    const migrationData = {
+      id: nanoid(),
+      tableId: addedTable.id,
+      changeType: 'init',
+    };
+
+    await prismaService.row.create({
+      data: {
+        id: migrationData.id,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        publishedAt: new Date(),
+        tables: {
+          connect: { versionId: toMigrationTable.versionId },
+        },
+        data: migrationData,
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    return { fromRevision, toRevision, addedTable, migrationData };
   }
 });
