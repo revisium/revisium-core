@@ -9,12 +9,18 @@ import { RowDiffService } from '../../../services/row-diff.service';
 import { SchemaImpactService } from '../../../services/schema-impact.service';
 import { RevisionComparisonService } from '../../../services/revision-comparison.service';
 import { RowChangeMapper } from '../../../mappers/row-change.mapper';
-import { ChangeType } from '../../../types';
+import { ChangeType, getRowCreatedId, getTableCreatedId } from '../../../types';
+import { PluginService } from 'src/features/plugin/plugin.service';
 
 describe('GetRowChangesHandler', () => {
   let module: TestingModule;
   let handler: GetRowChangesHandler;
   let prismaService: PrismaService;
+  let pluginService: PluginService;
+
+  const mockPluginService = {
+    computeRows: jest.fn().mockResolvedValue(undefined),
+  };
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
@@ -25,11 +31,20 @@ describe('GetRowChangesHandler', () => {
         SchemaImpactService,
         RevisionComparisonService,
         RowChangeMapper,
+        {
+          provide: PluginService,
+          useValue: mockPluginService,
+        },
       ],
     }).compile();
 
     handler = module.get(GetRowChangesHandler);
     prismaService = module.get(PrismaService);
+    pluginService = module.get(PluginService);
+  });
+
+  beforeEach(() => {
+    jest.clearAllMocks();
   });
 
   afterAll(async () => {
@@ -67,7 +82,7 @@ describe('GetRowChangesHandler', () => {
       expect(result.totalCount).toBeGreaterThan(0);
 
       const addedChange = result.edges.find(
-        (e) => e.node.rowCreatedId === addedRow.createdId,
+        (e) => getRowCreatedId(e.node) === addedRow.createdId,
       );
       expect(addedChange?.node.changeType).toBe(ChangeType.Added);
     });
@@ -87,7 +102,7 @@ describe('GetRowChangesHandler', () => {
 
       // Should only return rows from table1
       result.edges.forEach((edge) => {
-        expect(edge.node.tableCreatedId).toBe(table1.createdId);
+        expect(getTableCreatedId(edge.node)).toBe(table1.createdId);
       });
     });
 
@@ -105,7 +120,7 @@ describe('GetRowChangesHandler', () => {
       );
 
       expect(result.edges.length).toBeGreaterThan(0);
-      const found = result.edges.find((e) => e.node.rowId === searchRow.id);
+      const found = result.edges.find((e) => e.node.row?.id === searchRow.id);
       expect(found).toBeDefined();
     });
 
@@ -197,8 +212,9 @@ describe('GetRowChangesHandler', () => {
       expect(result.edges.length).toBe(1);
       const change = result.edges[0].node;
       expect(change.changeType).toBe(ChangeType.Renamed);
-      expect(change.oldRowId).toBe(fromRow.id);
-      expect(change.newRowId).toBe(toRow.id);
+      // For renamed rows, both row and fromRow exist
+      expect(change.fromRow?.id).toBe(fromRow.id);
+      expect(change.row?.id).toBe(toRow.id);
     });
 
     it('includes field changes in result', async () => {
@@ -217,7 +233,7 @@ describe('GetRowChangesHandler', () => {
       expect(Array.isArray(change.fieldChanges)).toBe(true);
     });
 
-    it('includes tableId in result', async () => {
+    it('includes table in result', async () => {
       const { toRevision, table } = await prepareRowChanges();
 
       const result = await handler.execute(
@@ -229,8 +245,8 @@ describe('GetRowChangesHandler', () => {
 
       expect(result.edges.length).toBeGreaterThan(0);
       const change = result.edges[0].node;
-      expect(change.tableId).toBeDefined();
-      expect(change.tableCreatedId).toBe(table.createdId);
+      expect(change.table?.id).toBeDefined();
+      expect(getTableCreatedId(change)).toBe(table.createdId);
     });
 
     it('compares with specified revision', async () => {
@@ -246,6 +262,63 @@ describe('GetRowChangesHandler', () => {
 
       // Should compare revision3 with revision1
       expect(result).toBeDefined();
+    });
+
+    it('calls computeRows for each table with changes', async () => {
+      const { toRevision, table } = await prepareRowChanges();
+
+      await handler.execute(
+        new GetRowChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      expect(pluginService.computeRows).toHaveBeenCalled();
+      expect(pluginService.computeRows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revisionId: toRevision.id,
+          tableId: table.id,
+        }),
+      );
+    });
+
+    it('calls computeRows for multiple tables when rows from different tables changed', async () => {
+      const { toRevision, table1, table2 } = await prepareMultipleTables();
+
+      await handler.execute(
+        new GetRowChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      expect(pluginService.computeRows).toHaveBeenCalledTimes(2);
+      expect(pluginService.computeRows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revisionId: toRevision.id,
+          tableId: table1.id,
+        }),
+      );
+      expect(pluginService.computeRows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revisionId: toRevision.id,
+          tableId: table2.id,
+        }),
+      );
+    });
+
+    it('does not call computeRows when no row changes', async () => {
+      const { revision } = await prepareRevisionWithoutParent();
+
+      await handler.execute(
+        new GetRowChangesQuery({
+          revisionId: revision.id,
+          first: 10,
+        }),
+      );
+
+      expect(pluginService.computeRows).not.toHaveBeenCalled();
     });
   });
 

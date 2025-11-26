@@ -1,4 +1,5 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
+import { Row } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetRowChangesQuery,
@@ -10,8 +11,13 @@ import { RowChange } from '../../types';
 import { getRowChangesPaginatedBetweenRevisions } from 'src/__generated__/client/sql/getRowChangesPaginatedBetweenRevisions';
 import { countRowChangesBetweenRevisions } from 'src/__generated__/client/sql/countRowChangesBetweenRevisions';
 import { createEmptyPaginatedResponse } from '../../utils/empty-responses';
-import { RowChangeMapper } from '../../mappers/row-change.mapper';
+import {
+  RowChangeMapper,
+  RawRowChangeData,
+} from '../../mappers/row-change.mapper';
 import { RevisionComparisonService } from '../../services/revision-comparison.service';
+import { PluginService } from 'src/features/plugin/plugin.service';
+import { ChangeType } from '../../types/enums';
 
 @QueryHandler(GetRowChangesQuery)
 export class GetRowChangesHandler
@@ -22,6 +28,7 @@ export class GetRowChangesHandler
     private readonly rowDiffService: RowDiffService,
     private readonly revisionComparisonService: RevisionComparisonService,
     private readonly rowChangeMapper: RowChangeMapper,
+    private readonly pluginService: PluginService,
   ) {}
 
   private get prisma() {
@@ -48,7 +55,7 @@ export class GetRowChangesHandler
     return getOffsetPagination({
       pageData: data,
       findMany: async (args) => {
-        const rows = await this.getRowChanges(
+        const rawRows = await this.getRowChanges(
           fromRevisionId,
           revisionId,
           args.take,
@@ -57,7 +64,9 @@ export class GetRowChangesHandler
           includeSystem,
         );
 
-        return Promise.all(rows.map((row) => this.mapToRowChange(row)));
+        await this.computeRowsForTables(rawRows, revisionId);
+
+        return rawRows.map((raw) => this.mapToRowChange(raw));
       },
       count: () =>
         this.countRowChanges(
@@ -154,12 +163,65 @@ export class GetRowChangesHandler
     return table?.createdId ?? undefined;
   }
 
-  private async mapToRowChange(row: any): Promise<RowChange> {
+  private mapToRowChange(raw: RawRowChangeData): RowChange {
     const fieldChanges = this.rowDiffService.analyzeFieldChanges(
-      row.fromData as Record<string, unknown> | null,
-      row.toData as Record<string, unknown> | null,
+      raw.fromData as Record<string, unknown> | null,
+      raw.toData as Record<string, unknown> | null,
     );
 
-    return this.rowChangeMapper.mapRawDataToRowChange(row, fieldChanges);
+    return this.rowChangeMapper.mapRawDataToRowChange(raw, fieldChanges);
+  }
+
+  private async computeRowsForTables(
+    rawRows: RawRowChangeData[],
+    revisionId: string,
+  ): Promise<void> {
+    const rowsByTable = new Map<string, Row[]>();
+
+    for (const rawRow of rawRows) {
+      if (rawRow.changeType === ChangeType.Removed) {
+        continue;
+      }
+
+      const tableId = rawRow.toTableId;
+
+      if (!tableId) {
+        continue;
+      }
+
+      if (!rowsByTable.has(tableId)) {
+        rowsByTable.set(tableId, []);
+      }
+
+      const row = this.createRowWithDataProxy(rawRow);
+      rowsByTable.get(tableId)?.push(row);
+    }
+
+    await Promise.all(
+      Array.from(rowsByTable.entries()).map(([tableId, rows]) =>
+        this.pluginService.computeRows({ revisionId, tableId, rows }),
+      ),
+    );
+  }
+
+  private createRowWithDataProxy(rawRow: RawRowChangeData): Row {
+    return {
+      id: rawRow.toRowId,
+      createdId: rawRow.toRowCreatedId,
+      versionId: rawRow.toRowVersionId,
+      hash: rawRow.toHash,
+      schemaHash: rawRow.toSchemaHash,
+      readonly: rawRow.toReadonly,
+      meta: rawRow.toMeta,
+      createdAt: rawRow.toRowCreatedAt,
+      updatedAt: rawRow.toRowUpdatedAt,
+      publishedAt: rawRow.toRowPublishedAt,
+      get data() {
+        return rawRow.toData;
+      },
+      set data(value) {
+        rawRow.toData = value;
+      },
+    };
   }
 }

@@ -11,6 +11,13 @@ input AddUserToProjectInput {
   userId: String!
 }
 
+type AddedRowChangeModel {
+  changeType: ChangeType!
+  fieldChanges: [FieldChangeModel!]!
+  row: RowChangeRowModel!
+  table: RowChangeTableModel!
+}
+
 input BooleanFilter {
   equals: Boolean
   not: Boolean
@@ -382,6 +389,15 @@ enum MigrationType {
   UPDATE
 }
 
+type ModifiedRowChangeModel {
+  changeType: ChangeType!
+  fieldChanges: [FieldChangeModel!]!
+  fromRow: RowChangeRowModel!
+  fromTable: RowChangeTableModel!
+  row: RowChangeRowModel!
+  table: RowChangeTableModel!
+}
+
 type Mutation {
   addUserToOrganization(data: AddUserToOrganizationInput!): Boolean!
   addUserToProject(data: AddUserToProjectInput!): Boolean!
@@ -582,6 +598,13 @@ input RemoveUserFromProjectInput {
   userId: String!
 }
 
+type RemovedRowChangeModel {
+  changeType: ChangeType!
+  fieldChanges: [FieldChangeModel!]!
+  fromRow: RowChangeRowModel!
+  fromTable: RowChangeTableModel!
+}
+
 input RenameRowInput {
   nextRowId: String!
   revisionId: String!
@@ -665,6 +688,8 @@ type RoleModel {
   permissions: [PermissionModel!]!
 }
 
+union RowChange = AddedRowChangeModel | ModifiedRowChangeModel | RemovedRowChangeModel
+
 enum RowChangeDetailType {
   FIELD_ADDED
   FIELD_MODIFIED
@@ -672,35 +697,37 @@ enum RowChangeDetailType {
   FIELD_REMOVED
 }
 
-type RowChangeModel {
-  changeType: ChangeType!
-  createdAt: DateTime!
-  fieldChanges: [FieldChangeModel!]!
-  fromData: JSON
-  fromHash: String
-  fromSchemaHash: String
-  fromVersionId: String
-  newRowId: String
-  oldRowId: String
-  publishedAt: DateTime!
-  rowCreatedId: String!
-  rowId: String!
-  tableCreatedId: String!
-  tableId: String!
-  toData: JSON
-  toHash: String
-  toSchemaHash: String
-  toVersionId: String
-  updatedAt: DateTime!
+type RowChangeEdge {
+  cursor: String!
+  node: RowChange!
 }
 
-type RowChangeModelEdge {
-  cursor: String!
-  node: RowChangeModel!
+type RowChangeRowModel {
+  createdAt: DateTime!
+  createdId: String!
+  data: JSON!
+  hash: String!
+  id: String!
+  meta: JSON!
+  publishedAt: DateTime!
+  readonly: Boolean!
+  schemaHash: String!
+  updatedAt: DateTime!
+  versionId: String!
+}
+
+type RowChangeTableModel {
+  createdAt: DateTime!
+  createdId: String!
+  id: String!
+  readonly: Boolean!
+  system: Boolean!
+  updatedAt: DateTime!
+  versionId: String!
 }
 
 type RowChangesConnection {
-  edges: [RowChangeModelEdge!]!
+  edges: [RowChangeEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
