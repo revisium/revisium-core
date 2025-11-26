@@ -9,17 +9,26 @@
 
 WITH parent_rows AS (
     SELECT
-        r."id",
-        r."createdId",
-        r."versionId",
+        -- Row fields
+        r."id" AS "rowId",
+        r."createdId" AS "rowCreatedId",
+        r."versionId" AS "rowVersionId",
         r."data",
         r."hash",
         r."schemaHash",
-        r."updatedAt",
-        r."publishedAt",
-        r."createdAt",
-        t."id" as "tableId",
-        t."createdId" as "tableCreatedId"
+        r."readonly",
+        r."meta",
+        r."createdAt" AS "rowCreatedAt",
+        r."updatedAt" AS "rowUpdatedAt",
+        r."publishedAt" AS "rowPublishedAt",
+        -- Table fields
+        t."id" AS "tableId",
+        t."createdId" AS "tableCreatedId",
+        t."versionId" AS "tableVersionId",
+        t."readonly" AS "tableReadonly",
+        t."system" AS "tableSystem",
+        t."createdAt" AS "tableCreatedAt",
+        t."updatedAt" AS "tableUpdatedAt"
     FROM "Row" r
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     INNER JOIN "Table" t ON t."versionId" = rt."B"
@@ -30,17 +39,26 @@ WITH parent_rows AS (
 ),
 child_rows AS (
     SELECT
-        r."id",
-        r."createdId",
-        r."versionId",
+        -- Row fields
+        r."id" AS "rowId",
+        r."createdId" AS "rowCreatedId",
+        r."versionId" AS "rowVersionId",
         r."data",
         r."hash",
         r."schemaHash",
-        r."updatedAt",
-        r."publishedAt",
-        r."createdAt",
-        t."id" as "tableId",
-        t."createdId" as "tableCreatedId"
+        r."readonly",
+        r."meta",
+        r."createdAt" AS "rowCreatedAt",
+        r."updatedAt" AS "rowUpdatedAt",
+        r."publishedAt" AS "rowPublishedAt",
+        -- Table fields
+        t."id" AS "tableId",
+        t."createdId" AS "tableCreatedId",
+        t."versionId" AS "tableVersionId",
+        t."readonly" AS "tableReadonly",
+        t."system" AS "tableSystem",
+        t."createdAt" AS "tableCreatedAt",
+        t."updatedAt" AS "tableUpdatedAt"
     FROM "Row" r
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     INNER JOIN "Table" t ON t."versionId" = rt."B"
@@ -51,40 +69,69 @@ child_rows AS (
 ),
 all_changes AS (
     SELECT
-        pr."id" AS "fromRowId",
-        COALESCE(cr."createdId", pr."createdId") AS "rowCreatedId",
-        pr."versionId" AS "fromVersionId",
+        -- fromRow (all Row fields)
+        pr."rowId" AS "fromRowId",
+        pr."rowCreatedId" AS "fromRowCreatedId",
+        pr."rowVersionId" AS "fromRowVersionId",
         pr."data" AS "fromData",
         pr."hash" AS "fromHash",
         pr."schemaHash" AS "fromSchemaHash",
-        pr."tableId" AS "fromTableId",
-        COALESCE(cr."tableCreatedId", pr."tableCreatedId") AS "tableCreatedId",
-        pr."createdAt" AS "fromCreatedAt",
+        pr."readonly" AS "fromReadonly",
+        pr."meta" AS "fromMeta",
+        pr."rowCreatedAt" AS "fromRowCreatedAt",
+        pr."rowUpdatedAt" AS "fromRowUpdatedAt",
+        pr."rowPublishedAt" AS "fromRowPublishedAt",
 
-        cr."id" AS "toRowId",
-        cr."versionId" AS "toVersionId",
+        -- toRow (all Row fields)
+        cr."rowId" AS "toRowId",
+        cr."rowCreatedId" AS "toRowCreatedId",
+        cr."rowVersionId" AS "toRowVersionId",
         cr."data" AS "toData",
         cr."hash" AS "toHash",
         cr."schemaHash" AS "toSchemaHash",
-        cr."tableId" AS "toTableId",
-        COALESCE(cr."updatedAt", pr."updatedAt") AS "updatedAt",
-        COALESCE(cr."publishedAt", pr."publishedAt") AS "publishedAt",
-        COALESCE(cr."createdAt", pr."createdAt") AS "createdAt",
+        cr."readonly" AS "toReadonly",
+        cr."meta" AS "toMeta",
+        cr."rowCreatedAt" AS "toRowCreatedAt",
+        cr."rowUpdatedAt" AS "toRowUpdatedAt",
+        cr."rowPublishedAt" AS "toRowPublishedAt",
 
+        -- fromTable (all Table fields)
+        pr."tableId" AS "fromTableId",
+        pr."tableCreatedId" AS "fromTableCreatedId",
+        pr."tableVersionId" AS "fromTableVersionId",
+        pr."tableReadonly" AS "fromTableReadonly",
+        pr."tableSystem" AS "fromTableSystem",
+        pr."tableCreatedAt" AS "fromTableCreatedAt",
+        pr."tableUpdatedAt" AS "fromTableUpdatedAt",
+
+        -- toTable (all Table fields)
+        cr."tableId" AS "toTableId",
+        cr."tableCreatedId" AS "toTableCreatedId",
+        cr."tableVersionId" AS "toTableVersionId",
+        cr."tableReadonly" AS "toTableReadonly",
+        cr."tableSystem" AS "toTableSystem",
+        cr."tableCreatedAt" AS "toTableCreatedAt",
+        cr."tableUpdatedAt" AS "toTableUpdatedAt",
+
+        -- Stable IDs for JOIN/sorting
+        COALESCE(cr."rowCreatedId", pr."rowCreatedId") AS "rowCreatedId",
+        COALESCE(cr."tableCreatedId", pr."tableCreatedId") AS "tableCreatedId",
+
+        -- Change metadata
         CASE
-            WHEN pr."createdId" IS NULL THEN 'ADDED'
-            WHEN cr."createdId" IS NULL THEN 'REMOVED'
-            WHEN pr."id" != cr."id" AND cr."hash" != pr."hash" THEN 'RENAMED_AND_MODIFIED'
-            WHEN pr."id" != cr."id" THEN 'RENAMED'
+            WHEN pr."rowCreatedId" IS NULL THEN 'ADDED'
+            WHEN cr."rowCreatedId" IS NULL THEN 'REMOVED'
+            WHEN pr."rowId" != cr."rowId" AND cr."hash" != pr."hash" THEN 'RENAMED_AND_MODIFIED'
+            WHEN pr."rowId" != cr."rowId" THEN 'RENAMED'
             WHEN cr."hash" != pr."hash" THEN 'MODIFIED'
         END AS "changeType"
 
     FROM child_rows cr
-    FULL OUTER JOIN parent_rows pr USING ("createdId")
+    FULL OUTER JOIN parent_rows pr ON cr."rowCreatedId" = pr."rowCreatedId"
     WHERE
-        (pr."createdId" IS NULL OR
-         cr."createdId" IS NULL OR
-         pr."id" != cr."id" OR
+        (pr."rowCreatedId" IS NULL OR
+         cr."rowCreatedId" IS NULL OR
+         pr."rowId" != cr."rowId" OR
          cr."hash" != pr."hash")
 )
 SELECT * FROM all_changes
@@ -102,7 +149,7 @@ WHERE
         ))
     ))
 ORDER BY
-    "updatedAt" DESC,
+    COALESCE("toRowUpdatedAt", "fromRowUpdatedAt") DESC,
     "rowCreatedId" ASC
 LIMIT $6
 OFFSET $7

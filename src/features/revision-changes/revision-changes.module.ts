@@ -12,6 +12,7 @@ import {
 } from './queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
+import { PluginModule } from 'src/features/plugin/plugin.module';
 import { TableChangeMapper } from './mappers/table-change.mapper';
 import { RowChangeMapper } from './mappers/row-change.mapper';
 import { RevisionChangesApiService } from './revision-changes-api.service';
@@ -31,7 +32,7 @@ const services = [
 const mappers = [TableChangeMapper, RowChangeMapper];
 
 @Module({
-  imports: [CqrsModule, ShareModule, DatabaseModule],
+  imports: [CqrsModule, ShareModule, DatabaseModule, PluginModule],
   providers: [
     ...queryHandlers,
     ...services,

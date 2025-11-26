@@ -15,29 +15,49 @@ import * as $runtime from "@prisma/client/runtime/client"
  * @param offset
  * @param includeSystem (optional, whether to include system tables, default FALSE)
  */
-export const getRowChangesPaginatedBetweenRevisions = $runtime.makeTypedQueryFactory("\nWITH parent_rows AS (\nSELECT\nr.\"id\",\nr.\"createdId\",\nr.\"versionId\",\nr.\"data\",\nr.\"hash\",\nr.\"schemaHash\",\nr.\"updatedAt\",\nr.\"publishedAt\",\nr.\"createdAt\",\nt.\"id\" as \"tableId\",\nt.\"createdId\" as \"tableCreatedId\"\nFROM \"Row\" r\nINNER JOIN \"_RowToTable\" rt ON r.\"versionId\" = rt.\"A\"\nINNER JOIN \"Table\" t ON t.\"versionId\" = rt.\"B\"\nINNER JOIN \"_RevisionToTable\" revt ON t.\"versionId\" = revt.\"B\"\nWHERE revt.\"A\" = $1\nAND ($3::text IS NULL OR t.\"createdId\" = $3)\nAND ($8::boolean IS TRUE OR t.\"system\" = FALSE)\n),\nchild_rows AS (\nSELECT\nr.\"id\",\nr.\"createdId\",\nr.\"versionId\",\nr.\"data\",\nr.\"hash\",\nr.\"schemaHash\",\nr.\"updatedAt\",\nr.\"publishedAt\",\nr.\"createdAt\",\nt.\"id\" as \"tableId\",\nt.\"createdId\" as \"tableCreatedId\"\nFROM \"Row\" r\nINNER JOIN \"_RowToTable\" rt ON r.\"versionId\" = rt.\"A\"\nINNER JOIN \"Table\" t ON t.\"versionId\" = rt.\"B\"\nINNER JOIN \"_RevisionToTable\" revt ON t.\"versionId\" = revt.\"B\"\nWHERE revt.\"A\" = $2\nAND ($3::text IS NULL OR t.\"createdId\" = $3)\nAND ($8::boolean IS TRUE OR t.\"system\" = FALSE)\n),\nall_changes AS (\nSELECT\npr.\"id\" AS \"fromRowId\",\nCOALESCE(cr.\"createdId\", pr.\"createdId\") AS \"rowCreatedId\",\npr.\"versionId\" AS \"fromVersionId\",\npr.\"data\" AS \"fromData\",\npr.\"hash\" AS \"fromHash\",\npr.\"schemaHash\" AS \"fromSchemaHash\",\npr.\"tableId\" AS \"fromTableId\",\nCOALESCE(cr.\"tableCreatedId\", pr.\"tableCreatedId\") AS \"tableCreatedId\",\npr.\"createdAt\" AS \"fromCreatedAt\",\n\ncr.\"id\" AS \"toRowId\",\ncr.\"versionId\" AS \"toVersionId\",\ncr.\"data\" AS \"toData\",\ncr.\"hash\" AS \"toHash\",\ncr.\"schemaHash\" AS \"toSchemaHash\",\ncr.\"tableId\" AS \"toTableId\",\nCOALESCE(cr.\"updatedAt\", pr.\"updatedAt\") AS \"updatedAt\",\nCOALESCE(cr.\"publishedAt\", pr.\"publishedAt\") AS \"publishedAt\",\nCOALESCE(cr.\"createdAt\", pr.\"createdAt\") AS \"createdAt\",\n\nCASE\nWHEN pr.\"createdId\" IS NULL THEN 'ADDED'\nWHEN cr.\"createdId\" IS NULL THEN 'REMOVED'\nWHEN pr.\"id\" != cr.\"id\" AND cr.\"hash\" != pr.\"hash\" THEN 'RENAMED_AND_MODIFIED'\nWHEN pr.\"id\" != cr.\"id\" THEN 'RENAMED'\nWHEN cr.\"hash\" != pr.\"hash\" THEN 'MODIFIED'\nEND AS \"changeType\"\n\nFROM child_rows cr\nFULL OUTER JOIN parent_rows pr USING (\"createdId\")\nWHERE\n(pr.\"createdId\" IS NULL OR\ncr.\"createdId\" IS NULL OR\npr.\"id\" != cr.\"id\" OR\ncr.\"hash\" != pr.\"hash\")\n)\nSELECT * FROM all_changes\nWHERE\n($4::text IS NULL OR\n\"fromRowId\" ILIKE '%' || $4 || '%' OR\n\"toRowId\" ILIKE '%' || $4 || '%')\nAND ($5::jsonb IS NULL OR (\n\"changeType\" = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))\nOR (\"changeType\" = 'RENAMED_AND_MODIFIED' AND (\n'RENAMED' = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))\nOR 'MODIFIED' = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))\n))\n))\nORDER BY\n\"updatedAt\" DESC,\n\"rowCreatedId\" ASC\nLIMIT $6\nOFFSET $7") as (fromRevisionId: string, toRevisionId: string, tableCreatedId: string, searchTerm: string, changeTypes: $runtime.InputJsonObject, limit: number, offset: number, includeSystem: boolean) => $runtime.TypedSql<getRowChangesPaginatedBetweenRevisions.Parameters, getRowChangesPaginatedBetweenRevisions.Result>
+export const getRowChangesPaginatedBetweenRevisions = $runtime.makeTypedQueryFactory("\nWITH parent_rows AS (\nSELECT\nr.\"id\" AS \"rowId\",\nr.\"createdId\" AS \"rowCreatedId\",\nr.\"versionId\" AS \"rowVersionId\",\nr.\"data\",\nr.\"hash\",\nr.\"schemaHash\",\nr.\"readonly\",\nr.\"meta\",\nr.\"createdAt\" AS \"rowCreatedAt\",\nr.\"updatedAt\" AS \"rowUpdatedAt\",\nr.\"publishedAt\" AS \"rowPublishedAt\",\nt.\"id\" AS \"tableId\",\nt.\"createdId\" AS \"tableCreatedId\",\nt.\"versionId\" AS \"tableVersionId\",\nt.\"readonly\" AS \"tableReadonly\",\nt.\"system\" AS \"tableSystem\",\nt.\"createdAt\" AS \"tableCreatedAt\",\nt.\"updatedAt\" AS \"tableUpdatedAt\"\nFROM \"Row\" r\nINNER JOIN \"_RowToTable\" rt ON r.\"versionId\" = rt.\"A\"\nINNER JOIN \"Table\" t ON t.\"versionId\" = rt.\"B\"\nINNER JOIN \"_RevisionToTable\" revt ON t.\"versionId\" = revt.\"B\"\nWHERE revt.\"A\" = $1\nAND ($3::text IS NULL OR t.\"createdId\" = $3)\nAND ($8::boolean IS TRUE OR t.\"system\" = FALSE)\n),\nchild_rows AS (\nSELECT\nr.\"id\" AS \"rowId\",\nr.\"createdId\" AS \"rowCreatedId\",\nr.\"versionId\" AS \"rowVersionId\",\nr.\"data\",\nr.\"hash\",\nr.\"schemaHash\",\nr.\"readonly\",\nr.\"meta\",\nr.\"createdAt\" AS \"rowCreatedAt\",\nr.\"updatedAt\" AS \"rowUpdatedAt\",\nr.\"publishedAt\" AS \"rowPublishedAt\",\nt.\"id\" AS \"tableId\",\nt.\"createdId\" AS \"tableCreatedId\",\nt.\"versionId\" AS \"tableVersionId\",\nt.\"readonly\" AS \"tableReadonly\",\nt.\"system\" AS \"tableSystem\",\nt.\"createdAt\" AS \"tableCreatedAt\",\nt.\"updatedAt\" AS \"tableUpdatedAt\"\nFROM \"Row\" r\nINNER JOIN \"_RowToTable\" rt ON r.\"versionId\" = rt.\"A\"\nINNER JOIN \"Table\" t ON t.\"versionId\" = rt.\"B\"\nINNER JOIN \"_RevisionToTable\" revt ON t.\"versionId\" = revt.\"B\"\nWHERE revt.\"A\" = $2\nAND ($3::text IS NULL OR t.\"createdId\" = $3)\nAND ($8::boolean IS TRUE OR t.\"system\" = FALSE)\n),\nall_changes AS (\nSELECT\npr.\"rowId\" AS \"fromRowId\",\npr.\"rowCreatedId\" AS \"fromRowCreatedId\",\npr.\"rowVersionId\" AS \"fromRowVersionId\",\npr.\"data\" AS \"fromData\",\npr.\"hash\" AS \"fromHash\",\npr.\"schemaHash\" AS \"fromSchemaHash\",\npr.\"readonly\" AS \"fromReadonly\",\npr.\"meta\" AS \"fromMeta\",\npr.\"rowCreatedAt\" AS \"fromRowCreatedAt\",\npr.\"rowUpdatedAt\" AS \"fromRowUpdatedAt\",\npr.\"rowPublishedAt\" AS \"fromRowPublishedAt\",\n\ncr.\"rowId\" AS \"toRowId\",\ncr.\"rowCreatedId\" AS \"toRowCreatedId\",\ncr.\"rowVersionId\" AS \"toRowVersionId\",\ncr.\"data\" AS \"toData\",\ncr.\"hash\" AS \"toHash\",\ncr.\"schemaHash\" AS \"toSchemaHash\",\ncr.\"readonly\" AS \"toReadonly\",\ncr.\"meta\" AS \"toMeta\",\ncr.\"rowCreatedAt\" AS \"toRowCreatedAt\",\ncr.\"rowUpdatedAt\" AS \"toRowUpdatedAt\",\ncr.\"rowPublishedAt\" AS \"toRowPublishedAt\",\n\npr.\"tableId\" AS \"fromTableId\",\npr.\"tableCreatedId\" AS \"fromTableCreatedId\",\npr.\"tableVersionId\" AS \"fromTableVersionId\",\npr.\"tableReadonly\" AS \"fromTableReadonly\",\npr.\"tableSystem\" AS \"fromTableSystem\",\npr.\"tableCreatedAt\" AS \"fromTableCreatedAt\",\npr.\"tableUpdatedAt\" AS \"fromTableUpdatedAt\",\n\ncr.\"tableId\" AS \"toTableId\",\ncr.\"tableCreatedId\" AS \"toTableCreatedId\",\ncr.\"tableVersionId\" AS \"toTableVersionId\",\ncr.\"tableReadonly\" AS \"toTableReadonly\",\ncr.\"tableSystem\" AS \"toTableSystem\",\ncr.\"tableCreatedAt\" AS \"toTableCreatedAt\",\ncr.\"tableUpdatedAt\" AS \"toTableUpdatedAt\",\n\nCOALESCE(cr.\"rowCreatedId\", pr.\"rowCreatedId\") AS \"rowCreatedId\",\nCOALESCE(cr.\"tableCreatedId\", pr.\"tableCreatedId\") AS \"tableCreatedId\",\n\nCASE\nWHEN pr.\"rowCreatedId\" IS NULL THEN 'ADDED'\nWHEN cr.\"rowCreatedId\" IS NULL THEN 'REMOVED'\nWHEN pr.\"rowId\" != cr.\"rowId\" AND cr.\"hash\" != pr.\"hash\" THEN 'RENAMED_AND_MODIFIED'\nWHEN pr.\"rowId\" != cr.\"rowId\" THEN 'RENAMED'\nWHEN cr.\"hash\" != pr.\"hash\" THEN 'MODIFIED'\nEND AS \"changeType\"\n\nFROM child_rows cr\nFULL OUTER JOIN parent_rows pr ON cr.\"rowCreatedId\" = pr.\"rowCreatedId\"\nWHERE\n(pr.\"rowCreatedId\" IS NULL OR\ncr.\"rowCreatedId\" IS NULL OR\npr.\"rowId\" != cr.\"rowId\" OR\ncr.\"hash\" != pr.\"hash\")\n)\nSELECT * FROM all_changes\nWHERE\n($4::text IS NULL OR\n\"fromRowId\" ILIKE '%' || $4 || '%' OR\n\"toRowId\" ILIKE '%' || $4 || '%')\nAND ($5::jsonb IS NULL OR (\n\"changeType\" = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))\nOR (\"changeType\" = 'RENAMED_AND_MODIFIED' AND (\n'RENAMED' = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))\nOR 'MODIFIED' = ANY(ARRAY(SELECT jsonb_array_elements_text($5::jsonb)))\n))\n))\nORDER BY\nCOALESCE(\"toRowUpdatedAt\", \"fromRowUpdatedAt\") DESC,\n\"rowCreatedId\" ASC\nLIMIT $6\nOFFSET $7") as (fromRevisionId: string, toRevisionId: string, tableCreatedId: string, searchTerm: string, changeTypes: $runtime.InputJsonObject, limit: number, offset: number, includeSystem: boolean) => $runtime.TypedSql<getRowChangesPaginatedBetweenRevisions.Parameters, getRowChangesPaginatedBetweenRevisions.Result>
 
 export namespace getRowChangesPaginatedBetweenRevisions {
   export type Parameters = [fromRevisionId: string, toRevisionId: string, tableCreatedId: string, searchTerm: string, changeTypes: $runtime.InputJsonObject, limit: number, offset: number, includeSystem: boolean]
   export type Result = {
     fromRowId: string
-    rowCreatedId: string | null
-    fromVersionId: string
+    fromRowCreatedId: string
+    fromRowVersionId: string
     fromData: $runtime.JsonValue
     fromHash: string
     fromSchemaHash: string
-    fromTableId: string
-    tableCreatedId: string | null
-    fromCreatedAt: Date
+    fromReadonly: boolean
+    fromMeta: $runtime.JsonValue
+    fromRowCreatedAt: Date
+    fromRowUpdatedAt: Date
+    fromRowPublishedAt: Date
     toRowId: string
-    toVersionId: string
+    toRowCreatedId: string
+    toRowVersionId: string
     toData: $runtime.JsonValue
     toHash: string
     toSchemaHash: string
+    toReadonly: boolean
+    toMeta: $runtime.JsonValue
+    toRowCreatedAt: Date
+    toRowUpdatedAt: Date
+    toRowPublishedAt: Date
+    fromTableId: string
+    fromTableCreatedId: string
+    fromTableVersionId: string
+    fromTableReadonly: boolean
+    fromTableSystem: boolean
+    fromTableCreatedAt: Date
+    fromTableUpdatedAt: Date
     toTableId: string
-    updatedAt: Date | null
-    publishedAt: Date | null
-    createdAt: Date | null
+    toTableCreatedId: string
+    toTableVersionId: string
+    toTableReadonly: boolean
+    toTableSystem: boolean
+    toTableCreatedAt: Date
+    toTableUpdatedAt: Date
+    rowCreatedId: string | null
+    tableCreatedId: string | null
     changeType: string | null
   }
 }

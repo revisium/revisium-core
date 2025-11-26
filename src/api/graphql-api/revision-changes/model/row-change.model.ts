@@ -1,68 +1,158 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { createUnionType, Field, Int, ObjectType } from '@nestjs/graphql';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
+import { Prisma } from 'src/__generated__/client';
+import { PageInfo } from 'src/api/graphql-api/share/model/paginated.model';
 import { ChangeTypeEnum } from './enums.model';
 import { FieldChangeModel } from './field-change.model';
-import { Paginated } from 'src/api/graphql-api/share/model/paginated.model';
 
 @ObjectType()
-export class RowChangeModel {
+export class RowChangeRowModel {
   @Field()
-  rowId: string;
+  id: string;
 
   @Field()
-  rowCreatedId: string;
+  createdId: string;
 
-  @Field(() => String, { nullable: true })
-  fromVersionId: string | null;
+  @Field()
+  versionId: string;
 
-  @Field(() => String, { nullable: true })
-  toVersionId: string | null;
+  @Field(() => JSONResolver)
+  data: Prisma.JsonValue;
 
-  @Field(() => ChangeTypeEnum)
-  changeType: ChangeTypeEnum;
+  @Field()
+  hash: string;
 
-  @Field(() => String, { nullable: true })
-  oldRowId?: string;
+  @Field()
+  schemaHash: string;
 
-  @Field(() => String, { nullable: true })
-  newRowId?: string;
+  @Field(() => Boolean)
+  readonly: boolean;
 
-  @Field(() => JSONResolver, { nullable: true })
-  fromData: unknown | null;
+  @Field(() => JSONResolver)
+  meta: Prisma.JsonValue;
 
-  @Field(() => JSONResolver, { nullable: true })
-  toData: unknown | null;
-
-  @Field(() => String, { nullable: true })
-  fromHash?: string;
-
-  @Field(() => String, { nullable: true })
-  toHash?: string;
-
-  @Field(() => String, { nullable: true })
-  fromSchemaHash?: string;
-
-  @Field(() => String, { nullable: true })
-  toSchemaHash?: string;
-
-  @Field(() => [FieldChangeModel])
-  fieldChanges: FieldChangeModel[];
+  @Field(() => DateTimeResolver)
+  createdAt: Date;
 
   @Field(() => DateTimeResolver)
   updatedAt: Date;
 
   @Field(() => DateTimeResolver)
   publishedAt: Date;
+}
+
+@ObjectType()
+export class RowChangeTableModel {
+  @Field()
+  id: string;
+
+  @Field()
+  createdId: string;
+
+  @Field()
+  versionId: string;
+
+  @Field(() => Boolean)
+  readonly: boolean;
+
+  @Field(() => Boolean)
+  system: boolean;
 
   @Field(() => DateTimeResolver)
   createdAt: Date;
 
-  @Field()
-  tableId: string;
-
-  @Field()
-  tableCreatedId: string;
+  @Field(() => DateTimeResolver)
+  updatedAt: Date;
 }
 
 @ObjectType()
-export class RowChangesConnection extends Paginated(RowChangeModel) {}
+export class AddedRowChangeModel {
+  @Field(() => ChangeTypeEnum)
+  changeType: ChangeTypeEnum.ADDED;
+
+  @Field(() => RowChangeRowModel)
+  row: RowChangeRowModel;
+
+  @Field(() => RowChangeTableModel)
+  table: RowChangeTableModel;
+
+  @Field(() => [FieldChangeModel])
+  fieldChanges: FieldChangeModel[];
+}
+
+@ObjectType()
+export class RemovedRowChangeModel {
+  @Field(() => ChangeTypeEnum)
+  changeType: ChangeTypeEnum.REMOVED;
+
+  @Field(() => RowChangeRowModel)
+  fromRow: RowChangeRowModel;
+
+  @Field(() => RowChangeTableModel)
+  fromTable: RowChangeTableModel;
+
+  @Field(() => [FieldChangeModel])
+  fieldChanges: FieldChangeModel[];
+}
+
+@ObjectType()
+export class ModifiedRowChangeModel {
+  @Field(() => ChangeTypeEnum)
+  changeType: ChangeTypeEnum;
+
+  @Field(() => RowChangeRowModel)
+  row: RowChangeRowModel;
+
+  @Field(() => RowChangeRowModel)
+  fromRow: RowChangeRowModel;
+
+  @Field(() => RowChangeTableModel)
+  table: RowChangeTableModel;
+
+  @Field(() => RowChangeTableModel)
+  fromTable: RowChangeTableModel;
+
+  @Field(() => [FieldChangeModel])
+  fieldChanges: FieldChangeModel[];
+}
+
+export const RowChangeUnion = createUnionType({
+  name: 'RowChange',
+  types: () =>
+    [
+      AddedRowChangeModel,
+      RemovedRowChangeModel,
+      ModifiedRowChangeModel,
+    ] as const,
+  resolveType: (value: { changeType: string }) => {
+    switch (value.changeType) {
+      case ChangeTypeEnum.ADDED:
+        return AddedRowChangeModel;
+      case ChangeTypeEnum.REMOVED:
+        return RemovedRowChangeModel;
+      default:
+        return ModifiedRowChangeModel;
+    }
+  },
+});
+
+@ObjectType()
+export class RowChangeEdge {
+  @Field(() => String)
+  cursor: string;
+
+  @Field(() => RowChangeUnion)
+  node: AddedRowChangeModel | RemovedRowChangeModel | ModifiedRowChangeModel;
+}
+
+@ObjectType()
+export class RowChangesConnection {
+  @Field(() => [RowChangeEdge])
+  edges: RowChangeEdge[];
+
+  @Field(() => Int)
+  totalCount: number;
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+}
