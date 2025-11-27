@@ -20,9 +20,11 @@ export class MoveEndpointsHandler
 
     if (toRevisionEndpoints.length) {
       throw new InternalServerErrorException(
-        `toRevisionId=${toRevisionId} should have endpoints`,
+        `toRevisionId=${toRevisionId} should not have endpoints`,
       );
     }
+
+    await this.removeDeletedEndpoints(toRevisionId);
 
     const fromRevisionEndpoints = await this.getEndpoints(fromRevisionId);
 
@@ -48,6 +50,12 @@ export class MoveEndpointsHandler
         revisionId,
         createdAt: new Date(),
       },
+    });
+  }
+
+  private removeDeletedEndpoints(revisionId: string) {
+    return this.transaction.endpoint.deleteMany({
+      where: { revisionId, isDeleted: true },
     });
   }
 }

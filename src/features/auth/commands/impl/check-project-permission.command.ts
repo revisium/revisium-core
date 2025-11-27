@@ -8,9 +8,8 @@ export class CheckProjectPermissionCommand {
     } & (
       | { readonly organizationId: string; readonly projectName: string }
       | { readonly revisionId: string }
-      | {
-          readonly endpointId: string;
-        }
+      | { readonly endpointId: string }
+      | { readonly projectId: string }
     ),
   ) {}
 }
