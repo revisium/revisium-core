@@ -156,12 +156,24 @@ type EndpointModel {
   createdAt: DateTime!
   id: String!
   revision: RevisionModel!
+  revisionId: String!
   type: EndpointType!
+}
+
+type EndpointModelEdge {
+  cursor: String!
+  node: EndpointModel!
 }
 
 enum EndpointType {
   GRAPHQL
   REST_API
+}
+
+type EndpointsConnection {
+  edges: [EndpointModelEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
 }
 
 type FieldChangeModel {
@@ -204,6 +216,15 @@ input GetMeProjectsInput {
 input GetProjectBranchesInput {
   after: String
   first: Int!
+}
+
+input GetProjectEndpointsInput {
+  after: String
+  branchId: String
+  first: Int!
+  organizationId: String!
+  projectName: String!
+  type: EndpointType
 }
 
 input GetProjectInput {
@@ -546,6 +567,7 @@ type Query {
   me: UserModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
   project(data: GetProjectInput!): ProjectModel!
+  projectEndpoints(data: GetProjectEndpointsInput!): EndpointsConnection!
   projects(data: GetProjectsInput!): ProjectsConnection!
   revision(data: GetRevisionInput!): RevisionModel!
   revisionChanges(data: GetRevisionChangesInput!): RevisionChangesModel!
