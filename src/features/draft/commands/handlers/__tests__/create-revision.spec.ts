@@ -233,11 +233,8 @@ describe('CreateRevisionHandler', () => {
 
     const result = await runTransaction(command);
 
-    // Deleted endpoints should not be moved
     expect(result.draftEndpoints).toEqual([]);
 
-    // The deleted endpoint should be permanently removed during commit
-    // (it gets cleaned up when head endpoints move to previousDraft)
     const deletedEndpointAfter = await prismaService.endpoint.findUnique({
       where: { id: draftEndpointId },
     });
