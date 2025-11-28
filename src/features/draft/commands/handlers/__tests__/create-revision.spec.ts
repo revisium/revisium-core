@@ -134,6 +134,113 @@ describe('CreateRevisionHandler', () => {
     });
   });
 
+  it('should create revision when deleted endpoints exist in target revision', async () => {
+    const ids = await prepareProject(prismaService);
+    const {
+      organizationId,
+      projectName,
+      branchName,
+      headRevisionId,
+      draftRevisionId,
+      headEndpointId,
+      draftEndpointId,
+    } = ids;
+
+    const nextDraftRevisionId = await prismaService.revision.create({
+      data: {
+        id: 'temp-next-draft',
+        isDraft: false,
+        isHead: false,
+        hasChanges: false,
+        branchId: (
+          await prismaService.revision.findUniqueOrThrow({
+            where: { id: draftRevisionId },
+          })
+        ).branchId,
+        parentId: draftRevisionId,
+      },
+      select: { id: true },
+    });
+
+    const draftEndpoint = await prismaService.endpoint.findUniqueOrThrow({
+      where: { id: draftEndpointId },
+    });
+    await prismaService.endpoint.create({
+      data: {
+        id: 'deleted-endpoint-id',
+        type: draftEndpoint.type,
+        revisionId: nextDraftRevisionId.id,
+        isDeleted: true,
+        versionId: draftEndpoint.versionId,
+      },
+    });
+
+    await prismaService.endpoint.delete({
+      where: { id: 'deleted-endpoint-id' },
+    });
+    await prismaService.revision.delete({
+      where: { id: nextDraftRevisionId.id },
+    });
+
+    await prismaService.revision.update({
+      where: { id: draftRevisionId },
+      data: { hasChanges: true },
+    });
+    await prepareRevision(ids);
+
+    const command = new CreateRevisionCommand({
+      organizationId,
+      projectName,
+      branchName,
+      comment: 'comment with deleted endpoints test',
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.headEndpoints).toEqual([headEndpointId]);
+    expect(result.draftEndpoints).toEqual([draftEndpointId]);
+    expect(result.previousDraftRevisionId).toEqual(draftRevisionId);
+    expect(result.previousHeadRevisionId).toEqual(headRevisionId);
+  });
+
+  it('should remove deleted endpoints during commit', async () => {
+    const ids = await prepareProject(prismaService);
+    const {
+      organizationId,
+      projectName,
+      branchName,
+      draftRevisionId,
+      draftEndpointId,
+    } = ids;
+
+    // Mark draft endpoint as deleted
+    await prismaService.endpoint.update({
+      where: { id: draftEndpointId },
+      data: { isDeleted: true },
+    });
+
+    await prismaService.revision.update({
+      where: { id: draftRevisionId },
+      data: { hasChanges: true },
+    });
+
+    const command = new CreateRevisionCommand({
+      organizationId,
+      projectName,
+      branchName,
+      comment: 'commit with deleted draft endpoint',
+    });
+
+    const result = await runTransaction(command);
+
+    expect(result.draftEndpoints).toEqual([]);
+
+    const deletedEndpointAfter = await prismaService.endpoint.findUnique({
+      where: { id: draftEndpointId },
+    });
+    expect(deletedEndpointAfter).toBeNull();
+  });
+
   async function beforeEndpointsChecks(ids: PrepareProjectReturnType) {
     const { headRevisionId, draftRevisionId, headEndpointId, draftEndpointId } =
       ids;

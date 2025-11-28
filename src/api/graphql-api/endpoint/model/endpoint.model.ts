@@ -15,6 +15,9 @@ export class EndpointModel {
   @Field(() => DateTimeResolver)
   createdAt: Date;
 
+  @Field()
+  revisionId: string;
+
   @Field(() => RevisionModel)
   revision: RevisionModel;
 

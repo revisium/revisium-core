@@ -4,23 +4,32 @@ import {
   Args,
   Mutation,
   Parent,
+  Query,
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import {
+  CreateEndpointInput,
+  DeleteEndpointInput,
+  GetProjectEndpointsInput,
+} from 'src/api/graphql-api/endpoint/inputs';
+import {
+  EndpointModel,
+  EndpointsConnection,
+} from 'src/api/graphql-api/endpoint/model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
+import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import {
   ApiCreateEndpointCommand,
   DeleteEndpointCommand,
 } from 'src/features/endpoint/commands/impl';
-import { GetRevisionByEndpointIdQuery } from 'src/features/endpoint/queries/impl';
 import {
-  CreateEndpointInput,
-  DeleteEndpointInput,
-} from 'src/api/graphql-api/endpoint/inputs';
-import { EndpointModel } from 'src/api/graphql-api/endpoint/model';
+  GetProjectEndpointsQuery,
+  GetRevisionByEndpointIdQuery,
+} from 'src/features/endpoint/queries/impl';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -32,6 +41,12 @@ export class EndpointResolver {
     private readonly queryBus: QueryBus,
     private readonly commandBus: CommandBus,
   ) {}
+
+  @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
+  @Query(() => EndpointsConnection)
+  projectEndpoints(@Args('data') data: GetProjectEndpointsInput) {
+    return this.queryBus.execute(new GetProjectEndpointsQuery(data));
+  }
 
   @ResolveField()
   revision(@Parent() endpoint: EndpointModel) {

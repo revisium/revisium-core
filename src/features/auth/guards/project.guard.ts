@@ -5,6 +5,7 @@ import { IPermissionParams } from 'src/features/auth/guards/permission-params';
 interface Params {
   organizationId?: string;
   projectName?: string;
+  projectId?: string;
   revisionId?: string;
   endpointId?: string;
 }
@@ -14,6 +15,7 @@ abstract class ProjectGuard extends BasePermissionGuard<Params> {
     params: {
       organizationId?: string;
       projectName?: string;
+      projectId?: string;
       revisionId?: string;
       endpointId?: string;
     },
@@ -28,6 +30,7 @@ abstract class ProjectGuard extends BasePermissionGuard<Params> {
     params: {
       organizationId?: string;
       projectName?: string;
+      projectId?: string;
       revisionId?: string;
       endpointId?: string;
     },
@@ -51,6 +54,12 @@ abstract class ProjectGuard extends BasePermissionGuard<Params> {
       return {
         permissions,
         endpointId: params.endpointId,
+        userId,
+      };
+    } else if (params.projectId) {
+      return {
+        permissions,
+        projectId: params.projectId,
         userId,
       };
     } else {

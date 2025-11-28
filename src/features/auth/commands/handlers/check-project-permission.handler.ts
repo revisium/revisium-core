@@ -123,6 +123,8 @@ export class CheckProjectPermissionHandler
       return this.getProjectByRevisionId(data.revisionId);
     } else if ('endpointId' in data) {
       return this.getProjectByEndpointId(data.endpointId);
+    } else if ('projectId' in data) {
+      return this.getProjectByProjectId(data.projectId);
     }
 
     throw new InternalServerErrorException(`Invalid data=${data}`);
@@ -169,6 +171,12 @@ export class CheckProjectPermissionHandler
     });
 
     return revision.branch.project;
+  }
+
+  private async getProjectByProjectId(projectId: string) {
+    return this.prisma.project.findFirstOrThrow({
+      where: { id: projectId, isDeleted: false },
+    });
   }
 
   private async getSystemRole(
