@@ -34,6 +34,7 @@ import {
   SearchUsersQuery,
   SearchUsersQueryReturnType,
 } from 'src/features/user/queries/impl';
+import { GetRoleQuery } from 'src/features/role/queries/impl/get-role.query';
 import { UserApiService } from 'src/features/user/user-api.service';
 
 @UseGuards(GqlJwtAuthGuard)
@@ -117,5 +118,13 @@ export class UserResolver {
       });
 
     return ownerRole?.organizationId;
+  }
+
+  @ResolveField()
+  async role(@Parent() parent: UserModel) {
+    if (!parent.roleId) {
+      return null;
+    }
+    return this.queryBus.execute(new GetRoleQuery({ roleId: parent.roleId }));
   }
 }

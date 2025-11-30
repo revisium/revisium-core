@@ -19,6 +19,7 @@ export class GetUserHandler
         id: true,
         username: true,
         email: true,
+        roleId: true,
       },
     });
 

@@ -9,6 +9,12 @@ export class UsersProjectResolver {
 
   @ResolveField()
   role(@Parent() parent: UsersProjectModel) {
+    if (parent.role) {
+      return parent.role;
+    }
+    if (!parent.roleId) {
+      return null;
+    }
     return this.queryBus.execute(new GetRoleQuery({ roleId: parent.roleId }));
   }
 }
