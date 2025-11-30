@@ -21,6 +21,7 @@ describe('GetUserHandler', () => {
         id: true,
         username: true,
         email: true,
+        roleId: true,
       },
     });
     expect(result).toEqual(user);

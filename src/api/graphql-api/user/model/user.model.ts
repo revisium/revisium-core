@@ -1,4 +1,5 @@
 import { Field, ObjectType } from '@nestjs/graphql';
+import { RoleModel } from 'src/api/graphql-api/role/model/role.model';
 
 @ObjectType()
 export class UserModel {
@@ -13,4 +14,9 @@ export class UserModel {
 
   @Field({ nullable: true })
   email?: string;
+
+  @Field(() => RoleModel, { nullable: true })
+  role?: RoleModel;
+
+  roleId?: string;
 }
