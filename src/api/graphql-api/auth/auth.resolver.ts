@@ -1,11 +1,7 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
-import {
-  PermissionAction,
-  PermissionSubject,
-  UserSystemRoles,
-} from 'src/features/auth/consts';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLSystemGuard } from 'src/features/auth/guards/system.guard';
@@ -53,7 +49,7 @@ export class AuthResolver {
   ): Promise<boolean> {
     await this.authApiService.createUser({
       ...data,
-      roleId: data.roleId as UserSystemRoles,
+      roleId: data.roleId,
       isEmailConfirmed: true,
     });
 

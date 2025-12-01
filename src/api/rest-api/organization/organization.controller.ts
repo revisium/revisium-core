@@ -66,9 +66,9 @@ export class OrganizationController {
     },
   ) {
     return this.organizationApiService.getProjectsByOrganizationId({
+      ...data,
       userId: req.user?.userId,
       organizationId,
-      ...data,
     });
   }
 
@@ -86,8 +86,8 @@ export class OrganizationController {
     @Query('fromRevisionId') fromRevisionId?: string,
   ): Promise<ProjectModel> {
     return this.projectApiService.apiCreateProject({
-      organizationId,
       ...data,
+      organizationId,
       fromRevisionId,
     });
   }
