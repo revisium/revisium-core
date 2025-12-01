@@ -1,20 +1,15 @@
-import { QueryBus } from '@nestjs/cqrs';
 import { Query, Resolver } from '@nestjs/graphql';
-import {
-  GetConfigurationQuery,
-  GetConfigurationQueryReturnType,
-} from 'src/infrastructure/configuration/queries/impl';
+import { ConfigurationApiService } from 'src/infrastructure/configuration/configuration-api.service';
 import { ConfigurationModel } from 'src/api/graphql-api/configuration/model';
 
 @Resolver(() => ConfigurationModel)
 export class ConfigurationResolver {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(
+    private readonly configurationApiService: ConfigurationApiService,
+  ) {}
 
   @Query(() => ConfigurationModel)
   configuration(): Promise<ConfigurationModel> {
-    return this.queryBus.execute<
-      GetConfigurationQuery,
-      GetConfigurationQueryReturnType
-    >(new GetConfigurationQuery());
+    return this.configurationApiService.getConfiguration();
   }
 }

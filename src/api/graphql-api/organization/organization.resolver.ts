@@ -1,5 +1,4 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Args,
   Mutation,
@@ -26,15 +25,8 @@ import { CreateProjectInput } from 'src/api/graphql-api/project/inputs';
 import { GetProjectsInput } from 'src/api/graphql-api/project/inputs/get-projects.input';
 import { ProjectModel } from 'src/api/graphql-api/project/model';
 import { ProjectsConnection } from 'src/api/graphql-api/project/model/projects.connection';
-import {
-  AddUserToOrganizationCommand,
-  RemoveUserFromOrganizationCommand,
-} from 'src/features/organization/commands/impl';
-import { ApiCreateProjectCommand } from 'src/features/project/commands/impl';
-import {
-  GetProjectsByOrganizationIdQuery,
-  GetUsersOrganizationQuery,
-} from 'src/features/organization/queries/impl';
+import { OrganizationApiService } from 'src/features/organization/organization-api.service';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 
 @PermissionParams({
@@ -44,8 +36,8 @@ import { UserApiService } from 'src/features/user/user-api.service';
 @Resolver(() => OrganizationModel)
 export class OrganizationResolver {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
+    private readonly organizationApi: OrganizationApiService,
+    private readonly projectApi: ProjectApiService,
     private readonly userApi: UserApiService,
   ) {}
 
@@ -59,9 +51,10 @@ export class OrganizationResolver {
     @Args('data') data: GetProjectsInput,
     @CurrentUser() user: IOptionalAuthUser,
   ) {
-    return this.queryBus.execute(
-      new GetProjectsByOrganizationIdQuery({ ...data, userId: user?.userId }),
-    );
+    return this.organizationApi.getProjectsByOrganizationId({
+      ...data,
+      userId: user?.userId,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLOrganizationGuard)
@@ -71,7 +64,7 @@ export class OrganizationResolver {
   })
   @Query(() => UsersOrganizationConnection)
   usersOrganization(@Args('data') data: GetUsersOrganizationInput) {
-    return this.queryBus.execute(new GetUsersOrganizationQuery({ ...data }));
+    return this.organizationApi.getUsersOrganization({ ...data });
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLOrganizationGuard)
@@ -81,9 +74,7 @@ export class OrganizationResolver {
   })
   @Mutation(() => ProjectModel)
   createProject(@Args('data') data: CreateProjectInput) {
-    return this.commandBus.execute<ApiCreateProjectCommand, string>(
-      new ApiCreateProjectCommand(data),
-    );
+    return this.projectApi.apiCreateProject(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLOrganizationGuard)
@@ -93,9 +84,7 @@ export class OrganizationResolver {
   })
   @Mutation(() => Boolean)
   addUserToOrganization(@Args('data') data: AddUserToOrganizationInput) {
-    return this.commandBus.execute<AddUserToOrganizationCommand, boolean>(
-      new AddUserToOrganizationCommand(data),
-    );
+    return this.organizationApi.addUserToOrganization(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLOrganizationGuard)
@@ -107,9 +96,7 @@ export class OrganizationResolver {
   removeUserFromOrganization(
     @Args('data') data: RemoveUserFromOrganizationInput,
   ) {
-    return this.commandBus.execute<RemoveUserFromOrganizationCommand, boolean>(
-      new RemoveUserFromOrganizationCommand(data),
-    );
+    return this.organizationApi.removeUserFromOrganization(data);
   }
 
   @ResolveField()

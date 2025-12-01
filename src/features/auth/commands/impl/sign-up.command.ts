@@ -8,4 +8,6 @@ export class SignUpCommand {
   ) {}
 }
 
+export type SignUpCommandData = SignUpCommand['data'];
+
 export type SignUpCommandReturnType = boolean;

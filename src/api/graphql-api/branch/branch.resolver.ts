@@ -1,5 +1,4 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Args,
   Mutation,
@@ -13,19 +12,7 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { ApiCreateBranchByRevisionIdCommand } from 'src/features/branch/commands/impl';
-import {
-  GetDraftRevisionQuery,
-  GetHeadRevisionQuery,
-  GetProjectByBranchQuery,
-  GetStartRevisionQuery,
-  GetTouchedByBranchIdQuery,
-  ResolveParentBranchByBranchQuery,
-} from 'src/features/branch/quieries/impl';
-import { GetBranchQuery } from 'src/features/branch/quieries/impl/get-branch.query';
-import { GetBranchesQuery } from 'src/features/branch/quieries/impl/get-branches.query';
-import { GetRevisionsByBranchIdQuery } from 'src/features/branch/quieries/impl/get-revisions-by-branch-id.query';
-import { ApiRevertChangesCommand } from 'src/features/draft/commands/impl/api-revert-changes.command';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { GetBranchesInput } from 'src/api/graphql-api/branch/inputs';
 import { CreateBranchByRevisionIdInput } from 'src/api/graphql-api/branch/inputs/create-branch-by-revision-id.input';
 import { GetBranchRevisionsInput } from 'src/api/graphql-api/branch/inputs/get-branch-revisions.input';
@@ -42,48 +29,43 @@ import {
 })
 @Resolver(() => BranchModel)
 export class BranchResolver {
-  constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
-  ) {}
+  constructor(private readonly branchApiService: BranchApiService) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => BranchModel)
   branch(@Args('data') data: GetBranchInput) {
-    return this.queryBus.execute(new GetBranchQuery(data));
+    return this.branchApiService.getBranch(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => BranchesConnection)
   branches(@Args('data') data: GetBranchesInput) {
-    return this.queryBus.execute(new GetBranchesQuery(data));
+    return this.branchApiService.getBranches(data);
   }
 
   @ResolveField()
   parent(@Parent() branch: BranchModel) {
-    return this.queryBus.execute(
-      new ResolveParentBranchByBranchQuery({ branchId: branch.id }),
-    );
+    return this.branchApiService.resolveParentBranch({ branchId: branch.id });
   }
 
   @ResolveField()
   project(@Parent() branch: BranchModel) {
-    return this.queryBus.execute(new GetProjectByBranchQuery(branch.id));
+    return this.branchApiService.getProjectByBranch(branch.id);
   }
 
   @ResolveField()
   start(@Parent() branch: BranchModel) {
-    return this.queryBus.execute(new GetStartRevisionQuery(branch.id));
+    return this.branchApiService.getStartRevision(branch.id);
   }
 
   @ResolveField()
   head(@Parent() branch: BranchModel) {
-    return this.queryBus.execute(new GetHeadRevisionQuery(branch.id));
+    return this.branchApiService.getHeadRevision(branch.id);
   }
 
   @ResolveField()
   draft(@Parent() branch: BranchModel) {
-    return this.queryBus.execute(new GetDraftRevisionQuery(branch.id));
+    return this.branchApiService.getDraftRevision(branch.id);
   }
 
   @ResolveField()
@@ -91,14 +73,15 @@ export class BranchResolver {
     @Parent() branch: BranchModel,
     @Args('data') data: GetBranchRevisionsInput,
   ) {
-    return this.queryBus.execute(
-      new GetRevisionsByBranchIdQuery({ branchId: branch.id, ...data }),
-    );
+    return this.branchApiService.getRevisionsByBranchId({
+      ...data,
+      branchId: branch.id,
+    });
   }
 
   @ResolveField()
   touched(@Parent() branch: BranchModel) {
-    return this.queryBus.execute(new GetTouchedByBranchIdQuery(branch.id));
+    return this.branchApiService.getTouchedByBranchId(branch.id);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -110,9 +93,7 @@ export class BranchResolver {
   async createBranchByRevisionId(
     @Args('data') data: CreateBranchByRevisionIdInput,
   ) {
-    return this.commandBus.execute(
-      new ApiCreateBranchByRevisionIdCommand(data),
-    );
+    return this.branchApiService.apiCreateBranchByRevisionId(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -122,6 +103,6 @@ export class BranchResolver {
   })
   @Mutation(() => BranchModel)
   revertChanges(@Args('data') data: RevertChangesInput) {
-    return this.commandBus.execute(new ApiRevertChangesCommand(data));
+    return this.branchApiService.apiRevertChanges(data);
   }
 }

@@ -7,4 +7,6 @@ export class SetUsernameCommand {
   ) {}
 }
 
+export type SetUsernameCommandData = SetUsernameCommand['data'];
+
 export type SetUsernameCommandReturnType = boolean;

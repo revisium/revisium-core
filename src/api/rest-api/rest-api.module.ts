@@ -1,10 +1,15 @@
 import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
 import { AuthModule } from 'src/features/auth/auth.module';
+import { BranchModule } from 'src/features/branch/branch.module';
 import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
+import { OrganizationModule } from 'src/features/organization/organization.module';
+import { ProjectModule } from 'src/features/project/project.module';
 import { RevisionModule } from 'src/features/revision/revision.module';
 import { RowModule } from 'src/features/row/row.module';
+import { TableModule } from 'src/features/table/table.module';
+import { UserModule } from 'src/features/user/user.module';
+import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { AuthController } from 'src/api/rest-api/auth/auth.controller';
 import { BranchByNameController } from 'src/api/rest-api/branch/branch-by-name.controller';
@@ -19,13 +24,18 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
 
 @Module({
   imports: [
-    CqrsModule,
     AuthModule,
+    BranchModule,
+    ConfigurationModule,
     MetricsModule,
     EndpointModule,
+    OrganizationModule,
+    ProjectModule,
     RevisionModule,
     DraftModule,
     RowModule,
+    TableModule,
+    UserModule,
   ],
   controllers: [
     AuthController,

@@ -6,7 +6,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -19,7 +18,6 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { DeleteEndpointCommand } from 'src/features/endpoint/commands/impl';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 
@@ -32,10 +30,7 @@ import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-met
 @ApiBearerAuth('access-token')
 @ApiTags('Endpoint')
 export class EndpointByIdController {
-  constructor(
-    private readonly commandBus: CommandBus,
-    private readonly endpointApi: EndpointApiService,
-  ) {}
+  constructor(private readonly endpointApi: EndpointApiService) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('relatives')
@@ -59,7 +54,7 @@ export class EndpointByIdController {
   @ApiOperation({ operationId: 'deleteEndpoint' })
   @ApiOkResponse({ type: Boolean })
   async deleteEndpoint(@Param('endpointId') endpointId: string): Promise<true> {
-    await this.commandBus.execute(new DeleteEndpointCommand({ endpointId }));
+    await this.endpointApi.deleteEndpoint({ endpointId });
 
     return true;
   }

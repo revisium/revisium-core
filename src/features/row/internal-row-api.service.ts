@@ -22,6 +22,9 @@ import {
   ResolveRowForeignKeysToQuery,
   ResolveRowForeignKeysToQueryData,
   ResolveRowForeignKeysToReturnType,
+  SearchRowsQuery,
+  SearchRowsQueryData,
+  SearchRowsResponse,
 } from 'src/features/row/queries/impl';
 
 @Injectable()
@@ -76,5 +79,11 @@ export class InternalRowApiService {
       ResolveRowForeignKeysToQuery,
       ResolveRowForeignKeysToReturnType
     >(new ResolveRowForeignKeysToQuery(data));
+  }
+
+  public searchRows(data: SearchRowsQueryData) {
+    return this.queryBus.execute<SearchRowsQuery, SearchRowsResponse>(
+      new SearchRowsQuery(data),
+    );
   }
 }

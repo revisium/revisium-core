@@ -1,4 +1,5 @@
 import { Prisma } from 'src/__generated__/client';
+import { IPaginatedType } from 'src/features/share/pagination.interface';
 
 export class GetRevisionsByBranchIdQuery {
   constructor(
@@ -13,3 +14,10 @@ export class GetRevisionsByBranchIdQuery {
     },
   ) {}
 }
+
+export type GetRevisionsByBranchIdQueryData =
+  GetRevisionsByBranchIdQuery['data'];
+
+export type GetRevisionsByBranchIdQueryReturnType = IPaginatedType<
+  Prisma.RevisionGetPayload<Prisma.RevisionDefaultArgs>
+>;

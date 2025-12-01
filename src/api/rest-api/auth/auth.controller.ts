@@ -7,41 +7,39 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  CreateUserCommand,
-  CreateUserCommandReturnType,
-  LoginCommand,
-} from 'src/features/auth/commands/impl';
+import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPSystemGuard } from 'src/features/auth/guards/system.guard';
 import { IAuthUser } from 'src/features/auth/types';
+import { UserApiService } from 'src/features/user/user-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { CreateUserDto, LoginDto } from 'src/api/rest-api/auth/dto';
 import { UpdatePasswordDto } from 'src/api/rest-api/auth/dto/update-password.dto';
 import { LoginResponse } from 'src/api/rest-api/auth/model';
-import { UpdatePasswordCommand } from 'src/features/user/commands/impl';
 
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('Auth')
 @ApiBearerAuth('access-token')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(
+    private readonly authApiService: AuthApiService,
+    private readonly userApiService: UserApiService,
+  ) {}
 
   @Post('login')
   @ApiOperation({ operationId: 'login' })
   @ApiOkResponse({ type: LoginResponse })
   login(@Body() data: LoginDto) {
-    return this.commandBus.execute(new LoginCommand(data));
+    return this.authApiService.login(data);
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPSystemGuard)
@@ -53,10 +51,7 @@ export class AuthController {
   @ApiOperation({ operationId: 'createUser' })
   @ApiOkResponse({ type: Boolean })
   async createUser(@Body() data: CreateUserDto): Promise<boolean> {
-    await this.commandBus.execute<
-      CreateUserCommand,
-      CreateUserCommandReturnType
-    >(new CreateUserCommand({ ...data, isEmailConfirmed: true }));
+    await this.authApiService.createUser({ ...data, isEmailConfirmed: true });
 
     return true;
   }
@@ -72,8 +67,9 @@ export class AuthController {
       user: IAuthUser;
     },
   ) {
-    return this.commandBus.execute(
-      new UpdatePasswordCommand({ ...data, userId: req.user.userId }),
-    );
+    return this.userApiService.updatePassword({
+      ...data,
+      userId: req.user.userId,
+    });
   }
 }

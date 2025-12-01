@@ -7,7 +7,6 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { CommandBus } from '@nestjs/cqrs';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import {
@@ -22,7 +21,6 @@ export abstract class BasePermissionGuard<T = Record<string, never>>
 {
   constructor(
     protected reflector: Reflector,
-    protected commandBus: CommandBus,
     protected authApi: AuthApiService,
   ) {}
 

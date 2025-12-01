@@ -7,4 +7,7 @@ export class RemoveUserFromOrganizationCommand {
   ) {}
 }
 
+export type RemoveUserFromOrganizationCommandData =
+  RemoveUserFromOrganizationCommand['data'];
+
 export type RemoveUserFromOrganizationCommandReturnType = boolean;

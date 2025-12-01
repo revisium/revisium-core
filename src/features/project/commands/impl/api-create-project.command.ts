@@ -11,4 +11,6 @@ export class ApiCreateProjectCommand {
   ) {}
 }
 
+export type ApiCreateProjectCommandData = ApiCreateProjectCommand['data'];
+
 export type ApiCreateProjectCommandReturnType = GetProjectByIdQueryReturnType;

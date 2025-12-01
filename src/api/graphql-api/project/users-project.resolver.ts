@@ -1,11 +1,10 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { QueryBus } from '@nestjs/cqrs';
 import { UsersProjectModel } from 'src/api/graphql-api/project/model/users-project.model';
-import { GetRoleQuery } from 'src/features/role/queries/impl/get-role.query';
+import { RoleApiService } from 'src/features/role/role-api.service';
 
 @Resolver(() => UsersProjectModel)
 export class UsersProjectResolver {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(private readonly roleApiService: RoleApiService) {}
 
   @ResolveField()
   role(@Parent() parent: UsersProjectModel) {
@@ -15,6 +14,6 @@ export class UsersProjectResolver {
     if (!parent.roleId) {
       return null;
     }
-    return this.queryBus.execute(new GetRoleQuery({ roleId: parent.roleId }));
+    return this.roleApiService.getRole({ roleId: parent.roleId });
   }
 }

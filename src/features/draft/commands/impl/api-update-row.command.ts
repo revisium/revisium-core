@@ -12,3 +12,5 @@ export class ApiUpdateRowCommand {
     },
   ) {}
 }
+
+export type ApiUpdateRowCommandData = ApiUpdateRowCommand['data'];

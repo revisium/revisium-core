@@ -2,16 +2,26 @@ import { Revision } from 'src/__generated__/client';
 import { RevisionModel } from 'src/api/rest-api/revision/model';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 
-export const transformFromPrismaToRevisionModel = (
+export function transformFromPrismaToRevisionModel(
   data: Revision,
-): RevisionModel => {
+): RevisionModel;
+export function transformFromPrismaToRevisionModel(
+  data: Revision | null,
+): RevisionModel | null;
+export function transformFromPrismaToRevisionModel(
+  data: Revision | null,
+): RevisionModel | null {
+  if (!data) {
+    return null;
+  }
+
   return {
     id: data.id,
     createdAt: data.createdAt,
     isDraft: data.isDraft,
     isHead: data.isHead,
   };
-};
+}
 
 export const transformFromPaginatedPrismaToRevisionModel = ({
   pageInfo,

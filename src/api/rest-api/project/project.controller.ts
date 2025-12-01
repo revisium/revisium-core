@@ -10,7 +10,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -23,20 +22,8 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import {
-  AddUserToProjectCommand,
-  DeleteProjectCommand,
-  RemoveUserFromProjectCommand,
-  UpdateProjectCommand,
-} from 'src/features/project/commands/impl';
-import {
-  GetAllBranchesByProjectQuery,
-  GetProjectQuery,
-  GetRootBranchByProjectQuery,
-  GetUsersProjectQuery,
-  GetUsersProjectQueryReturnType,
-} from 'src/features/project/queries/impl';
 import { BranchesConnection, BranchModel } from 'src/api/rest-api/branch/model';
 import { AddUserToProjectDto } from 'src/api/rest-api/project/dto/add-user-to-project.dto';
 import { GetProjectBranchesDto } from 'src/api/rest-api/project/dto/get-project-branches.dto';
@@ -57,10 +44,7 @@ import { transformFromPaginatedPrismaToUserProjectModel } from 'src/api/rest-api
 @ApiTags('Project')
 @ApiBearerAuth('access-token')
 export class ProjectController {
-  constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
-  ) {}
+  constructor(private readonly projectApi: ProjectApiService) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get(':projectName')
@@ -70,12 +54,10 @@ export class ProjectController {
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
   ) {
-    return this.queryBus.execute(
-      new GetProjectQuery({
-        projectName,
-        organizationId,
-      }),
-    );
+    return this.projectApi.getProject({
+      projectName,
+      organizationId,
+    });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -86,14 +68,12 @@ export class ProjectController {
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
   ): Promise<BranchModel> {
-    const project: ProjectModel = await this.queryBus.execute(
-      new GetProjectQuery({
-        organizationId,
-        projectName,
-      }),
-    );
+    const project = await this.projectApi.getProject({
+      organizationId,
+      projectName,
+    });
 
-    return this.queryBus.execute(new GetRootBranchByProjectQuery(project.id));
+    return this.projectApi.getRootBranchByProject(project.id);
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -104,17 +84,16 @@ export class ProjectController {
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
     @Query() data: GetProjectBranchesDto,
-  ): Promise<BranchModel> {
-    const project: ProjectModel = await this.queryBus.execute(
-      new GetProjectQuery({
-        organizationId,
-        projectName,
-      }),
-    );
+  ): Promise<BranchesConnection> {
+    const project = await this.projectApi.getProject({
+      organizationId,
+      projectName,
+    });
 
-    return this.queryBus.execute(
-      new GetAllBranchesByProjectQuery({ projectId: project.id, ...data }),
-    );
+    return this.projectApi.getAllBranchesByProject({
+      projectId: project.id,
+      ...data,
+    });
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
@@ -129,9 +108,10 @@ export class ProjectController {
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
   ): Promise<SuccessModelDto> {
-    const result = await this.commandBus.execute<DeleteProjectCommand, boolean>(
-      new DeleteProjectCommand({ organizationId, projectName }),
-    );
+    const result = await this.projectApi.deleteProject({
+      organizationId,
+      projectName,
+    });
 
     return {
       success: result,
@@ -151,9 +131,11 @@ export class ProjectController {
     @Param('projectName') projectName: string,
     @Body() data: UpdateProjectDto,
   ): Promise<SuccessModelDto> {
-    const result = await this.commandBus.execute<UpdateProjectCommand, boolean>(
-      new UpdateProjectCommand({ organizationId, projectName, ...data }),
-    );
+    const result = await this.projectApi.updateProject({
+      organizationId,
+      projectName,
+      ...data,
+    });
 
     return {
       success: result,
@@ -173,10 +155,11 @@ export class ProjectController {
     @Param('projectName') projectName: string,
     @Query() data: GetUsersProjectDto,
   ) {
-    const result = await this.queryBus.execute<
-      GetUsersProjectQuery,
-      GetUsersProjectQueryReturnType
-    >(new GetUsersProjectQuery({ organizationId, projectName, ...data }));
+    const result = await this.projectApi.getUsersProject({
+      organizationId,
+      projectName,
+      ...data,
+    });
 
     return transformFromPaginatedPrismaToUserProjectModel(result);
   }
@@ -194,10 +177,11 @@ export class ProjectController {
     @Param('projectName') projectName: string,
     @Body() data: AddUserToProjectDto,
   ): Promise<SuccessModelDto> {
-    const result = await this.commandBus.execute<
-      AddUserToProjectCommand,
-      boolean
-    >(new AddUserToProjectCommand({ organizationId, projectName, ...data }));
+    const result = await this.projectApi.addUserToProject({
+      organizationId,
+      projectName,
+      ...data,
+    });
 
     return {
       success: result,
@@ -217,16 +201,11 @@ export class ProjectController {
     @Param('projectName') projectName: string,
     @Param('userId') userId: string,
   ): Promise<SuccessModelDto> {
-    const result = await this.commandBus.execute<
-      RemoveUserFromProjectCommand,
-      boolean
-    >(
-      new RemoveUserFromProjectCommand({
-        organizationId,
-        projectName,
-        userId,
-      }),
-    );
+    const result = await this.projectApi.removeUserFromProject({
+      organizationId,
+      projectName,
+      userId,
+    });
 
     return {
       success: result,

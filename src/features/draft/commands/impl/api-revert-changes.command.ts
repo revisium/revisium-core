@@ -10,4 +10,6 @@ export class ApiRevertChangesCommand {
   ) {}
 }
 
+export type ApiRevertChangesCommandData = ApiRevertChangesCommand['data'];
+
 export type ApiRevertChangesCommandReturnType = GetBranchByIdReturnType;

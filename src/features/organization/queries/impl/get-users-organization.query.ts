@@ -11,6 +11,8 @@ export class GetUsersOrganizationQuery {
   ) {}
 }
 
+export type GetUsersOrganizationQueryData = GetUsersOrganizationQuery['data'];
+
 export type GetUsersOrganizationQueryReturnType = IPaginatedType<{
   id: string;
   user: User;

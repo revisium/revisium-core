@@ -13,4 +13,6 @@ export class CreateUserCommand {
   ) {}
 }
 
+export type CreateUserCommandData = CreateUserCommand['data'];
+
 export type CreateUserCommandReturnType = string;

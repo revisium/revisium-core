@@ -8,7 +8,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -18,17 +17,14 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
-import { Endpoint } from 'src/__generated__/client';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { ApiCreateBranchByRevisionIdCommand } from 'src/features/branch/commands/impl';
-import { ApiCreateTableCommand } from 'src/features/draft/commands/impl/api-create-table.command';
-import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
-import { ApiCreateEndpointCommand } from 'src/features/endpoint/commands/impl';
+import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
@@ -62,13 +58,6 @@ import {
   transformFromPrismaToTableModel,
 } from 'src/api/rest-api/share/utils/transformFromPrismaToTableModel';
 import { TablesConnection } from 'src/api/rest-api/table/model/table.model';
-import {
-  GetEndpointsByRevisionIdQuery,
-  GetTablesByRevisionIdQuery,
-  ResolveChildBranchesByRevisionQuery,
-  ResolveParentByRevisionQuery,
-} from 'src/features/revision/queries/impl';
-import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/resolve-child-by-revision.query';
 
 @UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
@@ -84,10 +73,10 @@ import { ResolveChildByRevisionQuery } from 'src/features/revision/queries/impl/
 @ApiExtraModels(RemoveMigrationDto)
 export class RevisionByIdController {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
     private readonly revisionApi: RevisionsApiService,
-    private readonly draftApiService: DraftApiService,
+    private readonly draftApi: DraftApiService,
+    private readonly branchApi: BranchApiService,
+    private readonly endpointApi: EndpointApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -106,7 +95,7 @@ export class RevisionByIdController {
   @ApiOkResponse({ type: RevisionModel })
   async parent(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.queryBus.execute(new ResolveParentByRevisionQuery(revisionId)),
+      await this.revisionApi.resolveParentByRevision(revisionId),
     );
   }
 
@@ -116,7 +105,7 @@ export class RevisionByIdController {
   @ApiOkResponse({ type: RevisionModel })
   async child(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.queryBus.execute(new ResolveChildByRevisionQuery(revisionId)),
+      await this.revisionApi.resolveChildByRevision(revisionId),
     );
   }
 
@@ -125,9 +114,7 @@ export class RevisionByIdController {
   @ApiOperation({ operationId: 'childBranches' })
   @ApiOkResponse({ type: [ChildBranchResponse] })
   async childBranches(@Param('revisionId') revisionId: string) {
-    return this.queryBus.execute(
-      new ResolveChildBranchesByRevisionQuery(revisionId),
-    );
+    return this.revisionApi.resolveChildBranchesByRevision(revisionId);
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -139,12 +126,10 @@ export class RevisionByIdController {
     @Query() data: GetRevisionTablesDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
-      await this.queryBus.execute(
-        new GetTablesByRevisionIdQuery({
-          revisionId,
-          ...data,
-        }),
-      ),
+      await this.revisionApi.getTablesByRevisionId({
+        ...data,
+        revisionId,
+      }),
     );
   }
 
@@ -156,9 +141,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
   ): Promise<EndpointModel[]> {
     return transformFromPrismaToEndpointsModel(
-      await this.queryBus.execute<GetEndpointsByRevisionIdQuery, Endpoint[]>(
-        new GetEndpointsByRevisionIdQuery(revisionId),
-      ),
+      await this.revisionApi.getEndpointsByRevisionId(revisionId),
     );
   }
 
@@ -199,12 +182,10 @@ export class RevisionByIdController {
     @Body() data: CreateBranchByRevisionDto,
   ): Promise<BranchModel> {
     return transformFromPrismaToBranchModel(
-      await this.commandBus.execute(
-        new ApiCreateBranchByRevisionIdCommand({
-          branchName: data.branchName,
-          revisionId,
-        }),
-      ),
+      await this.branchApi.apiCreateBranchByRevisionId({
+        branchName: data.branchName,
+        revisionId,
+      }),
     );
   }
 
@@ -222,12 +203,10 @@ export class RevisionByIdController {
     @Body() data: CreateEndpointDto,
   ): Promise<EndpointModel> {
     return transformFromPrismaToEndpointModel(
-      await this.commandBus.execute(
-        new ApiCreateEndpointCommand({
-          revisionId,
-          type: data.type,
-        }),
-      ),
+      await this.endpointApi.apiCreateEndpoint({
+        revisionId,
+        type: data.type,
+      }),
     );
   }
 
@@ -244,15 +223,10 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Body() data: CreateTableDto,
   ): Promise<CreateTableResponse> {
-    const result = await this.commandBus.execute<
-      ApiCreateTableCommand,
-      ApiCreateTableHandlerReturnType
-    >(
-      new ApiCreateTableCommand({
-        revisionId,
-        ...data,
-      }),
-    );
+    const result = await this.draftApi.apiCreateTable({
+      ...data,
+      revisionId,
+    });
 
     return {
       branch: transformFromPrismaToBranchModel(result.branch),
@@ -285,7 +259,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Body() migrations: MigrationDto[],
   ) {
-    return this.draftApiService.applyMigrations({
+    return this.draftApi.applyMigrations({
       revisionId,
       migrations,
     });

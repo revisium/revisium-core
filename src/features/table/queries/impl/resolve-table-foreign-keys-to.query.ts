@@ -1,3 +1,6 @@
+import { Table } from 'src/__generated__/client';
+import { IPaginatedType } from 'src/features/share/pagination.interface';
+
 export class ResolveTableForeignKeysToQuery {
   constructor(
     public readonly data: {
@@ -8,3 +11,8 @@ export class ResolveTableForeignKeysToQuery {
     },
   ) {}
 }
+
+export type ResolveTableForeignKeysToQueryData =
+  ResolveTableForeignKeysToQuery['data'];
+
+export type ResolveTableForeignKeysToQueryReturnType = IPaginatedType<Table>;

@@ -7,3 +7,7 @@ export class UpdateProjectCommand {
     },
   ) {}
 }
+
+export type UpdateProjectCommandData = UpdateProjectCommand['data'];
+
+export type UpdateProjectCommandReturnType = boolean;

@@ -6,6 +6,8 @@ export class LoginGithubCommand {
   ) {}
 }
 
+export type LoginGithubCommandData = LoginGithubCommand['data'];
+
 export type LoginGithubCommandReturnType = {
   accessToken: string;
 };

@@ -11,4 +11,6 @@ export class ApiCreateRevisionCommand {
   ) {}
 }
 
+export type ApiCreateRevisionCommandData = ApiCreateRevisionCommand['data'];
+
 export type ApiCreateRevisionCommandReturnType = GetRevisionQueryReturnType;

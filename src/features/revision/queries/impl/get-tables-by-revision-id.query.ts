@@ -1,3 +1,5 @@
+import { GetRevisionTablesReturnType } from 'src/features/revision/queries/types';
+
 export class GetTablesByRevisionIdQuery {
   constructor(
     public data: {
@@ -7,3 +9,7 @@ export class GetTablesByRevisionIdQuery {
     },
   ) {}
 }
+
+export type GetTablesByRevisionIdQueryData = GetTablesByRevisionIdQuery['data'];
+
+export type GetTablesByRevisionIdQueryReturnType = GetRevisionTablesReturnType;

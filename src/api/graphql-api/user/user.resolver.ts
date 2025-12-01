@@ -1,5 +1,4 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Args,
   Mutation,
@@ -20,60 +19,38 @@ import {
 } from 'src/api/graphql-api/user/inputs';
 import { UserModel } from 'src/api/graphql-api/user/model/user.model';
 import { UsersConnection } from 'src/api/graphql-api/user/model/users.connection';
-import {
-  SetUsernameCommand,
-  SetUsernameCommandReturnType,
-  UpdatePasswordCommand,
-  UpdatePasswordCommandReturnType,
-} from 'src/features/user/commands/impl';
-import {
-  GetProjectsByUserIdQuery,
-  GetProjectsByUserIdQueryReturnType,
-  GetUserQuery,
-  GetUserQueryReturnType,
-  SearchUsersQuery,
-  SearchUsersQueryReturnType,
-} from 'src/features/user/queries/impl';
-import { GetRoleQuery } from 'src/features/role/queries/impl/get-role.query';
+import { RoleApiService } from 'src/features/role/role-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 
 @UseGuards(GqlJwtAuthGuard)
 @Resolver(() => UserModel)
 export class UserResolver {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
     private readonly userApiService: UserApiService,
+    private readonly roleApiService: RoleApiService,
   ) {}
 
   @Query(() => UserModel)
   async me(@CurrentUser() user: IAuthUser) {
-    return this.queryBus.execute<GetUserQuery, GetUserQueryReturnType>(
-      new GetUserQuery({ userId: user.userId }),
-    );
+    return this.userApiService.getUser({ userId: user.userId });
   }
 
-  @UseGuards(GqlJwtAuthGuard) @Query(() => ProjectsConnection) meProjects(
+  @UseGuards(GqlJwtAuthGuard)
+  @Query(() => ProjectsConnection)
+  meProjects(
     @Args('data') data: GetMeProjectsInput,
     @CurrentUser() user: IAuthUser,
   ) {
-    return this.queryBus.execute<
-      GetProjectsByUserIdQuery,
-      GetProjectsByUserIdQueryReturnType
-    >(
-      new GetProjectsByUserIdQuery({
-        ...data,
-        userId: user.userId,
-      }),
-    );
+    return this.userApiService.getProjectsByUserId({
+      ...data,
+      userId: user.userId,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard)
   @Query(() => UsersConnection)
   async searchUsers(@Args('data') data: SearchUsersInput) {
-    return this.queryBus.execute<SearchUsersQuery, SearchUsersQueryReturnType>(
-      new SearchUsersQuery(data),
-    );
+    return this.userApiService.searchUsers(data);
   }
 
   @UseGuards(GqlJwtAuthGuard)
@@ -82,15 +59,10 @@ export class UserResolver {
     @Args('data') data: UpdatePasswordInput,
     @CurrentUser() user: IAuthUser,
   ): Promise<boolean> {
-    return this.commandBus.execute<
-      UpdatePasswordCommand,
-      UpdatePasswordCommandReturnType
-    >(
-      new UpdatePasswordCommand({
-        ...data,
-        userId: user.userId,
-      }),
-    );
+    return this.userApiService.updatePassword({
+      ...data,
+      userId: user.userId,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard)
@@ -99,15 +71,10 @@ export class UserResolver {
     @Args('data') data: SetUsernameInput,
     @CurrentUser() user: IAuthUser,
   ): Promise<boolean> {
-    return this.commandBus.execute<
-      SetUsernameCommand,
-      SetUsernameCommandReturnType
-    >(
-      new SetUsernameCommand({
-        ...data,
-        userId: user.userId,
-      }),
-    );
+    return this.userApiService.setUsername({
+      ...data,
+      userId: user.userId,
+    });
   }
 
   @ResolveField()
@@ -125,6 +92,6 @@ export class UserResolver {
     if (!parent.roleId) {
       return null;
     }
-    return this.queryBus.execute(new GetRoleQuery({ roleId: parent.roleId }));
+    return this.roleApiService.getRole({ roleId: parent.roleId });
   }
 }

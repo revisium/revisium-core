@@ -8,6 +8,7 @@ import {
   ResolveRowCountForeignKeysToQueryData,
   ResolveRowForeignKeysByQueryData,
   ResolveRowForeignKeysToQueryData,
+  SearchRowsQueryData,
 } from 'src/features/row/queries/impl';
 import { RowWithContext } from 'src/features/share/types/row-with-context.types';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
@@ -64,6 +65,10 @@ export class RowApiService {
 
   public resolveRowForeignKeysTo(data: ResolveRowForeignKeysToQueryData) {
     return this.api.resolveRowForeignKeysTo(data);
+  }
+
+  public searchRows(data: SearchRowsQueryData) {
+    return this.api.searchRows(data);
   }
 
   private async warmRowCache(rows: RowWithContext[]) {

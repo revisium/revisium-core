@@ -15,7 +15,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
@@ -31,22 +30,7 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import {
-  ApiPatchRowCommand,
-  ApiPatchRowCommandReturnType,
-} from 'src/features/draft/commands/impl/api-patch-row.command';
-import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
-import {
-  ApiRenameRowCommand,
-  ApiRenameRowCommandReturnType,
-} from 'src/features/draft/commands/impl/api-rename-row.command';
-import { ApiUpdateRowCommand } from 'src/features/draft/commands/impl/api-update-row.command';
-import {
-  ApiUploadFileCommand,
-  ApiUploadFileCommandReturnType,
-} from 'src/features/draft/commands/impl/api-upload-file.command';
-import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
-import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
+import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
@@ -83,7 +67,7 @@ import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/tr
 @ApiTags('Row')
 export class RowByIdController {
   constructor(
-    private readonly commandBus: CommandBus,
+    private readonly draftApi: DraftApiService,
     private readonly rowApi: RowApiService,
   ) {}
 
@@ -199,10 +183,11 @@ export class RowByIdController {
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ): Promise<RemoveRowResponse> {
-    const result = await this.commandBus.execute<
-      ApiRemoveRowCommand,
-      ApiRemoveRowHandlerReturnType
-    >(new ApiRemoveRowCommand({ revisionId, tableId, rowId }));
+    const result = await this.draftApi.apiRemoveRow({
+      revisionId,
+      tableId,
+      rowId,
+    });
 
     return {
       branch: transformFromPrismaToBranchModel(result.branch),
@@ -228,17 +213,12 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: UpdateRowDto,
   ): Promise<UpdateRowResponse> {
-    const result = await this.commandBus.execute<
-      ApiUpdateRowCommand,
-      ApiUpdateRowHandlerReturnType
-    >(
-      new ApiUpdateRowCommand({
-        revisionId,
-        tableId,
-        rowId,
-        data: data.data,
-      }),
-    );
+    const result = await this.draftApi.apiUpdateRow({
+      revisionId,
+      tableId,
+      rowId,
+      data: data.data,
+    });
 
     return {
       table: result.table
@@ -265,17 +245,12 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: PatchRowDto,
   ): Promise<PatchRowResponse> {
-    const result = await this.commandBus.execute<
-      ApiPatchRowCommand,
-      ApiPatchRowCommandReturnType
-    >(
-      new ApiPatchRowCommand({
-        revisionId,
-        tableId,
-        rowId,
-        patches: data.patches,
-      }),
-    );
+    const result = await this.draftApi.apiPatchRow({
+      revisionId,
+      tableId,
+      rowId,
+      patches: data.patches,
+    });
 
     return {
       table: result.table
@@ -302,17 +277,12 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: RenameRowDto,
   ): Promise<RenameRowResponse> {
-    const result = await this.commandBus.execute<
-      ApiRenameRowCommand,
-      ApiRenameRowCommandReturnType
-    >(
-      new ApiRenameRowCommand({
-        revisionId,
-        tableId,
-        rowId,
-        nextRowId: data.nextRowId,
-      }),
-    );
+    const result = await this.draftApi.apiRenameRow({
+      revisionId,
+      tableId,
+      rowId,
+      nextRowId: data.nextRowId,
+    });
 
     return {
       table: result.table
@@ -358,18 +328,13 @@ export class RowByIdController {
     )
     file: Express.Multer.File,
   ) {
-    const result = await this.commandBus.execute<
-      ApiUploadFileCommand,
-      ApiUploadFileCommandReturnType
-    >(
-      new ApiUploadFileCommand({
-        revisionId,
-        tableId,
-        rowId,
-        fileId,
-        file,
-      }),
-    );
+    const result = await this.draftApi.apiUploadFile({
+      revisionId,
+      tableId,
+      rowId,
+      fileId,
+      file,
+    });
 
     return {
       table: result.table

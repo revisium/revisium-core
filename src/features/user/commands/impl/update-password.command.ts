@@ -8,4 +8,6 @@ export class UpdatePasswordCommand {
   ) {}
 }
 
+export type UpdatePasswordCommandData = UpdatePasswordCommand['data'];
+
 export type UpdatePasswordCommandReturnType = boolean;
