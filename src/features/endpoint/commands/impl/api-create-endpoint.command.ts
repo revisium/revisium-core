@@ -1,4 +1,4 @@
-import { EndpointType } from 'src/__generated__/client';
+import { Endpoint, EndpointType } from 'src/__generated__/client';
 
 export class ApiCreateEndpointCommand {
   constructor(
@@ -8,3 +8,7 @@ export class ApiCreateEndpointCommand {
     },
   ) {}
 }
+
+export type ApiCreateEndpointCommandData = ApiCreateEndpointCommand['data'];
+
+export type ApiCreateEndpointCommandReturnType = Endpoint;

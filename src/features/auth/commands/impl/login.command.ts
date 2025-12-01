@@ -7,6 +7,8 @@ export class LoginCommand {
   ) {}
 }
 
+export type LoginCommandData = LoginCommand['data'];
+
 export type LoginCommandReturnType = {
   accessToken: string;
 };

@@ -1,5 +1,4 @@
 import { UseGuards } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
 import { Args, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
@@ -12,20 +11,7 @@ import { GetTablesInput } from 'src/api/graphql-api/table/inputs/get-tables.inpu
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
 import { RowApiService } from 'src/features/row/row-api.service';
-import {
-  GetCountRowsInTableQuery,
-  ResolveTableCountForeignKeysByQuery,
-  ResolveTableCountForeignKeysToQuery,
-  ResolveTableForeignKeysByQuery,
-  ResolveTableForeignKeysToQuery,
-  ResolveTableSchemaQuery,
-} from 'src/features/table/queries/impl';
-import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
-import { GetTablesQuery } from 'src/features/table/queries/impl/get-tables.query';
-import {
-  GetTableReturnType,
-  GetTablesReturnType,
-} from 'src/features/table/queries/types';
+import { TableApiService } from 'src/features/table/table-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -34,24 +20,20 @@ import {
 @Resolver(() => TableModel)
 export class TableResolver {
   constructor(
-    private readonly queryBus: QueryBus,
+    private readonly tableApi: TableApiService,
     private readonly rowApi: RowApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TableModel, { nullable: true })
   table(@Args('data') data: GetTableInput) {
-    return this.queryBus.execute<GetTableQuery, GetTableReturnType>(
-      new GetTableQuery(data),
-    );
+    return this.tableApi.getTable(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TablesConnection)
   tables(@Args('data') data: GetTablesInput) {
-    return this.queryBus.execute<GetTablesQuery, GetTablesReturnType>(
-      new GetTablesQuery(data),
-    );
+    return this.tableApi.getTables(data);
   }
 
   @ResolveField()
@@ -65,29 +47,25 @@ export class TableResolver {
 
   @ResolveField()
   count(@Parent() table: TableModel) {
-    return this.queryBus.execute(
-      new GetCountRowsInTableQuery({ tableVersionId: table.versionId }),
-    );
+    return this.tableApi.getCountRowsInTable({
+      tableVersionId: table.versionId,
+    });
   }
 
   @ResolveField()
   schema(@Parent() table: TableModel) {
-    return this.queryBus.execute(
-      new ResolveTableSchemaQuery({
-        revisionId: table.context.revisionId,
-        tableId: table.id,
-      }),
-    );
+    return this.tableApi.resolveTableSchema({
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+    });
   }
 
   @ResolveField()
   countForeignKeysBy(@Parent() table: TableModel) {
-    return this.queryBus.execute(
-      new ResolveTableCountForeignKeysByQuery({
-        revisionId: table.context.revisionId,
-        tableId: table.id,
-      }),
-    );
+    return this.tableApi.resolveTableCountForeignKeysBy({
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+    });
   }
 
   @ResolveField()
@@ -95,23 +73,19 @@ export class TableResolver {
     @Parent() table: TableModel,
     @Args('data') data: GetTableForeignKeysInput,
   ) {
-    return this.queryBus.execute(
-      new ResolveTableForeignKeysByQuery({
-        revisionId: table.context.revisionId,
-        tableId: table.id,
-        ...data,
-      }),
-    );
+    return this.tableApi.resolveTableForeignKeysBy({
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+      ...data,
+    });
   }
 
   @ResolveField()
   countForeignKeysTo(@Parent() table: TableModel) {
-    return this.queryBus.execute(
-      new ResolveTableCountForeignKeysToQuery({
-        revisionId: table.context.revisionId,
-        tableId: table.id,
-      }),
-    );
+    return this.tableApi.resolveTableCountForeignKeysTo({
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+    });
   }
 
   @ResolveField()
@@ -119,12 +93,10 @@ export class TableResolver {
     @Parent() table: TableModel,
     @Args('data') data: GetTableForeignKeysInput,
   ) {
-    return this.queryBus.execute(
-      new ResolveTableForeignKeysToQuery({
-        revisionId: table.context.revisionId,
-        tableId: table.id,
-        ...data,
-      }),
-    );
+    return this.tableApi.resolveTableForeignKeysTo({
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+      ...data,
+    });
   }
 }

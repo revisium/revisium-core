@@ -1,14 +1,13 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { QueryBus } from '@nestjs/cqrs';
 import { UsersOrganizationModel } from 'src/api/graphql-api/organization/model/users-organization.model';
-import { GetRoleQuery } from 'src/features/role/queries/impl/get-role.query';
+import { RoleApiService } from 'src/features/role/role-api.service';
 
 @Resolver(() => UsersOrganizationModel)
 export class UsersOrganizationResolver {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(private readonly roleApiService: RoleApiService) {}
 
   @ResolveField()
   role(@Parent() parent: UsersOrganizationModel) {
-    return this.queryBus.execute(new GetRoleQuery({ roleId: parent.roleId }));
+    return this.roleApiService.getRole({ roleId: parent.roleId });
   }
 }

@@ -7,3 +7,5 @@ export class GetBranchQuery {
     },
   ) {}
 }
+
+export type GetBranchQueryData = GetBranchQuery['data'];

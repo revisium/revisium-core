@@ -1,5 +1,4 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Args,
   Mutation,
@@ -28,19 +27,7 @@ import { ProjectModel } from 'src/api/graphql-api/project/model';
 import { UsersProjectConnection } from 'src/api/graphql-api/project/model/users-project.connection';
 import { IAuthUser } from 'src/features/auth/types';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
-import {
-  AddUserToProjectCommand,
-  DeleteProjectCommand,
-  RemoveUserFromProjectCommand,
-  UpdateProjectCommand,
-  UpdateUserProjectRoleCommand,
-} from 'src/features/project/commands/impl';
-import {
-  GetAllBranchesByProjectQuery,
-  GetProjectQuery,
-  GetRootBranchByProjectQuery,
-  GetUsersProjectQuery,
-} from 'src/features/project/queries/impl';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 
 @PermissionParams({
@@ -50,8 +37,7 @@ import { UserApiService } from 'src/features/user/user-api.service';
 @Resolver(() => ProjectModel)
 export class ProjectResolver {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
+    private readonly projectApi: ProjectApiService,
     private readonly organizationApi: OrganizationApiService,
     private readonly userApi: UserApiService,
   ) {}
@@ -59,7 +45,7 @@ export class ProjectResolver {
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => ProjectModel)
   project(@Args('data') data: GetProjectInput) {
-    return this.queryBus.execute(new GetProjectQuery(data));
+    return this.projectApi.getProject(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -69,12 +55,12 @@ export class ProjectResolver {
   })
   @Query(() => UsersProjectConnection)
   usersProject(@Args('data') data: GetUsersProjectInput) {
-    return this.queryBus.execute(new GetUsersProjectQuery({ ...data }));
+    return this.projectApi.getUsersProject({ ...data });
   }
 
   @ResolveField()
   rootBranch(@Parent() data: ProjectModel) {
-    return this.queryBus.execute(new GetRootBranchByProjectQuery(data.id));
+    return this.projectApi.getRootBranchByProject(data.id);
   }
 
   @ResolveField()
@@ -82,9 +68,10 @@ export class ProjectResolver {
     @Parent() parent: ProjectModel,
     @Args('data') data: GetProjectBranchesInput,
   ) {
-    return this.queryBus.execute(
-      new GetAllBranchesByProjectQuery({ projectId: parent.id, ...data }),
-    );
+    return this.projectApi.getAllBranchesByProject({
+      projectId: parent.id,
+      ...data,
+    });
   }
 
   @ResolveField()
@@ -101,9 +88,7 @@ export class ProjectResolver {
   })
   @Mutation(() => Boolean)
   updateProject(@Args('data') data: UpdateProjectInput) {
-    return this.commandBus.execute<UpdateProjectCommand, boolean>(
-      new UpdateProjectCommand(data),
-    );
+    return this.projectApi.updateProject(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -113,9 +98,7 @@ export class ProjectResolver {
   })
   @Mutation(() => Boolean)
   deleteProject(@Args('data') data: DeleteProjectInput) {
-    return this.commandBus.execute<DeleteProjectCommand, boolean>(
-      new DeleteProjectCommand(data),
-    );
+    return this.projectApi.deleteProject(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -125,9 +108,7 @@ export class ProjectResolver {
   })
   @Mutation(() => Boolean)
   addUserToProject(@Args('data') data: AddUserToProjectInput) {
-    return this.commandBus.execute<AddUserToProjectCommand, boolean>(
-      new AddUserToProjectCommand(data),
-    );
+    return this.projectApi.addUserToProject(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -137,9 +118,7 @@ export class ProjectResolver {
   })
   @Mutation(() => Boolean)
   removeUserFromProject(@Args('data') data: RemoveUserFromProjectInput) {
-    return this.commandBus.execute<RemoveUserFromProjectCommand, boolean>(
-      new RemoveUserFromProjectCommand(data),
-    );
+    return this.projectApi.removeUserFromProject(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -149,9 +128,7 @@ export class ProjectResolver {
   })
   @Mutation(() => Boolean)
   updateUserProjectRole(@Args('data') data: UpdateUserProjectRoleInput) {
-    return this.commandBus.execute<UpdateUserProjectRoleCommand, boolean>(
-      new UpdateUserProjectRoleCommand(data),
-    );
+    return this.projectApi.updateUserProjectRole(data);
   }
 
   @ResolveField()

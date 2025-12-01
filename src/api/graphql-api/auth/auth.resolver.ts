@@ -1,21 +1,11 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import {
-  ConfirmEmailCodeCommand,
-  ConfirmEmailCodeCommandReturnType,
-  CreateUserCommand,
-  CreateUserCommandReturnType,
-  LoginCommand,
-  LoginCommandReturnType,
-  LoginGithubCommand,
-  LoginGithubCommandReturnType,
-  LoginGoogleCommand,
-  LoginGoogleCommandReturnType,
-  SignUpCommand,
-  SignUpCommandReturnType,
-} from 'src/features/auth/commands/impl';
-import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+  PermissionAction,
+  PermissionSubject,
+  UserSystemRoles,
+} from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLSystemGuard } from 'src/features/auth/guards/system.guard';
@@ -31,33 +21,25 @@ import { LoginModel } from 'src/api/graphql-api/auth/model';
 
 @Resolver()
 export class AuthResolver {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(private readonly authApiService: AuthApiService) {}
 
   @Mutation(() => LoginModel)
   public login(@Args('data') data: LoginInput): Promise<LoginModel> {
-    return this.commandBus.execute<LoginCommand, LoginCommandReturnType>(
-      new LoginCommand({ ...data }),
-    );
+    return this.authApiService.login(data);
   }
 
   @Mutation(() => LoginModel)
   public async loginGoogle(
     @Args('data') data: LoginGoogleInput,
   ): Promise<LoginModel> {
-    return this.commandBus.execute<
-      LoginGoogleCommand,
-      LoginGoogleCommandReturnType
-    >(new LoginGoogleCommand({ ...data }));
+    return this.authApiService.loginGoogle(data);
   }
 
   @Mutation(() => LoginModel)
   public async loginGithub(
     @Args('data') data: LoginGithubInput,
   ): Promise<LoginModel> {
-    return this.commandBus.execute<
-      LoginGithubCommand,
-      LoginGithubCommandReturnType
-    >(new LoginGithubCommand({ ...data }));
+    return this.authApiService.loginGithub(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLSystemGuard)
@@ -69,19 +51,18 @@ export class AuthResolver {
   public async createUser(
     @Args('data') data: CreateUserInput,
   ): Promise<boolean> {
-    await this.commandBus.execute<
-      CreateUserCommand,
-      CreateUserCommandReturnType
-    >(new CreateUserCommand({ ...data, isEmailConfirmed: true }));
+    await this.authApiService.createUser({
+      ...data,
+      roleId: data.roleId as UserSystemRoles,
+      isEmailConfirmed: true,
+    });
 
     return true;
   }
 
   @Mutation(() => Boolean)
   public async signUp(@Args('data') data: SignUpInput): Promise<boolean> {
-    await this.commandBus.execute<SignUpCommand, SignUpCommandReturnType>(
-      new SignUpCommand({ ...data }),
-    );
+    await this.authApiService.signUp(data);
 
     return true;
   }
@@ -90,9 +71,6 @@ export class AuthResolver {
   public async confirmEmailCode(
     @Args('data') data: ConfirmEmailCodeInput,
   ): Promise<LoginModel> {
-    return this.commandBus.execute<
-      ConfirmEmailCodeCommand,
-      ConfirmEmailCodeCommandReturnType
-    >(new ConfirmEmailCodeCommand({ ...data }));
+    return this.authApiService.confirmEmailCode(data);
   }
 }

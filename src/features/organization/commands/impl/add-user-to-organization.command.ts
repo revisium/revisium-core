@@ -10,4 +10,7 @@ export class AddUserToOrganizationCommand {
   ) {}
 }
 
+export type AddUserToOrganizationCommandData =
+  AddUserToOrganizationCommand['data'];
+
 export type AddUserToOrganizationCommandReturnType = boolean;

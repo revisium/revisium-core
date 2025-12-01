@@ -8,3 +8,5 @@ export class ApiRemoveRowCommand {
     },
   ) {}
 }
+
+export type ApiRemoveRowCommandData = ApiRemoveRowCommand['data'];

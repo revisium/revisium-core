@@ -7,6 +7,8 @@ export class LoginGoogleCommand {
   ) {}
 }
 
+export type LoginGoogleCommandData = LoginGoogleCommand['data'];
+
 export type LoginGoogleCommandReturnType = {
   accessToken: string;
 };

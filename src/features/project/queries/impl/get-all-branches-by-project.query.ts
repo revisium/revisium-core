@@ -1,3 +1,6 @@
+import { Branch } from 'src/__generated__/client';
+import { IPaginatedType } from 'src/features/share/pagination.interface';
+
 export class GetAllBranchesByProjectQuery {
   constructor(
     public data: {
@@ -7,3 +10,8 @@ export class GetAllBranchesByProjectQuery {
     },
   ) {}
 }
+
+export type GetAllBranchesByProjectQueryData =
+  GetAllBranchesByProjectQuery['data'];
+
+export type GetAllBranchesByProjectQueryReturnType = IPaginatedType<Branch>;

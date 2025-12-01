@@ -6,4 +6,6 @@ export class ConfirmEmailCodeCommand {
   ) {}
 }
 
+export type ConfirmEmailCodeCommandData = ConfirmEmailCodeCommand['data'];
+
 export type ConfirmEmailCodeCommandReturnType = { accessToken: string };

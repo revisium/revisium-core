@@ -4,6 +4,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { PROJECT_HANDLERS } from 'src/features/project/commands/handlers';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
 
@@ -16,6 +17,8 @@ import { ShareModule } from 'src/features/share/share.module';
     },
     ...PROJECT_QUERIES,
     ...PROJECT_HANDLERS,
+    ProjectApiService,
   ],
+  exports: [ProjectApiService],
 })
 export class ProjectModule {}

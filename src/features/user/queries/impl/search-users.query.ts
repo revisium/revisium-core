@@ -11,6 +11,8 @@ export class SearchUsersQuery {
   ) {}
 }
 
+export type SearchUsersQueryData = SearchUsersQuery['data'];
+
 export type SearchUsersQueryReturnType = IPaginatedType<
   Pick<User, 'id' | 'username' | 'email'>
 >;

@@ -1,7 +1,6 @@
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
 import { GraphQLModule } from '@nestjs/graphql';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 import { UsersOrganizationResolver } from 'src/api/graphql-api/organization/users-organization.resolver';
@@ -9,6 +8,9 @@ import { UsersProjectResolver } from 'src/api/graphql-api/project/users-project.
 import { RevisionChangesResolver } from 'src/api/graphql-api/revision-changes/revision-changes.resolver';
 import { RoleResolver } from 'src/api/graphql-api/role/role.resolver';
 import { AuthModule } from 'src/features/auth/auth.module';
+import { BranchModule } from 'src/features/branch/branch.module';
+import { DraftModule } from 'src/features/draft/draft.module';
+import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { AuthResolver } from 'src/api/graphql-api/auth/auth.resolver';
 import { BranchResolver } from 'src/api/graphql-api/branch/branch.resolver';
 import { ParentBranchResolver } from 'src/api/graphql-api/branch/parent-branch.resolver';
@@ -29,6 +31,9 @@ import { RoleModule } from 'src/features/role/role.module';
 import { RowModule } from 'src/features/row/row.module';
 import { UserModule } from 'src/features/user/user.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
+import { ProjectModule } from 'src/features/project/project.module';
+import { TableModule } from 'src/features/table/table.module';
+import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql-metrics.plugin';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { RevisionChangesModule } from 'src/features/revision-changes/revision-changes.module';
@@ -60,14 +65,19 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
         ],
       }),
     }),
-    CqrsModule,
     AuthModule,
+    BranchModule,
+    ConfigurationModule,
+    DraftModule,
+    EndpointModule,
     UserModule,
     OrganizationModule,
+    ProjectModule,
     RoleModule,
     RowModule,
     RevisionModule,
     RevisionChangesModule,
+    TableModule,
   ],
   providers: [
     ConfigurationResolver,

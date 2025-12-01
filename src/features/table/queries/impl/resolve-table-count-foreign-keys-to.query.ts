@@ -6,3 +6,8 @@ export class ResolveTableCountForeignKeysToQuery {
     },
   ) {}
 }
+
+export type ResolveTableCountForeignKeysToQueryData =
+  ResolveTableCountForeignKeysToQuery['data'];
+
+export type ResolveTableCountForeignKeysToQueryReturnType = number;

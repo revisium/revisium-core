@@ -12,6 +12,8 @@ export class GetUsersProjectQuery {
   ) {}
 }
 
+export type GetUsersProjectQueryData = GetUsersProjectQuery['data'];
+
 export type GetUsersProjectQueryReturnType = IPaginatedType<{
   id: string;
   user: User;

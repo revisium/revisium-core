@@ -1,5 +1,4 @@
 import { UseGuards } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   Args,
   Mutation,
@@ -22,14 +21,7 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import {
-  ApiCreateEndpointCommand,
-  DeleteEndpointCommand,
-} from 'src/features/endpoint/commands/impl';
-import {
-  GetProjectEndpointsQuery,
-  GetRevisionByEndpointIdQuery,
-} from 'src/features/endpoint/queries/impl';
+import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -37,20 +29,17 @@ import {
 })
 @Resolver(() => EndpointModel)
 export class EndpointResolver {
-  constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
-  ) {}
+  constructor(private readonly endpointApiService: EndpointApiService) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => EndpointsConnection)
   projectEndpoints(@Args('data') data: GetProjectEndpointsInput) {
-    return this.queryBus.execute(new GetProjectEndpointsQuery(data));
+    return this.endpointApiService.getProjectEndpoints(data);
   }
 
   @ResolveField()
   revision(@Parent() endpoint: EndpointModel) {
-    return this.queryBus.execute(new GetRevisionByEndpointIdQuery(endpoint.id));
+    return this.endpointApiService.getRevisionByEndpointId(endpoint.id);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -60,7 +49,7 @@ export class EndpointResolver {
   })
   @Mutation(() => EndpointModel)
   createEndpoint(@Args('data') data: CreateEndpointInput) {
-    return this.commandBus.execute(new ApiCreateEndpointCommand(data));
+    return this.endpointApiService.apiCreateEndpoint(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -70,8 +59,6 @@ export class EndpointResolver {
   })
   @Mutation(() => Boolean)
   deleteEndpoint(@Args('data') data: DeleteEndpointInput) {
-    return this.commandBus.execute<DeleteEndpointCommand, boolean>(
-      new DeleteEndpointCommand(data),
-    );
+    return this.endpointApiService.deleteEndpoint(data);
   }
 }

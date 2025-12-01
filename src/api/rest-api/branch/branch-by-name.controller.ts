@@ -8,7 +8,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -21,17 +20,8 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import {
-  GetBranchQuery,
-  GetDraftRevisionQuery,
-  GetHeadRevisionQuery,
-  GetRevisionsByBranchIdQuery,
-  GetStartRevisionQuery,
-  GetTouchedByBranchIdQuery,
-  ResolveParentBranchByBranchQuery,
-} from 'src/features/branch/quieries/impl';
-import { ApiCreateRevisionCommand } from 'src/features/draft/commands/impl/api-create-revision.command';
-import { ApiRevertChangesCommand } from 'src/features/draft/commands/impl/api-revert-changes.command';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   CreateRevisionDto,
@@ -64,8 +54,8 @@ import {
 @ApiTags('Branch')
 export class BranchByNameController {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
+    private readonly branchApi: BranchApiService,
+    private readonly draftApi: DraftApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -89,16 +79,14 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ): Promise<TouchedModelDto> {
-    const branch: BranchModel = await this.resolveBranch(
+    const branch = await this.resolveBranch(
       organizationId,
       projectName,
       branchName,
     );
 
     return {
-      touched: await this.queryBus.execute(
-        new GetTouchedByBranchIdQuery(branch.id),
-      ),
+      touched: await this.branchApi.getTouchedByBranchId(branch.id),
     };
   }
 
@@ -111,17 +99,13 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ) {
-    const branch: BranchModel = await this.resolveBranch(
+    const branch = await this.resolveBranch(
       organizationId,
       projectName,
       branchName,
     );
 
-    return this.queryBus.execute(
-      new ResolveParentBranchByBranchQuery({
-        branchId: branch.id,
-      }),
-    );
+    return this.branchApi.resolveParentBranch({ branchId: branch.id });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -133,14 +117,14 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ) {
-    const branch: BranchModel = await this.resolveBranch(
+    const branch = await this.resolveBranch(
       organizationId,
       projectName,
       branchName,
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.queryBus.execute(new GetStartRevisionQuery(branch.id)),
+      await this.branchApi.getStartRevision(branch.id),
     );
   }
 
@@ -153,14 +137,14 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ) {
-    const branch: BranchModel = await this.resolveBranch(
+    const branch = await this.resolveBranch(
       organizationId,
       projectName,
       branchName,
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.queryBus.execute(new GetHeadRevisionQuery(branch.id)),
+      await this.branchApi.getHeadRevision(branch.id),
     );
   }
 
@@ -173,14 +157,14 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ) {
-    const branch: BranchModel = await this.resolveBranch(
+    const branch = await this.resolveBranch(
       organizationId,
       projectName,
       branchName,
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.queryBus.execute(new GetDraftRevisionQuery(branch.id)),
+      await this.branchApi.getDraftRevision(branch.id),
     );
   }
 
@@ -201,12 +185,10 @@ export class BranchByNameController {
     );
 
     return transformFromPaginatedPrismaToRevisionModel(
-      await this.queryBus.execute(
-        new GetRevisionsByBranchIdQuery({
-          branchId: branch.id,
-          ...data,
-        }),
-      ),
+      await this.branchApi.getRevisionsByBranchId({
+        branchId: branch.id,
+        ...data,
+      }),
     );
   }
 
@@ -226,14 +208,12 @@ export class BranchByNameController {
     @Body() data: CreateRevisionDto,
   ): Promise<RevisionModel> {
     return transformFromPrismaToRevisionModel(
-      await this.commandBus.execute(
-        new ApiCreateRevisionCommand({
-          organizationId,
-          projectName,
-          branchName,
-          ...data,
-        }),
-      ),
+      await this.draftApi.apiCreateRevision({
+        organizationId,
+        projectName,
+        branchName,
+        ...data,
+      }),
     );
   }
 
@@ -251,13 +231,11 @@ export class BranchByNameController {
     @Param('branchName') branchName: string,
   ): Promise<BranchModel> {
     return transformFromPrismaToBranchModel(
-      await this.commandBus.execute(
-        new ApiRevertChangesCommand({
-          organizationId,
-          projectName,
-          branchName,
-        }),
-      ),
+      await this.branchApi.apiRevertChanges({
+        organizationId,
+        projectName,
+        branchName,
+      }),
     );
   }
 
@@ -266,12 +244,10 @@ export class BranchByNameController {
     projectName: string,
     branchName: string,
   ): Promise<BranchModel> {
-    return this.queryBus.execute(
-      new GetBranchQuery({
-        organizationId,
-        projectName,
-        branchName,
-      }),
-    );
+    return this.branchApi.getBranch({
+      organizationId,
+      projectName,
+      branchName,
+    });
   }
 }

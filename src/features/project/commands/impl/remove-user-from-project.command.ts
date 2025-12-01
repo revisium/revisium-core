@@ -8,4 +8,7 @@ export class RemoveUserFromProjectCommand {
   ) {}
 }
 
+export type RemoveUserFromProjectCommandData =
+  RemoveUserFromProjectCommand['data'];
+
 export type RemoveUserFromProjectCommandReturnType = boolean;

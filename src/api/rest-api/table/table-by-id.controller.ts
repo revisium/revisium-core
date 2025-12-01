@@ -14,7 +14,6 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -22,7 +21,6 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
-import { Table } from 'src/__generated__/client';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
@@ -30,17 +28,9 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
-import { ApiRemoveTableCommand } from 'src/features/draft/commands/impl/api-remove-table.command';
-import {
-  ApiRenameTableCommand,
-  ApiRenameTableCommandReturnType,
-} from 'src/features/draft/commands/impl/api-rename-table.command';
-import { ApiUpdateTableCommand } from 'src/features/draft/commands/impl/api-update-table.command';
-import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
-import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
-import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
+import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { RowApiService } from 'src/features/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { BranchModel } from 'src/api/rest-api/branch/model';
 import { RowsConnection } from 'src/api/rest-api/row/model';
@@ -67,15 +57,7 @@ import {
   TablesConnection,
 } from 'src/api/rest-api/table/model/table.model';
 import { UpdateTableResponse } from 'src/api/rest-api/table/model/update-table.response';
-import {
-  GetCountRowsInTableQuery,
-  ResolveTableCountForeignKeysByQuery,
-  ResolveTableCountForeignKeysToQuery,
-  ResolveTableForeignKeysByQuery,
-  ResolveTableForeignKeysToQuery,
-  ResolveTableSchemaQuery,
-} from 'src/features/table/queries/impl';
-import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
+import { Table } from 'src/__generated__/client';
 
 @UseInterceptors(RestMetricsInterceptor)
 @PermissionParams({
@@ -87,8 +69,8 @@ import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
 @ApiTags('Table')
 export class TableByIdController {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
+    private readonly tableApi: TableApiService,
+    private readonly draftApi: DraftApiService,
     private readonly rowApi: RowApiService,
   ) {}
 
@@ -115,9 +97,9 @@ export class TableByIdController {
   ) {
     const table = await this.resolveTable(revisionId, tableId);
 
-    return this.queryBus.execute(
-      new GetCountRowsInTableQuery({ tableVersionId: table.versionId }),
-    );
+    return this.tableApi.getCountRowsInTable({
+      tableVersionId: table.versionId,
+    });
   }
 
   @UsePipes(
@@ -164,16 +146,11 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: CreateRowDto,
   ): Promise<CreateRowResponse> {
-    const result = await this.commandBus.execute<
-      ApiCreateRowCommand,
-      ApiCreateRowHandlerReturnType
-    >(
-      new ApiCreateRowCommand({
-        revisionId,
-        tableId,
-        ...data,
-      }),
-    );
+    const result = await this.draftApi.apiCreateRow({
+      revisionId,
+      tableId,
+      ...data,
+    });
 
     return {
       table: transformFromPrismaToTableModel(result.table),
@@ -192,9 +169,7 @@ export class TableByIdController {
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ) {
-    return this.queryBus.execute(
-      new ResolveTableSchemaQuery({ revisionId, tableId }),
-    );
+    return this.tableApi.resolveTableSchema({ revisionId, tableId });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -207,9 +182,10 @@ export class TableByIdController {
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ) {
-    return this.queryBus.execute(
-      new ResolveTableCountForeignKeysByQuery({ revisionId, tableId }),
-    );
+    return this.tableApi.resolveTableCountForeignKeysBy({
+      revisionId,
+      tableId,
+    });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -222,9 +198,11 @@ export class TableByIdController {
     @Query() data: GetTableForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
-      await this.queryBus.execute(
-        new ResolveTableForeignKeysByQuery({ revisionId, tableId, ...data }),
-      ),
+      await this.tableApi.resolveTableForeignKeysBy({
+        revisionId,
+        tableId,
+        ...data,
+      }),
     );
   }
 
@@ -238,9 +216,10 @@ export class TableByIdController {
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ) {
-    return this.queryBus.execute(
-      new ResolveTableCountForeignKeysToQuery({ revisionId, tableId }),
-    );
+    return this.tableApi.resolveTableCountForeignKeysTo({
+      revisionId,
+      tableId,
+    });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -253,9 +232,11 @@ export class TableByIdController {
     @Query() data: GetTableForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
-      await this.queryBus.execute(
-        new ResolveTableForeignKeysToQuery({ revisionId, tableId, ...data }),
-      ),
+      await this.tableApi.resolveTableForeignKeysTo({
+        revisionId,
+        tableId,
+        ...data,
+      }),
     );
   }
 
@@ -271,10 +252,7 @@ export class TableByIdController {
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ): Promise<BranchModel> {
-    const result = await this.commandBus.execute<
-      ApiRemoveTableCommand,
-      ApiRemoveTableHandlerReturnType
-    >(new ApiRemoveTableCommand({ revisionId, tableId }));
+    const result = await this.draftApi.apiRemoveTable({ revisionId, tableId });
 
     return transformFromPrismaToBranchModel(result.branch);
   }
@@ -293,12 +271,11 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: UpdateTableDto,
   ): Promise<UpdateTableResponse> {
-    const result = await this.commandBus.execute<
-      ApiUpdateTableCommand,
-      ApiUpdateTableHandlerReturnType
-    >(
-      new ApiUpdateTableCommand({ revisionId, tableId, patches: data.patches }),
-    );
+    const result = await this.draftApi.apiUpdateTable({
+      revisionId,
+      tableId,
+      patches: data.patches,
+    });
 
     return {
       table: result.table
@@ -322,16 +299,11 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: RenameTableDto,
   ): Promise<RenameTableResponse> {
-    const result = await this.commandBus.execute<
-      ApiRenameTableCommand,
-      ApiRenameTableCommandReturnType
-    >(
-      new ApiRenameTableCommand({
-        revisionId,
-        tableId,
-        nextTableId: data.nextTableId,
-      }),
-    );
+    const result = await this.draftApi.apiRenameTable({
+      revisionId,
+      tableId,
+      nextTableId: data.nextTableId,
+    });
 
     return {
       table: result.table
@@ -342,6 +314,6 @@ export class TableByIdController {
   }
 
   private resolveTable(revisionId: string, tableId: string): Promise<Table> {
-    return this.queryBus.execute(new GetTableQuery({ revisionId, tableId }));
+    return this.tableApi.getTable({ revisionId, tableId });
   }
 }

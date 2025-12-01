@@ -1,3 +1,5 @@
+import { GetTablesReturnType } from 'src/features/table/queries/types';
+
 export class GetTablesQuery {
   constructor(
     public data: {
@@ -7,3 +9,7 @@ export class GetTablesQuery {
     },
   ) {}
 }
+
+export type GetTablesQueryData = GetTablesQuery['data'];
+
+export type GetTablesQueryReturnType = GetTablesReturnType;

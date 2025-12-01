@@ -11,4 +11,6 @@ export class AddUserToProjectCommand {
   ) {}
 }
 
+export type AddUserToProjectCommandData = AddUserToProjectCommand['data'];
+
 export type AddUserToProjectCommandReturnType = boolean;

@@ -10,7 +10,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -24,16 +23,8 @@ import { HTTPOrganizationGuard } from 'src/features/auth/guards/organization.gua
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { IOptionalAuthUser } from 'src/features/auth/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import {
-  AddUserToOrganizationCommand,
-  RemoveUserFromOrganizationCommand,
-} from 'src/features/organization/commands/impl';
-import { ApiCreateProjectCommand } from 'src/features/project/commands/impl';
-import {
-  GetProjectsByOrganizationIdQuery,
-  GetUsersOrganizationQuery,
-  GetUsersOrganizationQueryReturnType,
-} from 'src/features/organization/queries/impl';
+import { OrganizationApiService } from 'src/features/organization/organization-api.service';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import {
   AddUserToOrganizationDto,
   CreateProjectDto,
@@ -58,8 +49,8 @@ import { transformFromPaginatedPrismaToUserOrganizationModel } from 'src/api/res
 @ApiTags('Organization')
 export class OrganizationController {
   constructor(
-    private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
+    private readonly organizationApiService: OrganizationApiService,
+    private readonly projectApiService: ProjectApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPOrganizationGuard)
@@ -74,13 +65,11 @@ export class OrganizationController {
       user: IOptionalAuthUser;
     },
   ) {
-    return this.queryBus.execute(
-      new GetProjectsByOrganizationIdQuery({
-        userId: req.user?.userId,
-        organizationId,
-        ...data,
-      }),
-    );
+    return this.organizationApiService.getProjectsByOrganizationId({
+      userId: req.user?.userId,
+      organizationId,
+      ...data,
+    });
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPOrganizationGuard)
@@ -91,18 +80,16 @@ export class OrganizationController {
   @Post(':organizationId/projects')
   @ApiOperation({ operationId: 'createProject' })
   @ApiOkResponse({ type: ProjectModel })
-  async createProject(
+  createProject(
     @Param('organizationId') organizationId: string,
     @Body() data: CreateProjectDto,
     @Query('fromRevisionId') fromRevisionId?: string,
   ): Promise<ProjectModel> {
-    return this.commandBus.execute<ApiCreateProjectCommand, ProjectModel>(
-      new ApiCreateProjectCommand({
-        organizationId,
-        ...data,
-        fromRevisionId,
-      }),
-    );
+    return this.projectApiService.apiCreateProject({
+      organizationId,
+      ...data,
+      fromRevisionId,
+    });
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPOrganizationGuard)
@@ -113,15 +100,10 @@ export class OrganizationController {
     @Param('organizationId') organizationId: string,
     @Query() data: GetUsersOrganizationDto,
   ) {
-    const result = await this.queryBus.execute<
-      GetUsersOrganizationQuery,
-      GetUsersOrganizationQueryReturnType
-    >(
-      new GetUsersOrganizationQuery({
-        organizationId,
-        ...data,
-      }),
-    );
+    const result = await this.organizationApiService.getUsersOrganization({
+      organizationId,
+      ...data,
+    });
 
     return transformFromPaginatedPrismaToUserOrganizationModel(result);
   }
@@ -138,9 +120,10 @@ export class OrganizationController {
     @Param('organizationId') organizationId: string,
     @Body() data: AddUserToOrganizationDto,
   ) {
-    return this.commandBus.execute<AddUserToOrganizationCommand, boolean>(
-      new AddUserToOrganizationCommand({ ...data, organizationId }),
-    );
+    return this.organizationApiService.addUserToOrganization({
+      ...data,
+      organizationId,
+    });
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPOrganizationGuard)
@@ -155,8 +138,9 @@ export class OrganizationController {
     @Param('organizationId') organizationId: string,
     @Body() data: RemoveUserFromOrganizationDto,
   ) {
-    return this.commandBus.execute<RemoveUserFromOrganizationCommand, boolean>(
-      new RemoveUserFromOrganizationCommand({ ...data, organizationId }),
-    );
+    return this.organizationApiService.removeUserFromOrganization({
+      ...data,
+      organizationId,
+    });
   }
 }

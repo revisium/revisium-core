@@ -12,6 +12,8 @@ export class ApiRenameRowCommand {
   ) {}
 }
 
+export type ApiRenameRowCommandData = ApiRenameRowCommand['data'];
+
 export type ApiRenameRowCommandReturnType = {
   table: GetTableByIdReturnType;
   previousVersionTableId: string;

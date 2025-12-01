@@ -9,4 +9,7 @@ export class UpdateUserProjectRoleCommand {
   ) {}
 }
 
+export type UpdateUserProjectRoleCommandData =
+  UpdateUserProjectRoleCommand['data'];
+
 export type UpdateUserProjectRoleCommandReturnType = boolean;

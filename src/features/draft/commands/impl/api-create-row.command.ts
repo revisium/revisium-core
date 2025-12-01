@@ -11,3 +11,5 @@ export class ApiCreateRowCommand {
     },
   ) {}
 }
+
+export type ApiCreateRowCommandData = ApiCreateRowCommand['data'];
