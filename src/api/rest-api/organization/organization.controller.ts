@@ -101,8 +101,8 @@ export class OrganizationController {
     @Query() data: GetUsersOrganizationDto,
   ) {
     const result = await this.organizationApiService.getUsersOrganization({
-      organizationId,
       ...data,
+      organizationId,
     });
 
     return transformFromPaginatedPrismaToUserOrganizationModel(result);
