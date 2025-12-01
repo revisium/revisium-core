@@ -69,8 +69,8 @@ export class ProjectResolver {
     @Args('data') data: GetProjectBranchesInput,
   ) {
     return this.projectApi.getAllBranchesByProject({
-      projectId: parent.id,
       ...data,
+      projectId: parent.id,
     });
   }
 

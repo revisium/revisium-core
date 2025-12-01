@@ -64,8 +64,8 @@ export class RevisionResolver {
     @Args('data') data: GetRevisionTablesInput,
   ) {
     return this.revisionApi.getTablesByRevisionId({
-      revisionId: revision.id,
       ...data,
+      revisionId: revision.id,
     });
   }
 

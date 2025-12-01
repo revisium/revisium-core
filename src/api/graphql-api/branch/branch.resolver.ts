@@ -74,8 +74,8 @@ export class BranchResolver {
     @Args('data') data: GetBranchRevisionsInput,
   ) {
     return this.branchApiService.getRevisionsByBranchId({
-      branchId: branch.id,
       ...data,
+      branchId: branch.id,
     });
   }
 

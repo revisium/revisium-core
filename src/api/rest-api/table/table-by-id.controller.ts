@@ -123,9 +123,9 @@ export class TableByIdController {
 
     return transformFromPaginatedPrismaToRowModel(
       await this.rowApi.getRows({
+        ...data,
         revisionId,
         tableId,
-        ...data,
         orderBy: prismaOrderBy,
         where,
       }),
@@ -147,9 +147,9 @@ export class TableByIdController {
     @Body() data: CreateRowDto,
   ): Promise<CreateRowResponse> {
     const result = await this.draftApi.apiCreateRow({
+      ...data,
       revisionId,
       tableId,
-      ...data,
     });
 
     return {
@@ -199,9 +199,9 @@ export class TableByIdController {
   ) {
     return transformFromPaginatedPrismaToTableModel(
       await this.tableApi.resolveTableForeignKeysBy({
+        ...data,
         revisionId,
         tableId,
-        ...data,
       }),
     );
   }
@@ -233,9 +233,9 @@ export class TableByIdController {
   ) {
     return transformFromPaginatedPrismaToTableModel(
       await this.tableApi.resolveTableForeignKeysTo({
+        ...data,
         revisionId,
         tableId,
-        ...data,
       }),
     );
   }

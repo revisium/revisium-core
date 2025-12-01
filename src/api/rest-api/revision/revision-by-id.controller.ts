@@ -127,8 +127,8 @@ export class RevisionByIdController {
   ) {
     return transformFromPaginatedPrismaToTableModel(
       await this.revisionApi.getTablesByRevisionId({
-        revisionId,
         ...data,
+        revisionId,
       }),
     );
   }
@@ -224,8 +224,8 @@ export class RevisionByIdController {
     @Body() data: CreateTableDto,
   ): Promise<CreateTableResponse> {
     const result = await this.draftApi.apiCreateTable({
-      revisionId,
       ...data,
+      revisionId,
     });
 
     return {

@@ -39,9 +39,9 @@ export class TableResolver {
   @ResolveField()
   rows(@Parent() table: TableModel, @Args('data') data: GetTableRowsInput) {
     return this.rowApi.getRows({
+      ...data,
       revisionId: table.context.revisionId,
       tableId: table.id,
-      ...data,
     });
   }
 
@@ -74,9 +74,9 @@ export class TableResolver {
     @Args('data') data: GetTableForeignKeysInput,
   ) {
     return this.tableApi.resolveTableForeignKeysBy({
+      ...data,
       revisionId: table.context.revisionId,
       tableId: table.id,
-      ...data,
     });
   }
 
@@ -94,9 +94,9 @@ export class TableResolver {
     @Args('data') data: GetTableForeignKeysInput,
   ) {
     return this.tableApi.resolveTableForeignKeysTo({
+      ...data,
       revisionId: table.context.revisionId,
       tableId: table.id,
-      ...data,
     });
   }
 }
