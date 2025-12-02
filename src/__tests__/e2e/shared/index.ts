@@ -8,7 +8,6 @@ export {
 export {
   getReadonlyFixture,
   getPublicProjectFixture,
-  resetFixtures,
   type PrepareDataReturnType,
 } from './readonly-fixture';
 

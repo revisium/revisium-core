@@ -38,9 +38,4 @@ export async function getPublicProjectFixture(
   return publicProjectFixture;
 }
 
-export function resetFixtures(): void {
-  cachedFixture = null;
-  publicProjectFixture = null;
-}
-
 export type { PrepareDataReturnType };

@@ -62,7 +62,7 @@ describe('restapi - auth', () => {
       fixture = await prepareData(app);
     });
 
-    it('system admin can create user', async () => {
+    it('organization owner cannot create user (requires system admin)', async () => {
       const uniqueUsername = `test-user-${Date.now()}`;
       const uniqueEmail = `test-${Date.now()}@example.com`;
 
