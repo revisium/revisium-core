@@ -35,6 +35,12 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     CaslAbilityFactory,
     ...AUTH_COMMANDS,
   ],
-  exports: [AuthService, GoogleOauthService, GitHubAuthService, AuthApiService],
+  exports: [
+    AuthService,
+    GoogleOauthService,
+    GitHubAuthService,
+    AuthApiService,
+    JwtSecretService,
+  ],
 })
 export class AuthModule {}

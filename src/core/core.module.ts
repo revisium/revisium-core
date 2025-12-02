@@ -16,6 +16,7 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { GraphqlApiModule } from 'src/api/graphql-api/graphql-api.module';
 import { HealthModule } from 'src/infrastructure/health/health.module';
+import { McpModule } from 'src/api/mcp-api/mcp.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
@@ -62,6 +63,7 @@ export class CoreModule {
         DraftModule,
         EndpointModule,
         MetricsModule,
+        McpModule,
         RevisiumCacheModule.forRootAsync(),
       ],
     };
