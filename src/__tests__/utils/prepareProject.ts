@@ -7,7 +7,11 @@ import {
   getRefSchema,
 } from '@revisium/schema-toolkit/mocks';
 import { AuthService } from 'src/features/auth/auth.service';
-import { UserRole } from 'src/features/auth/consts';
+import {
+  UserRole,
+  UserOrganizationRoles,
+  UserProjectRoles,
+} from 'src/features/auth/consts';
 import {
   getTestLinkedSchema,
   testSchema,
@@ -32,31 +36,6 @@ export type PrepareProjectReturnType = Awaited<
 
 export const hashedPassword =
   '$2a$10$Uj1aVmkVJh4ZV9Ij54bFLexeFcYz71QtySoosQ5V.txpETjOgG0bW';
-
-export const prepareData = async (
-  app: INestApplication,
-  options?: { createLinkedTable?: boolean },
-) => {
-  const prismaService = app.get(PrismaService);
-
-  const project = await prepareProject(prismaService, options);
-  const anotherProject = await prepareProject(prismaService, options);
-
-  return {
-    project,
-    owner: await prepareOrganizationUser(
-      app,
-      project.organizationId,
-      UserRole.organizationOwner,
-    ),
-    anotherProject,
-    anotherOwner: await prepareOrganizationUser(
-      app,
-      anotherProject.organizationId,
-      UserRole.organizationOwner,
-    ),
-  };
-};
 
 const prepareOrganizationUser = async (
   app: INestApplication,
@@ -94,9 +73,32 @@ const prepareOrganizationUser = async (
   };
 };
 
-export async function prepareBranch(prismaService: PrismaService) {
-  // branch / project / organization / revisions
+export const prepareData = async (
+  app: INestApplication,
+  options?: { createLinkedTable?: boolean },
+) => {
+  const prismaService = app.get(PrismaService);
 
+  const project = await prepareProject(prismaService, options);
+  const anotherProject = await prepareProject(prismaService, options);
+
+  return {
+    project,
+    owner: await prepareOrganizationUser(
+      app,
+      project.organizationId,
+      UserRole.organizationOwner,
+    ),
+    anotherProject,
+    anotherOwner: await prepareOrganizationUser(
+      app,
+      anotherProject.organizationId,
+      UserRole.organizationOwner,
+    ),
+  };
+};
+
+export async function prepareBranch(prismaService: PrismaService) {
   const organizationId = `org-${nanoid()}`;
   const projectId = `project-${nanoid()}`;
   const projectName = `name-${projectId}`;
@@ -573,3 +575,112 @@ export const createEmptyFile = () => ({
   width: 0,
   height: 0,
 });
+
+export const prepareProjectUser = async (
+  app: INestApplication,
+  organizationId: string,
+  projectId: string,
+  organizationRole: UserOrganizationRoles,
+  projectRole: UserProjectRoles,
+) => {
+  const prismaService = app.get(PrismaService);
+  const authService = app.get(AuthService);
+
+  const userId = nanoid();
+
+  const user = await prismaService.user.create({
+    data: {
+      id: userId,
+      username: `user-${projectRole}-${userId}`,
+      roleId: UserRole.systemUser,
+      password: hashedPassword,
+      isEmailConfirmed: true,
+      userOrganizations: {
+        create: {
+          id: nanoid(),
+          organizationId,
+          roleId: organizationRole,
+        },
+      },
+      userProjects: {
+        create: {
+          id: nanoid(),
+          projectId,
+          roleId: projectRole,
+        },
+      },
+    },
+  });
+
+  return {
+    user,
+    token: authService.login({
+      username: user.username,
+      sub: user.id,
+    }),
+  };
+};
+
+export type PrepareProjectUserReturnType = Awaited<
+  ReturnType<typeof prepareProjectUser>
+>;
+
+export const prepareDataWithRoles = async (
+  app: INestApplication,
+  options?: { createLinkedTable?: boolean },
+) => {
+  const prismaService = app.get(PrismaService);
+
+  const project = await prepareProject(prismaService, options);
+
+  const owner = await prepareOrganizationUser(
+    app,
+    project.organizationId,
+    UserRole.organizationOwner,
+  );
+
+  const developer = await prepareProjectUser(
+    app,
+    project.organizationId,
+    project.projectId,
+    UserOrganizationRoles.developer,
+    UserProjectRoles.developer,
+  );
+
+  const editor = await prepareProjectUser(
+    app,
+    project.organizationId,
+    project.projectId,
+    UserOrganizationRoles.editor,
+    UserProjectRoles.editor,
+  );
+
+  const reader = await prepareProjectUser(
+    app,
+    project.organizationId,
+    project.projectId,
+    UserOrganizationRoles.reader,
+    UserProjectRoles.reader,
+  );
+
+  const anotherProject = await prepareProject(prismaService, options);
+  const anotherOwner = await prepareOrganizationUser(
+    app,
+    anotherProject.organizationId,
+    UserRole.organizationOwner,
+  );
+
+  return {
+    project,
+    owner,
+    developer,
+    editor,
+    reader,
+    anotherProject,
+    anotherOwner,
+  };
+};
+
+export type PrepareDataWithRolesReturnType = Awaited<
+  ReturnType<typeof prepareDataWithRoles>
+>;
