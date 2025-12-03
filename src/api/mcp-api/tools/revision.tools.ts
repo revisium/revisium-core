@@ -18,6 +18,7 @@ export class RevisionTools implements McpToolRegistrar {
       {
         revisionId: z.string().describe('Revision ID'),
       },
+      { readOnlyHint: true },
       async ({ revisionId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -48,6 +49,7 @@ export class RevisionTools implements McpToolRegistrar {
         branchName: z.string().describe('Branch name'),
         comment: z.string().optional().describe('Commit comment'),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ organizationId, projectName, branchName, comment }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(
