@@ -7,11 +7,13 @@ import {
   Res,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { McpServerService } from './mcp-server.service';
 
+@ApiExcludeController()
 @Controller('mcp')
 export class McpController {
   private transports: Map<string, StreamableHTTPServerTransport> = new Map();
