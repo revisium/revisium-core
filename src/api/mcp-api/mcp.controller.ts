@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { randomUUID } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { McpServerService } from './mcp-server.service';
@@ -34,7 +35,7 @@ export class McpController {
       transport = this.transports.get(sessionId)!;
     } else if (!sessionId && isInitializeRequest(req.body)) {
       transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => crypto.randomUUID(),
+        sessionIdGenerator: () => randomUUID(),
         enableJsonResponse: !preferStreaming,
         onsessioninitialized: (newSessionId) => {
           this.transports.set(newSessionId, transport);
