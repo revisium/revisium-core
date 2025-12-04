@@ -27,7 +27,7 @@ export class ApiCreateTableHandler
 
   async execute({ data }: ApiCreateTableCommand) {
     const { branchId, tableVersionId }: CreateTableHandlerReturnType =
-      await this.transactionService.run(async () =>
+      await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<
           CreateTableCommand,
           CreateTableHandlerReturnType

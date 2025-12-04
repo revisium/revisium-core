@@ -28,7 +28,7 @@ export class ApiRevertChangesHandler
 
   async execute({ data }: ApiRevertChangesCommand) {
     const { branchId, draftRevisionId }: RevertChangesHandlerReturnType =
-      await this.transactionService.run(async () =>
+      await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<
           RevertChangesCommand,
           RevertChangesHandlerReturnType

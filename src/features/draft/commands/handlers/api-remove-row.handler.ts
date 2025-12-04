@@ -31,7 +31,7 @@ export class ApiRemoveRowHandler
       branchId,
       tableVersionId,
       previousTableVersionId,
-    }: RemoveRowHandlerReturnType = await this.transactionService.run(
+    }: RemoveRowHandlerReturnType = await this.transactionService.runSerializable(
       async () =>
         this.commandBus.execute<RemoveRowCommand, RemoveRowHandlerReturnType>(
           new RemoveRowCommand(data),

@@ -29,7 +29,7 @@ export class ApiCreateRevisionHandler
       nextDraftRevisionId,
       draftEndpoints,
       headEndpoints,
-    }: CreateRevisionHandlerReturnType = await this.transactionService.run(
+    }: CreateRevisionHandlerReturnType = await this.transactionService.runSerializable(
       async () =>
         this.commandBus.execute<
           CreateRevisionCommand,

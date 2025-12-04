@@ -27,7 +27,7 @@ export class ApiRemoveTableHandler
 
   async execute({ data }: ApiRemoveTableCommand) {
     const { branchId }: RemoveTableHandlerReturnType =
-      await this.transactionService.run(async () =>
+      await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<
           RemoveTableCommand,
           RemoveTableHandlerReturnType

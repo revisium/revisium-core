@@ -33,7 +33,7 @@ export class ApiRenameTableHandler
     const {
       tableVersionId,
       previousTableVersionId,
-    }: RenameTableCommandReturnType = await this.transactionService.run(
+    }: RenameTableCommandReturnType = await this.transactionService.runSerializable(
       async () =>
         this.commandBus.execute<
           RenameTableCommand,

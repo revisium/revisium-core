@@ -34,7 +34,7 @@ export class ApiUpdateRowHandler
       previousTableVersionId,
       rowVersionId,
       previousRowVersionId,
-    }: UpdateRowHandlerReturnType = await this.transactionService.run(
+    }: UpdateRowHandlerReturnType = await this.transactionService.runSerializable(
       async () => this.commandBus.execute(new UpdateRowCommand(data)),
     );
 

@@ -38,7 +38,7 @@ export class ApiPatchRowHandler
       previousTableVersionId,
       rowVersionId,
       previousRowVersionId,
-    }: PatchRowCommandReturnType = await this.transactionService.run(async () =>
+    }: PatchRowCommandReturnType = await this.transactionService.runSerializable(async () =>
       this.commandBus.execute(new PatchRowCommand(data)),
     );
 

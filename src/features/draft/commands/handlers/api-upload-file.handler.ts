@@ -39,7 +39,7 @@ export class ApiUploadFileHandler
       previousTableVersionId,
       rowVersionId,
       previousRowVersionId,
-    }: UploadFileCommandReturnType = await this.transactionService.run(
+    }: UploadFileCommandReturnType = await this.transactionService.runSerializable(
       async () => this.commandBus.execute(new UploadFileCommand(data)),
     );
 
