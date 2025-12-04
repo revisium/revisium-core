@@ -102,6 +102,7 @@ export class EndpointTools implements McpToolRegistrar {
     branchName: string;
     postfix: string;
     endpoint: { id: string; type: string };
+    project: { organizationId: string; name: string };
   }> {
     const relatives = await this.endpointApi.getEndpointRelatives({
       endpointId,
@@ -113,6 +114,7 @@ export class EndpointTools implements McpToolRegistrar {
       branchName: encodeURIComponent(branch.name),
       postfix: revision.isDraft ? 'draft' : revision.id,
       endpoint: { id: endpoint.id, type: endpoint.type },
+      project: { organizationId: project.organizationId, name: project.name },
     };
   }
 
@@ -271,8 +273,19 @@ export class EndpointTools implements McpToolRegistrar {
       },
       { readOnlyHint: true },
       async ({ endpointId }, context) => {
-        auth.requireAuth(context);
+        const session = auth.requireAuth(context);
         const path = await this.buildEndpointPath(endpointId);
+        await auth.checkPermissionByOrganizationProject(
+          path.project.organizationId,
+          path.project.name,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
 
         if (path.endpoint.type !== 'GRAPHQL') {
           return {
@@ -354,8 +367,19 @@ export class EndpointTools implements McpToolRegistrar {
       },
       { readOnlyHint: true },
       async ({ endpointId }, context) => {
-        auth.requireAuth(context);
+        const session = auth.requireAuth(context);
         const path = await this.buildEndpointPath(endpointId);
+        await auth.checkPermissionByOrganizationProject(
+          path.project.organizationId,
+          path.project.name,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
 
         if (path.endpoint.type !== 'REST_API') {
           return {
