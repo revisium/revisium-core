@@ -843,6 +843,143 @@ describe('mcp-api - role-based permissions', () => {
     });
   });
 
+  describe('Organization Operations', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    describe('getOrganization', () => {
+      it('owner can access own organization', async () => {
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'getOrganization', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const org = parseToolResult<{ id: string }>(
+          result.result as McpToolResult,
+        );
+        expect(org.id).toBe(preparedData.project.organizationId);
+      });
+
+      it('another owner can read organization metadata (public)', async () => {
+        const sessionId = await initAndLogin(preparedData.anotherOwner);
+
+        const result = await callMcpTool(sessionId, 'getOrganization', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const org = parseToolResult<{ id: string }>(
+          result.result as McpToolResult,
+        );
+        expect(org.id).toBe(preparedData.project.organizationId);
+      });
+
+      it('requires authentication', async () => {
+        const initResponse = await request(app.getHttpServer())
+          .post('/mcp')
+          .set('Content-Type', 'application/json')
+          .set('Accept', 'application/json, text/event-stream')
+          .buffer(true)
+          .send({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: {
+              protocolVersion: '2024-11-05',
+              capabilities: {},
+              clientInfo: { name: 'test', version: '1.0.0' },
+            },
+          });
+
+        const sessionId = initResponse.headers['mcp-session-id'] as string;
+
+        const result = await callMcpTool(sessionId, 'getOrganization', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+      });
+    });
+
+    describe('getProjects', () => {
+      it('owner can list projects in own organization', async () => {
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'getProjects', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const projects = parseToolResult<{ edges: Array<{ node: unknown }> }>(
+          result.result as McpToolResult,
+        );
+        expect(projects.edges).toBeDefined();
+        expect(projects.edges.length).toBeGreaterThan(0);
+      });
+
+      it('another owner can access organization endpoint but sees filtered results', async () => {
+        const sessionId = await initAndLogin(preparedData.anotherOwner);
+
+        const result = await callMcpTool(sessionId, 'getProjects', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const projects = parseToolResult<{ edges: Array<{ node: unknown }> }>(
+          result.result as McpToolResult,
+        );
+        expect(projects.edges).toBeDefined();
+      });
+
+      it('owner sees public projects in organization', async () => {
+        await makeProjectPublic(preparedData.project.projectId);
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'getProjects', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const projects = parseToolResult<{
+          edges: Array<{ node: { id: string } }>;
+        }>(result.result as McpToolResult);
+        expect(projects.edges.length).toBeGreaterThan(0);
+        expect(projects.edges[0].node.id).toBe(preparedData.project.projectId);
+      });
+
+      it('requires authentication', async () => {
+        const initResponse = await request(app.getHttpServer())
+          .post('/mcp')
+          .set('Content-Type', 'application/json')
+          .set('Accept', 'application/json, text/event-stream')
+          .buffer(true)
+          .send({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: {
+              protocolVersion: '2024-11-05',
+              capabilities: {},
+              clientInfo: { name: 'test', version: '1.0.0' },
+            },
+          });
+
+        const sessionId = initResponse.headers['mcp-session-id'] as string;
+
+        const result = await callMcpTool(sessionId, 'getProjects', {
+          organizationId: preparedData.project.organizationId,
+        });
+
+        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+      });
+    });
+  });
+
   describe('Project Operations - Role-Based', () => {
     let fixture: PrepareDataWithRolesReturnType;
 

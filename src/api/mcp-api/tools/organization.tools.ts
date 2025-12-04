@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
@@ -14,7 +15,17 @@ export class OrganizationTools implements McpToolRegistrar {
         organizationId: z.string().describe('Organization ID'),
       },
       async ({ organizationId }, context) => {
-        auth.requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganization(
+          organizationId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Organization,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.organizationApi.organization({
           organizationId,
         });
@@ -35,11 +46,22 @@ export class OrganizationTools implements McpToolRegistrar {
         after: z.string().optional().describe('Cursor for pagination'),
       },
       async ({ organizationId, first, after }, context) => {
-        auth.requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganization(
+          organizationId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Organization,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.organizationApi.getProjectsByOrganizationId({
           organizationId,
           first: first ?? 100,
           after,
+          userId: session.userId,
         });
         return {
           content: [

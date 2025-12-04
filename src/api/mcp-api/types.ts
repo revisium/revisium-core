@@ -22,10 +22,17 @@ export type CheckPermissionByOrganizationProject = (
   userId: string,
 ) => Promise<void>;
 
+export type CheckPermissionByOrganization = (
+  organizationId: string,
+  permissions: McpPermissionCheck[],
+  userId?: string,
+) => Promise<void>;
+
 export interface McpAuthHelpers {
   requireAuth: (context: McpContext) => McpSession;
   checkPermissionByRevision: CheckPermissionByRevision;
   checkPermissionByOrganizationProject: CheckPermissionByOrganizationProject;
+  checkPermissionByOrganization: CheckPermissionByOrganization;
 }
 
 export interface McpToolRegistrar {

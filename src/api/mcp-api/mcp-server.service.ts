@@ -93,6 +93,8 @@ export class McpServerService implements OnModuleInit {
       checkPermissionByRevision: this.checkPermissionByRevision.bind(this),
       checkPermissionByOrganizationProject:
         this.checkPermissionByOrganizationProject.bind(this),
+      checkPermissionByOrganization:
+        this.checkPermissionByOrganization.bind(this),
     };
 
     this.authTools.register(this.server, auth);
@@ -145,6 +147,18 @@ export class McpServerService implements OnModuleInit {
     await this.authApi.checkProjectPermission({
       organizationId,
       projectName,
+      permissions,
+      userId,
+    });
+  }
+
+  private async checkPermissionByOrganization(
+    organizationId: string,
+    permissions: McpPermissionCheck[],
+    userId?: string,
+  ): Promise<void> {
+    await this.authApi.checkOrganizationPermission({
+      organizationId,
       permissions,
       userId,
     });
