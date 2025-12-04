@@ -1,3 +1,4 @@
+import { Logger } from '@nestjs/common';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
@@ -5,6 +6,8 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 const EndpointTypeEnum = z.enum(['GRAPHQL', 'REST_API']);
+
+const FETCH_TIMEOUT_MS = 30000;
 
 const INTROSPECTION_QUERY = `
   query IntrospectionQuery {
@@ -72,13 +75,25 @@ const INTROSPECTION_QUERY = `
 `;
 
 export class EndpointTools implements McpToolRegistrar {
+  private readonly logger = new Logger(EndpointTools.name);
+  private hasWarnedAboutFallbackUrl = false;
+
   constructor(
     private readonly endpointApi: EndpointApiService,
     private readonly endpointServiceUrl?: string,
   ) {}
 
   private getEndpointServiceUrl(): string {
-    return this.endpointServiceUrl || 'http://localhost:8081';
+    if (!this.endpointServiceUrl) {
+      if (!this.hasWarnedAboutFallbackUrl) {
+        this.logger.warn(
+          'ENDPOINT_SERVICE_URL is not configured, using fallback http://localhost:8081',
+        );
+        this.hasWarnedAboutFallbackUrl = true;
+      }
+      return 'http://localhost:8081';
+    }
+    return this.endpointServiceUrl;
   }
 
   private async buildEndpointPath(endpointId: string): Promise<{
@@ -156,10 +171,21 @@ export class EndpointTools implements McpToolRegistrar {
       },
       { readOnlyHint: true },
       async ({ endpointId }, context) => {
-        auth.requireAuth(context);
+        const session = auth.requireAuth(context);
         const result = await this.endpointApi.getEndpointRelatives({
           endpointId,
         });
+        await auth.checkPermissionByOrganizationProject(
+          result.project.organizationId,
+          result.project.name,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -268,11 +294,18 @@ export class EndpointTools implements McpToolRegistrar {
         const baseUrl = this.getEndpointServiceUrl();
         const url = `${baseUrl}/endpoint/graphql/${path.orgId}/${path.projectName}/${path.branchName}/${path.postfix}`;
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          FETCH_TIMEOUT_MS,
+        );
+
         try {
           const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ query: INTROSPECTION_QUERY }),
+            signal: controller.signal,
           });
 
           if (!response.ok) {
@@ -286,13 +319,19 @@ export class EndpointTools implements McpToolRegistrar {
             ],
           };
         } catch (error) {
+          const message =
+            error instanceof Error && error.name === 'AbortError'
+              ? 'Request timed out'
+              : error instanceof Error
+                ? error.message
+                : String(error);
           return {
             content: [
               {
                 type: 'text' as const,
                 text: JSON.stringify(
                   {
-                    error: `Failed to fetch GraphQL schema: ${error instanceof Error ? error.message : String(error)}`,
+                    error: `Failed to fetch GraphQL schema: ${message}`,
                     url,
                   },
                   null,
@@ -301,6 +340,8 @@ export class EndpointTools implements McpToolRegistrar {
               },
             ],
           };
+        } finally {
+          clearTimeout(timeoutId);
         }
       },
     );
@@ -336,8 +377,14 @@ export class EndpointTools implements McpToolRegistrar {
         const baseUrl = this.getEndpointServiceUrl();
         const url = `${baseUrl}/endpoint/openapi/${path.orgId}/${path.projectName}/${path.branchName}/${path.postfix}/openapi.json`;
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          FETCH_TIMEOUT_MS,
+        );
+
         try {
-          const response = await fetch(url);
+          const response = await fetch(url, { signal: controller.signal });
 
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -350,13 +397,19 @@ export class EndpointTools implements McpToolRegistrar {
             ],
           };
         } catch (error) {
+          const message =
+            error instanceof Error && error.name === 'AbortError'
+              ? 'Request timed out'
+              : error instanceof Error
+                ? error.message
+                : String(error);
           return {
             content: [
               {
                 type: 'text' as const,
                 text: JSON.stringify(
                   {
-                    error: `Failed to fetch OpenAPI spec: ${error instanceof Error ? error.message : String(error)}`,
+                    error: `Failed to fetch OpenAPI spec: ${message}`,
                     url,
                   },
                   null,
@@ -365,6 +418,8 @@ export class EndpointTools implements McpToolRegistrar {
               },
             ],
           };
+        } finally {
+          clearTimeout(timeoutId);
         }
       },
     );

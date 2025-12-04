@@ -578,7 +578,9 @@ describe('MCP API', () => {
         .set('Accept', 'application/json, text/event-stream')
         .expect(400);
 
-      expect(res.body.error.message).toContain('session ID');
+      expect(res.body.error.message).toContain(
+        'Session expired or server was restarted',
+      );
     });
   });
 
@@ -589,7 +591,9 @@ describe('MCP API', () => {
         .set('Accept', 'application/json, text/event-stream')
         .expect(400);
 
-      expect(res.body.error.message).toContain('session ID');
+      expect(res.body.error.message).toContain(
+        'Session expired or server was restarted',
+      );
     });
 
     it('should terminate session', async () => {
