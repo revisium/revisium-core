@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from 'src/__generated__/client';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { randomInt } from 'node:crypto';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaClient } from 'src/features/share/types';
 
@@ -233,8 +234,9 @@ export class TransactionPrismaService {
   ): number {
     const exponentialDelay = baseDelayMs * Math.pow(2, attempt);
     const cappedDelay = Math.min(exponentialDelay, maxDelayMs);
-    const jitter = Math.random() * cappedDelay * 0.5;
-    return Math.floor(cappedDelay + jitter);
+    const maxJitter = Math.floor(cappedDelay * 0.5);
+    const jitter = maxJitter > 0 ? randomInt(maxJitter + 1) : 0;
+    return cappedDelay + jitter;
   }
 
   private sleep(ms: number): Promise<void> {
