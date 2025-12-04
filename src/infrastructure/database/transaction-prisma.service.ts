@@ -197,32 +197,29 @@ export class TransactionPrismaService {
 
   /**
    * Check if an error is a retryable serialization failure.
+   *
    * PostgreSQL error codes:
    * - 40001: serialization_failure
    * - 40P01: deadlock_detected
    *
-   * Prisma wraps these errors with different messages.
+   * Prisma error codes:
+   * - P2034: Transaction write conflict
    */
   private isRetryableError(error: Error): boolean {
-    const message = error.message || '';
     const code = (error as { code?: string }).code || '';
 
+    // Primary: check specific error codes first
+    if (code === '40001' || code === '40P01' || code === 'P2034') {
+      return true;
+    }
+
+    // Fallback: check specific PostgreSQL/Prisma messages
+    const message = error.message || '';
     return (
-      // PostgreSQL error codes
-      code === '40001' ||
-      code === '40P01' ||
-      // Prisma error codes
-      code === 'P2034' || // Transaction write conflict
-      // PostgreSQL messages
       message.includes('could not serialize access') ||
       message.includes('deadlock detected') ||
-      // Prisma-wrapped messages
-      message.includes('write conflict') ||
-      message.includes('WriteConflict') ||
       message.includes('TransactionWriteConflict') ||
-      message.includes('Please retry your transaction') ||
-      message.includes('Serialization') ||
-      message.includes('serialization')
+      message.includes('Please retry your transaction')
     );
   }
 
