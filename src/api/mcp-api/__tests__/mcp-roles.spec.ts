@@ -434,13 +434,6 @@ describe('mcp-api - role-based permissions', () => {
         const result = await callMcpTool(sessionId, 'getTables', {
           revisionId: fixture.project.draftRevisionId,
         });
-
-        if (!isSuccessResult(result)) {
-          console.log(
-            'getTables owner result:',
-            JSON.stringify(result, null, 2),
-          );
-        }
         expect(isSuccessResult(result)).toBe(true);
       });
 
