@@ -73,28 +73,6 @@ export class TransactionPrismaService {
     return this.getTransactionUnsafe() ?? this.prismaService;
   }
 
-  /**
-   * Run a transaction with optional retry on serialization failures.
-   *
-   * By default uses READ COMMITTED isolation without retries.
-   * Pass `retry` option to enable automatic retry with exponential backoff.
-   *
-   * @example
-   * ```typescript
-   * // Simple transaction (no retry)
-   * await transactionService.run(async () => {
-   *   await updateData();
-   * });
-   *
-   * // With retry on serialization failures
-   * await transactionService.run(async () => {
-   *   await updateData();
-   * }, {
-   *   isolationLevel: 'Serializable',
-   *   retry: { maxRetries: 10, baseDelayMs: 50, maxDelayMs: 2000 }
-   * });
-   * ```
-   */
   public async run<T>(
     handler: (...rest: unknown[]) => Promise<T>,
     options?: TransactionOptions,
@@ -108,38 +86,14 @@ export class TransactionPrismaService {
     return this.executeTransactionWithRetry(handler, prismaOptions, retry);
   }
 
-  /**
-   * Run a transaction with SERIALIZABLE isolation level and automatic retry
-   * on serialization failures.
-   *
-   * Use this for operations that:
-   * - Read data, make decisions, then write (read-modify-write patterns)
-   * - Need to prevent race conditions in copy-on-write scenarios
-   * - Create new versions of tables/rows based on readonly state
-   *
-   * PostgreSQL will detect conflicts and throw serialization errors, which
-   * this method will automatically retry with exponential backoff.
-   *
-   * @example
-   * ```typescript
-   * await transactionService.runSerializable(async () => {
-   *   const table = await findTable(id);
-   *   if (table.readonly) {
-   *     await createNewTableVersion(table);
-   *   }
-   *   await updateRow(rowId, data);
-   * });
-   * ```
-   */
   public runSerializable<T>(
     handler: (...rest: unknown[]) => Promise<T>,
-    options?: Partial<TransactionOptions>,
+    options?: Omit<Partial<TransactionOptions>, 'isolationLevel'>,
   ): Promise<T> {
     const mergedOptions: TransactionOptions = {
       maxWait: options?.maxWait ?? DEFAULT_SERIALIZABLE_OPTIONS.maxWait,
       timeout: options?.timeout ?? DEFAULT_SERIALIZABLE_OPTIONS.timeout,
-      isolationLevel:
-        options?.isolationLevel ?? DEFAULT_SERIALIZABLE_OPTIONS.isolationLevel,
+      isolationLevel: DEFAULT_SERIALIZABLE_OPTIONS.isolationLevel,
       retry: options?.retry ?? DEFAULT_SERIALIZABLE_OPTIONS.retry,
     };
 
