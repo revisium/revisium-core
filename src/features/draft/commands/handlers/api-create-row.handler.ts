@@ -34,9 +34,10 @@ export class ApiCreateRowHandler
       tableVersionId,
       rowVersionId,
       previousTableVersionId,
-    }: CreateRowHandlerReturnType = await this.transactionService.runSerializable(
-      async () => this.commandBus.execute(new CreateRowCommand(data)),
-    );
+    }: CreateRowHandlerReturnType =
+      await this.transactionService.runSerializable(async () =>
+        this.commandBus.execute(new CreateRowCommand(data)),
+      );
 
     await this.tryToNotifyEndpoints({
       tableVersionId,

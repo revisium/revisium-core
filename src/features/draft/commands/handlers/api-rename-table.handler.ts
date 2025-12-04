@@ -33,13 +33,13 @@ export class ApiRenameTableHandler
     const {
       tableVersionId,
       previousTableVersionId,
-    }: RenameTableCommandReturnType = await this.transactionService.runSerializable(
-      async () =>
+    }: RenameTableCommandReturnType =
+      await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<
           RenameTableCommand,
           RenameTableCommandReturnType
         >(new RenameTableCommand(data)),
-    );
+      );
 
     await this.shareCommands.notifyEndpoints({ revisionId: data.revisionId });
 

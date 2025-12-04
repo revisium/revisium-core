@@ -38,9 +38,10 @@ export class ApiRenameRowHandler
       previousTableVersionId,
       rowVersionId,
       previousRowVersionId,
-    }: RenameRowCommandReturnType = await this.transactionService.runSerializable(
-      async () => this.commandBus.execute(new RenameRowCommand(data)),
-    );
+    }: RenameRowCommandReturnType =
+      await this.transactionService.runSerializable(async () =>
+        this.commandBus.execute(new RenameRowCommand(data)),
+      );
 
     await this.tryToNotifyEndpoints({
       tableVersionId,

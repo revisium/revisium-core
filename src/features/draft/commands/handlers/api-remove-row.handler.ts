@@ -31,12 +31,12 @@ export class ApiRemoveRowHandler
       branchId,
       tableVersionId,
       previousTableVersionId,
-    }: RemoveRowHandlerReturnType = await this.transactionService.runSerializable(
-      async () =>
+    }: RemoveRowHandlerReturnType =
+      await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<RemoveRowCommand, RemoveRowHandlerReturnType>(
           new RemoveRowCommand(data),
         ),
-    );
+      );
 
     if (tableVersionId !== previousTableVersionId) {
       await this.shareCommands.notifyEndpoints({ revisionId: data.revisionId });

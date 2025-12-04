@@ -190,7 +190,8 @@ export class TransactionPrismaService {
       `Transaction failed after ${maxRetries} attempts due to serialization conflicts`,
     );
     throw (
-      lastError || new Error('Max retries exceeded for serializable transaction')
+      lastError ||
+      new Error('Max retries exceeded for serializable transaction')
     );
   }
 
