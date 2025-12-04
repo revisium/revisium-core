@@ -11,7 +11,7 @@ import { RevisionsApiService } from 'src/features/revision/revisions-api.service
 import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 import { McpSession, McpSessionService } from './mcp-session.service';
-import { McpContext } from './types';
+import { McpAuthHelpers, McpContext, McpPermissionCheck } from './types';
 
 import { SchemaResource, QueryResource, MigrationResource } from './resources';
 
@@ -88,17 +88,25 @@ export class McpServerService implements OnModuleInit {
     this.queryResource.register(this.server);
     this.migrationResource.register(this.server);
 
-    const requireAuth = this.requireAuth.bind(this);
-    this.authTools.register(this.server, requireAuth);
-    this.organizationTools.register(this.server, requireAuth);
-    this.projectTools.register(this.server, requireAuth);
-    this.branchTools.register(this.server, requireAuth);
-    this.tableTools.register(this.server, requireAuth);
-    this.rowTools.register(this.server, requireAuth);
-    this.revisionTools.register(this.server, requireAuth);
-    this.revisionChangesTools.register(this.server, requireAuth);
-    this.migrationTools.register(this.server, requireAuth);
-    this.userTools.register(this.server, requireAuth);
+    const auth: McpAuthHelpers = {
+      requireAuth: this.requireAuth.bind(this),
+      checkPermissionByRevision: this.checkPermissionByRevision.bind(this),
+      checkPermissionByOrganizationProject:
+        this.checkPermissionByOrganizationProject.bind(this),
+      checkPermissionByOrganization:
+        this.checkPermissionByOrganization.bind(this),
+    };
+
+    this.authTools.register(this.server, auth);
+    this.organizationTools.register(this.server, auth);
+    this.projectTools.register(this.server, auth);
+    this.branchTools.register(this.server, auth);
+    this.tableTools.register(this.server, auth);
+    this.rowTools.register(this.server, auth);
+    this.revisionTools.register(this.server, auth);
+    this.revisionChangesTools.register(this.server, auth);
+    this.migrationTools.register(this.server, auth);
+    this.userTools.register(this.server, auth);
   }
 
   public getServer(): McpServer {
@@ -116,5 +124,43 @@ export class McpServerService implements OnModuleInit {
       throw new Error('Not authenticated. Please use the login tool first.');
     }
     return session;
+  }
+
+  private async checkPermissionByRevision(
+    revisionId: string,
+    permissions: McpPermissionCheck[],
+    userId: string,
+  ): Promise<void> {
+    await this.authApi.checkProjectPermission({
+      revisionId,
+      permissions,
+      userId,
+    });
+  }
+
+  private async checkPermissionByOrganizationProject(
+    organizationId: string,
+    projectName: string,
+    permissions: McpPermissionCheck[],
+    userId: string,
+  ): Promise<void> {
+    await this.authApi.checkProjectPermission({
+      organizationId,
+      projectName,
+      permissions,
+      userId,
+    });
+  }
+
+  private async checkPermissionByOrganization(
+    organizationId: string,
+    permissions: McpPermissionCheck[],
+    userId?: string,
+  ): Promise<void> {
+    await this.authApi.checkOrganizationPermission({
+      organizationId,
+      permissions,
+      userId,
+    });
   }
 }

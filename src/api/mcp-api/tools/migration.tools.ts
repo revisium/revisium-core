@@ -3,8 +3,8 @@ import { z } from 'zod';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class MigrationTools implements McpToolRegistrar {
   constructor(
@@ -12,10 +12,7 @@ export class MigrationTools implements McpToolRegistrar {
     private readonly draftApi: DraftApiService,
   ) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getMigrations',
       'Get all migrations from a revision. Migrations are schema change records that can be applied to other Revisium instances. Read revisium://specs/migration resource for migration format details.',
@@ -27,7 +24,17 @@ export class MigrationTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.revisionsApi.migrations({ revisionId });
         return {
           content: [
@@ -51,7 +58,17 @@ export class MigrationTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId, migrations }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.update,
+              subject: PermissionSubject.Table,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.draftApi.applyMigrations({
           revisionId,
           migrations: migrations as Migration[],

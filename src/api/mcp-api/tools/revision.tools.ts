@@ -2,8 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class RevisionTools implements McpToolRegistrar {
   constructor(
@@ -11,10 +11,7 @@ export class RevisionTools implements McpToolRegistrar {
     private readonly draftApi: DraftApiService,
   ) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getRevision',
       'Get revision details',
@@ -22,7 +19,17 @@ export class RevisionTools implements McpToolRegistrar {
         revisionId: z.string().describe('Revision ID'),
       },
       async ({ revisionId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.revisionsApi.revision({ revisionId });
         return {
           content: [
@@ -42,7 +49,18 @@ export class RevisionTools implements McpToolRegistrar {
         comment: z.string().optional().describe('Commit comment'),
       },
       async ({ organizationId, projectName, branchName, comment }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.create,
+              subject: PermissionSubject.Revision,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.draftApi.apiCreateRevision({
           organizationId,
           projectName,

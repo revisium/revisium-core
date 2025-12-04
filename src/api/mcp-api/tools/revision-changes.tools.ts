@@ -1,16 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class RevisionChangesTools implements McpToolRegistrar {
   constructor(private readonly revisionChangesApi: RevisionChangesApiService) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getRevisionChanges',
       'Get summary of all changes in a revision (tables and rows added/modified/removed). Use this to see what changed in draft vs head.',
@@ -28,7 +25,17 @@ export class RevisionChangesTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId, compareWithRevisionId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.revisionChangesApi.revisionChanges({
           revisionId,
           compareWithRevisionId,
@@ -54,7 +61,17 @@ export class RevisionChangesTools implements McpToolRegistrar {
         after: z.string().optional().describe('Cursor for pagination'),
       },
       async ({ revisionId, compareWithRevisionId, first, after }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.revisionChangesApi.tableChanges({
           revisionId,
           compareWithRevisionId,
@@ -82,7 +99,17 @@ export class RevisionChangesTools implements McpToolRegistrar {
         after: z.string().optional().describe('Cursor for pagination'),
       },
       async ({ revisionId, compareWithRevisionId, first, after }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.revisionChangesApi.rowChanges({
           revisionId,
           compareWithRevisionId,

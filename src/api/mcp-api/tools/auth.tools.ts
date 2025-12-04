@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { McpSession, McpSessionService } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class AuthTools implements McpToolRegistrar {
   constructor(
@@ -10,10 +10,7 @@ export class AuthTools implements McpToolRegistrar {
     private readonly authApi: AuthApiService,
   ) {}
 
-  register(
-    server: McpServer,
-    _requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, _auth: McpAuthHelpers): void {
     server.tool(
       'login',
       'Authenticate with Revisium API using username and password',

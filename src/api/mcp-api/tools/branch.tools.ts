@@ -1,16 +1,13 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class BranchTools implements McpToolRegistrar {
   constructor(private readonly branchApi: BranchApiService) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getBranch',
       'Get branch by organization, project and branch name',
@@ -20,7 +17,18 @@ export class BranchTools implements McpToolRegistrar {
         branchName: z.string().describe('Branch name'),
       },
       async ({ organizationId, projectName, branchName }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.branchApi.getBranch({
           organizationId,
           projectName,
@@ -41,7 +49,7 @@ export class BranchTools implements McpToolRegistrar {
         branchId: z.string().describe('Branch ID'),
       },
       async ({ branchId }, context) => {
-        requireAuth(context);
+        auth.requireAuth(context);
         const result = await this.branchApi.getDraftRevision(branchId);
         return {
           content: [
@@ -59,7 +67,17 @@ export class BranchTools implements McpToolRegistrar {
         branchName: z.string().describe('New branch name'),
       },
       async ({ revisionId, branchName }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.create,
+              subject: PermissionSubject.Branch,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.branchApi.apiCreateBranchByRevisionId({
           revisionId,
           branchName,
@@ -81,7 +99,18 @@ export class BranchTools implements McpToolRegistrar {
         branchName: z.string().describe('Branch name'),
       },
       async ({ organizationId, projectName, branchName }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.revert,
+              subject: PermissionSubject.Revision,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.branchApi.apiRevertChanges({
           organizationId,
           projectName,
