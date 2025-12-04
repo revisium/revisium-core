@@ -8,3 +8,4 @@ export { RevisionTools } from './revision.tools';
 export { RevisionChangesTools } from './revision-changes.tools';
 export { MigrationTools } from './migration.tools';
 export { UserTools } from './user.tools';
+export { EndpointTools } from './endpoint.tools';

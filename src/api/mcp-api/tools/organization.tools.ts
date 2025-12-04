@@ -14,6 +14,7 @@ export class OrganizationTools implements McpToolRegistrar {
       {
         organizationId: z.string().describe('Organization ID'),
       },
+      { readOnlyHint: true },
       async ({ organizationId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganization(
@@ -45,6 +46,7 @@ export class OrganizationTools implements McpToolRegistrar {
         first: z.number().optional().describe('Number of items to fetch'),
         after: z.string().optional().describe('Cursor for pagination'),
       },
+      { readOnlyHint: true },
       async ({ organizationId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganization(

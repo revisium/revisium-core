@@ -23,6 +23,7 @@ export class RowTools implements McpToolRegistrar {
         first: z.number().optional().describe('Number of items'),
         after: z.string().optional().describe('Cursor'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, tableId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -57,6 +58,7 @@ export class RowTools implements McpToolRegistrar {
         tableId: z.string().describe('Table ID'),
         rowId: z.string().describe('Row ID'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, tableId, rowId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -91,6 +93,7 @@ export class RowTools implements McpToolRegistrar {
             'Row data matching table schema. For foreignKey fields, use valid rowId from referenced table or empty string.',
           ),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, data }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -121,6 +124,7 @@ export class RowTools implements McpToolRegistrar {
         rowId: z.string().describe('Row ID'),
         data: z.record(z.string(), z.unknown()).describe('New row data'),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, data }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -155,6 +159,7 @@ export class RowTools implements McpToolRegistrar {
             'JSON Patch operations. ONLY replace supported. Path WITHOUT leading slash. Example: [{"op":"replace","path":"title","value":"New"}]. For nested: "address.city". For arrays: "items[0]" or "items[0].name".',
           ),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, patches }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -185,6 +190,7 @@ export class RowTools implements McpToolRegistrar {
         rowId: z.string().describe('Current row ID'),
         nextRowId: z.string().describe('New row ID'),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, nextRowId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -214,6 +220,7 @@ export class RowTools implements McpToolRegistrar {
         tableId: z.string().describe('Table ID'),
         rowId: z.string().describe('Row ID to remove'),
       },
+      { readOnlyHint: false, destructiveHint: true },
       async ({ revisionId, tableId, rowId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

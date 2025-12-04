@@ -5,6 +5,7 @@ import {
   PrepareDataReturnType,
 } from 'src/__tests__/utils/prepareProject';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+import { AuthService } from 'src/features/auth/auth.service';
 
 const mcpPost = (
   app: INestApplication,
@@ -127,6 +128,7 @@ describe('MCP API', () => {
 
       const toolNames = data.result.tools.map((t: { name: string }) => t.name);
       expect(toolNames).toContain('login');
+      expect(toolNames).toContain('loginWithToken');
       expect(toolNames).toContain('me');
       expect(toolNames).toContain('getOrganization');
       expect(toolNames).toContain('getProjects');
@@ -311,6 +313,90 @@ describe('MCP API', () => {
       const content = JSON.parse(data.result.content[0].text);
       expect(content.authenticated).toBe(false);
     });
+
+    it('should login with access token', async () => {
+      // First login with password to get a valid token
+      const loginRes = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: {
+          name: 'login',
+          arguments: {
+            username: fixture.owner.user.username,
+            password: 'password',
+          },
+        },
+      });
+      const loginData = parseResponse(loginRes);
+      expect(JSON.parse(loginData.result.content[0].text).success).toBe(true);
+
+      // Create a new session
+      const newSessionRes = await mcpPost(app, null, {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          clientInfo: { name: 'test-client', version: '1.0.0' },
+        },
+      });
+      const newSessionId = newSessionRes.headers['mcp-session-id'];
+
+      // Get a fresh token by logging in again (we need the actual token)
+      const authService = app.get(AuthService);
+      const accessToken = authService.login({
+        username: fixture.owner.user.username,
+        sub: fixture.owner.user.id,
+      });
+
+      // Login with token in new session
+      const res = await mcpPost(app, newSessionId, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: {
+          name: 'loginWithToken',
+          arguments: { accessToken },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.success).toBe(true);
+      expect(content.user.username).toBe(fixture.owner.user.username);
+
+      // Verify me() works after loginWithToken
+      const meRes = await mcpPost(app, newSessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: { name: 'me', arguments: {} },
+      }).expect(200);
+
+      const meData = parseResponse(meRes);
+      const meContent = JSON.parse(meData.result.content[0].text);
+      expect(meContent.authenticated).toBe(true);
+      expect(meContent.user.username).toBe(fixture.owner.user.username);
+    });
+
+    it('should fail loginWithToken with invalid token', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 2,
+        method: 'tools/call',
+        params: {
+          name: 'loginWithToken',
+          arguments: { accessToken: 'invalid-token' },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.success).toBe(false);
+      expect(content.error).toBeDefined();
+    });
   });
 
   describe('tools/call - requires authentication', () => {
@@ -492,7 +578,9 @@ describe('MCP API', () => {
         .set('Accept', 'application/json, text/event-stream')
         .expect(400);
 
-      expect(res.body.error.message).toContain('session ID');
+      expect(res.body.error.message).toContain(
+        'Session expired or server was restarted',
+      );
     });
   });
 
@@ -503,7 +591,9 @@ describe('MCP API', () => {
         .set('Accept', 'application/json, text/event-stream')
         .expect(400);
 
-      expect(res.body.error.message).toContain('session ID');
+      expect(res.body.error.message).toContain(
+        'Session expired or server was restarted',
+      );
     });
 
     it('should terminate session', async () => {

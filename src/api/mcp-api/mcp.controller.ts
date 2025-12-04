@@ -55,7 +55,9 @@ export class McpController {
         jsonrpc: '2.0',
         error: {
           code: -32000,
-          message: 'Bad Request: No valid session ID provided',
+          message: sessionId
+            ? 'Session expired or server was restarted. Please reconnect the MCP client (use /mcp command in Claude Code or restart the client).'
+            : 'Bad Request: No session ID provided. Send an initialize request first.',
         },
         id: null,
       });
@@ -74,7 +76,8 @@ export class McpController {
         jsonrpc: '2.0',
         error: {
           code: -32000,
-          message: 'Bad Request: Missing or invalid session ID',
+          message:
+            'Session expired or server was restarted. Please reconnect the MCP client.',
         },
         id: null,
       });
@@ -94,7 +97,8 @@ export class McpController {
         jsonrpc: '2.0',
         error: {
           code: -32000,
-          message: 'Bad Request: Missing or invalid session ID',
+          message:
+            'Session expired or server was restarted. Please reconnect the MCP client.',
         },
         id: null,
       });

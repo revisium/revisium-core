@@ -24,6 +24,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
             'Optional: Compare with specific revision. If not provided, compares with parent revision.',
           ),
       },
+      { readOnlyHint: true },
       async ({ revisionId, compareWithRevisionId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -60,6 +61,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         first: z.number().optional().describe('Number of items (default: 50)'),
         after: z.string().optional().describe('Cursor for pagination'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, compareWithRevisionId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -98,6 +100,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         first: z.number().optional().describe('Number of items (default: 50)'),
         after: z.string().optional().describe('Cursor for pagination'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, compareWithRevisionId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

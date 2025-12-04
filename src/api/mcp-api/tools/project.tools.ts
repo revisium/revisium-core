@@ -14,11 +14,12 @@ export class ProjectTools implements McpToolRegistrar {
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getProject',
-      'Get project by organization ID and project name',
+      'Get project by organization ID and project name. Returns project info with rootBranch containing draftRevisionId and headRevisionId.',
       {
         organizationId: z.string().describe('Organization ID'),
         projectName: z.string().describe('Project name'),
       },
+      { readOnlyHint: true },
       async ({ organizationId, projectName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(
@@ -32,13 +33,40 @@ export class ProjectTools implements McpToolRegistrar {
           ],
           session.userId,
         );
-        const result = await this.projectApi.getProject({
+        const project = await this.projectApi.getProject({
           organizationId,
           projectName,
         });
+
+        const rootBranch = await this.projectApi.getRootBranchByProject(
+          project.id,
+        );
+
+        const draftRevision = await this.branchApi.getDraftRevision(
+          rootBranch.id,
+        );
+        const headRevision = await this.branchApi.getHeadRevision(
+          rootBranch.id,
+        );
+
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(
+                {
+                  ...project,
+                  rootBranch: {
+                    id: rootBranch.id,
+                    name: rootBranch.name,
+                    draftRevisionId: draftRevision.id,
+                    headRevisionId: headRevision.id,
+                  },
+                },
+                null,
+                2,
+              ),
+            },
           ],
         };
       },
@@ -55,6 +83,7 @@ export class ProjectTools implements McpToolRegistrar {
           .optional()
           .describe('Initial branch name (default: main)'),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ organizationId, projectName, branchName }, context) => {
         auth.requireAuth(context);
         const project = await this.projectApi.apiCreateProject({
@@ -101,6 +130,7 @@ export class ProjectTools implements McpToolRegistrar {
         organizationId: z.string().describe('Organization ID'),
         projectName: z.string().describe('Project name'),
       },
+      { readOnlyHint: false, destructiveHint: true },
       async ({ organizationId, projectName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(

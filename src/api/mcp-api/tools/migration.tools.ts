@@ -23,6 +23,7 @@ export class MigrationTools implements McpToolRegistrar {
             'Revision ID to get migrations from. Use headRevisionId for stable migrations.',
           ),
       },
+      { readOnlyHint: true },
       async ({ revisionId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -57,6 +58,7 @@ export class MigrationTools implements McpToolRegistrar {
             'Array of migration objects. Each migration has changeType (init/update/rename/remove), id, tableId, and type-specific fields.',
           ),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, migrations }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

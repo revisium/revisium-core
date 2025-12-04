@@ -22,6 +22,7 @@ export class TableTools implements McpToolRegistrar {
         first: z.number().optional().describe('Number of items'),
         after: z.string().optional().describe('Cursor'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -54,6 +55,7 @@ export class TableTools implements McpToolRegistrar {
         revisionId: z.string().describe('Revision ID'),
         tableId: z.string().describe('Table ID'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, tableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -82,6 +84,7 @@ export class TableTools implements McpToolRegistrar {
         revisionId: z.string().describe('Revision ID'),
         tableId: z.string().describe('Table ID'),
       },
+      { readOnlyHint: true },
       async ({ revisionId, tableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -120,6 +123,7 @@ export class TableTools implements McpToolRegistrar {
             'JSON Schema for the table. Must have type:object, properties with defaults, additionalProperties:false, required array. See schema-specification resource for examples.',
           ),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, schema }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -157,6 +161,7 @@ export class TableTools implements McpToolRegistrar {
             'JSON Patch operations (RFC 6902). Example: [{"op":"add","path":"/properties/newField","value":{"type":"string","default":""}},{"op":"add","path":"/required/-","value":"newField"}]',
           ),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, patches }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -190,6 +195,7 @@ export class TableTools implements McpToolRegistrar {
         tableId: z.string().describe('Current table ID'),
         nextTableId: z.string().describe('New table ID'),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, nextTableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -222,6 +228,7 @@ export class TableTools implements McpToolRegistrar {
         revisionId: z.string().describe('Draft revision ID'),
         tableId: z.string().describe('Table ID to remove'),
       },
+      { readOnlyHint: false, destructiveHint: true },
       async ({ revisionId, tableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

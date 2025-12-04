@@ -16,6 +16,7 @@ export class BranchTools implements McpToolRegistrar {
         projectName: z.string().describe('Project name'),
         branchName: z.string().describe('Branch name'),
       },
+      { readOnlyHint: true },
       async ({ organizationId, projectName, branchName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(
@@ -48,6 +49,7 @@ export class BranchTools implements McpToolRegistrar {
       {
         branchId: z.string().describe('Branch ID'),
       },
+      { readOnlyHint: true },
       async ({ branchId }, context) => {
         auth.requireAuth(context);
         const result = await this.branchApi.getDraftRevision(branchId);
@@ -66,6 +68,7 @@ export class BranchTools implements McpToolRegistrar {
         revisionId: z.string().describe('Source revision ID'),
         branchName: z.string().describe('New branch name'),
       },
+      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, branchName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -98,6 +101,7 @@ export class BranchTools implements McpToolRegistrar {
         projectName: z.string().describe('Project name'),
         branchName: z.string().describe('Branch name'),
       },
+      { readOnlyHint: false, destructiveHint: true },
       async ({ organizationId, projectName, branchName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(

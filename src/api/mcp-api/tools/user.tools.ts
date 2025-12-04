@@ -13,6 +13,7 @@ export class UserTools implements McpToolRegistrar {
       {
         userId: z.string().describe('User ID'),
       },
+      { readOnlyHint: true },
       async ({ userId }, context) => {
         auth.requireAuth(context);
         const result = await this.userApi.getUser({ userId });
@@ -34,6 +35,7 @@ export class UserTools implements McpToolRegistrar {
           .describe('Search query (username or email)'),
         first: z.number().optional().describe('Number of results'),
       },
+      { readOnlyHint: true },
       async ({ search, first }, context) => {
         auth.requireAuth(context);
         const result = await this.userApi.searchUsers({
