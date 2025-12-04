@@ -29,13 +29,13 @@ export class ApiUpdateTableHandler
     const {
       tableVersionId,
       previousTableVersionId,
-    }: UpdateTableHandlerReturnType = await this.transactionService.run(
-      async () =>
+    }: UpdateTableHandlerReturnType =
+      await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<
           UpdateTableCommand,
           UpdateTableHandlerReturnType
         >(new UpdateTableCommand(data)),
-    );
+      );
 
     await this.shareCommands.notifyEndpoints({ revisionId: data.revisionId });
 

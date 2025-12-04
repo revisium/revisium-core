@@ -38,9 +38,10 @@ export class ApiPatchRowHandler
       previousTableVersionId,
       rowVersionId,
       previousRowVersionId,
-    }: PatchRowCommandReturnType = await this.transactionService.run(async () =>
-      this.commandBus.execute(new PatchRowCommand(data)),
-    );
+    }: PatchRowCommandReturnType =
+      await this.transactionService.runSerializable(async () =>
+        this.commandBus.execute(new PatchRowCommand(data)),
+      );
 
     await this.tryToNotifyEndpoints({
       tableVersionId,
