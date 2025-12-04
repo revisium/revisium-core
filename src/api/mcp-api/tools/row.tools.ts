@@ -4,8 +4,8 @@ import { Prisma } from 'src/__generated__/client';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class RowTools implements McpToolRegistrar {
   constructor(
@@ -13,10 +13,7 @@ export class RowTools implements McpToolRegistrar {
     private readonly draftApi: DraftApiService,
   ) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getRows',
       'Get rows from a table',
@@ -27,7 +24,17 @@ export class RowTools implements McpToolRegistrar {
         after: z.string().optional().describe('Cursor'),
       },
       async ({ revisionId, tableId, first, after }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.rowApi.getRows({
           revisionId,
           tableId,
@@ -51,7 +58,17 @@ export class RowTools implements McpToolRegistrar {
         rowId: z.string().describe('Row ID'),
       },
       async ({ revisionId, tableId, rowId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.rowApi.getRow({ revisionId, tableId, rowId });
         return {
           content: [
@@ -75,7 +92,12 @@ export class RowTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId, tableId, rowId, data }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
+          session.userId,
+        );
         const result = await this.draftApi.apiCreateRow({
           revisionId,
           tableId,
@@ -100,7 +122,12 @@ export class RowTools implements McpToolRegistrar {
         data: z.record(z.string(), z.unknown()).describe('New row data'),
       },
       async ({ revisionId, tableId, rowId, data }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
+          session.userId,
+        );
         const result = await this.draftApi.apiUpdateRow({
           revisionId,
           tableId,
@@ -129,7 +156,12 @@ export class RowTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId, tableId, rowId, patches }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
+          session.userId,
+        );
         const result = await this.draftApi.apiPatchRow({
           revisionId,
           tableId,
@@ -154,7 +186,12 @@ export class RowTools implements McpToolRegistrar {
         nextRowId: z.string().describe('New row ID'),
       },
       async ({ revisionId, tableId, rowId, nextRowId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
+          session.userId,
+        );
         const result = await this.draftApi.apiRenameRow({
           revisionId,
           tableId,
@@ -178,7 +215,12 @@ export class RowTools implements McpToolRegistrar {
         rowId: z.string().describe('Row ID to remove'),
       },
       async ({ revisionId, tableId, rowId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
+          session.userId,
+        );
         const result = await this.draftApi.apiRemoveRow({
           revisionId,
           tableId,

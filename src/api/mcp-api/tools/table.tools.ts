@@ -4,8 +4,8 @@ import { Prisma } from 'src/__generated__/client';
 import { TableApiService } from 'src/features/table/table-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonPatch } from '@revisium/schema-toolkit/types';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class TableTools implements McpToolRegistrar {
   constructor(
@@ -13,10 +13,7 @@ export class TableTools implements McpToolRegistrar {
     private readonly draftApi: DraftApiService,
   ) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getTables',
       'Get all tables in a revision',
@@ -26,7 +23,17 @@ export class TableTools implements McpToolRegistrar {
         after: z.string().optional().describe('Cursor'),
       },
       async ({ revisionId, first, after }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.tableApi.getTables({
           revisionId,
           first: first ?? 100,
@@ -48,7 +55,17 @@ export class TableTools implements McpToolRegistrar {
         tableId: z.string().describe('Table ID'),
       },
       async ({ revisionId, tableId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.tableApi.getTable({ revisionId, tableId });
         return {
           content: [
@@ -66,7 +83,17 @@ export class TableTools implements McpToolRegistrar {
         tableId: z.string().describe('Table ID'),
       },
       async ({ revisionId, tableId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.tableApi.resolveTableSchema({
           revisionId,
           tableId,
@@ -94,7 +121,17 @@ export class TableTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId, tableId, schema }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.create,
+              subject: PermissionSubject.Table,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.draftApi.apiCreateTable({
           revisionId,
           tableId,
@@ -121,7 +158,17 @@ export class TableTools implements McpToolRegistrar {
           ),
       },
       async ({ revisionId, tableId, patches }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.update,
+              subject: PermissionSubject.Table,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.draftApi.apiUpdateTable({
           revisionId,
           tableId,
@@ -144,7 +191,17 @@ export class TableTools implements McpToolRegistrar {
         nextTableId: z.string().describe('New table ID'),
       },
       async ({ revisionId, tableId, nextTableId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.update,
+              subject: PermissionSubject.Table,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.draftApi.apiRenameTable({
           revisionId,
           tableId,
@@ -166,7 +223,17 @@ export class TableTools implements McpToolRegistrar {
         tableId: z.string().describe('Table ID to remove'),
       },
       async ({ revisionId, tableId }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.delete,
+              subject: PermissionSubject.Table,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.draftApi.apiRemoveTable({
           revisionId,
           tableId,

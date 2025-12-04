@@ -2,8 +2,8 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class ProjectTools implements McpToolRegistrar {
   constructor(
@@ -11,10 +11,7 @@ export class ProjectTools implements McpToolRegistrar {
     private readonly branchApi: BranchApiService,
   ) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getProject',
       'Get project by organization ID and project name',
@@ -23,7 +20,18 @@ export class ProjectTools implements McpToolRegistrar {
         projectName: z.string().describe('Project name'),
       },
       async ({ organizationId, projectName }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.projectApi.getProject({
           organizationId,
           projectName,
@@ -45,10 +53,10 @@ export class ProjectTools implements McpToolRegistrar {
         branchName: z
           .string()
           .optional()
-          .describe('Initial branch name (default: master)'),
+          .describe('Initial branch name (default: main)'),
       },
       async ({ organizationId, projectName, branchName }, context) => {
-        requireAuth(context);
+        auth.requireAuth(context);
         const project = await this.projectApi.apiCreateProject({
           organizationId,
           projectName,
@@ -58,7 +66,7 @@ export class ProjectTools implements McpToolRegistrar {
         const branch = await this.branchApi.getBranch({
           organizationId,
           projectName,
-          branchName: branchName || 'master',
+          branchName: branchName || 'main',
         });
 
         const draftRevision = await this.branchApi.getDraftRevision(branch.id);
@@ -94,7 +102,18 @@ export class ProjectTools implements McpToolRegistrar {
         projectName: z.string().describe('Project name'),
       },
       async ({ organizationId, projectName }, context) => {
-        requireAuth(context);
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.delete,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
         const result = await this.projectApi.deleteProject({
           organizationId,
           projectName,

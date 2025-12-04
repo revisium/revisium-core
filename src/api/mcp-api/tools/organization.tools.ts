@@ -1,16 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class OrganizationTools implements McpToolRegistrar {
   constructor(private readonly organizationApi: OrganizationApiService) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getOrganization',
       'Get organization by ID',
@@ -18,7 +14,7 @@ export class OrganizationTools implements McpToolRegistrar {
         organizationId: z.string().describe('Organization ID'),
       },
       async ({ organizationId }, context) => {
-        requireAuth(context);
+        auth.requireAuth(context);
         const result = await this.organizationApi.organization({
           organizationId,
         });
@@ -39,7 +35,7 @@ export class OrganizationTools implements McpToolRegistrar {
         after: z.string().optional().describe('Cursor for pagination'),
       },
       async ({ organizationId, first, after }, context) => {
-        requireAuth(context);
+        auth.requireAuth(context);
         const result = await this.organizationApi.getProjectsByOrganizationId({
           organizationId,
           first: first ?? 100,

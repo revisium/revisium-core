@@ -1,16 +1,12 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { UserApiService } from 'src/features/user/user-api.service';
-import { McpSession } from '../mcp-session.service';
-import { McpContext, McpToolRegistrar } from '../types';
+import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class UserTools implements McpToolRegistrar {
   constructor(private readonly userApi: UserApiService) {}
 
-  register(
-    server: McpServer,
-    requireAuth: (context: McpContext) => McpSession,
-  ): void {
+  register(server: McpServer, auth: McpAuthHelpers): void {
     server.tool(
       'getUser',
       'Get user by ID',
@@ -18,7 +14,7 @@ export class UserTools implements McpToolRegistrar {
         userId: z.string().describe('User ID'),
       },
       async ({ userId }, context) => {
-        requireAuth(context);
+        auth.requireAuth(context);
         const result = await this.userApi.getUser({ userId });
         return {
           content: [
@@ -39,7 +35,7 @@ export class UserTools implements McpToolRegistrar {
         first: z.number().optional().describe('Number of results'),
       },
       async ({ search, first }, context) => {
-        requireAuth(context);
+        auth.requireAuth(context);
         const result = await this.userApi.searchUsers({
           search,
           first: first ?? 20,
