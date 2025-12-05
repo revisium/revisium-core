@@ -5,6 +5,8 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import {
   createFreshTestApp,
+  authGet,
+  anonGet,
   authPost,
   anonPost,
   authDelete,
@@ -80,6 +82,86 @@ describe('restapi - organization', () => {
 
       expect(result).toHaveProperty('id');
       expect(result.name).toBe(projectName);
+    });
+  });
+
+  describe('GET /organization/:organizationId/projects', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('organization owner can get projects', async () => {
+      const result = await authGet(
+        app,
+        `/api/organization/${preparedData.project.organizationId}/projects?first=10`,
+        preparedData.owner.token,
+      )
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBeGreaterThanOrEqual(1);
+      expect(result.edges).toBeDefined();
+    });
+
+    it('another organization owner cannot see other organization projects', async () => {
+      const result = await authGet(
+        app,
+        `/api/organization/${preparedData.project.organizationId}/projects?first=10`,
+        preparedData.anotherOwner.token,
+      )
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBe(0);
+    });
+
+    it('unauthenticated user gets empty list for private projects', async () => {
+      const result = await anonGet(
+        app,
+        `/api/organization/${preparedData.project.organizationId}/projects?first=10`,
+      )
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBe(0);
+    });
+  });
+
+  describe('GET /organization/:organizationId/users', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('organization owner can get users of own organization', async () => {
+      const result = await authGet(
+        app,
+        `/api/organization/${preparedData.project.organizationId}/users?first=10`,
+        preparedData.owner.token,
+      )
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result.totalCount).toBeGreaterThanOrEqual(1);
+      expect(result.edges).toBeDefined();
+    });
+
+    it('another organization owner cannot get users of other organization', async () => {
+      await authGet(
+        app,
+        `/api/organization/${preparedData.project.organizationId}/users?first=10`,
+        preparedData.anotherOwner.token,
+      ).expect(403);
+    });
+
+    it('unauthenticated user cannot get users', async () => {
+      await anonGet(
+        app,
+        `/api/organization/${preparedData.project.organizationId}/users?first=10`,
+      ).expect(401);
     });
   });
 

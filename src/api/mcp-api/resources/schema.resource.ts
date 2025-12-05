@@ -2,7 +2,25 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { McpResourceRegistrar } from '../types';
 
+/**
+ * Creates a copy of metaSchema with enum removed from stringSchema.
+ * enum is supported in the backend but hidden from MCP to prevent
+ * AI agents from using it until UI support is ready.
+ */
+function createMcpMetaSchema() {
+  const schema = JSON.parse(JSON.stringify(metaSchema));
+
+  // Remove enum from stringSchema properties
+  if (schema.$defs?.stringSchema?.properties?.enum) {
+    delete schema.$defs.stringSchema.properties.enum;
+  }
+
+  return schema;
+}
+
 export class SchemaResource implements McpResourceRegistrar {
+  private readonly mcpMetaSchema = createMcpMetaSchema();
+
   register(server: McpServer): void {
     server.registerResource(
       'schema-specification',
@@ -27,7 +45,7 @@ export class SchemaResource implements McpResourceRegistrar {
     return {
       description:
         'Revisium Table Schema Specification. Use this JSON Schema to create and update table schemas.',
-      schema: metaSchema,
+      schema: this.mcpMetaSchema,
       examples: {
         simpleObject: {
           type: 'object',
@@ -149,6 +167,7 @@ export class SchemaResource implements McpResourceRegistrar {
       foreignKeyRules: [
         'IMPORTANT: Tables with foreignKey must be created AFTER the referenced table exists',
         'Create tables in dependency order: first tables without foreignKey, then tables that reference them',
+        'IMPORTANT: Self-references (foreignKey pointing to the same table) are NOT supported',
         'When creating rows with foreignKey fields, the referenced row must already exist',
         'foreignKey value must be a valid rowId from the referenced table, or empty string',
         'Example order: 1) create "categories" table, 2) create "products" table with foreignKey to categories',
@@ -161,6 +180,7 @@ export class SchemaResource implements McpResourceRegistrar {
         'When adding a field, also add to required: {"op":"add","path":"/required/-","value":"fieldName"}',
         'IMPORTANT: To add/modify description or other attributes, you must REPLACE the entire property object',
         'Example: to add description to existing field, use op:"replace" with the FULL property definition including all existing attributes plus description',
+        'IMPORTANT: Self-references (foreignKey pointing to the same table being updated) are NOT supported',
       ],
       updateTableExamples: {
         addNewField: [

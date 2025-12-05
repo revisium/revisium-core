@@ -93,6 +93,10 @@ export class OrganizationController {
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPOrganizationGuard)
+  @PermissionParams({
+    action: PermissionAction.read,
+    subject: PermissionSubject.User,
+  })
   @Get(':organizationId/users')
   @ApiOperation({ operationId: 'usersOrganization' })
   @ApiOkResponse({ type: UsersOrganizationConnection })
