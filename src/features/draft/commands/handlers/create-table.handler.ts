@@ -1,11 +1,15 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import { CreateSchemaCommand } from 'src/features/draft/commands/impl/transactional/create-schema.command';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { traverseStore } from '@revisium/schema-toolkit/lib';
+import { JsonSchema, JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
+import {
+  CreateTableCommand,
+  CreateTableCommandData,
+} from 'src/features/draft/commands/impl/create-table.command';
 import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/create-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
@@ -13,6 +17,7 @@ import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 
 @CommandHandler(CreateTableCommand)
 export class CreateTableHandler extends DraftHandler<
@@ -28,6 +33,7 @@ export class CreateTableHandler extends DraftHandler<
     protected readonly idService: IdService,
     protected readonly commandBus: CommandBus,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
+    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -40,6 +46,12 @@ export class CreateTableHandler extends DraftHandler<
     validateUrlLikeId(data.tableId);
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.checkTableExistence(revisionId, tableId);
+
+    if (this.checkItselfForeignKey(tableId, schema)) {
+      throw new BadRequestException(
+        'Self-referencing foreignKey is not supported',
+      );
+    }
 
     await this.createTable(tableId);
     await this.draftTransactionalCommands.validateSchema(schema);
@@ -114,5 +126,24 @@ export class CreateTableHandler extends DraftHandler<
       schema,
       this.jsonSchemaValidator.getSchemaHash(schema),
     );
+  }
+
+  private checkItselfForeignKey(
+    tableId: string,
+    schema: CreateTableCommandData['schema'],
+  ): boolean {
+    let isThereItselfForeignKey = false;
+
+    const schemaStore = this.jsonSchemaStore.create(schema as JsonSchema);
+    traverseStore(schemaStore, (item) => {
+      if (
+        item.type === JsonSchemaTypeName.String &&
+        item.foreignKey === tableId
+      ) {
+        isThereItselfForeignKey = true;
+      }
+    });
+
+    return isThereItselfForeignKey;
   }
 }

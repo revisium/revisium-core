@@ -80,6 +80,62 @@ describe('CreateTableHandler', () => {
     );
   });
 
+  it('should throw an error if the schema contains self-referencing foreignKey', async () => {
+    const { draftRevisionId } = await prepareProject(prismaService);
+
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: 'locations',
+      schema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', default: '' },
+          parentId: { type: 'string', default: '', foreignKey: 'locations' },
+        },
+        additionalProperties: false,
+        required: ['name', 'parentId'],
+      },
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
+    await expect(runTransaction(command)).rejects.toThrow(
+      'Self-referencing foreignKey is not supported',
+    );
+  });
+
+  it('should throw an error if the schema contains nested self-referencing foreignKey', async () => {
+    const { draftRevisionId } = await prepareProject(prismaService);
+
+    const command = new CreateTableCommand({
+      revisionId: draftRevisionId,
+      tableId: 'nodes',
+      schema: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', default: '' },
+          children: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                childId: { type: 'string', default: '', foreignKey: 'nodes' },
+              },
+              additionalProperties: false,
+              required: ['childId'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['name', 'children'],
+      },
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
+    await expect(runTransaction(command)).rejects.toThrow(
+      'Self-referencing foreignKey is not supported',
+    );
+  });
+
   it('should create a new table if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
     const { draftRevisionId, branchId } = ids;

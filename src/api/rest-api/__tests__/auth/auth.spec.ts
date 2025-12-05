@@ -119,5 +119,19 @@ describe('restapi - auth', () => {
         })
         .expect(401);
     });
+
+    it('update password fails with too short new password', async () => {
+      await authPut(app, '/api/auth/password', fixture.owner.token, {
+        oldPassword: 'password',
+        newPassword: 'short',
+      }).expect(400);
+    });
+
+    it('update password fails with missing fields', async () => {
+      await authPut(app, '/api/auth/password', fixture.owner.token, {
+        currentPassword: 'password',
+        newPassword: 'newPassword123',
+      }).expect(400);
+    });
   });
 });

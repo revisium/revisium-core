@@ -185,6 +185,54 @@ describe('GetProjectsByOrganizationIdHandler', () => {
     expect(result.totalCount).toBe(0);
   });
 
+  it('should not return projects from other organizations for authenticated user', async () => {
+    // Create two separate organizations with projects
+    const org1 = await prepareProject(prismaService);
+    const org2 = await prepareProject(prismaService);
+
+    // Create a user in org2
+    const userId = nanoid();
+    await prismaService.organization.update({
+      where: {
+        id: org2.organizationId,
+      },
+      data: {
+        userOrganizations: {
+          create: {
+            id: nanoid(),
+            role: {
+              connect: {
+                id: UserOrganizationRoles.organizationOwner,
+              },
+            },
+            user: {
+              create: {
+                id: userId,
+                password: '',
+                role: {
+                  connect: {
+                    id: UserSystemRoles.systemUser,
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    // User from org2 queries org1's projects - should get 0 (private project)
+    const result = await runTransaction(
+      new GetProjectsByOrganizationIdQuery({
+        userId,
+        organizationId: org1.organizationId,
+        first: 100,
+      }),
+    );
+
+    expect(result.totalCount).toBe(0);
+  });
+
   function runTransaction(
     query: GetProjectsByOrganizationIdQuery,
   ): Promise<GetProjectsByOrganizationIdQueryReturnType> {
