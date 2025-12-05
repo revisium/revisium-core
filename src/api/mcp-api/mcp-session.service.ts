@@ -11,8 +11,10 @@ export interface McpSession {
 
 @Injectable()
 export class McpSessionService {
-  private sessions: Map<string, { token: string; session: McpSession }> =
-    new Map();
+  private readonly sessions: Map<
+    string,
+    { token: string; session: McpSession }
+  > = new Map();
 
   constructor(
     private readonly jwtService: JwtService,

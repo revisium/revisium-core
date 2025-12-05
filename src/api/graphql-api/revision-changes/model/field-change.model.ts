@@ -17,10 +17,10 @@ export class FieldChangeModel {
   fieldPath: string;
 
   @Field(() => JSONResolver, { nullable: true })
-  oldValue: unknown | null;
+  oldValue: unknown;
 
   @Field(() => JSONResolver, { nullable: true })
-  newValue: unknown | null;
+  newValue: unknown;
 
   @Field(() => RowChangeDetailTypeEnum)
   changeType: RowChangeDetailTypeEnum;

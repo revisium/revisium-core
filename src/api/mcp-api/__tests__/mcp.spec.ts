@@ -170,10 +170,12 @@ describe('MCP API', () => {
 
       const data = parseResponse(res);
       expect(data.result.resources).toBeDefined();
-      expect(data.result.resources).toContainEqual({
-        uri: 'revisium://specs/schema',
-        name: 'schema-specification',
-      });
+      expect(data.result.resources).toContainEqual(
+        expect.objectContaining({
+          uri: 'revisium://specs/schema',
+          name: 'schema-specification',
+        }),
+      );
     });
   });
 

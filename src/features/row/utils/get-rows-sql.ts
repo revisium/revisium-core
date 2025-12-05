@@ -29,7 +29,7 @@ export function getRowsSql(
   orderBy?: OrderByConditions[],
 ): Prisma.Sql {
   const whereClause = generateWhere({
-    where: whereConditions || {},
+    where: whereConditions ?? {},
     fieldConfig: DEFAULT_ROW_FIELDS,
     tableAlias: 'r',
   });
@@ -71,7 +71,7 @@ export function getRowsCountSql(
   whereConditions?: WhereConditionsTyped<typeof DEFAULT_ROW_FIELDS>,
 ): Prisma.Sql {
   const whereClause = generateWhere({
-    where: whereConditions || {},
+    where: whereConditions ?? {},
     fieldConfig: DEFAULT_ROW_FIELDS,
     tableAlias: 'r',
   });

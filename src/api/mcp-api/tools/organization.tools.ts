@@ -8,13 +8,15 @@ export class OrganizationTools implements McpToolRegistrar {
   constructor(private readonly organizationApi: OrganizationApiService) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getOrganization',
-      'Get organization by ID',
       {
-        organizationId: z.string().describe('Organization ID'),
+        description: 'Get organization by ID',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ organizationId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganization(
@@ -38,15 +40,17 @@ export class OrganizationTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getProjects',
-      'Get all projects in an organization',
       {
-        organizationId: z.string().describe('Organization ID'),
-        first: z.number().optional().describe('Number of items to fetch'),
-        after: z.string().optional().describe('Cursor for pagination'),
+        description: 'Get all projects in an organization',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          first: z.number().optional().describe('Number of items to fetch'),
+          after: z.string().optional().describe('Cursor for pagination'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ organizationId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganization(

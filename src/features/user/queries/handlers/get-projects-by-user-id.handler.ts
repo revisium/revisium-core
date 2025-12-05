@@ -50,17 +50,18 @@ export class GetProjectsByUserIdHandler
   private getWhereInput(data: WhereData): Prisma.ProjectWhereInput {
     const OR: Prisma.ProjectWhereInput[] = [];
 
-    OR.push({
-      organization: {
-        userOrganizations: { some: { userId: data.userId } },
+    OR.push(
+      {
+        organization: {
+          userOrganizations: { some: { userId: data.userId } },
+        },
       },
-    });
-
-    OR.push({
-      userProjects: {
-        some: { userId: data.userId },
+      {
+        userProjects: {
+          some: { userId: data.userId },
+        },
       },
-    });
+    );
 
     const AND: Prisma.ProjectWhereInput[] = [{ isDeleted: false }, { OR }];
 

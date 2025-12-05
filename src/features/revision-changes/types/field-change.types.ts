@@ -7,8 +7,8 @@ export interface FieldMove {
 
 export interface FieldChange {
   fieldPath: string;
-  oldValue: unknown | null;
-  newValue: unknown | null;
+  oldValue: unknown;
+  newValue: unknown;
   changeType: RowChangeDetailType;
   movedFrom?: string;
 }

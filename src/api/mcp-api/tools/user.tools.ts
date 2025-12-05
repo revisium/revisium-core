@@ -7,13 +7,15 @@ export class UserTools implements McpToolRegistrar {
   constructor(private readonly userApi: UserApiService) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getUser',
-      'Get user by ID',
       {
-        userId: z.string().describe('User ID'),
+        description: 'Get user by ID',
+        inputSchema: {
+          userId: z.string().describe('User ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ userId }, context) => {
         auth.requireAuth(context);
         const result = await this.userApi.getUser({ userId });
@@ -25,17 +27,19 @@ export class UserTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'searchUsers',
-      'Search users by username or email',
       {
-        search: z
-          .string()
-          .optional()
-          .describe('Search query (username or email)'),
-        first: z.number().optional().describe('Number of results'),
+        description: 'Search users by username or email',
+        inputSchema: {
+          search: z
+            .string()
+            .optional()
+            .describe('Search query (username or email)'),
+          first: z.number().optional().describe('Number of results'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ search, first }, context) => {
         auth.requireAuth(context);
         const result = await this.userApi.searchUsers({

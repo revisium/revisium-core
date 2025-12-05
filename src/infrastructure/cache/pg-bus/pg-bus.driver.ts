@@ -11,7 +11,7 @@ const CHANNEL_NAME_RE = /^[a-z_][a-z0-9_$.:]{0,62}$/i;
 const MAX_PAYLOAD_BYTES = 8000;
 
 function escapeIdentifier(str: string): string {
-  return '"' + str.replace(/"/g, '""') + '"';
+  return '"' + str.replaceAll('"', '""') + '"';
 }
 
 export type PgBusDriverOptions = {

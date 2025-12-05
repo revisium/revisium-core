@@ -14,15 +14,17 @@ export class TableTools implements McpToolRegistrar {
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getTables',
-      'Get all tables in a revision',
       {
-        revisionId: z.string().describe('Revision ID'),
-        first: z.number().optional().describe('Number of items'),
-        after: z.string().optional().describe('Cursor'),
+        description: 'Get all tables in a revision',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          first: z.number().optional().describe('Number of items'),
+          after: z.string().optional().describe('Cursor'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -48,14 +50,16 @@ export class TableTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getTable',
-      'Get a specific table',
       {
-        revisionId: z.string().describe('Revision ID'),
-        tableId: z.string().describe('Table ID'),
+        description: 'Get a specific table',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          tableId: z.string().describe('Table ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, tableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -77,14 +81,16 @@ export class TableTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getTableSchema',
-      'Get schema of a table',
       {
-        revisionId: z.string().describe('Revision ID'),
-        tableId: z.string().describe('Table ID'),
+        description: 'Get schema of a table',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          tableId: z.string().describe('Table ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, tableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -109,21 +115,24 @@ export class TableTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'createTable',
-      'Create a new table with schema. Read revisium://specs/schema resource first. IMPORTANT: If schema has foreignKey, the referenced table MUST exist first. Create tables in dependency order.',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z
-          .string()
-          .describe('Table ID (URL-friendly, e.g., "posts", "categories")'),
-        schema: z
-          .record(z.string(), z.unknown())
-          .describe(
-            'JSON Schema for the table. Must have type:object, properties with defaults, additionalProperties:false, required array. See schema-specification resource for examples.',
-          ),
+        description:
+          'Create a new table with schema. Read revisium://specs/schema resource first. IMPORTANT: If schema has foreignKey, the referenced table MUST exist first. Create tables in dependency order.',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z
+            .string()
+            .describe('Table ID (URL-friendly, e.g., "posts", "categories")'),
+          schema: z
+            .record(z.string(), z.unknown())
+            .describe(
+              'JSON Schema for the table. Must have type:object, properties with defaults, additionalProperties:false, required array. See schema-specification resource for examples.',
+            ),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, schema }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -149,19 +158,22 @@ export class TableTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'updateTable',
-      'Update table schema using JSON Patch. IMPORTANT: Always call getTableSchema first to understand current structure before updating.',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID'),
-        patches: z
-          .array(z.record(z.string(), z.unknown()))
-          .describe(
-            'JSON Patch operations (RFC 6902). Example: [{"op":"add","path":"/properties/newField","value":{"type":"string","default":""}},{"op":"add","path":"/required/-","value":"newField"}]',
-          ),
+        description:
+          'Update table schema using JSON Patch. IMPORTANT: Always call getTableSchema first to understand current structure before updating.',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          patches: z
+            .array(z.record(z.string(), z.unknown()))
+            .describe(
+              'JSON Patch operations (RFC 6902). Example: [{"op":"add","path":"/properties/newField","value":{"type":"string","default":""}},{"op":"add","path":"/required/-","value":"newField"}]',
+            ),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, patches }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -187,15 +199,17 @@ export class TableTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'renameTable',
-      'Rename a table',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Current table ID'),
-        nextTableId: z.string().describe('New table ID'),
+        description: 'Rename a table',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Current table ID'),
+          nextTableId: z.string().describe('New table ID'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, nextTableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -221,14 +235,16 @@ export class TableTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'removeTable',
-      'Remove a table',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID to remove'),
+        description: 'Remove a table',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID to remove'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      { readOnlyHint: false, destructiveHint: true },
       async ({ revisionId, tableId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

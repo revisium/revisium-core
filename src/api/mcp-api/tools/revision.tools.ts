@@ -12,13 +12,15 @@ export class RevisionTools implements McpToolRegistrar {
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getRevision',
-      'Get revision details',
       {
-        revisionId: z.string().describe('Revision ID'),
+        description: 'Get revision details',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -40,16 +42,19 @@ export class RevisionTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'commitRevision',
-      'Commit changes in a draft revision. CRITICAL: ALWAYS ask user for permission before committing. Never commit automatically - head/draft may point to different environments and committing without permission can break production.',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name'),
-        branchName: z.string().describe('Branch name'),
-        comment: z.string().optional().describe('Commit comment'),
+        description:
+          'Commit changes in a draft revision. CRITICAL: ALWAYS ask user for permission before committing. Never commit automatically - head/draft may point to different environments and committing without permission can break production.',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          branchName: z.string().describe('Branch name'),
+          comment: z.string().optional().describe('Commit comment'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ organizationId, projectName, branchName, comment }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(

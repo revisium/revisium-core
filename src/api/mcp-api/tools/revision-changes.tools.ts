@@ -8,23 +8,26 @@ export class RevisionChangesTools implements McpToolRegistrar {
   constructor(private readonly revisionChangesApi: RevisionChangesApiService) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getRevisionChanges',
-      'Get summary of all changes in a revision (tables and rows added/modified/removed). Use this to see what changed in draft vs head.',
       {
-        revisionId: z
-          .string()
-          .describe(
-            'Revision ID (use draftRevisionId to see uncommitted changes)',
-          ),
-        compareWithRevisionId: z
-          .string()
-          .optional()
-          .describe(
-            'Optional: Compare with specific revision. If not provided, compares with parent revision.',
-          ),
+        description:
+          'Get summary of all changes in a revision (tables and rows added/modified/removed). Use this to see what changed in draft vs head.',
+        inputSchema: {
+          revisionId: z
+            .string()
+            .describe(
+              'Revision ID (use draftRevisionId to see uncommitted changes)',
+            ),
+          compareWithRevisionId: z
+            .string()
+            .optional()
+            .describe(
+              'Optional: Compare with specific revision. If not provided, compares with parent revision.',
+            ),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, compareWithRevisionId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -49,19 +52,25 @@ export class RevisionChangesTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getTableChanges',
-      'Get detailed list of changed tables in a revision, including schema changes.',
       {
-        revisionId: z.string().describe('Revision ID'),
-        compareWithRevisionId: z
-          .string()
-          .optional()
-          .describe('Optional: Compare with specific revision'),
-        first: z.number().optional().describe('Number of items (default: 50)'),
-        after: z.string().optional().describe('Cursor for pagination'),
+        description:
+          'Get detailed list of changed tables in a revision, including schema changes.',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          compareWithRevisionId: z
+            .string()
+            .optional()
+            .describe('Optional: Compare with specific revision'),
+          first: z
+            .number()
+            .optional()
+            .describe('Number of items (default: 50)'),
+          after: z.string().optional().describe('Cursor for pagination'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, compareWithRevisionId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -88,19 +97,25 @@ export class RevisionChangesTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getRowChanges',
-      'Get detailed list of changed rows in a revision, including field-level diffs.',
       {
-        revisionId: z.string().describe('Revision ID'),
-        compareWithRevisionId: z
-          .string()
-          .optional()
-          .describe('Optional: Compare with specific revision'),
-        first: z.number().optional().describe('Number of items (default: 50)'),
-        after: z.string().optional().describe('Cursor for pagination'),
+        description:
+          'Get detailed list of changed rows in a revision, including field-level diffs.',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          compareWithRevisionId: z
+            .string()
+            .optional()
+            .describe('Optional: Compare with specific revision'),
+          first: z
+            .number()
+            .optional()
+            .describe('Number of items (default: 50)'),
+          after: z.string().optional().describe('Cursor for pagination'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, compareWithRevisionId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

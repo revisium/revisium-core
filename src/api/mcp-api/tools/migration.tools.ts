@@ -13,17 +13,20 @@ export class MigrationTools implements McpToolRegistrar {
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getMigrations',
-      'Get all migrations from a revision. Migrations are schema change records that can be applied to other Revisium instances. Read revisium://specs/migration resource for migration format details.',
       {
-        revisionId: z
-          .string()
-          .describe(
-            'Revision ID to get migrations from. Use headRevisionId for stable migrations.',
-          ),
+        description:
+          'Get all migrations from a revision. Migrations are schema change records that can be applied to other Revisium instances. Read revisium://specs/migration resource for migration format details.',
+        inputSchema: {
+          revisionId: z
+            .string()
+            .describe(
+              'Revision ID to get migrations from. Use headRevisionId for stable migrations.',
+            ),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -45,20 +48,23 @@ export class MigrationTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'applyMigrations',
-      'Apply migrations to a draft revision. Use this to sync schema changes from another Revisium instance. Read revisium://specs/migration resource first.',
       {
-        revisionId: z
-          .string()
-          .describe('Draft revision ID to apply migrations to'),
-        migrations: z
-          .array(z.record(z.string(), z.unknown()))
-          .describe(
-            'Array of migration objects. Each migration has changeType (init/update/rename/remove), id, tableId, and type-specific fields.',
-          ),
+        description:
+          'Apply migrations to a draft revision. Use this to sync schema changes from another Revisium instance. Read revisium://specs/migration resource first.',
+        inputSchema: {
+          revisionId: z
+            .string()
+            .describe('Draft revision ID to apply migrations to'),
+          migrations: z
+            .array(z.record(z.string(), z.unknown()))
+            .describe(
+              'Array of migration objects. Each migration has changeType (init/update/rename/remove), id, tableId, and type-specific fields.',
+            ),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, migrations }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(

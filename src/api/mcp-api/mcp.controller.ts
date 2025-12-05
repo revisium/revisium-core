@@ -17,7 +17,8 @@ import { McpServerService } from './mcp-server.service';
 @ApiExcludeController()
 @Controller('mcp')
 export class McpController {
-  private transports: Map<string, StreamableHTTPServerTransport> = new Map();
+  private readonly transports: Map<string, StreamableHTTPServerTransport> =
+    new Map();
 
   constructor(private readonly mcpServer: McpServerService) {}
 

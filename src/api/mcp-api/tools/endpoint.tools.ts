@@ -119,20 +119,22 @@ export class EndpointTools implements McpToolRegistrar {
   }
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getProjectEndpoints',
-      'Get all endpoints for a project',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name'),
-        branchId: z.string().optional().describe('Filter by branch ID'),
-        type: EndpointTypeEnum.optional().describe(
-          'Filter by endpoint type (GRAPHQL or REST_API)',
-        ),
-        first: z.number().optional().describe('Number of items to fetch'),
-        after: z.string().optional().describe('Cursor for pagination'),
+        description: 'Get all endpoints for a project',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          branchId: z.string().optional().describe('Filter by branch ID'),
+          type: EndpointTypeEnum.optional().describe(
+            'Filter by endpoint type (GRAPHQL or REST_API)',
+          ),
+          first: z.number().optional().describe('Number of items to fetch'),
+          after: z.string().optional().describe('Cursor for pagination'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async (
         { organizationId, projectName, branchId, type, first, after },
         context,
@@ -165,13 +167,16 @@ export class EndpointTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getEndpointRelatives',
-      'Get endpoint with all related entities (revision, branch, project)',
       {
-        endpointId: z.string().describe('Endpoint ID'),
+        description:
+          'Get endpoint with all related entities (revision, branch, project)',
+        inputSchema: {
+          endpointId: z.string().describe('Endpoint ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ endpointId }, context) => {
         const session = auth.requireAuth(context);
         const result = await this.endpointApi.getEndpointRelatives({
@@ -196,16 +201,19 @@ export class EndpointTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'createEndpoint',
-      'Create a new endpoint for a revision. Endpoints expose revision data via GraphQL or REST API.',
       {
-        revisionId: z.string().describe('Revision ID to expose'),
-        type: EndpointTypeEnum.describe(
-          'Endpoint type: GRAPHQL for GraphQL API, REST_API for REST/OpenAPI',
-        ),
+        description:
+          'Create a new endpoint for a revision. Endpoints expose revision data via GraphQL or REST API.',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID to expose'),
+          type: EndpointTypeEnum.describe(
+            'Endpoint type: GRAPHQL for GraphQL API, REST_API for REST/OpenAPI',
+          ),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, type }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -230,13 +238,15 @@ export class EndpointTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'deleteEndpoint',
-      'Delete an endpoint',
       {
-        endpointId: z.string().describe('Endpoint ID to delete'),
+        description: 'Delete an endpoint',
+        inputSchema: {
+          endpointId: z.string().describe('Endpoint ID to delete'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      { readOnlyHint: false, destructiveHint: true },
       async ({ endpointId }, context) => {
         const session = auth.requireAuth(context);
         const relatives = await this.endpointApi.getEndpointRelatives({
@@ -265,13 +275,16 @@ export class EndpointTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getGraphQLSchema',
-      'Fetch GraphQL schema (introspection) from a GRAPHQL endpoint. Returns the full schema introspection result that describes all types, queries, and mutations available.',
       {
-        endpointId: z.string().describe('Endpoint ID (must be GRAPHQL type)'),
+        description:
+          'Fetch GraphQL schema (introspection) from a GRAPHQL endpoint. Returns the full schema introspection result that describes all types, queries, and mutations available.',
+        inputSchema: {
+          endpointId: z.string().describe('Endpoint ID (must be GRAPHQL type)'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ endpointId }, context) => {
         const session = auth.requireAuth(context);
         const path = await this.buildEndpointPath(endpointId);
@@ -332,12 +345,7 @@ export class EndpointTools implements McpToolRegistrar {
             ],
           };
         } catch (error) {
-          const message =
-            error instanceof Error && error.name === 'AbortError'
-              ? 'Request timed out'
-              : error instanceof Error
-                ? error.message
-                : String(error);
+          const message = this.getErrorMessage(error);
           return {
             content: [
               {
@@ -359,13 +367,18 @@ export class EndpointTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getOpenAPISpec',
-      'Fetch OpenAPI/Swagger specification from a REST_API endpoint. Returns the full OpenAPI JSON spec that describes all routes, parameters, and schemas.',
       {
-        endpointId: z.string().describe('Endpoint ID (must be REST_API type)'),
+        description:
+          'Fetch OpenAPI/Swagger specification from a REST_API endpoint. Returns the full OpenAPI JSON spec that describes all routes, parameters, and schemas.',
+        inputSchema: {
+          endpointId: z
+            .string()
+            .describe('Endpoint ID (must be REST_API type)'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ endpointId }, context) => {
         const session = auth.requireAuth(context);
         const path = await this.buildEndpointPath(endpointId);
@@ -421,12 +434,7 @@ export class EndpointTools implements McpToolRegistrar {
             ],
           };
         } catch (error) {
-          const message =
-            error instanceof Error && error.name === 'AbortError'
-              ? 'Request timed out'
-              : error instanceof Error
-                ? error.message
-                : String(error);
+          const message = this.getErrorMessage(error);
           return {
             content: [
               {
@@ -447,5 +455,15 @@ export class EndpointTools implements McpToolRegistrar {
         }
       },
     );
+  }
+
+  private getErrorMessage(error: unknown): string {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return 'Request timed out';
+    }
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 }

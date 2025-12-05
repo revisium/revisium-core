@@ -14,16 +14,18 @@ export class RowTools implements McpToolRegistrar {
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getRows',
-      'Get rows from a table',
       {
-        revisionId: z.string().describe('Revision ID'),
-        tableId: z.string().describe('Table ID'),
-        first: z.number().optional().describe('Number of items'),
-        after: z.string().optional().describe('Cursor'),
+        description: 'Get rows from a table',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          tableId: z.string().describe('Table ID'),
+          first: z.number().optional().describe('Number of items'),
+          after: z.string().optional().describe('Cursor'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, tableId, first, after }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -50,15 +52,17 @@ export class RowTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getRow',
-      'Get a specific row',
       {
-        revisionId: z.string().describe('Revision ID'),
-        tableId: z.string().describe('Table ID'),
-        rowId: z.string().describe('Row ID'),
+        description: 'Get a specific row',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowId: z.string().describe('Row ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ revisionId, tableId, rowId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -80,20 +84,23 @@ export class RowTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'createRow',
-      'Create a new row in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first. Create rows in dependency order.',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID'),
-        rowId: z.string().describe('Row ID (URL-friendly)'),
-        data: z
-          .record(z.string(), z.unknown())
-          .describe(
-            'Row data matching table schema. For foreignKey fields, use valid rowId from referenced table or empty string.',
-          ),
+        description:
+          'Create a new row in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first. Create rows in dependency order.',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowId: z.string().describe('Row ID (URL-friendly)'),
+          data: z
+            .record(z.string(), z.unknown())
+            .describe(
+              'Row data matching table schema. For foreignKey fields, use valid rowId from referenced table or empty string.',
+            ),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, data }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -115,16 +122,18 @@ export class RowTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'updateRow',
-      'Update a row (replace all data)',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID'),
-        rowId: z.string().describe('Row ID'),
-        data: z.record(z.string(), z.unknown()).describe('New row data'),
+        description: 'Update a row (replace all data)',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowId: z.string().describe('Row ID'),
+          data: z.record(z.string(), z.unknown()).describe('New row data'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, data }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -146,20 +155,23 @@ export class RowTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'patchRow',
-      'Patch a row using JSON Patch operations. ONLY "replace" operation is supported. Path is field name WITHOUT leading slash.',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID'),
-        rowId: z.string().describe('Row ID'),
-        patches: z
-          .array(z.record(z.string(), z.unknown()))
-          .describe(
-            'JSON Patch operations. ONLY replace supported. Path WITHOUT leading slash. Example: [{"op":"replace","path":"title","value":"New"}]. For nested: "address.city". For arrays: "items[0]" or "items[0].name".',
-          ),
+        description:
+          'Patch a row using JSON Patch operations. ONLY "replace" operation is supported. Path is field name WITHOUT leading slash.',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowId: z.string().describe('Row ID'),
+          patches: z
+            .array(z.record(z.string(), z.unknown()))
+            .describe(
+              'JSON Patch operations. ONLY replace supported. Path WITHOUT leading slash. Example: [{"op":"replace","path":"title","value":"New"}]. For nested: "address.city". For arrays: "items[0]" or "items[0].name".',
+            ),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, patches }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -181,16 +193,18 @@ export class RowTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'renameRow',
-      'Rename a row (change row ID)',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID'),
-        rowId: z.string().describe('Current row ID'),
-        nextRowId: z.string().describe('New row ID'),
+        description: 'Rename a row (change row ID)',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowId: z.string().describe('Current row ID'),
+          nextRowId: z.string().describe('New row ID'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, tableId, rowId, nextRowId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -212,15 +226,17 @@ export class RowTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'removeRow',
-      'Remove a row',
       {
-        revisionId: z.string().describe('Draft revision ID'),
-        tableId: z.string().describe('Table ID'),
-        rowId: z.string().describe('Row ID to remove'),
+        description: 'Remove a row',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowId: z.string().describe('Row ID to remove'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      { readOnlyHint: false, destructiveHint: true },
       async ({ revisionId, tableId, rowId }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
