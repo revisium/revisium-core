@@ -12,14 +12,17 @@ export class AuthTools implements McpToolRegistrar {
   ) {}
 
   register(server: McpServer, _auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'login',
-      'Authenticate with Revisium API using username and password',
       {
-        username: z.string().describe('Username'),
-        password: z.string().describe('Password'),
+        description:
+          'Authenticate with Revisium API using username and password',
+        inputSchema: {
+          username: z.string().describe('Username'),
+          password: z.string().describe('Password'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ username, password }, context) => {
         try {
           const result = await this.authApi.login({
@@ -82,13 +85,16 @@ export class AuthTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'loginWithToken',
-      'Authenticate with Revisium API using an existing JWT access token. Useful when already logged in via UI (Google, GitHub, or password).',
       {
-        accessToken: z.string().describe('JWT access token from Revisium UI'),
+        description:
+          'Authenticate with Revisium API using an existing JWT access token. Useful when already logged in via UI (Google, GitHub, or password).',
+        inputSchema: {
+          accessToken: z.string().describe('JWT access token from Revisium UI'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ accessToken }, context) => {
         try {
           const session = this.mcpSession.verifyToken(accessToken);
@@ -160,11 +166,13 @@ export class AuthTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'me',
-      'Get current authenticated user information',
-      {},
-      { readOnlyHint: true },
+      {
+        description: 'Get current authenticated user information',
+        inputSchema: {},
+        annotations: { readOnlyHint: true },
+      },
       async (_args, context) => {
         const session = this.getSessionFromContext(context);
         if (!session) {

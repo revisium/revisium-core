@@ -92,7 +92,7 @@ export class RowDiffService {
   }
 
   private normalizeFieldPath(jsonPointerPath: string): string {
-    return jsonPointerPath.slice(1).replace(/\//g, '.');
+    return jsonPointerPath.slice(1).replaceAll('/', '.');
   }
 
   private getValueAtPath(obj: Record<string, unknown>, path: string): unknown {

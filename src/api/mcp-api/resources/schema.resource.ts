@@ -4,9 +4,13 @@ import { McpResourceRegistrar } from '../types';
 
 export class SchemaResource implements McpResourceRegistrar {
   register(server: McpServer): void {
-    server.resource(
+    server.registerResource(
       'schema-specification',
       'revisium://specs/schema',
+      {
+        description: 'Revisium Table Schema Specification',
+        mimeType: 'application/json',
+      },
       async () => ({
         contents: [
           {

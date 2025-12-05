@@ -57,19 +57,20 @@ export class GetProjectsByOrganizationIdHandler
     ];
 
     if (data.userId) {
-      OR.push({
-        isDeleted: false,
-        organization: {
-          userOrganizations: { some: { userId: data.userId } },
+      OR.push(
+        {
+          isDeleted: false,
+          organization: {
+            userOrganizations: { some: { userId: data.userId } },
+          },
         },
-      });
-
-      OR.push({
-        isDeleted: false,
-        userProjects: {
-          some: { userId: data.userId },
+        {
+          isDeleted: false,
+          userProjects: {
+            some: { userId: data.userId },
+          },
         },
-      });
+      );
     }
 
     return {

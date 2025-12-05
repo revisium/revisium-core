@@ -30,7 +30,7 @@ export function extractMatchesFallback(
       if (hasMatch) {
         let relevance = 0;
         const exactMatch = queryTokens.every((queryToken) =>
-          valueTokens.some((valueToken) => valueToken === queryToken),
+          valueTokens.includes(queryToken),
         );
         const startsWithMatch = queryTokens.some((queryToken) =>
           valueTokens.some((valueToken) => valueToken.startsWith(queryToken)),
@@ -83,14 +83,12 @@ export function extractMatchesFallback(
 
   searchInObject(data);
 
-  return matches
-    .sort((a, b) => b.relevance - a.relevance)
-    .slice(0, 5)
-    .map((item) => item.match);
+  matches.sort((a, b) => b.relevance - a.relevance);
+  return matches.slice(0, 5).map((item) => item.match);
 }
 
 function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return string.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 function highlightText(text: string, terms: string[]): string {

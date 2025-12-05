@@ -3,9 +3,14 @@ import { McpResourceRegistrar } from '../types';
 
 export class MigrationResource implements McpResourceRegistrar {
   register(server: McpServer): void {
-    server.resource(
+    server.registerResource(
       'migration-specification',
       'revisium://specs/migration',
+      {
+        description:
+          'Revisium Migration Specification for syncing schema changes between instances',
+        mimeType: 'application/json',
+      },
       async () => ({
         contents: [
           {

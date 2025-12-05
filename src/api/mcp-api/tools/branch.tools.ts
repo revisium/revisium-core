@@ -8,15 +8,17 @@ export class BranchTools implements McpToolRegistrar {
   constructor(private readonly branchApi: BranchApiService) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getBranch',
-      'Get branch by organization, project and branch name',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name'),
-        branchName: z.string().describe('Branch name'),
+        description: 'Get branch by organization, project and branch name',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          branchName: z.string().describe('Branch name'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ organizationId, projectName, branchName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(
@@ -43,13 +45,15 @@ export class BranchTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'getDraftRevision',
-      'Get draft revision for a branch',
       {
-        branchId: z.string().describe('Branch ID'),
+        description: 'Get draft revision for a branch',
+        inputSchema: {
+          branchId: z.string().describe('Branch ID'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ branchId }, context) => {
         auth.requireAuth(context);
         const result = await this.branchApi.getDraftRevision(branchId);
@@ -61,14 +65,16 @@ export class BranchTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'createBranch',
-      'Create a new branch from a revision',
       {
-        revisionId: z.string().describe('Source revision ID'),
-        branchName: z.string().describe('New branch name'),
+        description: 'Create a new branch from a revision',
+        inputSchema: {
+          revisionId: z.string().describe('Source revision ID'),
+          branchName: z.string().describe('New branch name'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ revisionId, branchName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
@@ -93,15 +99,17 @@ export class BranchTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'revertChanges',
-      'Revert all uncommitted changes in a branch',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name'),
-        branchName: z.string().describe('Branch name'),
+        description: 'Revert all uncommitted changes in a branch',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          branchName: z.string().describe('Branch name'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      { readOnlyHint: false, destructiveHint: true },
       async ({ organizationId, projectName, branchName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(

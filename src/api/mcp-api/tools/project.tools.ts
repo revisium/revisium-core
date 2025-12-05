@@ -12,14 +12,17 @@ export class ProjectTools implements McpToolRegistrar {
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
-    server.tool(
+    server.registerTool(
       'getProject',
-      'Get project by organization ID and project name. Returns project info with rootBranch containing draftRevisionId and headRevisionId.',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name'),
+        description:
+          'Get project by organization ID and project name. Returns project info with rootBranch containing draftRevisionId and headRevisionId.',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+        },
+        annotations: { readOnlyHint: true },
       },
-      { readOnlyHint: true },
       async ({ organizationId, projectName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(
@@ -72,18 +75,20 @@ export class ProjectTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'createProject',
-      'Create a new project in an organization',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name (URL-friendly)'),
-        branchName: z
-          .string()
-          .optional()
-          .describe('Initial branch name (default: main)'),
+        description: 'Create a new project in an organization',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name (URL-friendly)'),
+          branchName: z
+            .string()
+            .optional()
+            .describe('Initial branch name (default: main)'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      { readOnlyHint: false, destructiveHint: false },
       async ({ organizationId, projectName, branchName }, context) => {
         auth.requireAuth(context);
         const project = await this.projectApi.apiCreateProject({
@@ -123,14 +128,16 @@ export class ProjectTools implements McpToolRegistrar {
       },
     );
 
-    server.tool(
+    server.registerTool(
       'deleteProject',
-      'Delete a project',
       {
-        organizationId: z.string().describe('Organization ID'),
-        projectName: z.string().describe('Project name'),
+        description: 'Delete a project',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      { readOnlyHint: false, destructiveHint: true },
       async ({ organizationId, projectName }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByOrganizationProject(

@@ -25,14 +25,16 @@ export class PluginListService {
     rowHashPlugin: RowHashPlugin,
     rowSchemaHashPlugin: RowSchemaHashPlugin,
   ) {
-    this.orderedPlugins.push(rowIdPlugin);
-    this.orderedPlugins.push(rowCreatedIdPlugin);
-    this.orderedPlugins.push(rowVersionIdPlugin);
-    this.orderedPlugins.push(rowCreatedAtPlugin);
-    this.orderedPlugins.push(rowPublishedAtPlugin);
-    this.orderedPlugins.push(rowUpdatedAtPlugin);
-    this.orderedPlugins.push(rowHashPlugin);
-    this.orderedPlugins.push(rowSchemaHashPlugin);
-    this.orderedPlugins.push(filePlugin);
+    this.orderedPlugins.push(
+      rowIdPlugin,
+      rowCreatedIdPlugin,
+      rowVersionIdPlugin,
+      rowCreatedAtPlugin,
+      rowPublishedAtPlugin,
+      rowUpdatedAtPlugin,
+      rowHashPlugin,
+      rowSchemaHashPlugin,
+      filePlugin,
+    );
   }
 }

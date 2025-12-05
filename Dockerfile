@@ -17,7 +17,7 @@ FROM  node:24.11.1-bullseye-slim
 
 ENV NODE_ENV=production
 
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/* \
+RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/* \
     && groupadd -r appuser && useradd -r -g appuser appuser
 
 WORKDIR /home/app

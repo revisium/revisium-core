@@ -35,21 +35,21 @@ import {
 export class McpServerService implements OnModuleInit {
   private readonly server: McpServer;
 
-  private schemaResource: SchemaResource;
-  private queryResource: QueryResource;
-  private migrationResource: MigrationResource;
+  private readonly schemaResource: SchemaResource;
+  private readonly queryResource: QueryResource;
+  private readonly migrationResource: MigrationResource;
 
-  private authTools: AuthTools;
-  private organizationTools: OrganizationTools;
-  private projectTools: ProjectTools;
-  private branchTools: BranchTools;
-  private tableTools: TableTools;
-  private rowTools: RowTools;
-  private revisionTools: RevisionTools;
-  private revisionChangesTools: RevisionChangesTools;
-  private migrationTools: MigrationTools;
-  private userTools: UserTools;
-  private endpointTools: EndpointTools;
+  private readonly authTools: AuthTools;
+  private readonly organizationTools: OrganizationTools;
+  private readonly projectTools: ProjectTools;
+  private readonly branchTools: BranchTools;
+  private readonly tableTools: TableTools;
+  private readonly rowTools: RowTools;
+  private readonly revisionTools: RevisionTools;
+  private readonly revisionChangesTools: RevisionChangesTools;
+  private readonly migrationTools: MigrationTools;
+  private readonly userTools: UserTools;
+  private readonly endpointTools: EndpointTools;
 
   constructor(
     private readonly configService: ConfigService,

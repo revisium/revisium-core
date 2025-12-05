@@ -3,9 +3,14 @@ import { McpResourceRegistrar } from '../types';
 
 export class QueryResource implements McpResourceRegistrar {
   register(server: McpServer): void {
-    server.resource(
+    server.registerResource(
       'query-specification',
       'revisium://specs/query',
+      {
+        description:
+          'Revisium Query Specification for filtering and sorting rows',
+        mimeType: 'application/json',
+      },
       async () => ({
         contents: [
           {
