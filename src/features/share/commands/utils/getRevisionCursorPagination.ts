@@ -57,7 +57,7 @@ export async function getRevisionCursorPagination<T extends NodeType>({
     await resolveArgs(resolveSequenceById, pageData),
   );
 
-  const endNode: NodeType | undefined = items.at(-1);
+  const endNode: NodeType | undefined = items[items.length - 1];
   const startNode: NodeType | undefined = items[0];
 
   const hasNextPage = endNode
