@@ -1,14 +1,13 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
-import { RowDeletedEvent } from 'src/infrastructure/cache';
+import { RowsDeletedEvent } from 'src/infrastructure/cache';
 import { DiffService } from 'src/features/share/diff.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
-import { RemoveRowHandlerReturnType } from 'src/features/draft/commands/types/remove-row.handler.types';
+import { RemoveRowsCommand } from 'src/features/draft/commands/impl/remove-rows.command';
+import { RemoveRowsHandlerReturnType } from 'src/features/draft/commands/types/remove-rows.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
 import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
@@ -22,10 +21,10 @@ import {
 } from '@revisium/schema-toolkit/lib';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
-@CommandHandler(RemoveRowCommand)
-export class RemoveRowHandler extends DraftHandler<
-  RemoveRowCommand,
-  RemoveRowHandlerReturnType
+@CommandHandler(RemoveRowsCommand)
+export class RemoveRowsHandler extends DraftHandler<
+  RemoveRowsCommand,
+  RemoveRowsHandlerReturnType
 > {
   constructor(
     protected readonly transactionService: TransactionPrismaService,
@@ -33,7 +32,6 @@ export class RemoveRowHandler extends DraftHandler<
     protected readonly eventBus: EventBus,
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly tableRequestDto: DraftTableRequestDto,
-    protected readonly rowRequestDto: DraftRowRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly foreignKeysService: ForeignKeysService,
@@ -43,36 +41,45 @@ export class RemoveRowHandler extends DraftHandler<
     super(transactionService, draftContext);
   }
 
-  protected async postActions({ data }: RemoveRowCommand) {
+  protected async postActions({ data }: RemoveRowsCommand) {
+    const uniqueRowIds = [...new Set(data.rowIds)];
     await this.eventBus.publishAll([
-      new RowDeletedEvent(data.revisionId, data.tableId, data.rowId),
+      new RowsDeletedEvent(data.revisionId, data.tableId, uniqueRowIds),
     ]);
   }
 
   protected async handler({
     data: input,
-  }: RemoveRowCommand): Promise<RemoveRowHandlerReturnType> {
-    const { revisionId, tableId, rowId, avoidCheckingSystemTable } = input;
+  }: RemoveRowsCommand): Promise<RemoveRowsHandlerReturnType> {
+    const { revisionId, tableId, rowIds, avoidCheckingSystemTable } = input;
+
+    if (!rowIds.length) {
+      throw new BadRequestException('rowIds array cannot be empty');
+    }
+
+    const uniqueRowIds = [...new Set(rowIds)];
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
 
     if (!avoidCheckingSystemTable) {
       await this.draftTransactionalCommands.validateNotSystemTable(tableId);
-      await this.validateForeignKeys(input);
+      await this.validateForeignKeys({ ...input, rowIds: uniqueRowIds });
     }
 
     await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
 
-    const row = await this.shareTransactionalQueries.findRowInTableOrThrow(
-      this.tableRequestDto.versionId,
-      rowId,
+    const rows = await Promise.all(
+      uniqueRowIds.map((rowId) =>
+        this.shareTransactionalQueries.findRowInTableOrThrow(
+          this.tableRequestDto.versionId,
+          rowId,
+        ),
+      ),
     );
 
-    await this.disconnectRow(row.versionId);
+    await this.disconnectRows(rows.map((row) => row.versionId));
 
-    this.rowRequestDto.id = rowId;
-    this.rowRequestDto.versionId = row.versionId;
-
+    const hasReadonlyRow = rows.some((row) => row.readonly);
     const areThereChangesInDraftTable = await this.areTheChangesInDraftTable();
 
     let wasTableReset = false;
@@ -85,7 +92,7 @@ export class RemoveRowHandler extends DraftHandler<
     const wasTableUpdated =
       this.tableRequestDto.versionId !== this.tableRequestDto.previousVersionId;
 
-    if (wasTableReset || wasTableUpdated || row.readonly) {
+    if (wasTableReset || wasTableUpdated || hasReadonlyRow) {
       await this.validateRevisionHasChanges();
     }
 
@@ -120,16 +127,14 @@ export class RemoveRowHandler extends DraftHandler<
     });
   }
 
-  private disconnectRow(rowId: string) {
+  private disconnectRows(rowVersionIds: string[]) {
     return this.transaction.table.update({
       where: {
         versionId: this.tableRequestDto.versionId,
       },
       data: {
         rows: {
-          disconnect: {
-            versionId: rowId,
-          },
+          disconnect: rowVersionIds.map((versionId) => ({ versionId })),
         },
       },
     });
@@ -173,7 +178,7 @@ export class RemoveRowHandler extends DraftHandler<
     });
   }
 
-  private async validateForeignKeys(data: RemoveRowCommand['data']) {
+  private async validateForeignKeys(data: RemoveRowsCommand['data']) {
     const schemaTable =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         data.revisionId,
@@ -213,10 +218,10 @@ export class RemoveRowHandler extends DraftHandler<
       });
 
       const count =
-        await this.foreignKeysService.countRowsByPathsAndValueInData(
+        await this.foreignKeysService.countRowsByPathsAndValuesInData(
           foreignKeyTable.versionId,
           paths,
-          data.rowId,
+          data.rowIds,
         );
 
       if (count) {

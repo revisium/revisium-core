@@ -555,6 +555,74 @@ describe('restapi - table-by-id', () => {
     }
   });
 
+  describe('DELETE /revision/:revisionId/tables/:tableId/rows', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('owner can delete rows', async () => {
+      const result = await request(app.getHttpServer())
+        .delete(getDeleteRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowIds: [preparedData.project.rowId],
+        })
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('branch');
+      expect(result).toHaveProperty('table');
+      expect(result).toHaveProperty('previousVersionTableId');
+      expect(result.branch.id).toBe(preparedData.project.branchId);
+    });
+
+    it('another owner cannot delete rows (private project)', async () => {
+      return request(app.getHttpServer())
+        .delete(getDeleteRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rowIds: [preparedData.project.rowId],
+        })
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    it('cannot delete rows without authentication', async () => {
+      return request(app.getHttpServer())
+        .delete(getDeleteRowsUrl())
+        .send({
+          rowIds: [preparedData.project.rowId],
+        })
+        .expect(401);
+    });
+
+    it('should fail for empty rowIds array', async () => {
+      return request(app.getHttpServer())
+        .delete(getDeleteRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowIds: [],
+        })
+        .expect(400)
+        .expect(/rowIds array cannot be empty/);
+    });
+
+    it('should fail for non-existent row', async () => {
+      return request(app.getHttpServer())
+        .delete(getDeleteRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowIds: ['non-existent-row-id'],
+        })
+        .expect(/A row with this name does not exist in the revision/);
+    });
+
+    function getDeleteRowsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows`;
+    }
+  });
+
   describe('POST /revision/:revisionId/tables/:tableId/rows - orderBy and filtering', () => {
     let preparedData: PrepareDataReturnType;
 
@@ -691,6 +759,18 @@ describe('restapi - table-by-id', () => {
           ],
         })
         .expect(/You are not allowed to update on Table/);
+    });
+
+    it('another owner cannot delete rows (no delete permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .delete(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rowIds: [preparedData.project.rowId],
+        })
+        .expect(/You are not allowed to delete on Row/);
     });
   });
 });

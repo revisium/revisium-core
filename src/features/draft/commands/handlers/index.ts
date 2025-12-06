@@ -3,6 +3,7 @@ import { ApiCreateRowHandler } from 'src/features/draft/commands/handlers/api-cr
 import { ApiCreateTableHandler } from 'src/features/draft/commands/handlers/api-create-table.handler';
 import { ApiPatchRowHandler } from 'src/features/draft/commands/handlers/api-patch-row.handler';
 import { ApiRemoveRowHandler } from 'src/features/draft/commands/handlers/api-remove-row.handler';
+import { ApiRemoveRowsHandler } from 'src/features/draft/commands/handlers/api-remove-rows.handler';
 import { ApiRemoveTableHandler } from 'src/features/draft/commands/handlers/api-remove-table.handler';
 import { ApiRenameRowHandler } from 'src/features/draft/commands/handlers/api-rename-row.handler';
 import { ApiRenameTableHandler } from 'src/features/draft/commands/handlers/api-rename-table.handler';
@@ -18,7 +19,7 @@ import { RenameRowHandler } from 'src/features/draft/commands/handlers/rename-ro
 import { RenameTableHandler } from 'src/features/draft/commands/handlers/rename-table.handler';
 import { CreateSchemaHandler } from 'src/features/draft/commands/handlers/transactional/create-schema.handler';
 import { CreateTableHandler } from 'src/features/draft/commands/handlers/create-table.handler';
-import { RemoveRowHandler } from 'src/features/draft/commands/handlers/remove-row.handler';
+import { RemoveRowsHandler } from 'src/features/draft/commands/handlers/remove-rows.handler';
 import { RemoveTableHandler } from 'src/features/draft/commands/handlers/remove-table.handler';
 import { RevertChangesHandler } from 'src/features/draft/commands/handlers/revert-changes.handler';
 import { GetOrCreateDraftRowHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-row.handler';
@@ -52,8 +53,9 @@ export const DRAFT_COMMANDS_HANDLERS = [
   ApiUpdateRowHandler,
   ApiRenameRowHandler,
   InternalUpdateRowsHandler,
-  RemoveRowHandler,
+  RemoveRowsHandler,
   ApiRemoveRowHandler,
+  ApiRemoveRowsHandler,
   GetOrCreateDraftTableHandler,
   GetOrCreateDraftRowHandler,
   GetOrCreateDraftRowsHandler,

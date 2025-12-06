@@ -117,10 +117,8 @@ export class ForeignKeysService {
       return [];
     }
 
-    // Validate all JSON paths
     jsonPaths.forEach((path) => this.validateJsonPath(path));
 
-    // Build conditions using Prisma.join for safe OR concatenation
     const conditions = Prisma.join(
       jsonPaths.map(
         (path) => Prisma.sql`
@@ -156,10 +154,8 @@ export class ForeignKeysService {
       return 0;
     }
 
-    // Validate all JSON paths
     jsonPaths.forEach((path) => this.validateJsonPath(path));
 
-    // Build conditions using Prisma.join for safe OR concatenation
     const conditions = Prisma.join(
       jsonPaths.map(
         (path) => Prisma.sql`
@@ -172,6 +168,52 @@ export class ForeignKeysService {
       ),
       ' OR ',
     );
+
+    const result: Array<{ count: string | number | bigint }> = await this
+      .transaction.$queryRaw`
+        SELECT count(*)
+        FROM "Row"
+        WHERE "versionId" IN (
+          SELECT "A" FROM "_RowToTable" WHERE "B" = ${tableVersionId}
+        )
+        AND (${conditions});
+      `;
+
+    return Number(result[0].count);
+  }
+
+  /**
+   * Batch version: counts rows where any of the paths contains any of the values.
+   * More efficient than calling countRowsByPathsAndValueInData in a loop.
+   */
+  async countRowsByPathsAndValuesInData(
+    tableVersionId: string,
+    jsonPaths: string[],
+    values: string[],
+  ) {
+    if (jsonPaths.length === 0 || values.length === 0) {
+      return 0;
+    }
+
+    jsonPaths.forEach((path) => this.validateJsonPath(path));
+
+    const allConditions: Prisma.Sql[] = [];
+
+    for (const path of jsonPaths) {
+      for (const value of values) {
+        allConditions.push(
+          Prisma.sql`
+            jsonb_path_exists(
+              "data",
+              ${`${path} ? (@ == $val)`}::jsonpath,
+              jsonb_build_object('val', to_jsonb(${value}::text))
+            )
+          `,
+        );
+      }
+    }
+
+    const conditions = Prisma.join(allConditions, ' OR ');
 
     const result: Array<{ count: string | number | bigint }> = await this
       .transaction.$queryRaw`

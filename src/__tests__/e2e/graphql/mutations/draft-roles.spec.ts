@@ -494,6 +494,84 @@ describe('graphql - draft mutations (role-based)', () => {
       });
     });
 
+    describe('removeRows', () => {
+      const getRemoveRowsMutation = (
+        revisionId: string,
+        tableId: string,
+        rowIds: string[],
+      ) => ({
+        query: gql`
+          mutation removeRows($data: RemoveRowsInput!) {
+            removeRows(data: $data) {
+              branch {
+                id
+              }
+              table {
+                id
+              }
+            }
+          }
+        `,
+        variables: {
+          data: { revisionId, tableId, rowIds },
+        },
+      });
+
+      it('owner can remove rows', async () => {
+        const result = await gqlQuery({
+          app,
+          token: fixture.owner.token,
+          ...getRemoveRowsMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            [fixture.project.rowId],
+          ),
+        });
+        expect(result.removeRows.branch).toBeDefined();
+      });
+
+      it('developer can remove rows', async () => {
+        const result = await gqlQuery({
+          app,
+          token: fixture.developer.token,
+          ...getRemoveRowsMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            [fixture.project.rowId],
+          ),
+        });
+        expect(result.removeRows.branch).toBeDefined();
+      });
+
+      it('editor can remove rows', async () => {
+        const result = await gqlQuery({
+          app,
+          token: fixture.editor.token,
+          ...getRemoveRowsMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            [fixture.project.rowId],
+          ),
+        });
+        expect(result.removeRows.branch).toBeDefined();
+      });
+
+      it('reader cannot remove rows', async () => {
+        await gqlQueryExpectError(
+          {
+            app,
+            token: fixture.reader.token,
+            ...getRemoveRowsMutation(
+              fixture.project.draftRevisionId,
+              fixture.project.tableId,
+              [fixture.project.rowId],
+            ),
+          },
+          /You are not allowed to delete on Row/,
+        );
+      });
+    });
+
     describe('renameRow', () => {
       const getRenameRowMutation = (
         revisionId: string,

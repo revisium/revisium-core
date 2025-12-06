@@ -220,6 +220,126 @@ describe('ForeignKeysService', () => {
     });
   });
 
+  describe('countRowsByPathsAndValuesInData (batch)', () => {
+    it('should count rows matching any of multiple values', async () => {
+      const tableVersionId = await createTableWithMultipleFields();
+
+      const count = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          ['$.author'],
+          ['john', 'jane'],
+        );
+      });
+
+      expect(count).toBe(3); // 2 with author=john, 1 with author=jane
+    });
+
+    it('should count rows matching any path and any value', async () => {
+      const tableVersionId = await createTableWithMultipleFields();
+
+      const count = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          ['$.author', '$.editor'],
+          ['john', 'mary'],
+        );
+      });
+
+      // john: author in 2 rows, editor in 1 row
+      // mary: editor in 2 rows
+      // But some rows have both, so we count unique rows
+      expect(count).toBe(4); // all 4 rows have either john or mary as author/editor
+    });
+
+    it('should return 0 when jsonPaths is empty', async () => {
+      const tableVersionId = await createTableWithRows();
+
+      const count = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          [],
+          ['value1', 'value2'],
+        );
+      });
+
+      expect(count).toBe(0);
+    });
+
+    it('should return 0 when values is empty', async () => {
+      const tableVersionId = await createTableWithRows();
+
+      const count = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          ['$.title'],
+          [],
+        );
+      });
+
+      expect(count).toBe(0);
+    });
+
+    it('should return 0 when no matches found', async () => {
+      const tableVersionId = await createTableWithRows();
+
+      const count = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          ['$.title'],
+          ['non-existent-1', 'non-existent-2'],
+        );
+      });
+
+      expect(count).toBe(0);
+    });
+
+    it('should handle nested paths with multiple values', async () => {
+      const tableVersionId = await createTableWithNestedData();
+
+      const count = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          ['$.user.id', '$.metadata.userId'],
+          ['user123', 'user456'],
+        );
+      });
+
+      expect(count).toBe(3); // user123 in 2 rows, user456 in 1 row
+    });
+
+    it('should be equivalent to multiple single-value calls', async () => {
+      const tableVersionId = await createTableWithMultipleFields();
+      const paths = ['$.author'];
+      const values = ['john', 'jane'];
+
+      // Batch call
+      const batchCount = await transactionPrismaService.run(async () => {
+        return service.countRowsByPathsAndValuesInData(
+          tableVersionId,
+          paths,
+          values,
+        );
+      });
+
+      // Individual calls
+      let individualSum = 0;
+      for (const value of values) {
+        const count = await transactionPrismaService.run(async () => {
+          return service.countRowsByPathsAndValueInData(
+            tableVersionId,
+            paths,
+            value,
+          );
+        });
+        individualSum += count;
+      }
+
+      // For non-overlapping values, batch should equal sum
+      expect(batchCount).toBe(individualSum);
+    });
+  });
+
   describe('Validation Tests', () => {
     it('should accept keys with numbers, hyphens and other valid characters', async () => {
       const tableVersionId = await createTableWithSpecialKeys();

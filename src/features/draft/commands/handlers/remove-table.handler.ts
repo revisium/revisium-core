@@ -7,7 +7,7 @@ import {
 import { TableDeletedEvent } from 'src/infrastructure/cache';
 import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { RemoveRowCommand } from 'src/features/draft/commands/impl/remove-row.command';
+import { RemoveRowsCommand } from 'src/features/draft/commands/impl/remove-rows.command';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';
 import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/remove-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
@@ -111,10 +111,10 @@ export class RemoveTableHandler extends DraftHandler<
 
   private async removeSchema(data: RemoveTableCommand['data']) {
     await this.commandBus.execute(
-      new RemoveRowCommand({
+      new RemoveRowsCommand({
         revisionId: data.revisionId,
         tableId: SystemTables.Schema,
-        rowId: data.tableId,
+        rowIds: [data.tableId],
         avoidCheckingSystemTable: true,
       }),
     );

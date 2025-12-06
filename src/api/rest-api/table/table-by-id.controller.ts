@@ -48,10 +48,14 @@ import {
   GetTableForeignKeysByDto,
   GetTableForeignKeysToDto,
   GetTableRowsDto,
+  RemoveRowsDto,
   RenameTableDto,
   UpdateTableDto,
 } from 'src/api/rest-api/table/dto';
-import { CreateRowResponse } from 'src/api/rest-api/table/model';
+import {
+  CreateRowResponse,
+  RemoveRowsResponse,
+} from 'src/api/rest-api/table/model';
 import {
   TableModel,
   TablesConnection,
@@ -156,6 +160,42 @@ export class TableByIdController {
       table: transformFromPrismaToTableModel(result.table),
       previousVersionTableId: result.previousVersionTableId,
       row: transformFromPrismaToRowModel(result.row),
+    };
+  }
+
+  @UsePipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  )
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.delete,
+    subject: PermissionSubject.Row,
+  })
+  @Delete('rows')
+  @ApiOperation({ operationId: 'deleteRows' })
+  @ApiBody({ type: RemoveRowsDto })
+  @ApiOkResponse({ type: RemoveRowsResponse })
+  async deleteRows(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Body() dto: RemoveRowsDto,
+  ): Promise<RemoveRowsResponse> {
+    const result = await this.draftApi.apiRemoveRows({
+      revisionId,
+      tableId,
+      rowIds: dto.rowIds,
+    });
+
+    return {
+      branch: transformFromPrismaToBranchModel(result.branch),
+      table: result.table
+        ? transformFromPrismaToTableModel(result.table)
+        : undefined,
+      previousVersionTableId: result.previousVersionTableId,
     };
   }
 

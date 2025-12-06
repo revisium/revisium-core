@@ -1,12 +1,12 @@
-export class RemoveRowCommand {
+export class RemoveRowsCommand {
   constructor(
     public readonly data: {
       revisionId: string;
       tableId: string;
-      rowId: string;
+      rowIds: string[];
       avoidCheckingSystemTable?: boolean;
     },
   ) {}
 }
 
-export type RemoveRowCommandData = RemoveRowCommand['data'];
+export type RemoveRowsCommandData = RemoveRowsCommand['data'];

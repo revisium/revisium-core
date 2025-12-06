@@ -77,6 +77,24 @@ export class RowCacheService {
     });
   }
 
+  public async invalidateRows({
+    revisionId,
+    tableId,
+    rowIds,
+  }: {
+    revisionId: string;
+    tableId: string;
+    rowIds: string[];
+  }) {
+    await Promise.all(
+      rowIds.map((rowId) =>
+        this.cache.delete({
+          key: ROW_CACHE_KEYS.ROW(revisionId, tableId, rowId),
+        }),
+      ),
+    );
+  }
+
   public async invalidateGetRows({
     revisionId,
     tableId,
