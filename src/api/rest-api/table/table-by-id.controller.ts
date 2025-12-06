@@ -163,13 +163,6 @@ export class TableByIdController {
     };
   }
 
-  @UsePipes(
-    new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }),
-  )
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
   @PermissionParams({
     action: PermissionAction.delete,
