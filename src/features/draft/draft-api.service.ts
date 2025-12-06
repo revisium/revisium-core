@@ -23,6 +23,10 @@ import {
   ApiRemoveRowCommandData,
 } from 'src/features/draft/commands/impl/api-remove-row.command';
 import {
+  ApiRemoveRowsCommand,
+  ApiRemoveRowsCommandData,
+} from 'src/features/draft/commands/impl/api-remove-rows.command';
+import {
   ApiRemoveTableCommand,
   ApiRemoveTableCommandData,
 } from 'src/features/draft/commands/impl/api-remove-table.command';
@@ -57,6 +61,7 @@ import {
 import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
+import { ApiRemoveRowsHandlerReturnType } from 'src/features/draft/commands/types/api-remove-rows.handler.types';
 import { ApiRemoveTableHandlerReturnType } from 'src/features/draft/commands/types/api-remove-table.handler.types';
 import { ApiUpdateRowHandlerReturnType } from 'src/features/draft/commands/types/api-update-row.handler.types';
 import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/types/api-update-table.handler.types';
@@ -133,6 +138,13 @@ export class DraftApiService {
       ApiRemoveRowCommand,
       ApiRemoveRowHandlerReturnType
     >(new ApiRemoveRowCommand(data));
+  }
+
+  public apiRemoveRows(data: ApiRemoveRowsCommandData) {
+    return this.commandBus.execute<
+      ApiRemoveRowsCommand,
+      ApiRemoveRowsHandlerReturnType
+    >(new ApiRemoveRowsCommand(data));
   }
 
   public apiCreateRevision(data: ApiCreateRevisionCommandData) {

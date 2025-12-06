@@ -7,17 +7,18 @@ import {
 import { GetBranchByIdQuery } from 'src/features/branch/quieries/impl';
 import { GetBranchByIdReturnType } from 'src/features/branch/quieries/types/get-branch-by-id.types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ApiRemoveRowCommand } from 'src/features/draft/commands/impl/api-remove-row.command';
+import { ApiRemoveRowsCommand } from 'src/features/draft/commands/impl/api-remove-rows.command';
 import { RemoveRowsCommand } from 'src/features/draft/commands/impl/remove-rows.command';
-import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
+import { ApiRemoveRowsHandlerReturnType } from 'src/features/draft/commands/types/api-remove-rows.handler.types';
 import { RemoveRowsHandlerReturnType } from 'src/features/draft/commands/types/remove-rows.handler.types';
 import { ShareCommands } from 'src/features/share/share.commands';
 import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-id.query';
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
-@CommandHandler(ApiRemoveRowCommand)
-export class ApiRemoveRowHandler
-  implements ICommandHandler<ApiRemoveRowCommand, ApiRemoveRowHandlerReturnType>
+@CommandHandler(ApiRemoveRowsCommand)
+export class ApiRemoveRowsHandler
+  implements
+    ICommandHandler<ApiRemoveRowsCommand, ApiRemoveRowsHandlerReturnType>
 {
   constructor(
     private readonly commandBus: CommandBus,
@@ -26,8 +27,7 @@ export class ApiRemoveRowHandler
     private readonly shareCommands: ShareCommands,
   ) {}
 
-  async execute({ data }: ApiRemoveRowCommand) {
-    const { rowId, ...rest } = data;
+  async execute({ data }: ApiRemoveRowsCommand) {
     const {
       branchId,
       tableVersionId,
@@ -35,7 +35,7 @@ export class ApiRemoveRowHandler
     }: RemoveRowsHandlerReturnType =
       await this.transactionService.runSerializable(async () =>
         this.commandBus.execute<RemoveRowsCommand, RemoveRowsHandlerReturnType>(
-          new RemoveRowsCommand({ ...rest, rowIds: [rowId] }),
+          new RemoveRowsCommand(data),
         ),
       );
 
@@ -59,7 +59,7 @@ export class ApiRemoveRowHandler
         : []),
     ]);
 
-    const result: ApiRemoveRowHandlerReturnType = {
+    const result: ApiRemoveRowsHandlerReturnType = {
       table,
       previousVersionTableId: previousTableVersionId,
       branch,

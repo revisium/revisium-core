@@ -437,6 +437,112 @@ describe('graphql - draft mutations', () => {
     });
   });
 
+  describe('removeRows', () => {
+    let fixture: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      fixture = await prepareData(app);
+    });
+
+    const getMutation = (
+      revisionId: string,
+      tableId: string,
+      rowIds: string[],
+    ) => ({
+      query: gql`
+        mutation removeRows($data: RemoveRowsInput!) {
+          removeRows(data: $data) {
+            branch {
+              id
+            }
+            table {
+              id
+            }
+            previousVersionTableId
+          }
+        }
+      `,
+      variables: {
+        data: { revisionId, tableId, rowIds },
+      },
+    });
+
+    it('owner can remove rows', async () => {
+      const result = await gqlQuery({
+        app,
+        token: fixture.owner.token,
+        ...getMutation(
+          fixture.project.draftRevisionId,
+          fixture.project.tableId,
+          [fixture.project.rowId],
+        ),
+      });
+
+      expect(result.removeRows.branch).toBeDefined();
+      expect(result.removeRows.branch.id).toBe(fixture.project.branchId);
+      expect(result.removeRows.table).toBeDefined();
+    });
+
+    it('cross-owner cannot remove rows', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.anotherOwner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            [fixture.project.rowId],
+          ),
+        },
+        /You are not allowed to read on Project/,
+      );
+    });
+
+    it('unauthenticated cannot remove rows', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            [fixture.project.rowId],
+          ),
+        },
+        /Unauthorized/,
+      );
+    });
+
+    it('should fail for empty rowIds array', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            [],
+          ),
+        },
+        /rowIds array cannot be empty/,
+      );
+    });
+
+    it('should fail for non-existent row', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            ['non-existent-row-id'],
+          ),
+        },
+        /A row with this name does not exist in the revision/,
+      );
+    });
+  });
+
   describe('renameRow', () => {
     let fixture: PrepareDataReturnType;
 

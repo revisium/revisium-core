@@ -437,6 +437,7 @@ type Mutation {
   loginGoogle(data: LoginGoogleInput!): LoginModel!
   patchRow(data: PatchRowInput!): PatchRowResultModel!
   removeRow(data: RemoveRowInput!): RemoveRowResultModel!
+  removeRows(data: RemoveRowsInput!): RemoveRowsResultModel!
   removeTable(data: RemoveTableInput!): RemoveTableResultModel!
   removeUserFromOrganization(data: RemoveUserFromOrganizationInput!): Boolean!
   removeUserFromProject(data: RemoveUserFromProjectInput!): Boolean!
@@ -595,6 +596,18 @@ input RemoveRowInput {
 }
 
 type RemoveRowResultModel {
+  branch: BranchModel!
+  previousVersionTableId: String
+  table: TableModel
+}
+
+input RemoveRowsInput {
+  revisionId: String!
+  rowIds: [String!]!
+  tableId: String!
+}
+
+type RemoveRowsResultModel {
   branch: BranchModel!
   previousVersionTableId: String
   table: TableModel

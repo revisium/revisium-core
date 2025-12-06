@@ -4,6 +4,7 @@ import { PatchRowInput } from 'src/api/graphql-api/draft/input/patch-row.input';
 import { PatchRowResultModel } from 'src/api/graphql-api/draft/model/patch-row-result.model';
 import { RenameRowResultModel } from 'src/api/graphql-api/draft/model/rename-row-result.model';
 import { RenameTableResultModel } from 'src/api/graphql-api/draft/model/rename-table-result.model';
+import { RemoveRowsResultModel } from 'src/api/graphql-api/draft/model/remove-rows-result.model';
 import { UpdateTableResultModel } from 'src/api/graphql-api/draft/model/update-table-result.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
@@ -14,6 +15,7 @@ import {
   CreateRowInput,
   CreateTableInput,
   RemoveRowInput,
+  RemoveRowsInput,
   RemoveTableInput,
   RenameRowInput,
   RenameTableInput,
@@ -122,5 +124,15 @@ export class DraftResolver {
   @Mutation(() => RemoveRowResultModel)
   async removeRow(@Args('data') data: RemoveRowInput) {
     return this.draftApiService.apiRemoveRow(data);
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.delete,
+    subject: PermissionSubject.Row,
+  })
+  @Mutation(() => RemoveRowsResultModel)
+  async removeRows(@Args('data') data: RemoveRowsInput) {
+    return this.draftApiService.apiRemoveRows(data);
   }
 }
