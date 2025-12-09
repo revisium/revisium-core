@@ -86,8 +86,6 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
     TableModule,
   ],
   providers: [
-    // Note: GraphQLValidationExceptionFilter is applied via @UseFilters on resolvers
-    // to avoid affecting REST API exception handling
     ConfigurationResolver,
     AuthResolver,
     UserResolver,

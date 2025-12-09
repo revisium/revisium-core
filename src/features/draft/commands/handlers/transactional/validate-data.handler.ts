@@ -1,37 +1,34 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import {
-  ValidateDataCommand,
-  ValidateDataCommandReturnType,
-} from 'src/features/draft/commands/impl/transactional/validate-data.command';
-import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
-import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import {
-  DataValidationException,
-  ForeignKeyTableNotFoundException,
-  ForeignKeyRowsNotFoundException,
-  ForeignKeyErrorDetail,
-  ValidationErrorDetail,
-  ValidationErrorContext,
-} from 'src/features/share/exceptions';
-import {
   createJsonValueStore,
   traverseValue,
 } from '@revisium/schema-toolkit/lib';
 import {
   JsonValueStore,
-  JsonStringValueStore,
   JsonValueStoreParent,
-  JsonObjectValueStore,
-  JsonArrayValueStore,
 } from '@revisium/schema-toolkit/model';
 import {
-  JsonValue,
-  JsonSchemaTypeName,
   JsonSchema,
+  JsonSchemaTypeName,
+  JsonValue,
 } from '@revisium/schema-toolkit/types';
 import { ErrorObject } from 'ajv/dist/2020';
+import {
+  ValidateDataCommand,
+  ValidateDataCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/validate-data.command';
+import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
+import {
+  DataValidationException,
+  ForeignKeyErrorDetail,
+  ForeignKeyRowsNotFoundException,
+  ForeignKeyTableNotFoundException,
+  ValidationErrorContext,
+  ValidationErrorDetail,
+} from 'src/features/share/exceptions';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
+import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 interface ForeignKeyReference {
   tableId: string;
@@ -175,7 +172,7 @@ export class ValidateDataHandler
       data.revisionId,
       data.tableId,
     );
-    return result.schema as JsonSchema;
+    return result.schema;
   }
 
   private collectForeignKeysWithPaths(
@@ -200,7 +197,7 @@ export class ValidateDataHandler
       return null;
     }
 
-    const stringNode = node as JsonStringValueStore;
+    const stringNode = node;
     const foreignKey = stringNode.foreignKey;
 
     if (
@@ -238,15 +235,13 @@ export class ValidateDataHandler
     parent: JsonValueStoreParent,
   ): string | null {
     if (parent.type === JsonSchemaTypeName.Object) {
-      const objectParent = parent as JsonObjectValueStore;
-      for (const [key, value] of Object.entries(objectParent.value)) {
+      for (const [key, value] of Object.entries(parent.value)) {
         if (value === node) {
           return key;
         }
       }
     } else if (parent.type === JsonSchemaTypeName.Array) {
-      const arrayParent = parent as JsonArrayValueStore;
-      const index = arrayParent.value.indexOf(node as JsonValueStore);
+      const index = parent.value.indexOf(node);
       if (index >= 0) {
         return String(index);
       }

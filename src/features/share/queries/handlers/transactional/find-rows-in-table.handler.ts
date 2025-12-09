@@ -20,7 +20,7 @@ export class FindRowsInTableHandler
 
     return this.transaction.row.findMany({
       where: {
-        OR: data.rowIds.map((id) => ({ id })),
+        id: { in: data.rowIds },
         tables: { some: { versionId: data.tableVersionId } },
       },
       select: { id: true, versionId: true, readonly: true },
