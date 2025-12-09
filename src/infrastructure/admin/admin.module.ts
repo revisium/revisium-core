@@ -22,6 +22,8 @@ export class AdminModule implements NestModule {
       rootPath: options.rootPath,
       serveStaticOptions: {
         cacheControl: true,
+        maxAge: '1y',
+        immutable: true,
       },
     };
 
@@ -34,9 +36,14 @@ export class AdminModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply((req: Request, res: Response, next: NextFunction) => {
-        const excludedExtensions = /\.(js|css|svg|png|jpg|jpeg)$/;
+        // Static assets with hash in filename get long cache
+        const staticAssets =
+          /\.(js|css|woff|woff2|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp|avif|wasm)$/;
 
-        if (!excludedExtensions.test(req.baseUrl)) {
+        if (staticAssets.test(req.baseUrl)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        } else {
+          // HTML and other files should not be cached
           res.setHeader('Cache-Control', 'no-store');
         }
 
