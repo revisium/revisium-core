@@ -39,7 +39,7 @@ export class AdminModule implements NestModule {
         const staticAssets =
           /\.(js|css|woff|woff2|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp|avif|wasm)$/;
 
-        if (staticAssets.test(req.baseUrl)) {
+        if (staticAssets.test(req.path)) {
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         } else {
           res.setHeader('Cache-Control', 'no-store');
