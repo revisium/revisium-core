@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { FindRowsInTableOrThrowQuery } from 'src/features/share/queries/impl/transactional/find-rows-in-table-or-throw.query';
+import { FindRowsInTableQuery } from 'src/features/share/queries/impl/transactional/find-rows-in-table.query';
 import {
   FindBranchInProjectType,
   FindDraftRevisionInBranchType,
@@ -52,6 +53,17 @@ export class ShareTransactionalQueries {
     );
   }
 
+  public async findTableInRevision(
+    revisionId: string,
+    tableId: string,
+  ): Promise<FindTableInRevisionType | null> {
+    try {
+      return await this.findTableInRevisionOrThrow(revisionId, tableId);
+    } catch {
+      return null;
+    }
+  }
+
   public async findRowInTableOrThrow(tableVersionId: string, rowId: string) {
     return this.queryBus.execute<
       FindRowInTableOrThrowQuery,
@@ -74,6 +86,18 @@ export class ShareTransactionalQueries {
     >(
       new FindRowsInTableOrThrowQuery({
         tableVersionId: tableVersionId,
+        rowIds,
+      }),
+    );
+  }
+
+  public async findRowsInTable(
+    tableVersionId: string,
+    rowIds: string[],
+  ): Promise<FindRowsInTableType> {
+    return this.queryBus.execute<FindRowsInTableQuery, FindRowsInTableType>(
+      new FindRowsInTableQuery({
+        tableVersionId,
         rowIds,
       }),
     );

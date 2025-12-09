@@ -26,6 +26,8 @@ export {
 export {
   gqlQuery,
   gqlQueryExpectError,
+  gqlQueryRaw,
   expectGraphQLFields,
   type GraphQLQueryOptions,
+  type GraphQLErrorResponse,
 } from './graphql-helpers';

@@ -55,7 +55,13 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
         resolvers: { DateTime: DateTimeResolver, JSON: JSONResolver },
         formatError: (error) => {
           if (error.extensions?.stacktrace) {
-            error.extensions.stacktrace = [];
+            return {
+              ...error,
+              extensions: {
+                ...error.extensions,
+                stacktrace: [],
+              },
+            };
           }
           return error;
         },
@@ -80,6 +86,8 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
     TableModule,
   ],
   providers: [
+    // Note: GraphQLValidationExceptionFilter is applied via @UseFilters on resolvers
+    // to avoid affecting REST API exception handling
     ConfigurationResolver,
     AuthResolver,
     UserResolver,

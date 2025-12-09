@@ -313,8 +313,49 @@ describe('restapi - row-by-id', () => {
         .expect(401);
     });
 
+    it('should return validation error for invalid data type', async () => {
+      return request(app.getHttpServer())
+        .put(getUpdateUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          data: {
+            ver: 'not-a-number',
+          },
+        })
+        .expect(400)
+        .expect(/must be number/);
+    });
+
+    it('should return validation error for missing required property', async () => {
+      return request(app.getHttpServer())
+        .put(getUpdateUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          data: {},
+        })
+        .expect(400)
+        .expect(/missing required property/);
+    });
+
+    it('should return error for non-existent row', async () => {
+      return request(app.getHttpServer())
+        .put(getNonExistentRowUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          data: {
+            ver: 5,
+          },
+        })
+        .expect(400)
+        .expect(/A row with this name does not exist in the revision/);
+    });
+
     function getUpdateUrl() {
       return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows/${preparedData.project.rowId}`;
+    }
+
+    function getNonExistentRowUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows/non-existent-row`;
     }
   });
 

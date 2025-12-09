@@ -8,6 +8,7 @@ import {
   createFreshTestApp,
   gqlQuery,
   gqlQueryExpectError,
+  gqlQueryRaw,
 } from 'src/__tests__/e2e/shared';
 
 describe('graphql - draft mutations', () => {
@@ -315,6 +316,84 @@ describe('graphql - draft mutations', () => {
         /Unauthorized/,
       );
     });
+
+    it('should return validation error with details for invalid data type', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            'invalid-data-row',
+            { ver: 'not-a-number' },
+          ),
+        },
+        /must be number/,
+      );
+    });
+
+    it('should return validation error for missing required property', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            'missing-prop-row',
+            {},
+          ),
+        },
+        /missing required property/,
+      );
+    });
+
+    it('should return validation error for duplicate row id', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            fixture.project.rowId, // existing row
+            { ver: 1 },
+          ),
+        },
+        /A row with this name already exists in the table/,
+      );
+    });
+
+    it('should return structured error response with code and details', async () => {
+      const response = await gqlQueryRaw({
+        app,
+        token: fixture.owner.token,
+        ...getMutation(
+          fixture.project.draftRevisionId,
+          fixture.project.tableId,
+          'structured-error-row',
+          { ver: 'not-a-number' },
+        ),
+      });
+
+      expect(response.errors).toBeDefined();
+      expect(response.errors).toHaveLength(1);
+
+      const error = response.errors![0];
+      expect(error.extensions).toBeDefined();
+      expect(error.extensions!.code).toBe('INVALID_DATA');
+      expect(error.extensions!.details).toBeDefined();
+      expect(Array.isArray(error.extensions!.details)).toBe(true);
+
+      const details = error.extensions!.details as Array<{
+        path: string;
+        message: string;
+      }>;
+      expect(details).toHaveLength(1);
+      expect(details[0].path).toBe('/ver');
+      expect(details[0].message).toBe('must be number');
+    });
   });
 
   describe('updateRow', () => {
@@ -373,6 +452,54 @@ describe('graphql - draft mutations', () => {
           ),
         },
         /You are not allowed to read on Project/,
+      );
+    });
+
+    it('should return validation error with details for invalid data type', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            fixture.project.rowId,
+            { ver: 'not-a-number' },
+          ),
+        },
+        /must be number/,
+      );
+    });
+
+    it('should return validation error for missing required property', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            fixture.project.rowId,
+            {},
+          ),
+        },
+        /missing required property/,
+      );
+    });
+
+    it('should return validation error for non-existent row', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            'non-existent-row-id',
+            { ver: 1 },
+          ),
+        },
+        /A row with this name does not exist in the revision/,
       );
     });
   });
@@ -600,6 +727,114 @@ describe('graphql - draft mutations', () => {
           ),
         },
         /You are not allowed to read on Project/,
+      );
+    });
+  });
+
+  describe('patchRow', () => {
+    let fixture: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      fixture = await prepareData(app);
+    });
+
+    const getMutation = (
+      revisionId: string,
+      tableId: string,
+      rowId: string,
+      patches: Array<{ op: string; path: string; value: unknown }>,
+    ) => ({
+      query: gql`
+        mutation patchRow($data: PatchRowInput!) {
+          patchRow(data: $data) {
+            previousVersionRowId
+            row {
+              id
+            }
+          }
+        }
+      `,
+      variables: {
+        data: { revisionId, tableId, rowId, patches },
+      },
+    });
+
+    it('owner can patch row', async () => {
+      const result = await gqlQuery({
+        app,
+        token: fixture.owner.token,
+        ...getMutation(
+          fixture.project.draftRevisionId,
+          fixture.project.tableId,
+          fixture.project.rowId,
+          [{ op: 'replace', path: 'ver', value: 999 }],
+        ),
+      });
+
+      expect(result.patchRow.row.id).toBe(fixture.project.rowId);
+    });
+
+    it('cross-owner cannot patch row', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.anotherOwner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            fixture.project.rowId,
+            [{ op: 'replace', path: 'ver', value: 1 }],
+          ),
+        },
+        /You are not allowed to read on Project/,
+      );
+    });
+
+    it('should return validation error for invalid data type', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            fixture.project.rowId,
+            [{ op: 'replace', path: 'ver', value: 'not-a-number' }],
+          ),
+        },
+        /must be number/,
+      );
+    });
+
+    it('should return validation error for invalid path', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            fixture.project.rowId,
+            [{ op: 'replace', path: 'non-existent-path', value: 'test' }],
+          ),
+        },
+        /Path not found/,
+      );
+    });
+
+    it('should return validation error for non-existent row', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getMutation(
+            fixture.project.draftRevisionId,
+            fixture.project.tableId,
+            'non-existent-row',
+            [{ op: 'replace', path: 'ver', value: 1 }],
+          ),
+        },
+        /Row not found/,
       );
     });
   });

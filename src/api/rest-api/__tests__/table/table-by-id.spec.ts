@@ -201,6 +201,67 @@ describe('restapi - table-by-id', () => {
         .expect(401);
     });
 
+    it('should return validation error for invalid data type', async () => {
+      return request(app.getHttpServer())
+        .post(getCreateRowUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowId: 'test-row-id',
+          data: {
+            ver: 'not-a-number',
+          },
+        })
+        .expect(400)
+        .expect(/must be number/);
+    });
+
+    it('should return validation error for missing required property', async () => {
+      return request(app.getHttpServer())
+        .post(getCreateRowUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowId: 'test-row-id',
+          data: {},
+        })
+        .expect(400)
+        .expect(/missing required property/);
+    });
+
+    it('should return error for duplicate row id', async () => {
+      return request(app.getHttpServer())
+        .post(getCreateRowUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowId: preparedData.project.rowId,
+          data: {
+            ver: 3,
+          },
+        })
+        .expect(400)
+        .expect(/A row with this name already exists in the table/);
+    });
+
+    it('should return structured error response for validation errors', async () => {
+      const result = await request(app.getHttpServer())
+        .post(getCreateRowUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rowId: 'test-structured-error',
+          data: {
+            ver: 'not-a-number',
+          },
+        })
+        .expect(400)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('code', 'INVALID_DATA');
+      expect(result).toHaveProperty('message');
+      expect(result).toHaveProperty('details');
+      expect(result.details).toHaveLength(1);
+      expect(result.details[0]).toHaveProperty('path', '/ver');
+      expect(result.details[0]).toHaveProperty('message', 'must be number');
+    });
+
     function getCreateRowUrl() {
       return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/create-row`;
     }

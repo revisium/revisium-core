@@ -126,8 +126,86 @@ describe('restapi - patch-row', () => {
         .expect(200);
     });
 
+    it('should return validation error for invalid data type', async () => {
+      return request(app.getHttpServer())
+        .patch(getPatchUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          patches: [
+            {
+              op: 'replace',
+              path: 'ver',
+              value: 'not-a-number',
+            },
+          ],
+        })
+        .expect(400)
+        .expect(/must be number/);
+    });
+
+    it('should return validation error for invalid path', async () => {
+      return request(app.getHttpServer())
+        .patch(getPatchUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          patches: [
+            {
+              op: 'replace',
+              path: 'non-existent-path',
+              value: 'test',
+            },
+          ],
+        })
+        .expect(400)
+        .expect(/Path not found/);
+    });
+
+    it('should return structured validation error response', async () => {
+      const result = await request(app.getHttpServer())
+        .patch(getPatchUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          patches: [
+            {
+              op: 'replace',
+              path: 'ver',
+              value: 'not-a-number',
+            },
+          ],
+        })
+        .expect(400)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('code', 'INVALID_DATA');
+      expect(result).toHaveProperty('message');
+      expect(result).toHaveProperty('details');
+      expect(result.details).toHaveLength(1);
+      expect(result.details[0]).toHaveProperty('path', '/ver');
+      expect(result.details[0]).toHaveProperty('message', 'must be number');
+    });
+
+    it('should return error for non-existent row', async () => {
+      return request(app.getHttpServer())
+        .patch(getNonExistentRowUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          patches: [
+            {
+              op: 'replace',
+              path: 'ver',
+              value: 10,
+            },
+          ],
+        })
+        .expect(404);
+    });
+
     function getPatchUrl() {
       return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows/${preparedData.project.rowId}`;
+    }
+
+    function getNonExistentRowUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows/non-existent-row`;
     }
   });
 

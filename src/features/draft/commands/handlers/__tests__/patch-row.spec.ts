@@ -33,7 +33,7 @@ describe('PatchRowHandler', () => {
       ],
     });
 
-    await expect(runTransaction(command)).rejects.toThrow('data is not valid');
+    await expect(runTransaction(command)).rejects.toThrow(/must be number/);
   });
 
   it('should throw an error if the path is invalid', async () => {

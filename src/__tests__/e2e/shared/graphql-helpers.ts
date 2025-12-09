@@ -58,6 +58,39 @@ export async function gqlQueryExpectError(
     .expect(errorPattern);
 }
 
+export interface GraphQLErrorResponse {
+  errors?: Array<{
+    message: string;
+    locations?: Array<{ line: number; column: number }>;
+    path?: string[];
+    extensions?: {
+      code?: string;
+      details?: unknown;
+      context?: unknown;
+      originalError?: unknown;
+      [key: string]: unknown;
+    };
+  }>;
+  data: unknown;
+}
+
+export async function gqlQueryRaw(
+  options: GraphQLQueryOptions,
+): Promise<GraphQLErrorResponse> {
+  const req = request(options.app.getHttpServer()).post(GRAPHQL_URL);
+
+  if (options.token) {
+    req.set('Authorization', `Bearer ${options.token}`);
+  }
+
+  const res = await req.send({
+    query: options.query,
+    variables: options.variables,
+  });
+
+  return res.body as GraphQLErrorResponse;
+}
+
 export function expectGraphQLFields(
   data: Record<string, unknown>,
   rootField: string,
