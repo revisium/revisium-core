@@ -1,6 +1,7 @@
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import compression from 'compression';
 import { initSwagger } from 'src/api/rest-api/init-swagger';
 import { AppModule } from 'src/app.module';
 
@@ -12,6 +13,7 @@ async function bootstrap() {
     }),
   });
 
+  app.use(compression());
   app.enableCors();
 
   app.useGlobalPipes(
