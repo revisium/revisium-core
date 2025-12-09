@@ -36,14 +36,12 @@ export class AdminModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply((req: Request, res: Response, next: NextFunction) => {
-        // Static assets with hash in filename get long cache
         const staticAssets =
           /\.(js|css|woff|woff2|ttf|eot|ico|svg|png|jpg|jpeg|gif|webp|avif|wasm)$/;
 
         if (staticAssets.test(req.baseUrl)) {
           res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
         } else {
-          // HTML and other files should not be cached
           res.setHeader('Cache-Control', 'no-store');
         }
 
