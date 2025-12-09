@@ -76,17 +76,16 @@ describe('CreateRowHandler', () => {
   });
 
   it('should throw an error if the data is not valid', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
       tableId: tableId,
-      rowId: rowId,
+      rowId: 'new-row',
       data: { ver: '3' },
     });
 
-    await expect(runTransaction(command)).rejects.toThrow('data is not valid');
+    await expect(runTransaction(command)).rejects.toThrow(/must be number/);
   });
 
   it('should throw an error if the table is a system table', async () => {

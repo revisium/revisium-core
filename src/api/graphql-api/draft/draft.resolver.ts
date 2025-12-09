@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { UseFilters, UseGuards } from '@nestjs/common';
 import { Args, Mutation, Resolver } from '@nestjs/graphql';
 import { PatchRowInput } from 'src/api/graphql-api/draft/input/patch-row.input';
 import { PatchRowResultModel } from 'src/api/graphql-api/draft/model/patch-row-result.model';
@@ -6,6 +6,7 @@ import { RenameRowResultModel } from 'src/api/graphql-api/draft/model/rename-row
 import { RenameTableResultModel } from 'src/api/graphql-api/draft/model/rename-table-result.model';
 import { RemoveRowsResultModel } from 'src/api/graphql-api/draft/model/remove-rows-result.model';
 import { UpdateTableResultModel } from 'src/api/graphql-api/draft/model/update-table-result.model';
+import { GraphQLValidationExceptionFilter } from 'src/api/graphql-api/filters/graphql-validation-exception.filter';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
@@ -28,6 +29,7 @@ import { RemoveRowResultModel } from 'src/api/graphql-api/draft/model/remove-row
 import { RemoveTableResultModel } from 'src/api/graphql-api/draft/model/remove-table-result.model';
 import { UpdateRowResultModel } from 'src/api/graphql-api/draft/model/update-row-result.model';
 
+@UseFilters(GraphQLValidationExceptionFilter)
 @PermissionParams({
   action: PermissionAction.read,
   subject: PermissionSubject.Project,

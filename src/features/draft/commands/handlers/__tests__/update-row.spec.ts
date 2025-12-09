@@ -86,7 +86,9 @@ describe('UpdateRowHandler', () => {
       data: { unrealKey: 3 },
     });
 
-    await expect(runTransaction(command)).rejects.toThrow('data is not valid');
+    await expect(runTransaction(command)).rejects.toThrow(
+      'missing required property "ver"',
+    );
   });
 
   it('should update the row if conditions are met', async () => {

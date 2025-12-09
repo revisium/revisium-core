@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
 
@@ -75,7 +75,18 @@ export class PatchRowHandler extends DraftHandler<
     const rootStore = createJsonValueStore(schemaStore, data.rowId, rowData);
 
     for (const patch of data.patches) {
-      const valueStore = getJsonValueStoreByPath(rootStore, patch.path);
+      let valueStore;
+      try {
+        valueStore = getJsonValueStoreByPath(rootStore, patch.path);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes('Path not found')
+        ) {
+          throw new BadRequestException(error.message);
+        }
+        throw error;
+      }
 
       if (valueStore instanceof JsonObjectValueStore) {
         const tempStore = createJsonObjectValueStore(
