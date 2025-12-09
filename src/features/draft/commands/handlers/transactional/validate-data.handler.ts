@@ -17,13 +17,11 @@ import {
   ValidateDataCommand,
   ValidateDataCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/validate-data.command';
-import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import {
   DataValidationException,
   ForeignKeyErrorDetail,
   ForeignKeyRowsNotFoundException,
   ForeignKeyTableNotFoundException,
-  ValidationErrorContext,
   ValidationErrorDetail,
 } from 'src/features/share/exceptions';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
@@ -46,7 +44,6 @@ export class ValidateDataHandler
   implements ICommandHandler<ValidateDataCommand, ValidateDataCommandReturnType>
 {
   constructor(
-    protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
@@ -62,7 +59,12 @@ export class ValidateDataHandler
       schemaHash,
       data.tableId,
     );
-    await this.validateForeignKeyReferences(data.rows, schema, data.tableId);
+    await this.validateForeignKeyReferences(
+      data.rows,
+      schema,
+      data.tableId,
+      data.revisionId,
+    );
 
     return { schemaHash };
   }
@@ -93,21 +95,22 @@ export class ValidateDataHandler
     rows: RowData[],
     schema: JsonSchema,
     tableId: string,
+    revisionId: string,
   ): Promise<void> {
     const allErrors: ForeignKeyErrorDetail[] = [];
-    let lastContext: ValidationErrorContext | undefined;
 
     for (const row of rows) {
-      const context: ValidationErrorContext = { tableId, rowId: row.rowId };
-      lastContext = context;
-
       const foreignKeys = this.extractForeignKeyReferences(row, schema);
-      const errors = await this.checkForeignKeyReferences(foreignKeys, context);
+      const errors = await this.checkForeignKeyReferences(
+        foreignKeys,
+        tableId,
+        revisionId,
+      );
       allErrors.push(...errors);
     }
 
     if (allErrors.length > 0) {
-      throw new ForeignKeyRowsNotFoundException(allErrors, lastContext);
+      throw new ForeignKeyRowsNotFoundException(allErrors, { tableId });
     }
   }
 
@@ -126,14 +129,15 @@ export class ValidateDataHandler
 
   private async checkForeignKeyReferences(
     foreignKeys: ForeignKeyReference[],
-    context: ValidationErrorContext,
+    tableId: string,
+    revisionId: string,
   ): Promise<ForeignKeyErrorDetail[]> {
     if (foreignKeys.length === 0) {
       return [];
     }
 
     const groupedByTable = this.groupForeignKeysByTable(foreignKeys);
-    return this.validateGroupedForeignKeys(groupedByTable, context);
+    return this.validateGroupedForeignKeys(groupedByTable, tableId, revisionId);
   }
 
   private formatValidationErrors(
@@ -265,11 +269,12 @@ export class ValidateDataHandler
 
   private async validateGroupedForeignKeys(
     groupedByTable: Map<string, Array<{ rowId: string; path: string }>>,
-    context: ValidationErrorContext,
+    tableId: string,
+    revisionId: string,
   ): Promise<ForeignKeyErrorDetail[]> {
     const results = await Promise.all(
-      Array.from(groupedByTable.entries()).map(([tableId, items]) =>
-        this.validateTableReferences(tableId, items, context),
+      Array.from(groupedByTable.entries()).map(([refTableId, items]) =>
+        this.validateTableReferences(refTableId, items, tableId, revisionId),
       ),
     );
 
@@ -277,24 +282,25 @@ export class ValidateDataHandler
   }
 
   private async validateTableReferences(
-    tableId: string,
+    refTableId: string,
     references: Array<{ rowId: string; path: string }>,
-    context: ValidationErrorContext,
+    sourceTableId: string,
+    revisionId: string,
   ): Promise<ForeignKeyErrorDetail[]> {
     const table = await this.shareTransactionalQueries.findTableInRevision(
-      this.revisionRequestDto.id,
-      tableId,
+      revisionId,
+      refTableId,
     );
 
     if (!table) {
       throw new ForeignKeyTableNotFoundException(
-        tableId,
-        context,
+        refTableId,
+        { tableId: sourceTableId },
         references[0].path,
       );
     }
 
-    return this.findMissingRows(table.versionId, tableId, references);
+    return this.findMissingRows(table.versionId, refTableId, references);
   }
 
   private async findMissingRows(

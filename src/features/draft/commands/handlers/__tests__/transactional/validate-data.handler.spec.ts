@@ -140,7 +140,7 @@ describe('ValidateDataHandler', () => {
             tableId: string;
             missingRowIds: string[];
           }>;
-          context: { tableId: string; rowId: string };
+          context: { tableId: string };
         };
 
         expect(response.code).toBe(ValidationErrorCode.FOREIGN_KEY_NOT_FOUND);
@@ -149,7 +149,6 @@ describe('ValidateDataHandler', () => {
         expect(response.details[0].tableId).toBe(tableId);
         expect(response.details[0].missingRowIds).toContain('non-existent-id');
         expect(response.context.tableId).toBe(table.tableId);
-        expect(response.context.rowId).toBe('test-row');
       }
     });
 
