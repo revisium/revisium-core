@@ -465,6 +465,7 @@ enum OrderByField {
   createdAt
   data
   id
+  publishedAt
   updatedAt
 }
 
