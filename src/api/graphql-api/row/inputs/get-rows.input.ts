@@ -5,6 +5,7 @@ import { JSONResolver } from 'graphql-scalars';
 export enum OrderByField {
   createdAt = 'createdAt',
   id = 'id',
+  publishedAt = 'publishedAt',
   updatedAt = 'updatedAt',
   data = 'data',
 }
