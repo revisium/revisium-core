@@ -10,8 +10,10 @@ import { GetTableInput } from 'src/api/graphql-api/table/inputs/get-table.input'
 import { GetTablesInput } from 'src/api/graphql-api/table/inputs/get-tables.input';
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
+import { TableViewsDataModel } from 'src/api/graphql-api/views/model/table-views-data.model';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { TableApiService } from 'src/features/table/table-api.service';
+import { ViewsApiService } from 'src/features/views/views-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -22,6 +24,7 @@ export class TableResolver {
   constructor(
     private readonly tableApi: TableApiService,
     private readonly rowApi: RowApiService,
+    private readonly viewsApi: ViewsApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -95,6 +98,14 @@ export class TableResolver {
   ) {
     return this.tableApi.resolveTableForeignKeysTo({
       ...data,
+      revisionId: table.context.revisionId,
+      tableId: table.id,
+    });
+  }
+
+  @ResolveField(() => TableViewsDataModel)
+  views(@Parent() table: TableModel) {
+    return this.viewsApi.getTableViews({
       revisionId: table.context.revisionId,
       tableId: table.id,
     });

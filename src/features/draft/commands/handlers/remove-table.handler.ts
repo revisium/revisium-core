@@ -118,7 +118,29 @@ export class RemoveTableHandler extends DraftHandler<
         avoidCheckingSystemTable: true,
       }),
     );
+    await this.removeViewsRow(data);
     await this.createRemoveMigration(data);
+  }
+
+  private async removeViewsRow(data: RemoveTableCommand['data']) {
+    const viewsRow =
+      await this.shareTransactionalQueries.findViewsRowInRevision(
+        data.revisionId,
+        data.tableId,
+      );
+
+    if (!viewsRow) {
+      return;
+    }
+
+    await this.commandBus.execute(
+      new RemoveRowsCommand({
+        revisionId: data.revisionId,
+        tableId: SystemTables.Views,
+        rowIds: [data.tableId],
+        avoidCheckingSystemTable: true,
+      }),
+    );
   }
 
   private async validateForeignKeys(data: RemoveTableCommand['data']) {

@@ -21,6 +21,7 @@ import {
   GetTableSchemaQuery,
   GetTableSchemaQueryReturnType,
 } from 'src/features/share/queries/impl';
+import { SystemTables } from 'src/features/share/system-tables.consts';
 
 @Injectable()
 export class ShareTransactionalQueries {
@@ -150,5 +151,29 @@ export class ShareTransactionalQueries {
         tableId,
       }),
     );
+  }
+
+  public async findViewsRowInRevision(
+    revisionId: string,
+    tableId: string,
+  ): Promise<(FindRowInTableType & { tableVersionId: string }) | null> {
+    const viewsTable = await this.findTableInRevision(
+      revisionId,
+      SystemTables.Views,
+    );
+
+    if (!viewsTable) {
+      return null;
+    }
+
+    try {
+      const row = await this.findRowInTableOrThrow(
+        viewsTable.versionId,
+        tableId,
+      );
+      return { ...row, tableVersionId: viewsTable.versionId };
+    } catch {
+      return null;
+    }
   }
 }

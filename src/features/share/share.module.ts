@@ -12,6 +12,7 @@ import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { ShareCommands } from 'src/features/share/share.commands';
 import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { SystemTablesService } from 'src/features/share/system-tables.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
     DiffService,
     JsonSchemaStoreService,
     JsonSchemaValidatorService,
+    SystemTablesService,
     ...SHARE_COMMANDS_HANDLERS,
     ...SHARE_QUERIES_HANDLERS,
   ],
@@ -39,6 +41,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
     DiffService,
     JsonSchemaStoreService,
     JsonSchemaValidatorService,
+    SystemTablesService,
   ],
 })
 export class ShareModule {}

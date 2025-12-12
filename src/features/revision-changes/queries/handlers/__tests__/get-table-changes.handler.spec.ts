@@ -8,6 +8,7 @@ import { GetTableChangesQuery } from '../../impl/get-table-changes.query';
 import { DiffService } from 'src/features/share/diff.service';
 import { SchemaImpactService } from '../../../services/schema-impact.service';
 import { RevisionComparisonService } from '../../../services/revision-comparison.service';
+import { ViewsComparisonService } from '../../../services/views-comparison.service';
 import { TableChangeMapper } from '../../../mappers/table-change.mapper';
 import { ChangeType, MigrationType } from '../../../types';
 import { SystemTables } from 'src/features/share/system-tables.consts';
@@ -25,6 +26,7 @@ describe('GetTableChangesHandler', () => {
         DiffService,
         SchemaImpactService,
         RevisionComparisonService,
+        ViewsComparisonService,
         TableChangeMapper,
       ],
     }).compile();
@@ -239,6 +241,102 @@ describe('GetTableChangesHandler', () => {
       expect(tableChange?.node.schemaMigrations[0]).toMatchObject({
         migrationType: MigrationType.Init,
       });
+    });
+
+    it('returns viewsChanges with no changes when no views exist', async () => {
+      const { toRevision, addedTable } = await prepareTableChanges();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      const tableChange = result.edges.find(
+        (e) => e.node.tableCreatedId === addedTable.createdId,
+      );
+      expect(tableChange).toBeDefined();
+      expect(tableChange?.node.viewsChanges).toBeDefined();
+      expect(tableChange?.node.viewsChanges.hasChanges).toBe(false);
+      expect(tableChange?.node.viewsChanges.changes).toEqual([]);
+      expect(tableChange?.node.viewsChanges.addedCount).toBe(0);
+      expect(tableChange?.node.viewsChanges.modifiedCount).toBe(0);
+      expect(tableChange?.node.viewsChanges.removedCount).toBe(0);
+      expect(tableChange?.node.viewsChanges.renamedCount).toBe(0);
+    });
+
+    it('returns viewsChanges with added views', async () => {
+      const { toRevision, addedTable } = await prepareTableWithViews();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      const tableChange = result.edges.find(
+        (e) => e.node.tableCreatedId === addedTable.createdId,
+      );
+      expect(tableChange).toBeDefined();
+      expect(tableChange?.node.viewsChanges.hasChanges).toBe(true);
+      expect(tableChange?.node.viewsChanges.changes).toHaveLength(2);
+      expect(tableChange?.node.viewsChanges.addedCount).toBe(2);
+      expect(tableChange?.node.viewsChanges.changes[0].viewId).toBe('default');
+      expect(tableChange?.node.viewsChanges.changes[0].changeType).toBe(
+        ChangeType.Added,
+      );
+      expect(tableChange?.node.viewsChanges.changes[1].viewId).toBe('custom');
+      expect(tableChange?.node.viewsChanges.changes[1].changeType).toBe(
+        ChangeType.Added,
+      );
+    });
+
+    it('returns viewsChanges with modified views', async () => {
+      const { toRevision, modifiedTable } =
+        await prepareTableWithModifiedViews();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      const tableChange = result.edges.find(
+        (e) => e.node.tableCreatedId === modifiedTable.createdId,
+      );
+      expect(tableChange).toBeDefined();
+      expect(tableChange?.node.viewsChanges.hasChanges).toBe(true);
+      expect(tableChange?.node.viewsChanges.modifiedCount).toBe(1);
+      expect(tableChange?.node.viewsChanges.changes[0].viewId).toBe('default');
+      expect(tableChange?.node.viewsChanges.changes[0].changeType).toBe(
+        ChangeType.Modified,
+      );
+    });
+
+    it('returns viewsChanges with removed views', async () => {
+      const { toRevision, modifiedTable } =
+        await prepareTableWithRemovedViews();
+
+      const result = await handler.execute(
+        new GetTableChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      const tableChange = result.edges.find(
+        (e) => e.node.tableCreatedId === modifiedTable.createdId,
+      );
+      expect(tableChange).toBeDefined();
+      expect(tableChange?.node.viewsChanges.hasChanges).toBe(true);
+      expect(tableChange?.node.viewsChanges.removedCount).toBe(1);
+      expect(tableChange?.node.viewsChanges.changes[0].viewId).toBe('custom');
+      expect(tableChange?.node.viewsChanges.changes[0].changeType).toBe(
+        ChangeType.Removed,
+      );
     });
   });
 
@@ -743,5 +841,357 @@ describe('GetTableChangesHandler', () => {
     });
 
     return { fromRevision, toRevision, addedTable, migrationData };
+  }
+
+  async function prepareTableWithViews() {
+    const branch = await prismaService.branch.create({
+      data: {
+        id: nanoid(),
+        name: nanoid(),
+        project: {
+          create: {
+            id: nanoid(),
+            name: nanoid(),
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const fromRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        branchId: branch.id,
+      },
+    });
+
+    const toRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        parentId: fromRevision.id,
+        branchId: branch.id,
+      },
+    });
+
+    // Create user table
+    const addedTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create views system table in toRevision
+    const viewsTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Views,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        system: true,
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create views row for the user table with 2 views
+    await prismaService.row.create({
+      data: {
+        id: addedTable.id,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: viewsTable.versionId },
+        },
+        data: {
+          version: 1,
+          defaultViewId: 'default',
+          views: [
+            { id: 'default', name: 'Default', columns: null },
+            { id: 'custom', name: 'Custom View', columns: [{ field: 'id' }] },
+          ],
+        },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    return { fromRevision, toRevision, addedTable };
+  }
+
+  async function prepareTableWithModifiedViews() {
+    const branch = await prismaService.branch.create({
+      data: {
+        id: nanoid(),
+        name: nanoid(),
+        project: {
+          create: {
+            id: nanoid(),
+            name: nanoid(),
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const fromRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        branchId: branch.id,
+      },
+    });
+
+    const toRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        parentId: fromRevision.id,
+        branchId: branch.id,
+      },
+    });
+
+    // Create table in both revisions
+    const tableCreatedId = nanoid();
+    const tableId = nanoid();
+
+    const fromTable = await prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    const modifiedTable = await prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create views system table in fromRevision
+    const fromViewsTableCreatedId = nanoid();
+    const fromViewsTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Views,
+        createdId: fromViewsTableCreatedId,
+        versionId: nanoid(),
+        system: true,
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    // Create views row for fromRevision
+    await prismaService.row.create({
+      data: {
+        id: tableId,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: fromViewsTable.versionId },
+        },
+        data: {
+          version: 1,
+          defaultViewId: 'default',
+          views: [{ id: 'default', name: 'Default', columns: null }],
+        },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    // Create views system table in toRevision
+    const toViewsTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Views,
+        createdId: fromViewsTableCreatedId,
+        versionId: nanoid(),
+        system: true,
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create modified views row for toRevision
+    await prismaService.row.create({
+      data: {
+        id: tableId,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: toViewsTable.versionId },
+        },
+        data: {
+          version: 1,
+          defaultViewId: 'default',
+          views: [
+            {
+              id: 'default',
+              name: 'Default',
+              columns: [{ field: 'id', width: 200 }],
+            },
+          ],
+        },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    return { fromRevision, toRevision, fromTable, modifiedTable };
+  }
+
+  async function prepareTableWithRemovedViews() {
+    const branch = await prismaService.branch.create({
+      data: {
+        id: nanoid(),
+        name: nanoid(),
+        project: {
+          create: {
+            id: nanoid(),
+            name: nanoid(),
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const fromRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        branchId: branch.id,
+      },
+    });
+
+    const toRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        parentId: fromRevision.id,
+        branchId: branch.id,
+      },
+    });
+
+    // Create table in both revisions
+    const tableCreatedId = nanoid();
+    const tableId = nanoid();
+
+    const fromTable = await prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    const modifiedTable = await prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create views system table in fromRevision
+    const fromViewsTableCreatedId = nanoid();
+    const fromViewsTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Views,
+        createdId: fromViewsTableCreatedId,
+        versionId: nanoid(),
+        system: true,
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    // Create views row for fromRevision with 2 views
+    await prismaService.row.create({
+      data: {
+        id: tableId,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: fromViewsTable.versionId },
+        },
+        data: {
+          version: 1,
+          defaultViewId: 'default',
+          views: [
+            { id: 'default', name: 'Default', columns: null },
+            { id: 'custom', name: 'Custom', columns: [{ field: 'id' }] },
+          ],
+        },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    // Create views system table in toRevision
+    const toViewsTable = await prismaService.table.create({
+      data: {
+        id: SystemTables.Views,
+        createdId: fromViewsTableCreatedId,
+        versionId: nanoid(),
+        system: true,
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    // Create views row for toRevision with 1 view (custom view removed)
+    await prismaService.row.create({
+      data: {
+        id: tableId,
+        createdId: nanoid(),
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: toViewsTable.versionId },
+        },
+        data: {
+          version: 1,
+          defaultViewId: 'default',
+          views: [{ id: 'default', name: 'Default', columns: null }],
+        },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    return { fromRevision, toRevision, fromTable, modifiedTable };
   }
 });

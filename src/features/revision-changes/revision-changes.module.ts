@@ -4,6 +4,7 @@ import {
   RowDiffService,
   SchemaImpactService,
   RevisionComparisonService,
+  ViewsComparisonService,
 } from './services';
 import {
   GetRevisionChangesHandler,
@@ -27,6 +28,7 @@ const services = [
   RowDiffService,
   SchemaImpactService,
   RevisionComparisonService,
+  ViewsComparisonService,
 ];
 
 const mappers = [TableChangeMapper, RowChangeMapper];

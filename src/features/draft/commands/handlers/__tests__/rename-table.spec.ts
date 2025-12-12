@@ -1,5 +1,6 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
+import { nanoid } from 'nanoid';
 import objectHash from 'object-hash';
 import {
   prepareProject,
@@ -274,5 +275,128 @@ describe('RenameTableHandler', () => {
 
   afterAll(async () => {
     await prismaService.$disconnect();
+  });
+
+  describe('views integration', () => {
+    it('should rename views row when renaming table that has views configured', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const viewsTableVersionId = nanoid();
+      await prismaService.table.create({
+        data: {
+          id: SystemTables.Views,
+          versionId: viewsTableVersionId,
+          createdId: nanoid(),
+          readonly: false,
+          system: true,
+          revisions: {
+            connect: { id: draftRevisionId },
+          },
+        },
+      });
+
+      const viewsRowVersionId = nanoid();
+      await prismaService.row.create({
+        data: {
+          id: tableId,
+          versionId: viewsRowVersionId,
+          createdId: nanoid(),
+          readonly: false,
+          data: {
+            version: 1,
+            defaultViewId: 'default',
+            views: [{ id: 'default', name: 'Default' }],
+          },
+          hash: '',
+          schemaHash: '',
+          tables: {
+            connect: { versionId: viewsTableVersionId },
+          },
+        },
+      });
+
+      const viewsRowBefore = await prismaService.row.findFirst({
+        where: {
+          id: tableId,
+          tables: { some: { versionId: viewsTableVersionId } },
+        },
+      });
+      expect(viewsRowBefore).not.toBeNull();
+
+      const command = new RenameTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        nextTableId,
+      });
+      await runTransaction(command);
+
+      const viewsRowAfterOld = await prismaService.row.findFirst({
+        where: {
+          id: tableId,
+          tables: {
+            some: {
+              id: SystemTables.Views,
+              revisions: { some: { id: draftRevisionId } },
+            },
+          },
+        },
+      });
+      expect(viewsRowAfterOld).toBeNull();
+
+      const viewsRowAfterNew = await prismaService.row.findFirst({
+        where: {
+          id: nextTableId,
+          tables: {
+            some: {
+              id: SystemTables.Views,
+              revisions: { some: { id: draftRevisionId } },
+            },
+          },
+        },
+      });
+      expect(viewsRowAfterNew).not.toBeNull();
+      expect(viewsRowAfterNew!.data).toEqual({
+        version: 1,
+        defaultViewId: 'default',
+        views: [{ id: 'default', name: 'Default' }],
+      });
+    });
+
+    it('should not fail when renaming table without views', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new RenameTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        nextTableId,
+      });
+
+      await expect(runTransaction(command)).resolves.toBeDefined();
+    });
+
+    it('should not fail when views table exists but no views row for table', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      await prismaService.table.create({
+        data: {
+          id: SystemTables.Views,
+          versionId: nanoid(),
+          createdId: nanoid(),
+          readonly: false,
+          system: true,
+          revisions: {
+            connect: { id: draftRevisionId },
+          },
+        },
+      });
+
+      const command = new RenameTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        nextTableId,
+      });
+
+      await expect(runTransaction(command)).resolves.toBeDefined();
+    });
   });
 });

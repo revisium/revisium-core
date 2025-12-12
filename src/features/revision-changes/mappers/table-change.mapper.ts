@@ -3,7 +3,7 @@ import {
   TableDiff,
   TableDiffChangeType,
 } from 'src/features/share/diff.service';
-import { TableChange, ChangeType } from '../types';
+import { TableChange, ChangeType, ViewsChangeDetail } from '../types';
 import { SchemaMigrationDetail } from '../types/schema-change.types';
 import { Prisma } from 'src/__generated__/client';
 import { SchemaImpactService } from '../services/schema-impact.service';
@@ -24,6 +24,7 @@ export class TableChangeMapper {
     diff: TableDiff,
     migrations: Prisma.JsonValue[],
     rowStats: RowStatsData | null,
+    viewsChanges: ViewsChangeDetail,
   ): TableChange {
     const changeType = this.mapChangeType(diff.changeType);
 
@@ -35,6 +36,7 @@ export class TableChangeMapper {
       changeType,
       ...this.mapRenamedFields(changeType, diff.fromId, diff.toId),
       schemaMigrations: this.extractSchemaMigrations(migrations),
+      viewsChanges,
       rowChangesCount: Number(rowStats?.total ?? 0),
       addedRowsCount: Number(rowStats?.added ?? 0),
       modifiedRowsCount: Number(rowStats?.modified ?? 0),

@@ -21,6 +21,7 @@ import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { RevisionModule } from 'src/features/revision';
+import { ViewsModule } from 'src/features/views/views.module';
 import { REVISION_QUERIES_HANDLERS } from 'src/features/revision/queries/commands';
 import { InternalRowApiService } from 'src/features/row/internal-row-api.service';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
@@ -124,6 +125,7 @@ export const createTestingModule = async () => {
       NotificationModule,
       CacheModule.register(),
       RevisionModule,
+      ViewsModule,
       RevisiumCacheModule.forRootAsync(),
     ],
     providers: [

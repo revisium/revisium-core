@@ -7,6 +7,7 @@ import { UsersOrganizationResolver } from 'src/api/graphql-api/organization/user
 import { UsersProjectResolver } from 'src/api/graphql-api/project/users-project.resolver';
 import { RevisionChangesResolver } from 'src/api/graphql-api/revision-changes/revision-changes.resolver';
 import { RoleResolver } from 'src/api/graphql-api/role/role.resolver';
+import { ViewsResolver } from 'src/api/graphql-api/views/views.resolver';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
 import { DraftModule } from 'src/features/draft/draft.module';
@@ -33,6 +34,7 @@ import { UserModule } from 'src/features/user/user.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
 import { ProjectModule } from 'src/features/project/project.module';
 import { TableModule } from 'src/features/table/table.module';
+import { ViewsModule } from 'src/features/views/views.module';
 import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql-metrics.plugin';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
@@ -84,6 +86,7 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
     RevisionModule,
     RevisionChangesModule,
     TableModule,
+    ViewsModule,
   ],
   providers: [
     ConfigurationResolver,
@@ -104,6 +107,7 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
     SearchRowsResolver,
     TableResolver,
     RevisionChangesResolver,
+    ViewsResolver,
   ],
 })
 export class GraphqlApiModule {}
