@@ -1,4 +1,5 @@
 import { CommandBus } from '@nestjs/cqrs';
+import hash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   getArraySchema,
@@ -89,22 +90,25 @@ describe('PatchRowHandler', () => {
       schemaRowVersionId,
     } = ids;
 
+    const newSchema = getObjectSchema({
+      str: getStringSchema(),
+      num: getNumberSchema(),
+      bool: getBooleanSchema(),
+      list: getArraySchema(
+        getObjectSchema({
+          nestedList: getArraySchema(getNumberSchema()),
+          nestedField: getBooleanSchema(),
+        }),
+      ),
+    });
+
     await prismaService.row.update({
       where: {
         versionId: schemaRowVersionId,
       },
       data: {
-        data: getObjectSchema({
-          str: getStringSchema(),
-          num: getNumberSchema(),
-          bool: getBooleanSchema(),
-          list: getArraySchema(
-            getObjectSchema({
-              nestedList: getArraySchema(getNumberSchema()),
-              nestedField: getBooleanSchema(),
-            }),
-          ),
-        }),
+        data: newSchema,
+        hash: hash(newSchema),
       },
     });
 
@@ -132,6 +136,7 @@ describe('PatchRowHandler', () => {
             },
           ],
         },
+        schemaHash: hash(newSchema),
       },
     });
 
