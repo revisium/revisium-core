@@ -1,6 +1,7 @@
 import { Field, Int, ObjectType } from '@nestjs/graphql';
 import { ChangeTypeEnum } from './enums.model';
 import { SchemaMigrationDetailModel } from './schema-change.model';
+import { ViewsChangeDetailModel } from './views-change.model';
 import { Paginated } from 'src/api/graphql-api/share/model/paginated.model';
 
 @ObjectType()
@@ -28,6 +29,9 @@ export class TableChangeModel {
 
   @Field(() => [SchemaMigrationDetailModel])
   schemaMigrations: SchemaMigrationDetailModel[];
+
+  @Field(() => ViewsChangeDetailModel)
+  viewsChanges: ViewsChangeDetailModel;
 
   @Field(() => Int)
   rowChangesCount: number;

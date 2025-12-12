@@ -49,6 +49,7 @@ export class RenameSchemaHandler extends DraftHandler<
     data,
   }: RenameSchemaCommand): Promise<RenameSchemaCommandReturnType> {
     await this.renameRowInSchemaTable(data);
+    await this.renameRowInViewsTable(data);
     await this.updateLinkedSchemas(data);
     await this.createRenameMigration(data);
 
@@ -119,6 +120,30 @@ export class RenameSchemaHandler extends DraftHandler<
       new InternalRenameRowCommand({
         revisionId: data.revisionId,
         tableId: SystemTables.Schema,
+        rowId: data.tableId,
+        nextRowId: data.nextTableId,
+      }),
+    );
+  }
+
+  private async renameRowInViewsTable(data: RenameSchemaCommand['data']) {
+    const viewsRow =
+      await this.shareTransactionalQueries.findViewsRowInRevision(
+        data.revisionId,
+        data.tableId,
+      );
+
+    if (!viewsRow) {
+      return;
+    }
+
+    await this.commandBus.execute<
+      InternalRenameRowCommand,
+      InternalRenameRowCommandReturnType
+    >(
+      new InternalRenameRowCommand({
+        revisionId: data.revisionId,
+        tableId: SystemTables.Views,
         rowId: data.tableId,
         nextRowId: data.nextTableId,
       }),

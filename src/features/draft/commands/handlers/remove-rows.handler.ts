@@ -152,7 +152,7 @@ export class RemoveRowsHandler extends DraftHandler<
       );
 
     const tableInHead =
-      await this.shareTransactionalQueries.findTableInRevisionOrThrow(
+      await this.shareTransactionalQueries.findTableInRevision(
         headRevision.id,
         this.tableRequestDto.id,
       );
@@ -170,9 +170,11 @@ export class RemoveRowsHandler extends DraftHandler<
           disconnect: {
             versionId: tableInDraft.versionId,
           },
-          connect: {
-            versionId: tableInHead.versionId,
-          },
+          ...(tableInHead && {
+            connect: {
+              versionId: tableInHead.versionId,
+            },
+          }),
         },
       },
     });

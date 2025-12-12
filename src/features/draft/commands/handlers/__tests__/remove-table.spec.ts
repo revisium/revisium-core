@@ -154,7 +154,6 @@ describe('RemoveTableHandler', () => {
   });
 
   xit('should set hasChanges as false if conditions are met', async () => {
-    // need to remove init and others migrations for this table
     const {
       draftRevisionId,
       tableId,
@@ -168,7 +167,6 @@ describe('RemoveTableHandler', () => {
         versionId: headTableVersionId,
       },
     });
-    // draft schema table
     await prismaService.table.update({
       where: {
         versionId: schemaTableVersionId,
@@ -203,7 +201,6 @@ describe('RemoveTableHandler', () => {
         },
       },
     });
-    // row in schema table
     await prismaService.row.create({
       data: {
         id: tableId,
@@ -364,6 +361,102 @@ describe('RemoveTableHandler', () => {
       where: { versionId: draftTableVersionId },
     });
     expect(table).toBeNull();
+  });
+
+  describe('views integration', () => {
+    it('should remove views row when removing table that has views configured', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const viewsTableVersionId = nanoid();
+      await prismaService.table.create({
+        data: {
+          id: SystemTables.Views,
+          versionId: viewsTableVersionId,
+          createdId: nanoid(),
+          readonly: false,
+          system: true,
+          revisions: {
+            connect: { id: draftRevisionId },
+          },
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          id: tableId,
+          versionId: nanoid(),
+          createdId: nanoid(),
+          readonly: false,
+          data: {
+            version: 1,
+            defaultViewId: 'default',
+            views: [{ id: 'default', name: 'Default' }],
+          },
+          hash: '',
+          schemaHash: '',
+          tables: {
+            connect: { versionId: viewsTableVersionId },
+          },
+        },
+      });
+
+      const viewsRowBefore = await prismaService.row.findFirst({
+        where: {
+          id: tableId,
+          tables: { some: { versionId: viewsTableVersionId } },
+        },
+      });
+      expect(viewsRowBefore).not.toBeNull();
+
+      const command = new RemoveTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      });
+      await runTransaction(command);
+
+      const viewsRowAfter = await prismaService.row.findFirst({
+        where: {
+          id: tableId,
+          tables: { some: { versionId: viewsTableVersionId } },
+        },
+      });
+      expect(viewsRowAfter).toBeNull();
+    });
+
+    it('should not fail when removing table without views', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new RemoveTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      });
+
+      await expect(runTransaction(command)).resolves.toBeDefined();
+    });
+
+    it('should not fail when views table exists but no views row for table', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      await prismaService.table.create({
+        data: {
+          id: SystemTables.Views,
+          versionId: nanoid(),
+          createdId: nanoid(),
+          readonly: false,
+          system: true,
+          revisions: {
+            connect: { id: draftRevisionId },
+          },
+        },
+      });
+
+      const command = new RemoveTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      });
+
+      await expect(runTransaction(command)).resolves.toBeDefined();
+    });
   });
 
   async function migrationCheck({

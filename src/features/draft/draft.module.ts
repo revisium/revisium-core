@@ -31,6 +31,6 @@ import { ShareModule } from 'src/features/share/share.module';
     ...DRAFT_REQUEST_DTO,
     ...DRAFT_COMMANDS_HANDLERS,
   ],
-  exports: [DraftApiService],
+  exports: [DraftApiService, DraftContextService, DraftTransactionalCommands],
 })
 export class DraftModule {}

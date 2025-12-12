@@ -9,6 +9,7 @@ import { DiffService, TableDiff } from 'src/features/share/diff.service';
 import { TableChange } from '../../types';
 import { getRowChangesStatsBetweenRevisions } from 'src/__generated__/client/sql/getRowChangesStatsBetweenRevisions';
 import { RevisionComparisonService } from '../../services/revision-comparison.service';
+import { ViewsComparisonService } from '../../services/views-comparison.service';
 import { createEmptyPaginatedResponse } from '../../utils/empty-responses';
 import { TableChangeMapper } from '../../mappers/table-change.mapper';
 
@@ -20,6 +21,7 @@ export class GetTableChangesHandler
     private readonly transactionService: TransactionPrismaService,
     private readonly diffService: DiffService,
     private readonly revisionComparisonService: RevisionComparisonService,
+    private readonly viewsComparisonService: ViewsComparisonService,
     private readonly tableChangeMapper: TableChangeMapper,
   ) {}
 
@@ -83,24 +85,30 @@ export class GetTableChangesHandler
     fromRevisionId: string,
     includeSystem = false,
   ): Promise<TableChange> {
-    const migrations =
-      await this.revisionComparisonService.getMigrationsForTableBetweenRevisions(
+    const [migrations, rowStats, viewsChanges] = await Promise.all([
+      this.revisionComparisonService.getMigrationsForTableBetweenRevisions(
         fromRevisionId,
         revisionId,
         diff.createdId,
-      );
-
-    const rowStats = await this.getRowsStatsForTable(
-      fromRevisionId,
-      revisionId,
-      diff.createdId,
-      includeSystem,
-    );
+      ),
+      this.getRowsStatsForTable(
+        fromRevisionId,
+        revisionId,
+        diff.createdId,
+        includeSystem,
+      ),
+      this.viewsComparisonService.compareViewsForTable(
+        fromRevisionId,
+        revisionId,
+        diff.id,
+      ),
+    ]);
 
     return this.tableChangeMapper.mapTableDiffToTableChange(
       diff,
       migrations,
       rowStats,
+      viewsChanges,
     );
   }
 

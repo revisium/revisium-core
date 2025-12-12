@@ -1,5 +1,6 @@
 import { ChangeType } from './enums';
 import { SchemaMigrationDetail } from './schema-change.types';
+import { ViewsChangeDetail } from './views-change.types';
 
 export interface TableChange {
   tableId: string;
@@ -12,6 +13,7 @@ export interface TableChange {
   newTableId?: string;
 
   schemaMigrations: SchemaMigrationDetail[];
+  viewsChanges: ViewsChangeDetail;
 
   rowChangesCount: number;
   addedRowsCount: number;

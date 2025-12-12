@@ -311,6 +311,11 @@ input GetTableRowsInput {
   first: Int!
 }
 
+input GetTableViewsInput {
+  revisionId: String!
+  tableId: String!
+}
+
 input GetTablesInput {
   after: String
   first: Int!
@@ -450,6 +455,7 @@ type Mutation {
   updateProject(data: UpdateProjectInput!): Boolean!
   updateRow(data: UpdateRowInput!): UpdateRowResultModel!
   updateTable(data: UpdateTableInput!): UpdateTableResultModel!
+  updateTableViews(data: UpdateTableViewsInput!): TableViewsDataModel!
   updateUserProjectRole(data: UpdateUserProjectRoleInput!): Boolean!
 }
 
@@ -580,6 +586,7 @@ type Query {
   searchUsers(data: SearchUsersInput!): UsersConnection!
   table(data: GetTableInput!): TableModel
   tableChanges(data: GetTableChangesInput!): TableChangesConnection!
+  tableViews(data: GetTableViewsInput!): TableViewsDataModel!
   tables(data: GetTablesInput!): TablesConnection!
   usersOrganization(data: GetUsersOrganizationInput!): UsersOrganizationConnection!
   usersProject(data: GetUsersProjectInput!): UsersProjectConnection!
@@ -911,6 +918,7 @@ type TableChangeModel {
   tableCreatedId: String!
   tableId: String!
   toVersionId: String
+  viewsChanges: ViewsChangeDetailModel!
 }
 
 type TableChangeModelEdge {
@@ -945,11 +953,24 @@ type TableModel {
   schema: JSON!
   updatedAt: DateTime!
   versionId: String!
+  views: TableViewsDataModel!
 }
 
 type TableModelEdge {
   cursor: String!
   node: TableModel!
+}
+
+input TableViewsDataInput {
+  defaultViewId: String!
+  version: Int!
+  views: [ViewInput!]!
+}
+
+type TableViewsDataModel {
+  defaultViewId: String!
+  version: Int!
+  views: [ViewModel!]!
 }
 
 type TablesConnection {
@@ -992,6 +1013,12 @@ input UpdateTableInput {
 type UpdateTableResultModel {
   previousVersionTableId: String!
   table: TableModel!
+}
+
+input UpdateTableViewsInput {
+  revisionId: String!
+  tableId: String!
+  viewsData: TableViewsDataInput!
 }
 
 input UpdateUserProjectRoleInput {
@@ -1072,6 +1099,62 @@ type UsersProjectModel {
 type UsersProjectModelEdge {
   cursor: String!
   node: UsersProjectModel!
+}
+
+type ViewChangeModel {
+  changeType: ChangeType!
+  oldViewName: String
+  viewId: String!
+  viewName: String!
+}
+
+input ViewColumnInput {
+  field: String!
+  width: Float
+}
+
+type ViewColumnModel {
+  field: String!
+  width: Float
+}
+
+input ViewInput {
+  columns: [ViewColumnInput!]
+  description: String
+  filters: JSON
+  id: String!
+  name: String!
+  search: String
+  sorts: [ViewSortInput!]
+}
+
+type ViewModel {
+  columns: [ViewColumnModel!]
+  description: String
+  filters: JSON
+  id: String!
+  name: String!
+  search: String
+  sorts: [ViewSortModel!]
+}
+
+input ViewSortInput {
+  direction: String!
+  field: String!
+}
+
+type ViewSortModel {
+  direction: String!
+  field: String!
+}
+
+type ViewsChangeDetailModel {
+  addedCount: Int!
+  changes: [ViewChangeModel!]!
+  hasChanges: Boolean!
+  modifiedCount: Int!
+  removedCount: Int!
+  renamedCount: Int!
 }
 
 input WhereInput {

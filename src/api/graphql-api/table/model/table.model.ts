@@ -4,6 +4,7 @@ import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
+import { TableViewsDataModel } from 'src/api/graphql-api/views/model/table-views-data.model';
 
 export type TableModelContext = {
   revisionId: string;
@@ -49,6 +50,9 @@ export class TableModel {
 
   @Field(() => Int)
   countForeignKeysBy: number;
+
+  @Field(() => TableViewsDataModel)
+  views: TableViewsDataModel;
 
   context: TableModelContext;
 }

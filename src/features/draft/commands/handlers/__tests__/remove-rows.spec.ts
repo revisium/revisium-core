@@ -565,6 +565,72 @@ describe('RemoveRowsHandler', () => {
     expect(row).toBeNull();
   });
 
+  it('should revert table correctly when table exists only in draft (not in head)', async () => {
+    const { draftRevisionId, branchId } = await prepareProject(prismaService);
+
+    const newTableId = nanoid();
+    const newTableVersionId = nanoid();
+    await prismaService.table.create({
+      data: {
+        id: newTableId,
+        versionId: newTableVersionId,
+        createdId: nanoid(),
+        readonly: false,
+        revisions: {
+          connect: { id: draftRevisionId },
+        },
+      },
+    });
+
+    const rowId = nanoid();
+    const rowVersionId = nanoid();
+    await prismaService.row.create({
+      data: {
+        id: rowId,
+        versionId: rowVersionId,
+        createdId: nanoid(),
+        readonly: false,
+        data: {},
+        hash: '',
+        schemaHash: '',
+        tables: {
+          connect: { versionId: newTableVersionId },
+        },
+      },
+    });
+
+    const command = new RemoveRowsCommand({
+      revisionId: draftRevisionId,
+      tableId: newTableId,
+      rowIds: [rowId],
+      avoidCheckingSystemTable: true,
+    });
+
+    const result = await runTransaction(command);
+    expect(result.branchId).toBe(branchId);
+
+    const row = await prismaService.row.findFirst({
+      where: {
+        id: rowId,
+        tables: {
+          some: {
+            id: newTableId,
+            revisions: { some: { id: draftRevisionId } },
+          },
+        },
+      },
+    });
+    expect(row).toBeNull();
+
+    const table = await prismaService.table.findFirst({
+      where: {
+        id: newTableId,
+        revisions: { some: { id: draftRevisionId } },
+      },
+    });
+    expect(table).toBeNull();
+  });
+
   async function checkRevision(
     ids: PrepareProjectReturnType,
     hasChanges: boolean,

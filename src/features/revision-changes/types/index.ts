@@ -5,3 +5,4 @@ export * from './row-change.types';
 export * from './table-change.types';
 export * from './revision-changes.types';
 export * from './filters.types';
+export * from './views-change.types';

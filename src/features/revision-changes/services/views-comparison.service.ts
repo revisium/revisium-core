@@ -1,0 +1,227 @@
+import { Injectable } from '@nestjs/common';
+import { SystemTables } from 'src/features/share/system-tables.consts';
+import { TableViewsData, View } from 'src/features/views/types';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { ChangeType } from '../types/enums';
+import { ViewChange, ViewsChangeDetail } from '../types/views-change.types';
+
+@Injectable()
+export class ViewsComparisonService {
+  constructor(private readonly transactionService: TransactionPrismaService) {}
+
+  private get prisma() {
+    return this.transactionService.getTransactionOrPrisma();
+  }
+
+  async compareViewsForTable(
+    fromRevisionId: string | null,
+    toRevisionId: string,
+    tableId: string,
+  ): Promise<ViewsChangeDetail> {
+    const [fromViews, toViews] = await Promise.all([
+      fromRevisionId ? this.getViewsData(fromRevisionId, tableId) : null,
+      this.getViewsData(toRevisionId, tableId),
+    ]);
+
+    return this.compareViewsData(fromViews, toViews);
+  }
+
+  private async getViewsData(
+    revisionId: string,
+    tableId: string,
+  ): Promise<TableViewsData | null> {
+    const viewsTable = await this.prisma.table.findFirst({
+      where: {
+        id: SystemTables.Views,
+        revisions: {
+          some: {
+            id: revisionId,
+          },
+        },
+      },
+      select: {
+        versionId: true,
+      },
+    });
+
+    if (!viewsTable) {
+      return null;
+    }
+
+    const viewsRow = await this.prisma.row.findFirst({
+      where: {
+        id: tableId,
+        tables: {
+          some: {
+            versionId: viewsTable.versionId,
+          },
+        },
+      },
+      select: {
+        data: true,
+      },
+    });
+
+    if (!viewsRow) {
+      return null;
+    }
+
+    return viewsRow.data as unknown as TableViewsData;
+  }
+
+  private compareViewsData(
+    fromData: TableViewsData | null,
+    toData: TableViewsData | null,
+  ): ViewsChangeDetail {
+    const emptyResult: ViewsChangeDetail = {
+      hasChanges: false,
+      changes: [],
+      addedCount: 0,
+      modifiedCount: 0,
+      removedCount: 0,
+      renamedCount: 0,
+    };
+
+    if (!fromData && !toData) {
+      return emptyResult;
+    }
+
+    if (!fromData && toData) {
+      const changes: ViewChange[] = toData.views.map((view) => ({
+        viewId: view.id,
+        viewName: view.name,
+        changeType: ChangeType.Added,
+      }));
+
+      return {
+        hasChanges: changes.length > 0,
+        changes,
+        addedCount: changes.length,
+        modifiedCount: 0,
+        removedCount: 0,
+        renamedCount: 0,
+      };
+    }
+
+    if (fromData && !toData) {
+      const changes: ViewChange[] = fromData.views.map((view) => ({
+        viewId: view.id,
+        viewName: view.name,
+        changeType: ChangeType.Removed,
+      }));
+
+      return {
+        hasChanges: changes.length > 0,
+        changes,
+        addedCount: 0,
+        modifiedCount: 0,
+        removedCount: changes.length,
+        renamedCount: 0,
+      };
+    }
+
+    const fromViewsMap = new Map(fromData!.views.map((v) => [v.id, v]));
+    const toViewsMap = new Map(toData!.views.map((v) => [v.id, v]));
+
+    const changes: ViewChange[] = [];
+
+    for (const toView of toData!.views) {
+      const fromView = fromViewsMap.get(toView.id);
+
+      if (!fromView) {
+        changes.push({
+          viewId: toView.id,
+          viewName: toView.name,
+          changeType: ChangeType.Added,
+        });
+      } else if (this.isViewModified(fromView, toView)) {
+        if (fromView.name !== toView.name) {
+          changes.push({
+            viewId: toView.id,
+            viewName: toView.name,
+            changeType: ChangeType.RenamedAndModified,
+            oldViewName: fromView.name,
+          });
+        } else {
+          changes.push({
+            viewId: toView.id,
+            viewName: toView.name,
+            changeType: ChangeType.Modified,
+          });
+        }
+      } else if (fromView.name !== toView.name) {
+        changes.push({
+          viewId: toView.id,
+          viewName: toView.name,
+          changeType: ChangeType.Renamed,
+          oldViewName: fromView.name,
+        });
+      }
+    }
+
+    for (const fromView of fromData!.views) {
+      if (!toViewsMap.has(fromView.id)) {
+        changes.push({
+          viewId: fromView.id,
+          viewName: fromView.name,
+          changeType: ChangeType.Removed,
+        });
+      }
+    }
+
+    const defaultViewChanged =
+      fromData!.defaultViewId !== toData!.defaultViewId;
+
+    let addedCount = 0;
+    let modifiedCount = 0;
+    let removedCount = 0;
+    let renamedCount = 0;
+
+    for (const change of changes) {
+      switch (change.changeType) {
+        case ChangeType.Added:
+          addedCount++;
+          break;
+        case ChangeType.Modified:
+          modifiedCount++;
+          break;
+        case ChangeType.Removed:
+          removedCount++;
+          break;
+        case ChangeType.Renamed:
+          renamedCount++;
+          break;
+        case ChangeType.RenamedAndModified:
+          renamedCount++;
+          modifiedCount++;
+          break;
+      }
+    }
+
+    return {
+      hasChanges: changes.length > 0 || defaultViewChanged,
+      changes,
+      addedCount,
+      modifiedCount,
+      removedCount,
+      renamedCount,
+    };
+  }
+
+  private isViewModified(fromView: View, toView: View): boolean {
+    const fromConfig = this.normalizeViewConfig(fromView);
+    const toConfig = this.normalizeViewConfig(toView);
+
+    return JSON.stringify(fromConfig) !== JSON.stringify(toConfig);
+  }
+
+  private normalizeViewConfig(view: View): Omit<View, 'id' | 'name'> {
+    return {
+      description: view.description,
+      columns: view.columns,
+      filters: view.filters,
+      sorts: view.sorts,
+      search: view.search,
+    };
+  }
+}
