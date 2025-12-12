@@ -1139,7 +1139,7 @@ type ViewModel {
 }
 
 input ViewSortInput {
-  direction: String!
+  direction: SortOrder!
   field: String!
 }
 

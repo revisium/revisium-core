@@ -71,11 +71,10 @@ describe('graphql - tableChanges', () => {
         (edge: any) => edge.node.tableId === preparedData.project.tableId,
       );
 
-      if (tableChange) {
-        expect(tableChange.node.viewsChanges).toBeDefined();
-        expect(tableChange.node.viewsChanges.hasChanges).toBe(false);
-        expect(tableChange.node.viewsChanges.changes).toEqual([]);
-      }
+      expect(tableChange).toBeDefined();
+      expect(tableChange.node.viewsChanges).toBeDefined();
+      expect(tableChange.node.viewsChanges.hasChanges).toBe(false);
+      expect(tableChange.node.viewsChanges.changes).toEqual([]);
     });
 
     it('returns viewsChanges with added views', async () => {

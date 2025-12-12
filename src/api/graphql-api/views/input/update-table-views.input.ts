@@ -1,5 +1,6 @@
 import { Field, Float, InputType, Int } from '@nestjs/graphql';
 import { JSONResolver } from 'graphql-scalars';
+import { Prisma } from 'src/__generated__/client';
 
 @InputType()
 export class ViewColumnInput {
@@ -15,8 +16,8 @@ export class ViewSortInput {
   @Field()
   field: string;
 
-  @Field()
-  direction: string;
+  @Field(() => Prisma.SortOrder)
+  direction: Prisma.SortOrder;
 }
 
 @InputType()

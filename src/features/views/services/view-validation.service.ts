@@ -12,7 +12,7 @@ import {
   ViewFilterGroup,
 } from 'src/features/views/types';
 
-const SYSTEM_FIELDS = ['id', 'createdAt', 'updatedAt'];
+const SYSTEM_FIELDS = new Set(['id', 'createdAt', 'updatedAt']);
 
 @Injectable()
 export class ViewValidationService {
@@ -101,7 +101,7 @@ export class ViewValidationService {
   }
 
   private isValidField(field: string, validFields: Set<string>): boolean {
-    if (SYSTEM_FIELDS.includes(field)) {
+    if (SYSTEM_FIELDS.has(field)) {
       return true;
     }
 
