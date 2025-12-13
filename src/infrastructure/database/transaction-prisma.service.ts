@@ -94,7 +94,21 @@ export class TransactionPrismaService implements OnModuleInit {
 
   private getEnvNumber(key: string, defaultValue: number): number {
     const value = this.configService.get<string>(key);
-    return value ? Number.parseInt(value, 10) : defaultValue;
+
+    if (!value) {
+      return defaultValue;
+    }
+
+    const parsed = Number.parseInt(value, 10);
+
+    if (Number.isNaN(parsed)) {
+      this.logger.warn(
+        `Invalid value for ${key}: "${value}" is not a number, using default ${defaultValue}`,
+      );
+      return defaultValue;
+    }
+
+    return parsed;
   }
 
   private logTransactionSettings() {
