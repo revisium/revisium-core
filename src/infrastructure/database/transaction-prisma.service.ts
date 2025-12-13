@@ -159,23 +159,26 @@ export class TransactionPrismaService {
    *
    * Prisma error codes:
    * - P2034: Transaction write conflict
+   * - P2003: Foreign key constraint failed (race condition on concurrent table creation)
    */
   private isRetryableError(error: Error): boolean {
     const code = (error as { code?: string }).code || '';
+    const retryableCodes = ['40001', '40P01', 'P2034', 'P2003'];
 
-    // Primary: check specific error codes first
-    if (code === '40001' || code === '40P01' || code === 'P2034') {
+    if (retryableCodes.includes(code)) {
       return true;
     }
 
-    // Fallback: check specific PostgreSQL/Prisma messages
     const message = error.message || '';
-    return (
-      message.includes('could not serialize access') ||
-      message.includes('deadlock detected') ||
-      message.includes('TransactionWriteConflict') ||
-      message.includes('Please retry your transaction')
-    );
+    const retryableMessages = [
+      'could not serialize access',
+      'deadlock detected',
+      'TransactionWriteConflict',
+      'Please retry your transaction',
+      'Foreign key constraint',
+    ];
+
+    return retryableMessages.some((pattern) => message.includes(pattern));
   }
 
   /**
