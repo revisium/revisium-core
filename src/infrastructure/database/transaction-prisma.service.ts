@@ -2,7 +2,9 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from 'src/__generated__/client';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { randomInt } from 'node:crypto';
@@ -41,15 +43,126 @@ const DEFAULT_SERIALIZABLE_OPTIONS: Required<TransactionOptions> = {
   },
 };
 
+interface SettingConfig {
+  envKey: string;
+  defaultValue: number;
+  minValue: number;
+  unit: string;
+}
+
+const SETTINGS_CONFIG: Record<string, SettingConfig> = {
+  maxWait: {
+    envKey: 'TRANSACTION_MAX_WAIT',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.maxWait,
+    minValue: 1,
+    unit: 'ms',
+  },
+  timeout: {
+    envKey: 'TRANSACTION_TIMEOUT',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.timeout,
+    minValue: 1,
+    unit: 'ms',
+  },
+  maxRetries: {
+    envKey: 'TRANSACTION_MAX_RETRIES',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.retry.maxRetries,
+    minValue: 0,
+    unit: '',
+  },
+  baseDelayMs: {
+    envKey: 'TRANSACTION_BASE_DELAY_MS',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.retry.baseDelayMs,
+    minValue: 0,
+    unit: 'ms',
+  },
+  maxDelayMs: {
+    envKey: 'TRANSACTION_MAX_DELAY_MS',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.retry.maxDelayMs,
+    minValue: 0,
+    unit: 'ms',
+  },
+};
+
 @Injectable()
-export class TransactionPrismaService {
+export class TransactionPrismaService implements OnModuleInit {
   private readonly logger = new Logger(TransactionPrismaService.name);
 
   private readonly asyncLocalStorage = new AsyncLocalStorage<{
     $prisma: TransactionPrismaClient;
   }>();
 
-  constructor(private readonly prismaService: PrismaService) {}
+  private readonly serializableOptions: Required<TransactionOptions>;
+
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.serializableOptions = this.buildSerializableOptions();
+  }
+
+  onModuleInit() {
+    this.logTransactionSettings();
+  }
+
+  private buildSerializableOptions(): Required<TransactionOptions> {
+    return {
+      maxWait: this.getValidatedEnvNumber('maxWait'),
+      timeout: this.getValidatedEnvNumber('timeout'),
+      isolationLevel: DEFAULT_SERIALIZABLE_OPTIONS.isolationLevel,
+      retry: {
+        maxRetries: this.getValidatedEnvNumber('maxRetries'),
+        baseDelayMs: this.getValidatedEnvNumber('baseDelayMs'),
+        maxDelayMs: this.getValidatedEnvNumber('maxDelayMs'),
+      },
+    };
+  }
+
+  private getValidatedEnvNumber(settingName: string): number {
+    const config = SETTINGS_CONFIG[settingName];
+    const value = this.configService.get<string>(config.envKey);
+
+    if (!value) {
+      return config.defaultValue;
+    }
+
+    const parsed = Number.parseInt(value, 10);
+
+    if (Number.isNaN(parsed)) {
+      this.logger.warn(
+        `Invalid ${config.envKey}: "${value}" is not a number, using default ${config.defaultValue}`,
+      );
+      return config.defaultValue;
+    }
+
+    if (parsed < config.minValue) {
+      this.logger.warn(
+        `Invalid ${config.envKey}: ${parsed} is below minimum ${config.minValue}, using default ${config.defaultValue}`,
+      );
+      return config.defaultValue;
+    }
+
+    return parsed;
+  }
+
+  private logTransactionSettings() {
+    const flatOptions: Record<string, number> = {
+      maxWait: this.serializableOptions.maxWait,
+      timeout: this.serializableOptions.timeout,
+      maxRetries: this.serializableOptions.retry.maxRetries,
+      baseDelayMs: this.serializableOptions.retry.baseDelayMs,
+      maxDelayMs: this.serializableOptions.retry.maxDelayMs,
+    };
+
+    const settings = Object.entries(SETTINGS_CONFIG).map(([name, config]) => {
+      const value = flatOptions[name];
+      const isOverridden = value !== config.defaultValue;
+      return isOverridden
+        ? `${name}=${value}${config.unit} (from ${config.envKey})`
+        : `${name}=${value}${config.unit}`;
+    });
+
+    this.logger.log(`Transaction settings: ${settings.join(', ')}`);
+  }
 
   public getTransaction() {
     const transactionInCurrentContext = this.asyncLocalStorage.getStore();
@@ -91,10 +204,10 @@ export class TransactionPrismaService {
     options?: Omit<Partial<TransactionOptions>, 'isolationLevel'>,
   ): Promise<T> {
     const mergedOptions: TransactionOptions = {
-      maxWait: options?.maxWait ?? DEFAULT_SERIALIZABLE_OPTIONS.maxWait,
-      timeout: options?.timeout ?? DEFAULT_SERIALIZABLE_OPTIONS.timeout,
-      isolationLevel: DEFAULT_SERIALIZABLE_OPTIONS.isolationLevel,
-      retry: options?.retry ?? DEFAULT_SERIALIZABLE_OPTIONS.retry,
+      maxWait: options?.maxWait ?? this.serializableOptions.maxWait,
+      timeout: options?.timeout ?? this.serializableOptions.timeout,
+      isolationLevel: this.serializableOptions.isolationLevel,
+      retry: options?.retry ?? this.serializableOptions.retry,
     };
 
     return this.run(handler, mergedOptions);

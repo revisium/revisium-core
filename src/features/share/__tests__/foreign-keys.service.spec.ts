@@ -15,7 +15,7 @@ describe('ForeignKeysService', () => {
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [DatabaseModule],
-      providers: [ForeignKeysService, TransactionPrismaService],
+      providers: [ForeignKeysService],
     }).compile();
 
     service = module.get<ForeignKeysService>(ForeignKeysService);
