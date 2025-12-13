@@ -24,6 +24,7 @@ import {
   ViewsMigrationError,
   ViewsMigrationService,
 } from 'src/features/share/views-migration.service';
+import { tableViewsSchema } from 'src/features/share/schema/table-views-schema';
 import { TableViewsData } from 'src/features/views/types';
 import { SchemaTable, traverseStore } from '@revisium/schema-toolkit/lib';
 import {
@@ -294,7 +295,7 @@ export class UpdateTableHandler extends DraftHandler<
       );
 
       const schemaHash =
-        this.jsonSchemaValidator.getSchemaHash(migratedViewsData);
+        this.jsonSchemaValidator.getSchemaHash(tableViewsSchema);
 
       await this.commandBus.execute(
         new InternalUpdateRowCommand({

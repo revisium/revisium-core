@@ -90,7 +90,6 @@ export class UpdateTableViewsHandler extends DraftHandler<
     );
 
     const existingRow = await this.findViewsRow(viewsTable.versionId, tableId);
-    const schemaHash = this.jsonSchemaValidator.getSchemaHash(viewsData);
 
     if (existingRow) {
       await this.commandBus.execute(
@@ -99,7 +98,7 @@ export class UpdateTableViewsHandler extends DraftHandler<
           tableId: SystemTables.Views,
           rowId: tableId,
           data: viewsData as unknown as Prisma.InputJsonValue,
-          schemaHash,
+          schemaHash: this.viewsSchemaHash,
         }),
       );
     } else {
@@ -109,7 +108,7 @@ export class UpdateTableViewsHandler extends DraftHandler<
           tableId: SystemTables.Views,
           rowId: tableId,
           data: viewsData as unknown as Prisma.InputJsonValue,
-          schemaHash,
+          schemaHash: this.viewsSchemaHash,
         }),
       );
     }

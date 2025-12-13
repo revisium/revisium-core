@@ -9,6 +9,7 @@ import { getArraySchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
+import { tableViewsSchema } from 'src/features/share/schema/table-views-schema';
 import { InitMigration, UpdateMigration } from '@revisium/schema-toolkit/types';
 import {
   JsonSchemaTypeName,
@@ -822,6 +823,39 @@ describe('UpdateTableHandler', () => {
       await expect(runTransaction(command)).rejects.toThrow(
         /Views migration failed/,
       );
+    });
+
+    it('should use tableViewsSchema hash for migrated views row', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+      await setupViews(draftRevisionId, tableId, createViewsData());
+
+      await runTransaction(
+        new UpdateTableCommand({
+          revisionId: draftRevisionId,
+          tableId,
+          patches: [
+            {
+              op: 'move',
+              from: '/properties/ver',
+              path: '/properties/version',
+            },
+          ],
+        }),
+      );
+
+      const viewsTableRow = await prismaService.row.findFirst({
+        where: {
+          id: tableId,
+          tables: {
+            some: {
+              id: SystemTables.Views,
+            },
+          },
+        },
+      });
+
+      expect(viewsTableRow).not.toBeNull();
+      expect(viewsTableRow!.schemaHash).toBe(objectHash(tableViewsSchema));
     });
   });
 });
