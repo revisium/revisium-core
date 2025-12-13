@@ -64,7 +64,7 @@ export class GetRowChangesHandler
           includeSystem,
         );
 
-        await this.computeRowsForTables(rawRows, revisionId);
+        await this.computeRowsForTables(rawRows, fromRevisionId, revisionId);
 
         return rawRows.map((raw) => this.mapToRowChange(raw));
       },
@@ -174,37 +174,51 @@ export class GetRowChangesHandler
 
   private async computeRowsForTables(
     rawRows: RawRowChangeData[],
-    revisionId: string,
+    fromRevisionId: string,
+    toRevisionId: string,
   ): Promise<void> {
-    const rowsByTable = new Map<string, Row[]>();
+    const toRowsByTable = new Map<string, Row[]>();
+    const fromRowsByTable = new Map<string, Row[]>();
 
     for (const rawRow of rawRows) {
-      if (rawRow.changeType === ChangeType.Removed) {
-        continue;
+      if (rawRow.changeType !== ChangeType.Removed && rawRow.toTableId) {
+        if (!toRowsByTable.has(rawRow.toTableId)) {
+          toRowsByTable.set(rawRow.toTableId, []);
+        }
+        toRowsByTable
+          .get(rawRow.toTableId)
+          ?.push(this.createToRowProxy(rawRow));
       }
 
-      const tableId = rawRow.toTableId;
-
-      if (!tableId) {
-        continue;
+      if (rawRow.changeType !== ChangeType.Added && rawRow.fromTableId) {
+        if (!fromRowsByTable.has(rawRow.fromTableId)) {
+          fromRowsByTable.set(rawRow.fromTableId, []);
+        }
+        fromRowsByTable
+          .get(rawRow.fromTableId)
+          ?.push(this.createFromRowProxy(rawRow));
       }
-
-      if (!rowsByTable.has(tableId)) {
-        rowsByTable.set(tableId, []);
-      }
-
-      const row = this.createRowWithDataProxy(rawRow);
-      rowsByTable.get(tableId)?.push(row);
     }
 
-    await Promise.all(
-      Array.from(rowsByTable.entries()).map(([tableId, rows]) =>
-        this.pluginService.computeRows({ revisionId, tableId, rows }),
+    await Promise.all([
+      ...Array.from(toRowsByTable.entries()).map(([tableId, rows]) =>
+        this.pluginService.computeRows({
+          revisionId: toRevisionId,
+          tableId,
+          rows,
+        }),
       ),
-    );
+      ...Array.from(fromRowsByTable.entries()).map(([tableId, rows]) =>
+        this.pluginService.computeRows({
+          revisionId: fromRevisionId,
+          tableId,
+          rows,
+        }),
+      ),
+    ]);
   }
 
-  private createRowWithDataProxy(rawRow: RawRowChangeData): Row {
+  private createToRowProxy(rawRow: RawRowChangeData): Row {
     return {
       id: rawRow.toRowId,
       createdId: rawRow.toRowCreatedId,
@@ -221,6 +235,27 @@ export class GetRowChangesHandler
       },
       set data(value) {
         rawRow.toData = value;
+      },
+    };
+  }
+
+  private createFromRowProxy(rawRow: RawRowChangeData): Row {
+    return {
+      id: rawRow.fromRowId,
+      createdId: rawRow.fromRowCreatedId,
+      versionId: rawRow.fromRowVersionId,
+      hash: rawRow.fromHash,
+      schemaHash: rawRow.fromSchemaHash,
+      readonly: rawRow.fromReadonly,
+      meta: rawRow.fromMeta,
+      createdAt: rawRow.fromRowCreatedAt,
+      updatedAt: rawRow.fromRowUpdatedAt,
+      publishedAt: rawRow.fromRowPublishedAt,
+      get data() {
+        return rawRow.fromData;
+      },
+      set data(value) {
+        rawRow.fromData = value;
       },
     };
   }
