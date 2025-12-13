@@ -130,6 +130,7 @@ export class TransactionPrismaService implements OnModuleInit {
         this.serializableOptions.retry.maxRetries,
         DEFAULT_SERIALIZABLE_OPTIONS.retry.maxRetries,
         'TRANSACTION_MAX_RETRIES',
+        '',
       ),
       this.formatSetting(
         'baseDelayMs',
@@ -153,11 +154,12 @@ export class TransactionPrismaService implements OnModuleInit {
     value: number,
     defaultValue: number,
     envKey: string,
+    unit = 'ms',
   ): string {
     const isOverridden = value !== defaultValue;
     return isOverridden
-      ? `${name}=${value}ms (from ${envKey})`
-      : `${name}=${value}ms`;
+      ? `${name}=${value}${unit} (from ${envKey})`
+      : `${name}=${value}${unit}`;
   }
 
   public getTransaction() {
