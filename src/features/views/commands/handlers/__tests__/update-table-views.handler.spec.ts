@@ -86,6 +86,118 @@ describe('UpdateTableViewsHandler', () => {
       });
     });
 
+    describe('view ID format validation', () => {
+      it('should throw error when view ID contains invalid characters', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const invalidData: TableViewsData = {
+          version: 1,
+          defaultViewId: '<script>alert("xss")</script>',
+          views: [{ id: '<script>alert("xss")</script>', name: 'XSS View' }],
+        };
+
+        await expect(
+          runTransaction(
+            new UpdateTableViewsCommand({
+              revisionId: draftRevisionId,
+              tableId,
+              viewsData: invalidData,
+            }),
+          ),
+        ).rejects.toThrow(/View ID .* is invalid/);
+      });
+
+      it('should throw error when view ID starts with double underscore', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const invalidData: TableViewsData = {
+          version: 1,
+          defaultViewId: '__system',
+          views: [{ id: '__system', name: 'System View' }],
+        };
+
+        await expect(
+          runTransaction(
+            new UpdateTableViewsCommand({
+              revisionId: draftRevisionId,
+              tableId,
+              viewsData: invalidData,
+            }),
+          ),
+        ).rejects.toThrow(/View ID .* is invalid/);
+      });
+
+      it('should throw error when view ID starts with number', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const invalidData: TableViewsData = {
+          version: 1,
+          defaultViewId: '123view',
+          views: [{ id: '123view', name: 'Numeric Start' }],
+        };
+
+        await expect(
+          runTransaction(
+            new UpdateTableViewsCommand({
+              revisionId: draftRevisionId,
+              tableId,
+              viewsData: invalidData,
+            }),
+          ),
+        ).rejects.toThrow(/View ID .* is invalid/);
+      });
+
+      it('should throw error when view ID exceeds max length', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const longId = 'a'.repeat(65);
+        const invalidData: TableViewsData = {
+          version: 1,
+          defaultViewId: longId,
+          views: [{ id: longId, name: 'Long ID View' }],
+        };
+
+        await expect(
+          runTransaction(
+            new UpdateTableViewsCommand({
+              revisionId: draftRevisionId,
+              tableId,
+              viewsData: invalidData,
+            }),
+          ),
+        ).rejects.toThrow(/View ID .* is invalid/);
+      });
+
+      it('should accept valid view IDs', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const validData: TableViewsData = {
+          version: 1,
+          defaultViewId: 'valid_view-1',
+          views: [
+            { id: 'valid_view-1', name: 'Valid View 1' },
+            { id: '_underscore', name: 'Underscore Start' },
+            { id: 'CamelCase', name: 'Camel Case' },
+          ],
+        };
+
+        const result = await runTransaction(
+          new UpdateTableViewsCommand({
+            revisionId: draftRevisionId,
+            tableId,
+            viewsData: validData,
+          }),
+        );
+
+        expect(result).toBe(true);
+      });
+    });
+
     describe('schema validation', () => {
       it('should throw error for invalid version type', async () => {
         const { draftRevisionId, tableId } =
@@ -490,6 +602,48 @@ describe('UpdateTableViewsHandler', () => {
         );
 
         expect(result).toBe(true);
+      });
+    });
+
+    describe('table existence validation', () => {
+      it('should throw BadRequestException when table does not exist', async () => {
+        const { draftRevisionId } = await prepareProject(prismaService);
+
+        const validData: TableViewsData = {
+          version: 1,
+          defaultViewId: 'default',
+          views: [{ id: 'default', name: 'Default' }],
+        };
+
+        await expect(
+          runTransaction(
+            new UpdateTableViewsCommand({
+              revisionId: draftRevisionId,
+              tableId: 'non_existent_table',
+              viewsData: validData,
+            }),
+          ),
+        ).rejects.toThrow(BadRequestException);
+      });
+
+      it('should include table name in error message', async () => {
+        const { draftRevisionId } = await prepareProject(prismaService);
+
+        const validData: TableViewsData = {
+          version: 1,
+          defaultViewId: 'default',
+          views: [{ id: 'default', name: 'Default' }],
+        };
+
+        await expect(
+          runTransaction(
+            new UpdateTableViewsCommand({
+              revisionId: draftRevisionId,
+              tableId: 'non_existent_table',
+              viewsData: validData,
+            }),
+          ),
+        ).rejects.toThrow('Table "non_existent_table" does not exist');
       });
     });
 

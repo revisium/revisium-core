@@ -1,4 +1,4 @@
-import { InternalServerErrorException } from '@nestjs/common';
+import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -50,8 +50,8 @@ export class GetTableSchemaHandler
     });
 
     if (!result) {
-      throw new InternalServerErrorException(
-        `Not found schema for ${tableId} in revision=${revisionId}`,
+      throw new BadRequestException(
+        `Table "${tableId}" does not exist in the revision`,
       );
     }
 
