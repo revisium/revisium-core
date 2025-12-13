@@ -43,6 +43,46 @@ const DEFAULT_SERIALIZABLE_OPTIONS: Required<TransactionOptions> = {
   },
 };
 
+interface SettingConfig {
+  envKey: string;
+  defaultValue: number;
+  minValue: number;
+  unit: string;
+}
+
+const SETTINGS_CONFIG: Record<string, SettingConfig> = {
+  maxWait: {
+    envKey: 'TRANSACTION_MAX_WAIT',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.maxWait,
+    minValue: 1,
+    unit: 'ms',
+  },
+  timeout: {
+    envKey: 'TRANSACTION_TIMEOUT',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.timeout,
+    minValue: 1,
+    unit: 'ms',
+  },
+  maxRetries: {
+    envKey: 'TRANSACTION_MAX_RETRIES',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.retry.maxRetries,
+    minValue: 0,
+    unit: '',
+  },
+  baseDelayMs: {
+    envKey: 'TRANSACTION_BASE_DELAY_MS',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.retry.baseDelayMs,
+    minValue: 0,
+    unit: 'ms',
+  },
+  maxDelayMs: {
+    envKey: 'TRANSACTION_MAX_DELAY_MS',
+    defaultValue: DEFAULT_SERIALIZABLE_OPTIONS.retry.maxDelayMs,
+    minValue: 0,
+    unit: 'ms',
+  },
+};
+
 @Injectable()
 export class TransactionPrismaService implements OnModuleInit {
   private readonly logger = new Logger(TransactionPrismaService.name);
@@ -66,100 +106,62 @@ export class TransactionPrismaService implements OnModuleInit {
 
   private buildSerializableOptions(): Required<TransactionOptions> {
     return {
-      maxWait: this.getEnvNumber(
-        'TRANSACTION_MAX_WAIT',
-        DEFAULT_SERIALIZABLE_OPTIONS.maxWait,
-      ),
-      timeout: this.getEnvNumber(
-        'TRANSACTION_TIMEOUT',
-        DEFAULT_SERIALIZABLE_OPTIONS.timeout,
-      ),
+      maxWait: this.getValidatedEnvNumber('maxWait'),
+      timeout: this.getValidatedEnvNumber('timeout'),
       isolationLevel: DEFAULT_SERIALIZABLE_OPTIONS.isolationLevel,
       retry: {
-        maxRetries: this.getEnvNumber(
-          'TRANSACTION_MAX_RETRIES',
-          DEFAULT_SERIALIZABLE_OPTIONS.retry.maxRetries,
-        ),
-        baseDelayMs: this.getEnvNumber(
-          'TRANSACTION_BASE_DELAY_MS',
-          DEFAULT_SERIALIZABLE_OPTIONS.retry.baseDelayMs,
-        ),
-        maxDelayMs: this.getEnvNumber(
-          'TRANSACTION_MAX_DELAY_MS',
-          DEFAULT_SERIALIZABLE_OPTIONS.retry.maxDelayMs,
-        ),
+        maxRetries: this.getValidatedEnvNumber('maxRetries'),
+        baseDelayMs: this.getValidatedEnvNumber('baseDelayMs'),
+        maxDelayMs: this.getValidatedEnvNumber('maxDelayMs'),
       },
     };
   }
 
-  private getEnvNumber(key: string, defaultValue: number): number {
-    const value = this.configService.get<string>(key);
+  private getValidatedEnvNumber(settingName: string): number {
+    const config = SETTINGS_CONFIG[settingName];
+    const value = this.configService.get<string>(config.envKey);
 
     if (!value) {
-      return defaultValue;
+      return config.defaultValue;
     }
 
     const parsed = Number.parseInt(value, 10);
 
     if (Number.isNaN(parsed)) {
       this.logger.warn(
-        `Invalid value for ${key}: "${value}" is not a number, using default ${defaultValue}`,
+        `Invalid ${config.envKey}: "${value}" is not a number, using default ${config.defaultValue}`,
       );
-      return defaultValue;
+      return config.defaultValue;
+    }
+
+    if (parsed < config.minValue) {
+      this.logger.warn(
+        `Invalid ${config.envKey}: ${parsed} is below minimum ${config.minValue}, using default ${config.defaultValue}`,
+      );
+      return config.defaultValue;
     }
 
     return parsed;
   }
 
   private logTransactionSettings() {
-    const settings = [
-      this.formatSetting(
-        'maxWait',
-        this.serializableOptions.maxWait,
-        DEFAULT_SERIALIZABLE_OPTIONS.maxWait,
-        'TRANSACTION_MAX_WAIT',
-      ),
-      this.formatSetting(
-        'timeout',
-        this.serializableOptions.timeout,
-        DEFAULT_SERIALIZABLE_OPTIONS.timeout,
-        'TRANSACTION_TIMEOUT',
-      ),
-      this.formatSetting(
-        'maxRetries',
-        this.serializableOptions.retry.maxRetries,
-        DEFAULT_SERIALIZABLE_OPTIONS.retry.maxRetries,
-        'TRANSACTION_MAX_RETRIES',
-        '',
-      ),
-      this.formatSetting(
-        'baseDelayMs',
-        this.serializableOptions.retry.baseDelayMs,
-        DEFAULT_SERIALIZABLE_OPTIONS.retry.baseDelayMs,
-        'TRANSACTION_BASE_DELAY_MS',
-      ),
-      this.formatSetting(
-        'maxDelayMs',
-        this.serializableOptions.retry.maxDelayMs,
-        DEFAULT_SERIALIZABLE_OPTIONS.retry.maxDelayMs,
-        'TRANSACTION_MAX_DELAY_MS',
-      ),
-    ];
+    const flatOptions: Record<string, number> = {
+      maxWait: this.serializableOptions.maxWait,
+      timeout: this.serializableOptions.timeout,
+      maxRetries: this.serializableOptions.retry.maxRetries,
+      baseDelayMs: this.serializableOptions.retry.baseDelayMs,
+      maxDelayMs: this.serializableOptions.retry.maxDelayMs,
+    };
+
+    const settings = Object.entries(SETTINGS_CONFIG).map(([name, config]) => {
+      const value = flatOptions[name];
+      const isOverridden = value !== config.defaultValue;
+      return isOverridden
+        ? `${name}=${value}${config.unit} (from ${config.envKey})`
+        : `${name}=${value}${config.unit}`;
+    });
 
     this.logger.log(`Transaction settings: ${settings.join(', ')}`);
-  }
-
-  private formatSetting(
-    name: string,
-    value: number,
-    defaultValue: number,
-    envKey: string,
-    unit = 'ms',
-  ): string {
-    const isOverridden = value !== defaultValue;
-    return isOverridden
-      ? `${name}=${value}${unit} (from ${envKey})`
-      : `${name}=${value}${unit}`;
   }
 
   public getTransaction() {
