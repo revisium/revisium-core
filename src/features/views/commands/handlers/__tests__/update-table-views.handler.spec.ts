@@ -540,6 +540,18 @@ describe('UpdateTableViewsHandler', () => {
     });
 
     describe('schemaHash computation', () => {
+      const getViewsRow = (tableId: string) =>
+        prismaService.row.findFirst({
+          where: {
+            id: tableId,
+            tables: {
+              some: {
+                id: SystemTables.Views,
+              },
+            },
+          },
+        });
+
       it('should use tableViewsSchema hash, not data hash', async () => {
         const { draftRevisionId, tableId } =
           await prepareProject(prismaService);
@@ -561,19 +573,10 @@ describe('UpdateTableViewsHandler', () => {
           }),
         );
 
-        const viewsTableRow = await prismaService.row.findFirst({
-          where: {
-            id: tableId,
-            tables: {
-              some: {
-                id: SystemTables.Views,
-              },
-            },
-          },
-        });
+        const viewsTableRow = await getViewsRow(tableId);
 
         expect(viewsTableRow).not.toBeNull();
-        expect(viewsTableRow!.schemaHash).toBe(expectedSchemaHash);
+        expect(viewsTableRow?.schemaHash).toBe(expectedSchemaHash);
       });
 
       it('should have same schemaHash for different views data', async () => {
@@ -594,16 +597,8 @@ describe('UpdateTableViewsHandler', () => {
           }),
         );
 
-        const row1 = await prismaService.row.findFirst({
-          where: {
-            id: tableId,
-            tables: {
-              some: {
-                id: SystemTables.Views,
-              },
-            },
-          },
-        });
+        const row1 = await getViewsRow(tableId);
+        expect(row1).not.toBeNull();
 
         const viewsData2: TableViewsData = {
           version: 1,
@@ -622,18 +617,10 @@ describe('UpdateTableViewsHandler', () => {
           }),
         );
 
-        const row2 = await prismaService.row.findFirst({
-          where: {
-            id: tableId,
-            tables: {
-              some: {
-                id: SystemTables.Views,
-              },
-            },
-          },
-        });
+        const row2 = await getViewsRow(tableId);
+        expect(row2).not.toBeNull();
 
-        expect(row1!.schemaHash).toBe(row2!.schemaHash);
+        expect(row1?.schemaHash).toBe(row2?.schemaHash);
       });
     });
 
