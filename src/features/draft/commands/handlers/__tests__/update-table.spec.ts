@@ -22,9 +22,15 @@ import {
   testSchemaString,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
+import { UpdateTableViewsCommand } from 'src/features/views/commands/impl';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import {
+  ViewsMigrationService,
+  ViewsMigrationError,
+} from 'src/features/share/views-migration.service';
+import { TableViewsData } from 'src/features/views/types';
 import objectHash from 'object-hash';
 
 describe('UpdateTableHandler', () => {
@@ -592,6 +598,7 @@ describe('UpdateTableHandler', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
+  let viewsMigrationService: ViewsMigrationService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -599,6 +606,7 @@ describe('UpdateTableHandler', () => {
     commandBus = result.commandBus;
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
+    viewsMigrationService = result.viewsMigrationService;
   });
 
   beforeEach(() => {
@@ -607,5 +615,213 @@ describe('UpdateTableHandler', () => {
 
   afterAll(async () => {
     await prismaService.$disconnect();
+  });
+
+  describe('views migration on schema changes', () => {
+    const createViewsData = (
+      overrides: Partial<TableViewsData['views'][0]> = {},
+    ): TableViewsData => ({
+      version: 1,
+      defaultViewId: 'default',
+      views: [
+        {
+          id: 'default',
+          name: 'Default',
+          columns: [{ field: 'data.ver', width: 100 }],
+          sorts: [{ field: 'data.ver', direction: 'asc' }],
+          filters: {
+            logic: 'and',
+            conditions: [{ field: 'data.ver', operator: 'equals', value: 1 }],
+          },
+          ...overrides,
+        },
+      ],
+    });
+
+    const setupViews = (
+      revisionId: string,
+      tableId: string,
+      viewsData: TableViewsData,
+    ) =>
+      transactionService.run(() =>
+        commandBus.execute(
+          new UpdateTableViewsCommand({ revisionId, tableId, viewsData }),
+        ),
+      );
+
+    const getViewsData = async (
+      revisionId: string,
+      tableId: string,
+    ): Promise<TableViewsData | null> => {
+      const viewsTable = await prismaService.table.findFirst({
+        where: {
+          id: SystemTables.Views,
+          revisions: { some: { id: revisionId } },
+        },
+      });
+      if (!viewsTable) return null;
+
+      const viewsRow = await prismaService.row.findFirst({
+        where: {
+          id: tableId,
+          tables: { some: { versionId: viewsTable.versionId } },
+        },
+      });
+      return viewsRow?.data as TableViewsData | null;
+    };
+
+    it('should migrate views on move patch (field rename)', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+      await setupViews(draftRevisionId, tableId, createViewsData());
+
+      await runTransaction(
+        new UpdateTableCommand({
+          revisionId: draftRevisionId,
+          tableId,
+          patches: [
+            {
+              op: 'move',
+              from: '/properties/ver',
+              path: '/properties/version',
+            },
+          ],
+        }),
+      );
+
+      const result = await getViewsData(draftRevisionId, tableId);
+
+      expect(result?.views[0].columns).toEqual([
+        { field: 'data.version', width: 100 },
+      ]);
+      expect(result?.views[0].sorts).toEqual([
+        { field: 'data.version', direction: 'asc' },
+      ]);
+      expect(result?.views[0].filters?.conditions).toEqual([
+        { field: 'data.version', operator: 'equals', value: 1 },
+      ]);
+    });
+
+    it('should migrate views on remove patch (field deletion)', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+      await setupViews(
+        draftRevisionId,
+        tableId,
+        createViewsData({
+          columns: [
+            { field: 'data.ver', width: 100 },
+            { field: 'id', width: 80 },
+          ],
+        }),
+      );
+
+      await runTransaction(
+        new UpdateTableCommand({
+          revisionId: draftRevisionId,
+          tableId,
+          patches: [{ op: 'remove', path: '/properties/ver' }],
+        }),
+      );
+
+      const result = await getViewsData(draftRevisionId, tableId);
+
+      expect(result?.views[0].columns).toEqual([{ field: 'id', width: 80 }]);
+      expect(result?.views[0].sorts).toEqual([]);
+      expect(result?.views[0].filters?.conditions).toEqual([]);
+    });
+
+    it('should migrate views on replace patch (type change)', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+      await setupViews(
+        draftRevisionId,
+        tableId,
+        createViewsData({
+          filters: {
+            logic: 'and',
+            conditions: [
+              { field: 'data.ver', operator: 'greater_than', value: 5 },
+            ],
+          },
+        }),
+      );
+
+      await runTransaction(
+        new UpdateTableCommand({
+          revisionId: draftRevisionId,
+          tableId,
+          patches: [
+            {
+              op: 'replace',
+              path: '/properties/ver',
+              value: { type: JsonSchemaTypeName.String, default: '' },
+            },
+          ],
+        }),
+      );
+
+      const result = await getViewsData(draftRevisionId, tableId);
+
+      expect(result?.views[0].columns).toEqual([
+        { field: 'data.ver', width: 100 },
+      ]);
+      expect(result?.views[0].sorts).toEqual([
+        { field: 'data.ver', direction: 'asc' },
+      ]);
+      expect(result?.views[0].filters?.conditions).toEqual([]);
+    });
+
+    it('should not modify views when no views exist', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      await runTransaction(
+        new UpdateTableCommand({
+          revisionId: draftRevisionId,
+          tableId,
+          patches: [
+            {
+              op: 'replace',
+              path: '/properties/ver',
+              value: { type: JsonSchemaTypeName.String, default: '' },
+            },
+          ],
+        }),
+      );
+
+      const result = await getViewsData(draftRevisionId, tableId);
+      expect(result).toBeNull();
+    });
+
+    it('should throw BadRequestException when views migration fails', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+      await setupViews(
+        draftRevisionId,
+        tableId,
+        createViewsData({ sorts: undefined, filters: undefined }),
+      );
+
+      jest
+        .spyOn(viewsMigrationService, 'migrateViews')
+        .mockImplementation(() => {
+          throw new ViewsMigrationError(
+            'Test migration error',
+            { revisionId: draftRevisionId, tableId },
+            { patchOp: 'move', patchPath: '/properties/ver' },
+          );
+        });
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          { op: 'move', from: '/properties/ver', path: '/properties/version' },
+        ],
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        /Views migration failed/,
+      );
+    });
   });
 });

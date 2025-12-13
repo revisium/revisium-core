@@ -5,6 +5,7 @@ import {
   WhereConditionsTyped,
 } from '@revisium/prisma-pg-json';
 import { PluginService } from 'src/features/plugin/plugin.service';
+import { SystemColumnMappingService } from 'src/features/row/services/system-column-mapping.service';
 import {
   getRowsSql,
   getRowsCountSql,
@@ -26,6 +27,7 @@ export class GetRowsHandler
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly pluginService: PluginService,
+    private readonly systemColumnMappingService: SystemColumnMappingService,
   ) {}
 
   private get transaction() {
@@ -39,10 +41,12 @@ export class GetRowsHandler
         data.tableId,
       );
 
+    const mappedData = await this.mapFieldsToSystemColumns(data);
+
     return getOffsetPagination({
       pageData: data,
       findMany: async (args) => {
-        const rows = await this.getRows(args, tableVersionId, data);
+        const rows = await this.getRows(args, tableVersionId, mappedData);
 
         await this.pluginService.computeRows({
           revisionId: data.revisionId,
@@ -58,8 +62,33 @@ export class GetRowsHandler
           },
         }));
       },
-      count: () => this.getRowsCount(tableVersionId, data),
+      count: () => this.getRowsCount(tableVersionId, mappedData),
     });
+  }
+
+  private async mapFieldsToSystemColumns(
+    data: GetRowsQueryData,
+  ): Promise<GetRowsQueryData> {
+    const { schema } = await this.shareTransactionalQueries.getTableSchema(
+      data.revisionId,
+      data.tableId,
+    );
+
+    const mappedWhere = this.systemColumnMappingService.mapWhereConditions(
+      data.where,
+      schema,
+    );
+
+    const mappedOrderBy = this.systemColumnMappingService.mapOrderByConditions(
+      data.orderBy,
+      schema,
+    );
+
+    return {
+      ...data,
+      where: mappedWhere,
+      orderBy: mappedOrderBy,
+    };
   }
 
   private getRows(

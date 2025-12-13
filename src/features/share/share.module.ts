@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DiffService } from 'src/features/share/diff.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
+import { ViewsMigrationService } from 'src/features/share/views-migration.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { SHARE_COMMANDS_HANDLERS } from 'src/features/share/commands/handlers';
@@ -30,6 +31,7 @@ import { SystemTablesService } from 'src/features/share/system-tables.service';
     JsonSchemaStoreService,
     JsonSchemaValidatorService,
     SystemTablesService,
+    ViewsMigrationService,
     ...SHARE_COMMANDS_HANDLERS,
     ...SHARE_QUERIES_HANDLERS,
   ],
@@ -42,6 +44,7 @@ import { SystemTablesService } from 'src/features/share/system-tables.service';
     JsonSchemaStoreService,
     JsonSchemaValidatorService,
     SystemTablesService,
+    ViewsMigrationService,
   ],
 })
 export class ShareModule {}

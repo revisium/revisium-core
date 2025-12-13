@@ -1,9 +1,14 @@
 import { QueryBus } from '@nestjs/cqrs';
+import { getObjectSchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { nanoid } from 'nanoid';
 import {
   createPreviousFile,
+  prepareBranch,
   prepareProject,
+  prepareRow,
   prepareTableAndRowWithFile,
+  prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
@@ -316,6 +321,252 @@ describe('getRows', () => {
       );
 
       expect(resultInsensitive.edges.length).toEqual(1);
+    });
+  });
+
+  describe('field mapping', () => {
+    it('should filter by system column when schema field has $ref to RowCreatedAt', async () => {
+      const {
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+      } = await prepareBranch(prismaService);
+
+      const schemaWithSystemRef = getObjectSchema({
+        createdAtField: getRefSchema(SystemSchemaIds.RowCreatedAt),
+      });
+
+      const table = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: schemaWithSystemRef,
+      });
+
+      const now = new Date();
+      const pastDate = new Date(now.getTime() - 1000 * 60 * 60 * 24);
+      const futureDate = new Date(now.getTime() + 1000 * 60 * 60 * 24);
+
+      await prepareRow({
+        prismaService,
+        headTableVersionId: table.headTableVersionId,
+        draftTableVersionId: table.draftTableVersionId,
+        data: { createdAtField: '' },
+        dataDraft: { createdAtField: '' },
+        schema: schemaWithSystemRef,
+      });
+
+      const result = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          first: 100,
+          where: {
+            data: {
+              path: ['createdAtField'],
+              gte: pastDate.toISOString(),
+            },
+          },
+        }),
+      );
+
+      expect(result.edges.length).toEqual(1);
+
+      const futureResult = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          first: 100,
+          where: {
+            data: {
+              path: ['createdAtField'],
+              gte: futureDate.toISOString(),
+            },
+          },
+        }),
+      );
+
+      expect(futureResult.edges.length).toEqual(0);
+    });
+
+    it('should sort by system column when schema field has $ref to RowCreatedAt', async () => {
+      const {
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+      } = await prepareBranch(prismaService);
+
+      const schemaWithSystemRef = getObjectSchema({
+        createdAtField: getRefSchema(SystemSchemaIds.RowCreatedAt),
+      });
+
+      const table = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: schemaWithSystemRef,
+      });
+
+      const row1VersionId = nanoid();
+      const row2VersionId = nanoid();
+      const row3VersionId = nanoid();
+
+      const now = new Date();
+      const date1 = new Date(now.getTime() - 3000);
+      const date2 = new Date(now.getTime() - 2000);
+      const date3 = new Date(now.getTime() - 1000);
+
+      await prismaService.row.create({
+        data: {
+          tables: { connect: { versionId: table.draftTableVersionId } },
+          id: 'row-1',
+          versionId: row1VersionId,
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          data: { createdAtField: '' },
+          createdAt: date1,
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          tables: { connect: { versionId: table.draftTableVersionId } },
+          id: 'row-2',
+          versionId: row2VersionId,
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          data: { createdAtField: '' },
+          createdAt: date2,
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          tables: { connect: { versionId: table.draftTableVersionId } },
+          id: 'row-3',
+          versionId: row3VersionId,
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          data: { createdAtField: '' },
+          createdAt: date3,
+        },
+      });
+
+      const resultAsc = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          first: 100,
+          orderBy: [
+            {
+              data: {
+                path: ['createdAtField'],
+                direction: 'asc',
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(resultAsc.edges.map((e) => e.node.id)).toEqual([
+        'row-1',
+        'row-2',
+        'row-3',
+      ]);
+
+      const resultDesc = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          first: 100,
+          orderBy: [
+            {
+              data: {
+                path: ['createdAtField'],
+                direction: 'desc',
+              },
+            },
+          ],
+        }),
+      );
+
+      expect(resultDesc.edges.map((e) => e.node.id)).toEqual([
+        'row-3',
+        'row-2',
+        'row-1',
+      ]);
+    });
+
+    it('should filter by system column when schema field has $ref to RowId', async () => {
+      const {
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+      } = await prepareBranch(prismaService);
+
+      const schemaWithSystemRef = getObjectSchema({
+        rowIdField: getRefSchema(SystemSchemaIds.RowId),
+      });
+
+      const table = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: schemaWithSystemRef,
+      });
+
+      await prismaService.row.create({
+        data: {
+          tables: { connect: { versionId: table.draftTableVersionId } },
+          id: 'test-row-id',
+          versionId: nanoid(),
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          data: { rowIdField: '' },
+        },
+      });
+
+      await prismaService.row.create({
+        data: {
+          tables: { connect: { versionId: table.draftTableVersionId } },
+          id: 'another-row-id',
+          versionId: nanoid(),
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          data: { rowIdField: '' },
+        },
+      });
+
+      const result = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: table.tableId,
+          first: 100,
+          where: {
+            data: {
+              path: ['rowIdField'],
+              equals: 'test-row-id',
+            },
+          },
+        }),
+      );
+
+      expect(result.edges.length).toEqual(1);
+      expect(result.edges[0].node.id).toEqual('test-row-id');
     });
   });
 
