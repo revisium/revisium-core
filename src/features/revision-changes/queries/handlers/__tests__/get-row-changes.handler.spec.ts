@@ -320,6 +320,31 @@ describe('GetRowChangesHandler', () => {
 
       expect(pluginService.computeRows).not.toHaveBeenCalled();
     });
+
+    it('calls computeRows for both fromRevision and toRevision for modified rows', async () => {
+      const { fromRevision, toRevision, fromTable, toTable } =
+        await prepareModifiedRowWithTables();
+
+      await handler.execute(
+        new GetRowChangesQuery({
+          revisionId: toRevision.id,
+          first: 10,
+        }),
+      );
+
+      expect(pluginService.computeRows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revisionId: toRevision.id,
+          tableId: toTable.id,
+        }),
+      );
+      expect(pluginService.computeRows).toHaveBeenCalledWith(
+        expect.objectContaining({
+          revisionId: fromRevision.id,
+          tableId: fromTable.id,
+        }),
+      );
+    });
   });
 
   // Helper functions
@@ -1002,6 +1027,96 @@ describe('GetRowChangesHandler', () => {
     });
 
     return { fromRevision, toRevision };
+  }
+
+  async function prepareModifiedRowWithTables() {
+    const branch = await prismaService.branch.create({
+      data: {
+        id: nanoid(),
+        name: nanoid(),
+        project: {
+          create: {
+            id: nanoid(),
+            name: nanoid(),
+            organization: {
+              create: {
+                id: nanoid(),
+                createdId: nanoid(),
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const fromRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        branchId: branch.id,
+      },
+    });
+
+    const toRevision = await prismaService.revision.create({
+      data: {
+        id: nanoid(),
+        parentId: fromRevision.id,
+        branchId: branch.id,
+      },
+    });
+
+    const fromTable = await prismaService.table.create({
+      data: {
+        id: nanoid(),
+        createdId: nanoid(),
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: fromRevision.id },
+        },
+      },
+    });
+
+    const toTable = await prismaService.table.create({
+      data: {
+        id: fromTable.id,
+        createdId: fromTable.createdId,
+        versionId: nanoid(),
+        revisions: {
+          connect: { id: toRevision.id },
+        },
+      },
+    });
+
+    const rowCreatedId = nanoid();
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        createdId: rowCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: fromTable.versionId },
+        },
+        data: { name: 'old value' },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    await prismaService.row.create({
+      data: {
+        id: nanoid(),
+        createdId: rowCreatedId,
+        versionId: nanoid(),
+        tables: {
+          connect: { versionId: toTable.versionId },
+        },
+        data: { name: 'new value' },
+        hash: nanoid(),
+        schemaHash: nanoid(),
+      },
+    });
+
+    return { fromRevision, toRevision, fromTable, toTable };
   }
 
   async function prepareMultipleRevisions() {
