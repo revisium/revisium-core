@@ -2,6 +2,9 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
+import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
+import { tableViewsSchema } from 'src/features/share/schema/table-views-schema';
+import { SystemTables } from 'src/features/share/system-tables.consts';
 import { UpdateTableViewsCommand } from 'src/features/views/commands/impl';
 import { DEFAULT_VIEW_ID, TableViewsData } from 'src/features/views/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -536,6 +539,91 @@ describe('UpdateTableViewsHandler', () => {
       });
     });
 
+    describe('schemaHash computation', () => {
+      const getViewsRow = (tableId: string) =>
+        prismaService.row.findFirst({
+          where: {
+            id: tableId,
+            tables: {
+              some: {
+                id: SystemTables.Views,
+              },
+            },
+          },
+        });
+
+      it('should use tableViewsSchema hash, not data hash', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const expectedSchemaHash =
+          jsonSchemaValidator.getSchemaHash(tableViewsSchema);
+
+        const viewsData: TableViewsData = {
+          version: 1,
+          defaultViewId: 'default',
+          views: [{ id: 'default', name: 'Default View' }],
+        };
+
+        await runTransaction(
+          new UpdateTableViewsCommand({
+            revisionId: draftRevisionId,
+            tableId,
+            viewsData,
+          }),
+        );
+
+        const viewsTableRow = await getViewsRow(tableId);
+
+        expect(viewsTableRow).not.toBeNull();
+        expect(viewsTableRow?.schemaHash).toBe(expectedSchemaHash);
+      });
+
+      it('should have same schemaHash for different views data', async () => {
+        const { draftRevisionId, tableId } =
+          await prepareProject(prismaService);
+
+        const viewsData1: TableViewsData = {
+          version: 1,
+          defaultViewId: 'view1',
+          views: [{ id: 'view1', name: 'View 1' }],
+        };
+
+        await runTransaction(
+          new UpdateTableViewsCommand({
+            revisionId: draftRevisionId,
+            tableId,
+            viewsData: viewsData1,
+          }),
+        );
+
+        const row1 = await getViewsRow(tableId);
+        expect(row1).not.toBeNull();
+
+        const viewsData2: TableViewsData = {
+          version: 1,
+          defaultViewId: 'view2',
+          views: [
+            { id: 'view2', name: 'View 2' },
+            { id: 'view3', name: 'View 3' },
+          ],
+        };
+
+        await runTransaction(
+          new UpdateTableViewsCommand({
+            revisionId: draftRevisionId,
+            tableId,
+            viewsData: viewsData2,
+          }),
+        );
+
+        const row2 = await getViewsRow(tableId);
+        expect(row2).not.toBeNull();
+
+        expect(row1?.schemaHash).toBe(row2?.schemaHash);
+      });
+    });
+
     describe('hasChanges flag', () => {
       it('should set hasChanges to true after updating views', async () => {
         const { draftRevisionId, tableId } =
@@ -615,6 +703,7 @@ describe('UpdateTableViewsHandler', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
+  let jsonSchemaValidator: JsonSchemaValidatorService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -622,6 +711,7 @@ describe('UpdateTableViewsHandler', () => {
     commandBus = result.commandBus;
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
+    jsonSchemaValidator = result.module.get(JsonSchemaValidatorService);
   });
 
   beforeEach(() => {

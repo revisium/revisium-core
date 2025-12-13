@@ -32,6 +32,7 @@ import { SearchRowsHandler } from 'src/features/row/queries/handlers/search-rows
 import { ResolveRowCountForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-count-foreign-keys-by.handler';
 import { ResolveRowCountForeignKeysToHandler } from 'src/features/row/queries/handlers/resolve-row-count-foreign-keys-to.handler';
 import { RowApiService } from 'src/features/row/row-api.service';
+import { SystemColumnMappingService } from 'src/features/row/services/system-column-mapping.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { GetRevisionHandler } from 'src/features/revision/queries/commands/get-revision.handler';
 import { GetRowByIdHandler } from 'src/features/row/queries/handlers/get-row-by-id.handler';
@@ -39,6 +40,7 @@ import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { ViewsMigrationService } from 'src/features/share/views-migration.service';
 import {
   JsonObjectSchema,
   JsonSchemaTypeName,
@@ -154,6 +156,7 @@ export const createTestingModule = async () => {
       ResolveRowCountForeignKeysByHandler,
       ResolveRowCountForeignKeysToHandler,
       SearchRowsHandler,
+      SystemColumnMappingService,
     ],
   })
     .overrideProvider(S3Service)
@@ -175,6 +178,7 @@ export const createTestingModule = async () => {
   const endpointNotificationService = module.get(EndpointNotificationService);
   const migrationContextService = module.get(MigrationContextService);
   const cacheService = module.get(CacheService);
+  const viewsMigrationService = module.get(ViewsMigrationService);
   return {
     module,
     prismaService,
@@ -188,6 +192,7 @@ export const createTestingModule = async () => {
     endpointNotificationService,
     migrationContextService,
     cacheService,
+    viewsMigrationService,
   };
 };
 
