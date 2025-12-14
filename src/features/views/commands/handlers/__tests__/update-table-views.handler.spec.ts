@@ -509,7 +509,7 @@ describe('UpdateTableViewsHandler', () => {
                     operator: 'equals',
                     value: 'published',
                   },
-                  { field: 'data.views', operator: 'greater_than', value: 100 },
+                  { field: 'data.views', operator: 'gt', value: 100 },
                 ],
                 groups: [
                   {

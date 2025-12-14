@@ -111,16 +111,12 @@ describe('table-views-schema', () => {
       'ends_with',
       'is_empty',
       'is_not_empty',
-      'greater_than',
-      'greater_than_or_equal',
-      'less_than',
-      'less_than_or_equal',
+      'gt',
+      'gte',
+      'lt',
+      'lte',
       'is_true',
       'is_false',
-      'before',
-      'after',
-      'on_or_before',
-      'on_or_after',
     ];
 
     for (const operator of operators) {
