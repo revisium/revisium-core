@@ -738,9 +738,7 @@ describe('UpdateTableHandler', () => {
         createViewsData({
           filters: {
             logic: 'and',
-            conditions: [
-              { field: 'data.ver', operator: 'greater_than', value: 5 },
-            ],
+            conditions: [{ field: 'data.ver', operator: 'gt', value: 5 }],
           },
         }),
       );
