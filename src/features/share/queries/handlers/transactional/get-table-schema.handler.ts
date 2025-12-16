@@ -7,7 +7,10 @@ import {
   GetTableSchemaQueryReturnType,
   HistoryPatches,
 } from 'src/features/share/queries/impl';
-import { SystemTables } from 'src/features/share/system-tables.consts';
+import {
+  findSchemaForSystemTables,
+  SystemTables,
+} from 'src/features/share/system-tables.consts';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(GetTableSchemaQuery)
@@ -28,6 +31,16 @@ export class GetTableSchemaHandler
   }
 
   private async getSchema(revisionId: string, tableId: string) {
+    const systemSchema = findSchemaForSystemTables(tableId);
+
+    if (systemSchema) {
+      return {
+        schema: systemSchema as JsonSchema,
+        hash: '',
+        historyPatches: [],
+      };
+    }
+
     const result = await this.prisma.row.findFirst({
       where: {
         id: tableId,
