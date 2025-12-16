@@ -140,6 +140,7 @@ describe('MCP API', () => {
       expect(toolNames).toContain('getRows');
       expect(toolNames).toContain('createRow');
       expect(toolNames).toContain('commitRevision');
+      expect(toolNames).toContain('uploadFile');
     });
   });
 
@@ -174,6 +175,12 @@ describe('MCP API', () => {
         expect.objectContaining({
           uri: 'revisium://specs/schema',
           name: 'schema-specification',
+        }),
+      );
+      expect(data.result.resources).toContainEqual(
+        expect.objectContaining({
+          uri: 'revisium://specs/file',
+          name: 'file-specification',
         }),
       );
     });

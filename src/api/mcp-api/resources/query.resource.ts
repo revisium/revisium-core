@@ -458,6 +458,295 @@ export class QueryResource implements McpResourceRegistrar {
         },
       },
 
+      fileFieldQueries: {
+        description:
+          'Examples for querying file fields (fields with $ref: "File")',
+        note: 'File fields have nested properties: status, fileId, url, fileName, hash, extension, mimeType, size, width, height',
+
+        byStatus: {
+          description: 'Filter by file upload status',
+          examples: {
+            uploadedFiles: {
+              description: 'Find rows where file is uploaded',
+              where: { data: { path: 'document.status', equals: 'uploaded' } },
+            },
+            pendingUploads: {
+              description: 'Find rows where file is waiting for upload',
+              where: { data: { path: 'avatar.status', equals: 'ready' } },
+            },
+            failedUploads: {
+              description: 'Find rows where file upload failed',
+              where: { data: { path: 'attachment.status', equals: 'error' } },
+            },
+          },
+        },
+
+        byExtension: {
+          description: 'Filter by file extension',
+          examples: {
+            pdfFiles: {
+              description: 'Find all PDF documents',
+              where: { data: { path: 'document.extension', equals: 'pdf' } },
+            },
+            imageFiles: {
+              description: 'Find common image formats',
+              where: {
+                OR: [
+                  { data: { path: 'image.extension', equals: 'jpg' } },
+                  { data: { path: 'image.extension', equals: 'jpeg' } },
+                  { data: { path: 'image.extension', equals: 'png' } },
+                  { data: { path: 'image.extension', equals: 'webp' } },
+                ],
+              },
+            },
+            extensionIn: {
+              description: 'Find files with specific extensions using in',
+              where: {
+                data: {
+                  path: 'attachment.extension',
+                  in: ['pdf', 'doc', 'docx', 'xls', 'xlsx'],
+                },
+              },
+            },
+          },
+        },
+
+        byMimeType: {
+          description: 'Filter by MIME type',
+          examples: {
+            allImages: {
+              description: 'Find all image files',
+              where: {
+                data: {
+                  path: 'photo.mimeType',
+                  string_starts_with: 'image/',
+                },
+              },
+            },
+            allVideos: {
+              description: 'Find all video files',
+              where: {
+                data: {
+                  path: 'media.mimeType',
+                  string_starts_with: 'video/',
+                },
+              },
+            },
+            specificMimeType: {
+              description: 'Find PNG images specifically',
+              where: { data: { path: 'image.mimeType', equals: 'image/png' } },
+            },
+          },
+        },
+
+        bySize: {
+          description: 'Filter by file size (in bytes)',
+          examples: {
+            largeFiles: {
+              description: 'Find files larger than 10MB',
+              where: { data: { path: 'document.size', gt: 10485760 } },
+            },
+            smallFiles: {
+              description: 'Find files smaller than 1MB',
+              where: { data: { path: 'attachment.size', lt: 1048576 } },
+            },
+            sizeRange: {
+              description: 'Find files between 1MB and 5MB',
+              where: {
+                AND: [
+                  { data: { path: 'file.size', gte: 1048576 } },
+                  { data: { path: 'file.size', lte: 5242880 } },
+                ],
+              },
+            },
+            nonEmptyFiles: {
+              description: 'Find files with actual content (size > 0)',
+              where: { data: { path: 'document.size', gt: 0 } },
+            },
+          },
+        },
+
+        byDimensions: {
+          description: 'Filter images by width/height (in pixels)',
+          examples: {
+            wideImages: {
+              description: 'Find images wider than 1920px',
+              where: { data: { path: 'image.width', gt: 1920 } },
+            },
+            tallImages: {
+              description: 'Find images taller than 1080px',
+              where: { data: { path: 'image.height', gt: 1080 } },
+            },
+            minimumResolution: {
+              description: 'Find images at least 800x600',
+              where: {
+                AND: [
+                  { data: { path: 'photo.width', gte: 800 } },
+                  { data: { path: 'photo.height', gte: 600 } },
+                ],
+              },
+            },
+            squareImages: {
+              description:
+                'Note: For aspect ratio queries, retrieve and filter in application',
+              note: 'Database cannot compare two fields directly',
+            },
+            thumbnailSize: {
+              description: 'Find small thumbnails (max 200px in any dimension)',
+              where: {
+                AND: [
+                  { data: { path: 'thumb.width', lte: 200 } },
+                  { data: { path: 'thumb.height', lte: 200 } },
+                  { data: { path: 'thumb.width', gt: 0 } },
+                ],
+              },
+            },
+          },
+        },
+
+        byFileName: {
+          description: 'Filter by original file name',
+          examples: {
+            exactName: {
+              description: 'Find file by exact name',
+              where: {
+                data: { path: 'document.fileName', equals: 'report.pdf' },
+              },
+            },
+            nameContains: {
+              description: 'Find files with name containing text',
+              where: {
+                data: {
+                  path: 'attachment.fileName',
+                  string_contains: 'invoice',
+                  mode: 'insensitive',
+                },
+              },
+            },
+            nameStartsWith: {
+              description: 'Find files starting with prefix',
+              where: {
+                data: {
+                  path: 'file.fileName',
+                  string_starts_with: 'IMG_',
+                },
+              },
+            },
+          },
+        },
+
+        arrayOfFiles: {
+          description: 'Query arrays of files (e.g., gallery, attachments)',
+          examples: {
+            anyFilePdf: {
+              description: 'Find rows where any attachment is a PDF',
+              where: {
+                data: { path: 'attachments[*].extension', equals: 'pdf' },
+              },
+            },
+            firstImageUploaded: {
+              description: 'Find rows where first gallery image is uploaded',
+              where: {
+                data: { path: 'gallery[0].status', equals: 'uploaded' },
+              },
+            },
+            anyLargeFile: {
+              description: 'Find rows with any file larger than 5MB',
+              where: { data: { path: 'files[*].size', gt: 5242880 } },
+            },
+            anyImageFile: {
+              description: 'Find rows with any image in attachments',
+              where: {
+                data: {
+                  path: 'attachments[*].mimeType',
+                  string_starts_with: 'image/',
+                },
+              },
+            },
+          },
+        },
+
+        sorting: {
+          description: 'Sort by file properties',
+          examples: {
+            bySize: {
+              description: 'Sort by file size (largest first)',
+              orderBy: {
+                data: { path: 'document.size', direction: 'desc', type: 'int' },
+              },
+            },
+            byFileName: {
+              description: 'Sort alphabetically by file name',
+              orderBy: {
+                data: {
+                  path: 'attachment.fileName',
+                  direction: 'asc',
+                  type: 'text',
+                },
+              },
+            },
+            byWidth: {
+              description: 'Sort images by width',
+              orderBy: {
+                data: { path: 'image.width', direction: 'desc', type: 'int' },
+              },
+            },
+          },
+        },
+
+        combinedQueries: {
+          description: 'Complex file queries combining multiple conditions',
+          examples: {
+            uploadedImages: {
+              description: 'Find uploaded image files only',
+              where: {
+                AND: [
+                  { data: { path: 'photo.status', equals: 'uploaded' } },
+                  {
+                    data: {
+                      path: 'photo.mimeType',
+                      string_starts_with: 'image/',
+                    },
+                  },
+                ],
+              },
+            },
+            largeUploadedPdfs: {
+              description: 'Find uploaded PDFs larger than 1MB',
+              where: {
+                AND: [
+                  { data: { path: 'document.status', equals: 'uploaded' } },
+                  { data: { path: 'document.extension', equals: 'pdf' } },
+                  { data: { path: 'document.size', gt: 1048576 } },
+                ],
+              },
+            },
+            highResImages: {
+              description: 'Find uploaded high-resolution images (4K+)',
+              where: {
+                AND: [
+                  { data: { path: 'image.status', equals: 'uploaded' } },
+                  { data: { path: 'image.width', gte: 3840 } },
+                  { data: { path: 'image.height', gte: 2160 } },
+                ],
+              },
+            },
+            productsWithImages: {
+              description: 'Find products with uploaded main image',
+              where: {
+                AND: [
+                  { data: { path: 'mainImage.status', equals: 'uploaded' } },
+                  { data: { path: 'isActive', equals: true } },
+                ],
+              },
+              orderBy: {
+                data: { path: 'name', direction: 'asc', type: 'text' },
+              },
+            },
+          },
+        },
+      },
+
       schemaToQueryMapping: {
         description: 'How to build queries based on your table schema',
         guide: [
@@ -467,6 +756,8 @@ export class QueryResource implements McpResourceRegistrar {
           'For date fields (format: date-time): use equals, gt, gte, lt, lte',
           'For nested objects: use dot notation in path (e.g., "address.city")',
           'For arrays: use bracket notation (e.g., "items[0]") or wildcard ("items[*]")',
+          'For file fields ($ref: "File"): use dot notation to access properties (e.g., "avatar.status", "document.extension", "image.width")',
+          'For file arrays: use wildcard to search any file (e.g., "attachments[*].extension")',
         ],
         performanceTips: [
           'Put most selective filters first in AND arrays',
