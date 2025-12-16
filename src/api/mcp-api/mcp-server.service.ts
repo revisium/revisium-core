@@ -15,7 +15,12 @@ import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.s
 import { McpSession, McpSessionService } from './mcp-session.service';
 import { McpAuthHelpers, McpContext, McpPermissionCheck } from './types';
 
-import { SchemaResource, QueryResource, MigrationResource } from './resources';
+import {
+  SchemaResource,
+  QueryResource,
+  MigrationResource,
+  FileResource,
+} from './resources';
 
 import {
   AuthTools,
@@ -29,6 +34,7 @@ import {
   MigrationTools,
   UserTools,
   EndpointTools,
+  FileTools,
 } from './tools';
 
 @Injectable()
@@ -38,6 +44,7 @@ export class McpServerService implements OnModuleInit {
   private readonly schemaResource: SchemaResource;
   private readonly queryResource: QueryResource;
   private readonly migrationResource: MigrationResource;
+  private readonly fileResource: FileResource;
 
   private readonly authTools: AuthTools;
   private readonly organizationTools: OrganizationTools;
@@ -50,6 +57,7 @@ export class McpServerService implements OnModuleInit {
   private readonly migrationTools: MigrationTools;
   private readonly userTools: UserTools;
   private readonly endpointTools: EndpointTools;
+  private readonly fileTools: FileTools;
 
   constructor(
     private readonly configService: ConfigService,
@@ -124,6 +132,7 @@ PERMISSIONS:
     this.schemaResource = new SchemaResource();
     this.queryResource = new QueryResource();
     this.migrationResource = new MigrationResource();
+    this.fileResource = new FileResource();
 
     this.authTools = new AuthTools(
       this.mcpSession,
@@ -145,12 +154,14 @@ PERMISSIONS:
       this.endpointApi,
       this.configService.get<string>('ENDPOINT_SERVICE_URL'),
     );
+    this.fileTools = new FileTools(this.draftApi);
   }
 
   onModuleInit() {
     this.schemaResource.register(this.server);
     this.queryResource.register(this.server);
     this.migrationResource.register(this.server);
+    this.fileResource.register(this.server);
 
     const auth: McpAuthHelpers = {
       requireAuth: this.requireAuth.bind(this),
@@ -172,6 +183,7 @@ PERMISSIONS:
     this.migrationTools.register(this.server, auth);
     this.userTools.register(this.server, auth);
     this.endpointTools.register(this.server, auth);
+    this.fileTools.register(this.server, auth);
   }
 
   public getServer(): McpServer {

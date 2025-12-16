@@ -1,4 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { McpResourceRegistrar } from '../types';
 
@@ -20,6 +21,7 @@ function createMcpMetaSchema() {
 
 export class SchemaResource implements McpResourceRegistrar {
   private readonly mcpMetaSchema = createMcpMetaSchema();
+  private readonly fileRef = SystemSchemaIds.File;
 
   register(server: McpServer): void {
     server.registerResource(
@@ -152,6 +154,190 @@ export class SchemaResource implements McpResourceRegistrar {
           additionalProperties: false,
           required: ['name', 'address'],
         },
+        withSingleFile: {
+          description: 'Table with a single file field for document upload',
+          type: 'object',
+          properties: {
+            title: {
+              type: 'string',
+              default: '',
+              description: 'Document title',
+            },
+            document: {
+              $ref: this.fileRef,
+              description: 'Uploaded document (PDF, DOC, etc.)',
+            },
+          },
+          additionalProperties: false,
+          required: ['title', 'document'],
+        },
+        withFileGallery: {
+          description: 'Table with array of files for image gallery',
+          type: 'object',
+          properties: {
+            albumName: {
+              type: 'string',
+              default: '',
+              description: 'Photo album name',
+            },
+            coverImage: {
+              $ref: this.fileRef,
+              description: 'Main cover image',
+            },
+            photos: {
+              type: 'array',
+              items: { $ref: this.fileRef },
+              description:
+                'Gallery photos (add items to upload multiple files)',
+            },
+          },
+          additionalProperties: false,
+          required: ['albumName', 'coverImage', 'photos'],
+        },
+        productWithImages: {
+          description: 'E-commerce product with main image and gallery',
+          type: 'object',
+          properties: {
+            name: {
+              type: 'string',
+              default: '',
+              description: 'Product name',
+            },
+            price: {
+              type: 'number',
+              default: 0,
+              description: 'Product price',
+            },
+            description: {
+              type: 'string',
+              default: '',
+              contentMediaType: 'text/markdown',
+              description: 'Product description in Markdown',
+            },
+            mainImage: {
+              $ref: this.fileRef,
+              description: 'Primary product image',
+            },
+            gallery: {
+              type: 'array',
+              items: { $ref: this.fileRef },
+              description: 'Additional product images',
+            },
+            categoryId: {
+              type: 'string',
+              default: '',
+              foreignKey: 'categories',
+              description: 'Product category reference',
+            },
+          },
+          additionalProperties: false,
+          required: [
+            'name',
+            'price',
+            'description',
+            'mainImage',
+            'gallery',
+            'categoryId',
+          ],
+        },
+        blogPostWithMedia: {
+          description: 'Blog post with featured image and attachments',
+          type: 'object',
+          properties: {
+            title: {
+              type: 'string',
+              default: '',
+              description: 'Post title',
+            },
+            slug: {
+              type: 'string',
+              default: '',
+              description: 'URL-friendly identifier',
+            },
+            content: {
+              type: 'string',
+              default: '',
+              contentMediaType: 'text/markdown',
+              description: 'Post content in Markdown',
+            },
+            featuredImage: {
+              $ref: this.fileRef,
+              description: 'Hero image displayed at top of post',
+            },
+            attachments: {
+              type: 'array',
+              items: { $ref: this.fileRef },
+              description: 'Downloadable files (PDFs, docs, etc.)',
+            },
+            publishedAt: {
+              type: 'string',
+              format: 'date-time',
+              default: '',
+              description: 'Publication date',
+            },
+            authorId: {
+              type: 'string',
+              default: '',
+              foreignKey: 'authors',
+              description: 'Post author reference',
+            },
+          },
+          additionalProperties: false,
+          required: [
+            'title',
+            'slug',
+            'content',
+            'featuredImage',
+            'attachments',
+            'publishedAt',
+            'authorId',
+          ],
+        },
+        userProfile: {
+          description: 'User profile with avatar and document uploads',
+          type: 'object',
+          properties: {
+            username: {
+              type: 'string',
+              default: '',
+              description: 'Unique username',
+            },
+            email: {
+              type: 'string',
+              format: 'email',
+              default: '',
+              description: 'User email address',
+            },
+            avatar: {
+              $ref: this.fileRef,
+              description: 'Profile picture (recommended: square image)',
+            },
+            resume: {
+              $ref: this.fileRef,
+              description: 'Resume/CV document (PDF format recommended)',
+            },
+            portfolio: {
+              type: 'array',
+              items: { $ref: this.fileRef },
+              description: 'Portfolio samples and work examples',
+            },
+            bio: {
+              type: 'string',
+              default: '',
+              contentMediaType: 'text/markdown',
+              description: 'User biography',
+            },
+          },
+          additionalProperties: false,
+          required: [
+            'username',
+            'email',
+            'avatar',
+            'resume',
+            'portfolio',
+            'bio',
+          ],
+        },
       },
       rules: [
         'Root schema must be type: object',
@@ -172,6 +358,58 @@ export class SchemaResource implements McpResourceRegistrar {
         'foreignKey value must be a valid rowId from the referenced table, or empty string',
         'Example order: 1) create "categories" table, 2) create "products" table with foreignKey to categories',
       ],
+      fileFieldRules: [
+        `Use $ref: "${this.fileRef}" to define a file field`,
+        'File fields are automatically initialized with status="ready" and a unique fileId when row is created',
+        'Use uploadFile tool to upload actual file content using the generated fileId',
+        'After upload, status changes to "uploaded" and url becomes available',
+        `For arrays of files, use type: "array" with items: { $ref: "${this.fileRef}" }`,
+        'Maximum file size: 50MB',
+        'For images, width and height are automatically extracted after upload',
+        'File content is immutable - only fileName can be modified after upload',
+        'See revisium://specs/file resource for detailed file upload workflow',
+      ],
+      fileSchemaRef: this.fileRef,
+      fileFieldExamples: {
+        singleFile: {
+          note: 'Simple file field for document upload',
+          schema: { $ref: this.fileRef, description: 'Uploaded document' },
+        },
+        arrayOfFiles: {
+          note: 'Array of files for gallery or attachments',
+          schema: {
+            type: 'array',
+            items: { $ref: this.fileRef },
+            description: 'Multiple file uploads',
+          },
+        },
+        addFileFieldToExistingTable: {
+          note: 'JSON Patch to add file field to existing table',
+          patches: [
+            {
+              op: 'add',
+              path: '/properties/attachment',
+              value: { $ref: this.fileRef, description: 'File attachment' },
+            },
+            { op: 'add', path: '/required/-', value: 'attachment' },
+          ],
+        },
+        addFileArrayToExistingTable: {
+          note: 'JSON Patch to add array of files to existing table',
+          patches: [
+            {
+              op: 'add',
+              path: '/properties/images',
+              value: {
+                type: 'array',
+                items: { $ref: this.fileRef },
+                description: 'Image gallery',
+              },
+            },
+            { op: 'add', path: '/required/-', value: 'images' },
+          ],
+        },
+      },
       updateTableRules: [
         'Use JSON Patch operations (RFC 6902) to update table schema',
         'ALWAYS read getTableSchema first before updating to understand current structure',
