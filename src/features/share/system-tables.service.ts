@@ -1,8 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import hash from 'object-hash';
-import { InternalCreateRowCommand } from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import {
   findSchemaForSystemTables,
@@ -19,7 +15,6 @@ export class SystemTablesService {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
-    private readonly commandBus: CommandBus,
     private readonly idService: IdService,
   ) {}
 
@@ -70,16 +65,6 @@ export class SystemTablesService {
         },
       },
     });
-
-    await this.commandBus.execute(
-      new InternalCreateRowCommand({
-        revisionId,
-        tableId: SystemTables.Schema,
-        rowId: systemTableId,
-        data: schema,
-        schemaHash: hash(metaSchema),
-      }),
-    );
 
     await this.transaction.revision.updateMany({
       where: { id: revisionId, hasChanges: false },

@@ -57,6 +57,35 @@ describe('SystemTablesService', () => {
       expect(secondResult.system).toBe(true);
     });
 
+    it('should NOT create row in revisium_schema_table for system table', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      await runTransaction(async () => {
+        await systemTablesService.ensureSystemTable(
+          draftRevisionId,
+          SystemTables.Views,
+        );
+      });
+
+      const schemaTable = await prismaService.table.findFirst({
+        where: {
+          id: SystemTables.Schema,
+          revisions: { some: { id: draftRevisionId } },
+        },
+      });
+
+      expect(schemaTable).toBeDefined();
+
+      const schemaRow = await prismaService.row.findFirst({
+        where: {
+          id: SystemTables.Views,
+          tables: { some: { versionId: schemaTable!.versionId } },
+        },
+      });
+
+      expect(schemaRow).toBeNull();
+    });
+
     it('should not appear in tables query (system tables filtered)', async () => {
       const { draftRevisionId } = await prepareProject(prismaService);
 
