@@ -368,7 +368,9 @@ input JsonFilter {
   path: [String!]
   search: String
   searchIn: SearchIn
-  searchLanguage: String
+
+  """Default: simple"""
+  searchLanguage: SearchLanguage
   searchType: SearchType
   string_contains: String
   string_ends_with: String
@@ -833,6 +835,39 @@ enum SearchIn {
   numbers
   strings
   values
+}
+
+"""Language for full-text search. Default: simple"""
+enum SearchLanguage {
+  arabic
+  armenian
+  basque
+  catalan
+  danish
+  dutch
+  english
+  finnish
+  french
+  german
+  greek
+  hindi
+  hungarian
+  indonesian
+  irish
+  italian
+  lithuanian
+  nepali
+  norwegian
+  portuguese
+  romanian
+  russian
+  serbian
+  simple
+  spanish
+  swedish
+  tamil
+  turkish
+  yiddish
 }
 
 type SearchMatch {

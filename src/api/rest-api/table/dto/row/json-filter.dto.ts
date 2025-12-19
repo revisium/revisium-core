@@ -7,6 +7,7 @@ import {
   IsIn,
   IsNumber,
 } from 'class-validator';
+import { SEARCH_LANGUAGES } from '@revisium/prisma-pg-json';
 
 export class JsonFilterDto {
   @ApiPropertyOptional({ description: 'Exact JSON match' })
@@ -108,10 +109,11 @@ export class JsonFilterDto {
   search?: string;
 
   @ApiPropertyOptional({
-    description: 'Language for full-text search (e.g., "english", "russian")',
+    enum: SEARCH_LANGUAGES,
+    description: 'Language for full-text search. Default: simple',
   })
   @IsOptional()
-  @IsString()
+  @IsIn(SEARCH_LANGUAGES)
   searchLanguage?: string;
 
   @ApiPropertyOptional({
