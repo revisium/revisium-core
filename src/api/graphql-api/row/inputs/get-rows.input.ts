@@ -1,6 +1,12 @@
 import { Field, InputType, Int } from '@nestjs/graphql';
+import { SEARCH_LANGUAGES } from '@revisium/prisma-pg-json';
 import { Prisma } from 'src/__generated__/client';
 import { JSONResolver } from 'graphql-scalars';
+import type { SearchLanguage as SearchLanguageType } from '@revisium/prisma-pg-json';
+
+export const SearchLanguage = Object.fromEntries(
+  SEARCH_LANGUAGES.map((lang) => [lang, lang]),
+) as { [K in SearchLanguageType]: K };
 
 export enum OrderByField {
   createdAt = 'createdAt',
@@ -135,8 +141,11 @@ export class JsonFilter {
   @Field({ nullable: true })
   search?: string;
 
-  @Field({ nullable: true })
-  searchLanguage?: string;
+  @Field(() => SearchLanguage, {
+    nullable: true,
+    description: 'Default: simple',
+  })
+  searchLanguage?: SearchLanguageType;
 
   @Field(() => SearchType, { nullable: true })
   searchType?: SearchType;

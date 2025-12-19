@@ -6,6 +6,7 @@ import {
   OrderDataAggregation,
   OrderDataType,
   SearchIn,
+  SearchLanguage,
   SearchType,
 } from 'src/api/graphql-api/row/inputs';
 import {
@@ -21,6 +22,10 @@ export const registerGraphqlEnums = () => {
   registerEnumType(OrderDataAggregation, { name: 'OrderDataAggregation' });
   registerEnumType(SearchType, { name: 'SearchType' });
   registerEnumType(SearchIn, { name: 'SearchIn' });
+  registerEnumType(SearchLanguage, {
+    name: 'SearchLanguage',
+    description: 'Language for full-text search. Default: simple',
+  });
   registerEnumType(Prisma.SortOrder, { name: 'SortOrder' });
   registerEnumType(Prisma.QueryMode, { name: 'QueryMode' });
   registerEnumType(PatchRowOp, { name: 'PatchRowOp' });
