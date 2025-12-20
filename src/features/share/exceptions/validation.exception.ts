@@ -1,5 +1,84 @@
 import { BadRequestException } from '@nestjs/common';
 
+function formatContextString(context?: ValidationErrorContext): string {
+  if (!context) {
+    return '';
+  }
+  const rowPart = context.rowId ? ` for row "${context.rowId}"` : '';
+  return ` in table "${context.tableId}"${rowPart}`;
+}
+
+function formatContextStringParens(context?: ValidationErrorContext): string {
+  if (!context) {
+    return '';
+  }
+  const rowPart = context.rowId ? `, row "${context.rowId}"` : '';
+  return ` (in table "${context.tableId}"${rowPart})`;
+}
+
+function formatMissingRowsString(missingRowIds: string[]): string {
+  const rowCount = missingRowIds.length;
+
+  if (rowCount === 1) {
+    return `"${missingRowIds[0]}"`;
+  }
+
+  const quotedRows = missingRowIds
+    .slice(0, 3)
+    .map((r) => `"${r}"`)
+    .join(', ');
+  const ellipsis = rowCount > 3 ? '...' : '';
+
+  return `${rowCount} rows (${quotedRows}${ellipsis})`;
+}
+
+function formatDataValidationMessage(
+  details: ValidationErrorDetail[],
+  context?: ValidationErrorContext,
+): string {
+  const contextStr = formatContextString(context);
+
+  if (details.length === 0) {
+    return `Data validation failed${contextStr}`;
+  }
+
+  if (details.length === 1) {
+    return `Validation error at "${details[0].path}"${contextStr}: ${details[0].message}`;
+  }
+
+  return `Validation failed with ${details.length} errors${contextStr}`;
+}
+
+function formatForeignKeyTableNotFoundMessage(
+  referencedTableId: string,
+  context?: ValidationErrorContext,
+  path?: string,
+): string {
+  const contextStr = formatContextStringParens(context);
+  const pathStr = path ? ` at path "${path}"` : '';
+
+  return `Referenced table "${referencedTableId}"${pathStr} does not exist in the revision${contextStr}`;
+}
+
+function formatForeignKeyRowsNotFoundMessage(
+  details: ForeignKeyErrorDetail[],
+  context?: ValidationErrorContext,
+): string {
+  const contextStr = formatContextString(context);
+
+  if (details.length === 0) {
+    return `Foreign key validation failed${contextStr}`;
+  }
+
+  if (details.length === 1) {
+    const detail = details[0];
+    const rowsStr = formatMissingRowsString(detail.missingRowIds);
+    return `Foreign key error at "${detail.path}"${contextStr}: ${rowsStr} not found in table "${detail.tableId}"`;
+  }
+
+  return `Foreign key validation failed: ${details.length} references not found${contextStr}`;
+}
+
 export interface ValidationErrorDetail {
   path: string;
   message: string;
@@ -43,31 +122,12 @@ export class DataValidationException extends BadRequestException {
   ) {
     const response: ValidationErrorResponse = {
       code: ValidationErrorCode.INVALID_DATA,
-      message: DataValidationException.formatMessage(details, context),
+      message: formatDataValidationMessage(details, context),
       context,
       details,
     };
 
     super(response);
-  }
-
-  private static formatMessage(
-    details: ValidationErrorDetail[],
-    context?: ValidationErrorContext,
-  ): string {
-    const contextStr = context
-      ? ` in table "${context.tableId}"${context.rowId ? ` for row "${context.rowId}"` : ''}`
-      : '';
-
-    if (details.length === 0) {
-      return `Data validation failed${contextStr}`;
-    }
-
-    if (details.length === 1) {
-      return `Validation error at "${details[0].path}"${contextStr}: ${details[0].message}`;
-    }
-
-    return `Validation failed with ${details.length} errors${contextStr}`;
   }
 
   getDetails(): ValidationErrorDetail[] {
@@ -87,16 +147,13 @@ export class ForeignKeyTableNotFoundException extends BadRequestException {
     context?: ValidationErrorContext,
     path?: string,
   ) {
-    const contextStr = context
-      ? ` (in table "${context.tableId}"${context.rowId ? `, row "${context.rowId}"` : ''})`
-      : '';
-    const message = path
-      ? `Referenced table "${referencedTableId}" at path "${path}" does not exist in the revision${contextStr}`
-      : `Referenced table "${referencedTableId}" does not exist in the revision${contextStr}`;
-
     super({
       code: ValidationErrorCode.TABLE_NOT_FOUND,
-      message,
+      message: formatForeignKeyTableNotFoundMessage(
+        referencedTableId,
+        context,
+        path,
+      ),
       referencedTableId,
       context,
       path,
@@ -111,40 +168,12 @@ export class ForeignKeyRowsNotFoundException extends BadRequestException {
   ) {
     const response: ForeignKeyErrorResponse = {
       code: ValidationErrorCode.FOREIGN_KEY_NOT_FOUND,
-      message: ForeignKeyRowsNotFoundException.formatMessage(details, context),
+      message: formatForeignKeyRowsNotFoundMessage(details, context),
       context,
       details,
     };
 
     super(response);
-  }
-
-  private static formatMessage(
-    details: ForeignKeyErrorDetail[],
-    context?: ValidationErrorContext,
-  ): string {
-    const contextStr = context
-      ? ` in table "${context.tableId}"${context.rowId ? ` for row "${context.rowId}"` : ''}`
-      : '';
-
-    if (details.length === 0) {
-      return `Foreign key validation failed${contextStr}`;
-    }
-
-    if (details.length === 1) {
-      const detail = details[0];
-      const rowCount = detail.missingRowIds.length;
-      const rowsStr =
-        rowCount === 1
-          ? `"${detail.missingRowIds[0]}"`
-          : `${rowCount} rows (${detail.missingRowIds
-              .slice(0, 3)
-              .map((r) => `"${r}"`)
-              .join(', ')}${rowCount > 3 ? '...' : ''})`;
-      return `Foreign key error at "${detail.path}"${contextStr}: ${rowsStr} not found in table "${detail.tableId}"`;
-    }
-
-    return `Foreign key validation failed: ${details.length} references not found${contextStr}`;
   }
 
   getDetails(): ForeignKeyErrorDetail[] {
