@@ -115,7 +115,7 @@ export class RevisiumCacheModule {
                   `✅ Cache enabled: L1 + L2 (BentoCache + Redis @ ${redisUrl}).`,
                 );
               } else {
-                const datebaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
+                const databaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
                 const debug = parseBool(
                   cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
                 );
@@ -135,7 +135,7 @@ export class RevisiumCacheModule {
                       )
                       .useBus(
                         pgBusDriver({
-                          connectionString: datebaseUrl,
+                          connectionString: databaseUrl,
                           debug,
                         }),
                       ),
