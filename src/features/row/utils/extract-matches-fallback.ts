@@ -130,7 +130,7 @@ function handlePrimitiveMatch(
 }
 
 function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+  return string.replaceAll(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 }
 
 function highlightText(text: string, terms: string[]): string {

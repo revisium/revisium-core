@@ -352,6 +352,6 @@ export class ViewsMigrationService {
   }
 
   private cloneViewsData(viewsData: TableViewsData): TableViewsData {
-    return JSON.parse(JSON.stringify(viewsData));
+    return structuredClone(viewsData);
   }
 }

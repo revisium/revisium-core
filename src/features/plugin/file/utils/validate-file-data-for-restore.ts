@@ -142,8 +142,8 @@ const validateFileName = (fileName: string): void => {
     }
 
     for (let i = 0; i < fileName.length; i++) {
-      const code = fileName.charCodeAt(i);
-      if ((code >= 0 && code <= 31) || code === 127) {
+      const code = fileName.codePointAt(i);
+      if (code !== undefined && ((code >= 0 && code <= 31) || code === 127)) {
         throw new Error('fileName contains control characters');
       }
     }

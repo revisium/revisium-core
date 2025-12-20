@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
+import { SchemaObject } from 'ajv';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { McpResourceRegistrar } from '../types';
 
@@ -9,7 +10,7 @@ import { McpResourceRegistrar } from '../types';
  * AI agents from using it until UI support is ready.
  */
 function createMcpMetaSchema() {
-  const schema = JSON.parse(JSON.stringify(metaSchema));
+  const schema = structuredClone(metaSchema) as SchemaObject;
 
   // Remove enum from stringSchema properties
   if (schema.$defs?.stringSchema?.properties?.enum) {
