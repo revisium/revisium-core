@@ -73,7 +73,23 @@ export class ViewsComparisonService {
     fromData: TableViewsData | null,
     toData: TableViewsData | null,
   ): ViewsChangeDetail {
-    const emptyResult: ViewsChangeDetail = {
+    if (!fromData && !toData) {
+      return this.createEmptyResult();
+    }
+
+    if (!fromData && toData) {
+      return this.createAllAddedResult(toData.views);
+    }
+
+    if (fromData && !toData) {
+      return this.createAllRemovedResult(fromData.views);
+    }
+
+    return this.compareExistingViews(fromData!, toData!);
+  }
+
+  private createEmptyResult(): ViewsChangeDetail {
+    return {
       hasChanges: false,
       changes: [],
       addedCount: 0,
@@ -81,131 +97,159 @@ export class ViewsComparisonService {
       removedCount: 0,
       renamedCount: 0,
     };
+  }
 
-    if (!fromData && !toData) {
-      return emptyResult;
-    }
+  private createAllAddedResult(views: View[]): ViewsChangeDetail {
+    const changes: ViewChange[] = views.map((view) => ({
+      viewId: view.id,
+      viewName: view.name,
+      changeType: ChangeType.Added,
+    }));
 
-    if (!fromData && toData) {
-      const changes: ViewChange[] = toData.views.map((view) => ({
-        viewId: view.id,
-        viewName: view.name,
-        changeType: ChangeType.Added,
-      }));
+    return {
+      hasChanges: changes.length > 0,
+      changes,
+      addedCount: changes.length,
+      modifiedCount: 0,
+      removedCount: 0,
+      renamedCount: 0,
+    };
+  }
 
-      return {
-        hasChanges: changes.length > 0,
-        changes,
-        addedCount: changes.length,
-        modifiedCount: 0,
-        removedCount: 0,
-        renamedCount: 0,
-      };
-    }
+  private createAllRemovedResult(views: View[]): ViewsChangeDetail {
+    const changes: ViewChange[] = views.map((view) => ({
+      viewId: view.id,
+      viewName: view.name,
+      changeType: ChangeType.Removed,
+    }));
 
-    if (fromData && !toData) {
-      const changes: ViewChange[] = fromData.views.map((view) => ({
-        viewId: view.id,
-        viewName: view.name,
-        changeType: ChangeType.Removed,
-      }));
+    return {
+      hasChanges: changes.length > 0,
+      changes,
+      addedCount: 0,
+      modifiedCount: 0,
+      removedCount: changes.length,
+      renamedCount: 0,
+    };
+  }
 
-      return {
-        hasChanges: changes.length > 0,
-        changes,
-        addedCount: 0,
-        modifiedCount: 0,
-        removedCount: changes.length,
-        renamedCount: 0,
-      };
-    }
+  private compareExistingViews(
+    fromData: TableViewsData,
+    toData: TableViewsData,
+  ): ViewsChangeDetail {
+    const fromViewsMap = new Map(fromData.views.map((v) => [v.id, v]));
+    const toViewsMap = new Map(toData.views.map((v) => [v.id, v]));
 
-    const fromViewsMap = new Map(fromData!.views.map((v) => [v.id, v]));
-    const toViewsMap = new Map(toData!.views.map((v) => [v.id, v]));
+    const changes: ViewChange[] = [
+      ...this.detectAddedAndModifiedViews(toData.views, fromViewsMap),
+      ...this.detectRemovedViews(fromData.views, toViewsMap),
+    ];
 
-    const changes: ViewChange[] = [];
-
-    for (const toView of toData!.views) {
-      const fromView = fromViewsMap.get(toView.id);
-
-      if (!fromView) {
-        changes.push({
-          viewId: toView.id,
-          viewName: toView.name,
-          changeType: ChangeType.Added,
-        });
-      } else if (this.isViewModified(fromView, toView)) {
-        if (fromView.name !== toView.name) {
-          changes.push({
-            viewId: toView.id,
-            viewName: toView.name,
-            changeType: ChangeType.RenamedAndModified,
-            oldViewName: fromView.name,
-          });
-        } else {
-          changes.push({
-            viewId: toView.id,
-            viewName: toView.name,
-            changeType: ChangeType.Modified,
-          });
-        }
-      } else if (fromView.name !== toView.name) {
-        changes.push({
-          viewId: toView.id,
-          viewName: toView.name,
-          changeType: ChangeType.Renamed,
-          oldViewName: fromView.name,
-        });
-      }
-    }
-
-    for (const fromView of fromData!.views) {
-      if (!toViewsMap.has(fromView.id)) {
-        changes.push({
-          viewId: fromView.id,
-          viewName: fromView.name,
-          changeType: ChangeType.Removed,
-        });
-      }
-    }
-
-    const defaultViewChanged =
-      fromData!.defaultViewId !== toData!.defaultViewId;
-
-    let addedCount = 0;
-    let modifiedCount = 0;
-    let removedCount = 0;
-    let renamedCount = 0;
-
-    for (const change of changes) {
-      switch (change.changeType) {
-        case ChangeType.Added:
-          addedCount++;
-          break;
-        case ChangeType.Modified:
-          modifiedCount++;
-          break;
-        case ChangeType.Removed:
-          removedCount++;
-          break;
-        case ChangeType.Renamed:
-          renamedCount++;
-          break;
-        case ChangeType.RenamedAndModified:
-          renamedCount++;
-          modifiedCount++;
-          break;
-      }
-    }
+    const defaultViewChanged = fromData.defaultViewId !== toData.defaultViewId;
+    const counts = this.countChanges(changes);
 
     return {
       hasChanges: changes.length > 0 || defaultViewChanged,
       changes,
-      addedCount,
-      modifiedCount,
-      removedCount,
-      renamedCount,
+      ...counts,
     };
+  }
+
+  private detectAddedAndModifiedViews(
+    toViews: View[],
+    fromViewsMap: Map<string, View>,
+  ): ViewChange[] {
+    return toViews
+      .map((toView) =>
+        this.detectViewChange(fromViewsMap.get(toView.id), toView),
+      )
+      .filter(Boolean) as ViewChange[];
+  }
+
+  private detectViewChange(
+    fromView: View | undefined,
+    toView: View,
+  ): ViewChange | null {
+    if (!fromView) {
+      return {
+        viewId: toView.id,
+        viewName: toView.name,
+        changeType: ChangeType.Added,
+      };
+    }
+
+    const isModified = this.isViewModified(fromView, toView);
+    const isRenamed = fromView.name !== toView.name;
+
+    if (isModified && isRenamed) {
+      return {
+        viewId: toView.id,
+        viewName: toView.name,
+        changeType: ChangeType.RenamedAndModified,
+        oldViewName: fromView.name,
+      };
+    }
+    if (isModified) {
+      return {
+        viewId: toView.id,
+        viewName: toView.name,
+        changeType: ChangeType.Modified,
+      };
+    }
+    if (isRenamed) {
+      return {
+        viewId: toView.id,
+        viewName: toView.name,
+        changeType: ChangeType.Renamed,
+        oldViewName: fromView.name,
+      };
+    }
+    return null;
+  }
+
+  private detectRemovedViews(
+    fromViews: View[],
+    toViewsMap: Map<string, View>,
+  ): ViewChange[] {
+    return fromViews
+      .filter((fromView) => !toViewsMap.has(fromView.id))
+      .map((fromView) => ({
+        viewId: fromView.id,
+        viewName: fromView.name,
+        changeType: ChangeType.Removed,
+      }));
+  }
+
+  private countChanges(changes: ViewChange[]): {
+    addedCount: number;
+    modifiedCount: number;
+    removedCount: number;
+    renamedCount: number;
+  } {
+    return changes.reduce(
+      (acc, change) => {
+        switch (change.changeType) {
+          case ChangeType.Added:
+            acc.addedCount++;
+            break;
+          case ChangeType.Modified:
+            acc.modifiedCount++;
+            break;
+          case ChangeType.Removed:
+            acc.removedCount++;
+            break;
+          case ChangeType.Renamed:
+            acc.renamedCount++;
+            break;
+          case ChangeType.RenamedAndModified:
+            acc.renamedCount++;
+            acc.modifiedCount++;
+            break;
+        }
+        return acc;
+      },
+      { addedCount: 0, modifiedCount: 0, removedCount: 0, renamedCount: 0 },
+    );
   }
 
   private isViewModified(fromView: View, toView: View): boolean {
