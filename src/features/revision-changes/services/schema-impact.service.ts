@@ -158,7 +158,7 @@ export class SchemaImpactService {
   }
 
   private extractFieldPath(jsonPath: string): string | null {
-    const match = jsonPath.match(/\/properties\/([^/]+)/);
+    const match = /\/properties\/([^/]+)/.exec(jsonPath);
     return match ? match[1] : null;
   }
 }
