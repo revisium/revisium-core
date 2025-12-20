@@ -48,7 +48,7 @@ export class FileValueStore {
     for (const [field, item] of Object.entries(this.store.value)) {
       if (item.value !== item.schema.default) {
         throw new Error(
-          `${field} must have default value = ${item.schema.default}`,
+          `${field} must have default value = ${JSON.stringify(item.schema.default)}`,
         );
       }
     }
