@@ -60,35 +60,7 @@ export class RevisiumCacheModule {
             try {
               let bento: any;
 
-              if (!redisUrl) {
-                const datebaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
-                const debug = parseBool(
-                  cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
-                );
-
-                const { BentoCache, bentostore, memoryDriver } =
-                  await loadBentoCacheCore();
-
-                // L1 only configuration
-                bento = new BentoCache({
-                  default: 'cache',
-                  stores: {
-                    cache: bentostore()
-                      .useL1Layer(
-                        memoryDriver({
-                          maxSize: l1MaxSize,
-                        }),
-                      )
-                      .useBus(
-                        pgBusDriver({
-                          connectionString: datebaseUrl,
-                          debug,
-                        }),
-                      ),
-                  },
-                });
-                logger.log('✅ Cache enabled: L1 only (BentoCache memory).');
-              } else {
+              if (redisUrl) {
                 const redisBusHost = cfg.getOrThrow<string>(
                   'EXPERIMENTAL_CACHE_REDIS_BUS_HOST',
                 );
@@ -142,6 +114,34 @@ export class RevisiumCacheModule {
                 logger.log(
                   `✅ Cache enabled: L1 + L2 (BentoCache + Redis @ ${redisUrl}).`,
                 );
+              } else {
+                const databaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
+                const debug = parseBool(
+                  cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
+                );
+
+                const { BentoCache, bentostore, memoryDriver } =
+                  await loadBentoCacheCore();
+
+                // L1 only configuration
+                bento = new BentoCache({
+                  default: 'cache',
+                  stores: {
+                    cache: bentostore()
+                      .useL1Layer(
+                        memoryDriver({
+                          maxSize: l1MaxSize,
+                        }),
+                      )
+                      .useBus(
+                        pgBusDriver({
+                          connectionString: databaseUrl,
+                          debug,
+                        }),
+                      ),
+                  },
+                });
+                logger.log('✅ Cache enabled: L1 only (BentoCache memory).');
               }
 
               return bento;
