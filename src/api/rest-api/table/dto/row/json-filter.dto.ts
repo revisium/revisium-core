@@ -117,13 +117,13 @@ export class JsonFilterDto {
   searchLanguage?: string;
 
   @ApiPropertyOptional({
-    enum: ['plain', 'phrase'],
+    enum: ['plain', 'phrase', 'prefix', 'tsquery'],
     description:
-      'Search type: plain (individual words) or phrase (exact phrase)',
+      'Search type: plain (individual words), phrase (exact phrase), prefix (word beginnings with :*), tsquery (raw PostgreSQL tsquery syntax)',
   })
   @IsOptional()
-  @IsIn(['plain', 'phrase'])
-  searchType?: 'plain' | 'phrase';
+  @IsIn(['plain', 'phrase', 'prefix', 'tsquery'])
+  searchType?: 'plain' | 'phrase' | 'prefix' | 'tsquery';
 
   @ApiPropertyOptional({
     enum: ['all', 'values', 'keys', 'strings', 'numbers', 'booleans'],

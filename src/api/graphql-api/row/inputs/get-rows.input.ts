@@ -35,6 +35,8 @@ export enum OrderDataAggregation {
 export enum SearchType {
   plain = 'plain',
   phrase = 'phrase',
+  prefix = 'prefix',
+  tsquery = 'tsquery',
 }
 
 export enum SearchIn {

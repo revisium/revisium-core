@@ -662,10 +662,12 @@
             "type": "string"
           },
           "searchType": {
-            "description": "Search type: plain (individual words) or phrase (exact phrase)",
+            "description": "Search type: plain (individual words), phrase (exact phrase), prefix (word beginnings with :*), tsquery (raw PostgreSQL tsquery syntax)",
             "enum": [
               "plain",
-              "phrase"
+              "phrase",
+              "prefix",
+              "tsquery"
             ],
             "type": "string"
           },
@@ -1779,7 +1781,7 @@
     "contact": {},
     "description": "",
     "title": "Revisium API",
-    "version": "2.5.0"
+    "version": "2.6.0-alpha.1"
   },
   "openapi": "3.0.0",
   "paths": {
