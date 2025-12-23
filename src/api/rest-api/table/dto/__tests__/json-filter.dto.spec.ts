@@ -107,6 +107,24 @@ describe('JsonFilterDto', () => {
       expect(errors).toHaveLength(0);
     });
 
+    it('should pass with valid searchType prefix', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test pre',
+        searchType: 'prefix',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
+    it('should pass with valid searchType tsquery', async () => {
+      const dto = plainToInstance(JsonFilterDto, {
+        search: 'test:* & query',
+        searchType: 'tsquery',
+      });
+      const errors = await validate(dto);
+      expect(errors).toHaveLength(0);
+    });
+
     it('should fail with invalid searchType', async () => {
       const dto = plainToInstance(JsonFilterDto, {
         search: 'test',

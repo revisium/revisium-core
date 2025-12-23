@@ -465,4 +465,176 @@ describe('getRowsSql', () => {
       expect(Number(count[0].count)).toBe(2);
     });
   });
+
+  describe('Search', () => {
+    it('should search with searchType plain (default)', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'Crystal Labyrinth',
+          searchLanguage: 'simple',
+          searchType: 'plain',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+
+    it('should search with searchType phrase', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'Crystal Labyrinth',
+          searchLanguage: 'simple',
+          searchType: 'phrase',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+
+    it('should search with searchType prefix for partial words', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'Cryst Laby',
+          searchLanguage: 'simple',
+          searchType: 'prefix',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+
+    it('should search with searchType prefix for single partial word', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'blok',
+          searchLanguage: 'simple',
+          searchType: 'prefix',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+
+    it('should search with searchType tsquery using AND operator', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'Crystal & Labyrinth',
+          searchLanguage: 'simple',
+          searchType: 'tsquery',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+
+    it('should search with searchType tsquery using OR operator', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'Crystal | typescript',
+          searchLanguage: 'simple',
+          searchType: 'tsquery',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(2);
+      expect(result.map((r) => r.id)).toEqual([ids.row1, ids.row6]);
+    });
+
+    it('should search with searchType tsquery using NOT operator', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'admin & !supervisor',
+          searchLanguage: 'simple',
+          searchType: 'tsquery',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(2);
+      expect(result.map((r) => r.id)).toEqual([ids.row1, ids.row3]);
+    });
+
+    it('should search with searchType tsquery using prefix operator', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'Cryst:* & Laby:*',
+          searchLanguage: 'simple',
+          searchType: 'tsquery',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(1);
+      expect(result[0].id).toBe(ids.row6);
+    });
+
+    it('should not find with prefix search when word does not start with query', async () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: [],
+          search: 'ystal',
+          searchLanguage: 'simple',
+          searchType: 'prefix',
+        } as JsonFilter,
+      };
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 10, 0, where, orderBy),
+      );
+
+      expect(result.length).toBe(0);
+    });
+  });
 });
