@@ -128,4 +128,32 @@ export class DraftRevisionInternalService {
 
     return revision.parentId;
   }
+
+  public async ensureTableNotExists(
+    revisionId: string,
+    tableId: string,
+  ): Promise<void> {
+    const exists = await this.tableExistsInRevision(revisionId, tableId);
+    if (exists) {
+      throw new BadRequestException(
+        'A table with this name already exists in the revision',
+      );
+    }
+  }
+
+  private async tableExistsInRevision(
+    revisionId: string,
+    tableId: string,
+  ): Promise<boolean> {
+    const table = await this.transaction.table.findFirst({
+      where: {
+        id: tableId,
+        revisions: {
+          some: { id: revisionId },
+        },
+      },
+      select: { versionId: true },
+    });
+    return table !== null;
+  }
 }

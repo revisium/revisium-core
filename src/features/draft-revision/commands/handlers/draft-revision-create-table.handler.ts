@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DraftRevisionCreateTableCommand } from 'src/features/draft-revision/commands/impl/draft-revision-create-table.command';
 import { DraftRevisionCreateTableCommandReturnType } from 'src/features/draft-revision/commands/impl';
@@ -32,7 +31,7 @@ export class DraftRevisionCreateTableHandler
     const revision = await this.internalService.findRevisionOrThrow(revisionId);
     this.validationService.ensureDraftRevision(revision);
     this.validationService.ensureValidTableId(tableId);
-    await this.ensureTableNotExists(revisionId, tableId);
+    await this.internalService.ensureTableNotExists(revisionId, tableId);
 
     const result = await this.createTableInRevision({
       revisionId,
@@ -43,34 +42,6 @@ export class DraftRevisionCreateTableHandler
     await this.internalService.markRevisionAsChanged(revisionId);
 
     return result;
-  }
-
-  private async ensureTableNotExists(
-    revisionId: string,
-    tableId: string,
-  ): Promise<void> {
-    const exists = await this.tableExistsInRevision(revisionId, tableId);
-    if (exists) {
-      throw new BadRequestException(
-        'A table with this name already exists in the revision',
-      );
-    }
-  }
-
-  private async tableExistsInRevision(
-    revisionId: string,
-    tableId: string,
-  ): Promise<boolean> {
-    const table = await this.transaction.table.findFirst({
-      where: {
-        id: tableId,
-        revisions: {
-          some: { id: revisionId },
-        },
-      },
-      select: { versionId: true },
-    });
-    return table !== null;
   }
 
   private async createTableInRevision(input: {
