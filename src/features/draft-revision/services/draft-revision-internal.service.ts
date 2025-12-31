@@ -3,8 +3,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import {
   DraftRevisionGetOrCreateDraftRowCommand,
   DraftRevisionGetOrCreateDraftTableCommand,
-} from 'src/features/draft-revision/commands/impl';
-import {
   DraftRevisionGetOrCreateDraftRowCommandData,
   DraftRevisionGetOrCreateDraftRowCommandReturnType,
   DraftRevisionGetOrCreateDraftTableCommandData,
