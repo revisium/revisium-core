@@ -141,24 +141,6 @@ describe('DraftRevisionCreateTableHandler', () => {
       expect(table?.system).toBe(true);
     });
 
-    it('should create a readonly table', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
-
-      const command = new DraftRevisionCreateTableCommand({
-        revisionId: draftRevisionId,
-        tableId: 'readonly-table',
-        readonly: true,
-      });
-
-      const result = await runInTransaction(command);
-
-      const table = await prismaService.table.findUnique({
-        where: { versionId: result.tableVersionId },
-      });
-
-      expect(table?.readonly).toBe(true);
-    });
-
     it('should link table to revision', async () => {
       const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
 

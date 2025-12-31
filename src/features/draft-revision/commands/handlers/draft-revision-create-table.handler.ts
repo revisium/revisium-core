@@ -27,7 +27,7 @@ export class DraftRevisionCreateTableHandler
   async execute({
     data,
   }: DraftRevisionCreateTableCommand): Promise<DraftRevisionCreateTableCommandReturnType> {
-    const { revisionId, tableId, system = false, readonly = false } = data;
+    const { revisionId, tableId, system = false } = data;
 
     const revision = await this.internalService.findRevisionOrThrow(revisionId);
     this.validationService.ensureDraftRevision(revision);
@@ -38,7 +38,6 @@ export class DraftRevisionCreateTableHandler
       revisionId,
       tableId,
       system,
-      readonly,
     });
 
     await this.internalService.markRevisionAsChanged(revisionId);
@@ -78,7 +77,6 @@ export class DraftRevisionCreateTableHandler
     revisionId: string;
     tableId: string;
     system: boolean;
-    readonly: boolean;
   }): Promise<DraftRevisionCreateTableCommandReturnType> {
     const tableVersionId = this.idService.generate();
     const tableCreatedId = this.idService.generate();
@@ -89,7 +87,6 @@ export class DraftRevisionCreateTableHandler
         createdId: tableCreatedId,
         id: input.tableId,
         system: input.system,
-        readonly: input.readonly,
         revisions: {
           connect: { id: input.revisionId },
         },

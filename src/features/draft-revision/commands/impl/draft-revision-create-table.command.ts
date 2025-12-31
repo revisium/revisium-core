@@ -2,7 +2,6 @@ export interface DraftRevisionCreateTableCommandData {
   revisionId: string;
   tableId: string;
   system?: boolean;
-  readonly?: boolean;
 }
 
 export interface DraftRevisionCreateTableCommandReturnType {
