@@ -116,7 +116,9 @@ export class DraftRevisionInternalService {
       .tables({ select: { versionId: true } });
   }
 
-  public async findParentRevisionIdOrThrow(revisionId: string): Promise<string> {
+  public async findParentRevisionIdOrThrow(
+    revisionId: string,
+  ): Promise<string> {
     const revision = await this.transaction.revision.findUniqueOrThrow({
       where: { id: revisionId },
       select: { parentId: true },
