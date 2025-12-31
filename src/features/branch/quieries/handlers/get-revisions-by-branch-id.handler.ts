@@ -2,14 +2,18 @@ import { BadRequestException } from '@nestjs/common';
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
 import { GetRevisionsByBranchIdQuery } from 'src/features/branch/quieries/impl/get-revisions-by-branch-id.query';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { getRevisionCursorPagination } from 'src/features/share/commands/utils/getRevisionCursorPagination';
 
 @QueryHandler(GetRevisionsByBranchIdQuery)
 export class GetRevisionsByBranchIdHandler
   implements IQueryHandler<GetRevisionsByBranchIdQuery>
 {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: TransactionPrismaService) {}
+
+  private get prisma() {
+    return this.prismaService.getTransactionOrPrisma();
+  }
 
   async execute({ data }: GetRevisionsByBranchIdQuery) {
     if (data.after && data.before) {

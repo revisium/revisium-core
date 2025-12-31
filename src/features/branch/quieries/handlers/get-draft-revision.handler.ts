@@ -1,13 +1,17 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GetDraftRevisionQuery } from 'src/features/branch/quieries/impl';
 import { GetDraftRevisionTypes } from 'src/features/branch/quieries/types';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetDraftRevisionQuery)
 export class GetDraftRevisionHandler
   implements IQueryHandler<GetDraftRevisionQuery>
 {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: TransactionPrismaService) {}
+
+  private get prisma() {
+    return this.prismaService.getTransactionOrPrisma();
+  }
 
   async execute({
     branchId,

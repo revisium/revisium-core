@@ -1,13 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import {
   DraftRevisionGetOrCreateDraftRowCommand,
-  DraftRevisionGetOrCreateDraftTableCommand,
   DraftRevisionGetOrCreateDraftRowCommandData,
   DraftRevisionGetOrCreateDraftRowCommandReturnType,
+  DraftRevisionGetOrCreateDraftTableCommand,
   DraftRevisionGetOrCreateDraftTableCommandData,
   DraftRevisionGetOrCreateDraftTableCommandReturnType,
 } from 'src/features/draft-revision/commands/impl';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -17,6 +19,8 @@ export class DraftRevisionInternalService {
     private readonly commandBus: CommandBus,
     private readonly transactionService: TransactionPrismaService,
     private readonly diffService: DiffService,
+    private readonly revisionsApiService: RevisionsApiService,
+    private readonly branchApiService: BranchApiService,
   ) {}
 
   private get transaction() {
@@ -61,49 +65,28 @@ export class DraftRevisionInternalService {
     });
   }
 
-  public async findRevisionOrThrow(
-    revisionId: string,
-  ): Promise<{ id: string; isDraft: boolean; parentId: string | null }> {
-    const revision = await this.transaction.revision.findUnique({
-      where: { id: revisionId },
-      select: { id: true, isDraft: true, parentId: true },
-    });
-
-    if (!revision) {
+  public async findRevisionOrThrow(revisionId: string) {
+    try {
+      return await this.revisionsApiService.revision({ revisionId });
+    } catch {
       throw new BadRequestException('Revision not found');
     }
-
-    return revision;
   }
 
-  public async findHeadRevisionOrThrow(
-    branchId: string,
-  ): Promise<{ id: string }> {
-    const revision = await this.transaction.revision.findFirst({
-      where: { branchId, isHead: true },
-      select: { id: true },
-    });
-
-    if (!revision) {
+  public async findHeadRevisionOrThrow(branchId: string) {
+    try {
+      return await this.branchApiService.getHeadRevision(branchId);
+    } catch {
       throw new BadRequestException('Head revision not found');
     }
-
-    return revision;
   }
 
-  public async findDraftRevisionOrThrow(
-    branchId: string,
-  ): Promise<{ id: string; hasChanges: boolean }> {
-    const revision = await this.transaction.revision.findFirst({
-      where: { branchId, isDraft: true },
-      select: { id: true, hasChanges: true },
-    });
-
-    if (!revision) {
+  public async findDraftRevisionOrThrow(branchId: string) {
+    try {
+      return await this.branchApiService.getDraftRevision(branchId);
+    } catch {
       throw new BadRequestException('Draft revision not found');
     }
-
-    return revision;
   }
 
   public async getRevisionTableVersionIds(
