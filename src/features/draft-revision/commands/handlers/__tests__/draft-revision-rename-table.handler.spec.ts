@@ -105,6 +105,24 @@ describe('DraftRevisionRenameTableHandler', () => {
         BadRequestException,
       );
     });
+
+    it('should throw an error if tableId equals nextTableId', async () => {
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      await createTable(draftRevisionId, 'test-table');
+
+      const command = new DraftRevisionRenameTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'test-table',
+        nextTableId: 'test-table',
+      });
+
+      await expect(runInTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runInTransaction(command)).rejects.toThrow(
+        'New ID must be different from current',
+      );
+    });
   });
 
   describe('rename draft table', () => {

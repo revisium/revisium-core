@@ -122,7 +122,7 @@ describe('DraftRevisionRenameRowsHandler', () => {
         BadRequestException,
       );
       await expect(runInTransaction(command)).rejects.toThrow(
-        'New row ID must be different from current',
+        'New ID must be different from current',
       );
     });
 

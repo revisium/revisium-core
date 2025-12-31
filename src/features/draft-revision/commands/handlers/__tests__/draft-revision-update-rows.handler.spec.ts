@@ -118,6 +118,29 @@ describe('DraftRevisionUpdateRowsHandler', () => {
       );
       await expect(runInTransaction(command)).rejects.toThrow('not found');
     });
+
+    it('should throw an error if duplicate rowIds in request', async () => {
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      await createTableAndRows(draftRevisionId, 'test-table', [
+        { rowId: 'row-1', data: { original: 'data' } },
+      ]);
+
+      const command = new DraftRevisionUpdateRowsCommand({
+        revisionId: draftRevisionId,
+        tableId: 'test-table',
+        rows: [
+          { rowId: 'row-1', data: { updated: 'data1' } },
+          { rowId: 'row-1', data: { updated: 'data2' } },
+        ],
+      });
+
+      await expect(runInTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runInTransaction(command)).rejects.toThrow(
+        'Duplicate row IDs in request',
+      );
+    });
   });
 
   describe('success cases', () => {

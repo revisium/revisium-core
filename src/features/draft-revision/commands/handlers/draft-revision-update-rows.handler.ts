@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import objectHash from 'object-hash';
 import {
@@ -32,9 +33,10 @@ export class DraftRevisionUpdateRowsHandler
       data.revisionId,
     );
     this.validationService.ensureDraftRevision(revision);
-    data.rows.forEach((row) =>
-      this.validationService.ensureValidRowId(row.rowId),
-    );
+
+    const rowIds = data.rows.map((r) => r.rowId);
+    rowIds.forEach((rowId) => this.validationService.ensureValidRowId(rowId));
+    this.ensureUniqueRowIds(rowIds);
 
     const tableResult = await this.internalService.getOrCreateDraftTable({
       revisionId: data.revisionId,
@@ -96,5 +98,12 @@ export class DraftRevisionUpdateRowsHandler
       where: { versionId: rowVersionId },
       data: this.buildUpdateData(rowData),
     });
+  }
+
+  private ensureUniqueRowIds(rowIds: string[]): void {
+    const unique = new Set(rowIds);
+    if (unique.size !== rowIds.length) {
+      throw new BadRequestException('Duplicate row IDs in request');
+    }
   }
 }

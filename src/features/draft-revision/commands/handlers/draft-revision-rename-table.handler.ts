@@ -2,8 +2,10 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { DraftRevisionRenameTableCommand } from 'src/features/draft-revision/commands/impl/draft-revision-rename-table.command';
 import { DraftRevisionRenameTableCommandReturnType } from 'src/features/draft-revision/commands/impl';
-import { DraftRevisionInternalService } from 'src/features/draft-revision/services';
-import { DraftRevisionValidationService } from 'src/features/draft-revision/services';
+import {
+  DraftRevisionInternalService,
+  DraftRevisionValidationService,
+} from 'src/features/draft-revision/services';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionRenameTableCommand)
@@ -28,6 +30,7 @@ export class DraftRevisionRenameTableHandler
     const revision = await this.internalService.findRevisionOrThrow(revisionId);
     this.validationService.ensureDraftRevision(revision);
     this.validationService.ensureValidTableId(nextTableId);
+    this.validationService.ensureIdsDifferent(tableId, nextTableId);
     await this.ensureTableNotExists(revisionId, nextTableId);
 
     const getOrCreateResult = await this.internalService.getOrCreateDraftTable({

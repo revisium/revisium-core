@@ -41,11 +41,11 @@ export class DraftRevisionRevertHandler
     return { draftRevisionId: draftRevision.id };
   }
 
-  private resetDraftRevision(
+  private async resetDraftRevision(
     revisionId: string,
     tables: { versionId: string }[],
-  ): Promise<unknown> {
-    return this.transaction.revision.update({
+  ): Promise<void> {
+    await this.transaction.revision.update({
       where: { id: revisionId },
       data: {
         hasChanges: false,

@@ -6,7 +6,6 @@ import {
 
 @Injectable()
 export class DraftRevisionValidationService {
-
   ensureDraftRevision(revision: { isDraft: boolean } | null): void {
     if (!revision) {
       throw new BadRequestException('Revision not found');
@@ -41,9 +40,7 @@ export class DraftRevisionValidationService {
 
   ensureIdsDifferent(currentId: string, newId: string): void {
     if (currentId === newId) {
-      throw new BadRequestException(
-        'New row ID must be different from current',
-      );
+      throw new BadRequestException('New ID must be different from current');
     }
   }
 
