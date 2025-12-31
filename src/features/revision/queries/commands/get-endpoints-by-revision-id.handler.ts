@@ -1,13 +1,17 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { GetEndpointsByRevisionIdQuery } from 'src/features/revision/queries/impl';
 import { GetEndpointsByRevisionId } from 'src/features/revision/queries/types';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetEndpointsByRevisionIdQuery)
 export class GetEndpointsByRevisionIdHandler
   implements IQueryHandler<GetEndpointsByRevisionIdQuery>
 {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: TransactionPrismaService) {}
+
+  private get prisma() {
+    return this.prismaService.getTransactionOrPrisma();
+  }
 
   execute({
     revisionId,

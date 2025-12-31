@@ -1,12 +1,16 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { ResolveChildBranchesByRevisionQuery } from 'src/features/revision/queries/impl';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(ResolveChildBranchesByRevisionQuery)
 export class ResolveChildBranchesByRevisionHandler
   implements IQueryHandler<ResolveChildBranchesByRevisionQuery>
 {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: TransactionPrismaService) {}
+
+  private get prisma() {
+    return this.prismaService.getTransactionOrPrisma();
+  }
 
   public async execute({
     revisionId,

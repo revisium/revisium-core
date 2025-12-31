@@ -6,11 +6,15 @@ import {
 } from 'src/features/revision/queries/impl';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { Migration } from '@revisium/schema-toolkit/types';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetMigrationsQuery)
 export class GetMigrationsHandler implements IQueryHandler<GetMigrationsQuery> {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prismaService: TransactionPrismaService) {}
+
+  private get prisma() {
+    return this.prismaService.getTransactionOrPrisma();
+  }
 
   public async execute({ data }: GetMigrationsQuery) {
     return this.getTableMigrations(data);
