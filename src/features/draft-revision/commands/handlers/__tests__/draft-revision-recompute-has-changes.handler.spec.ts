@@ -11,8 +11,7 @@ import {
 describe('DraftRevisionRecomputeHasChangesHandler', () => {
   describe('revert table', () => {
     it('should revert table to head when no row changes remain', async () => {
-      const { draftRevisionId, headRevisionId, branchId } =
-        await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
 
       const tableId = 'test-table';
       const tableVersionId = nanoid();
