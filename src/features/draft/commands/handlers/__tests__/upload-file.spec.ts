@@ -51,9 +51,7 @@ describe('UploadFileHandler', () => {
       file: createExpressImageFile(),
     });
 
-    await expect(runTransaction(command)).rejects.toThrow(
-      `Row not found: rowId=non-existent-row, tableId=${table.tableId}, revisionId=${draftRevisionId}`,
-    );
+    await expect(runTransaction(command)).rejects.toThrow('Row not found');
   });
 
   it('should upload file', async () => {

@@ -1,4 +1,4 @@
-import { BadRequestException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import {
   InternalUpdateRowCommand,
@@ -91,7 +91,7 @@ export class UploadFileHandler extends DraftHandler<
     });
 
     if (!row) {
-      throw new BadRequestException(
+      throw new NotFoundException(
         `Row not found: rowId=${options.rowId}, tableId=${options.tableId}, revisionId=${options.revisionId}`,
       );
     }
