@@ -11,6 +11,7 @@ import {
 } from 'src/features/draft-revision/services';
 import { RevisionModule } from 'src/features/revision/revision.module';
 import { DiffService } from 'src/features/share/diff.service';
+import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -93,6 +94,7 @@ export const createDraftRevisionTestingModule = async () => {
       DraftRevisionInternalService,
       DraftRevisionValidationService,
       DiffService,
+      ShareTransactionalQueries,
       ...DRAFT_REVISION_COMMANDS_HANDLERS,
     ],
   }).compile();

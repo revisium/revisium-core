@@ -3,6 +3,7 @@ import { DraftRevisionCreateRowsHandler } from 'src/features/draft-revision/comm
 import { DraftRevisionCreateTableHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-create-table.handler';
 import { DraftRevisionGetOrCreateDraftRowHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-get-or-create-draft-row.handler';
 import { DraftRevisionGetOrCreateDraftTableHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-get-or-create-draft-table.handler';
+import { DraftRevisionRecomputeHasChangesHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-recompute-has-changes.handler';
 import { DraftRevisionRemoveRowsHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-remove-rows.handler';
 import { DraftRevisionRemoveTableHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-remove-table.handler';
 import { DraftRevisionRenameRowsHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-rename-rows.handler';
@@ -22,6 +23,7 @@ export const DRAFT_REVISION_COMMANDS_HANDLERS = [
   DraftRevisionGetOrCreateDraftRowHandler,
   DraftRevisionCommitHandler,
   DraftRevisionRevertHandler,
+  DraftRevisionRecomputeHasChangesHandler,
 ];
 
 export { DraftRevisionCreateTableHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-create-table.handler';
@@ -35,3 +37,4 @@ export { DraftRevisionRemoveRowsHandler } from 'src/features/draft-revision/comm
 export { DraftRevisionGetOrCreateDraftRowHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-get-or-create-draft-row.handler';
 export { DraftRevisionCommitHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-commit.handler';
 export { DraftRevisionRevertHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-revert.handler';
+export { DraftRevisionRecomputeHasChangesHandler } from 'src/features/draft-revision/commands/handlers/draft-revision-recompute-has-changes.handler';

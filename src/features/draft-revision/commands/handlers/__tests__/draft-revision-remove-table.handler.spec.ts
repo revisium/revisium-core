@@ -91,30 +91,6 @@ describe('DraftRevisionRemoveTableHandler', () => {
         'not found in revision',
       );
     });
-
-    it('should throw an error if revision has no parent', async () => {
-      const { headRevisionId } = await prepareDraftRevisionTest(prismaService);
-
-      await prismaService.revision.update({
-        where: { id: headRevisionId },
-        data: { isDraft: true },
-      });
-
-      const tableResult = await createTable(headRevisionId, 'test-table');
-      expect(tableResult.tableVersionId).toBeDefined();
-
-      const command = new DraftRevisionRemoveTableCommand({
-        revisionId: headRevisionId,
-        tableId: 'test-table',
-      });
-
-      await expect(runInTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runInTransaction(command)).rejects.toThrow(
-        'Parent revision not found',
-      );
-    });
   });
 
   describe('success cases', () => {

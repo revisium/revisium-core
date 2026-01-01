@@ -32,12 +32,7 @@ export class DraftRevisionRemoveTableHandler
     const table = await this.findTableOrThrow(revisionId, tableId);
     const deleted = await this.removeTable(revisionId, table);
 
-    const parentRevisionId =
-      await this.internalService.findParentRevisionIdOrThrow(revisionId);
-    await this.internalService.recomputeHasChanges(
-      revisionId,
-      parentRevisionId,
-    );
+    await this.internalService.recomputeHasChanges(revisionId, tableId);
 
     return { tableVersionId: table.versionId, deleted };
   }
