@@ -225,7 +225,7 @@ describe('graphql - draft mutations', () => {
       );
     });
 
-    it('should fail if target name exists', async () => {
+    it('should fail if IDs are the same', async () => {
       await gqlQueryExpectError(
         {
           app,
@@ -236,7 +236,7 @@ describe('graphql - draft mutations', () => {
             fixture.project.tableId, // same name
           ),
         },
-        /A table with this name already exists in the revision/,
+        /New ID must be different from current/,
       );
     });
   });
@@ -361,7 +361,7 @@ describe('graphql - draft mutations', () => {
             { ver: 1 },
           ),
         },
-        /A row with this name already exists in the table/,
+        /Rows already exist:/,
       );
     });
 
@@ -665,7 +665,7 @@ describe('graphql - draft mutations', () => {
             ['non-existent-row-id'],
           ),
         },
-        /A row with this name does not exist in the revision/,
+        /Rows not found in table/,
       );
     });
   });

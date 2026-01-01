@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
 import { Row } from 'src/__generated__/client';
 import {
@@ -8,11 +7,8 @@ import {
 } from 'src/features/draft/commands/impl/transactional/internal-rename-row.command';
 import { InternalUpdateRowCommand } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { DraftRowRequestDto } from 'src/features/draft/draft-request-dto/row-request.dto';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 import { RowRenamedEvent } from 'src/infrastructure/cache';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
@@ -40,15 +36,12 @@ export class InternalRenameRowHandler extends DraftHandler<
   constructor(
     protected readonly commandBus: CommandBus,
     protected readonly transactionService: TransactionPrismaService,
-    protected readonly draftTransactionalCommands: DraftTransactionalCommands,
-    protected readonly revisionRequestDto: DraftRevisionRequestDto,
-    protected readonly tableRequestDto: DraftTableRequestDto,
-    protected readonly rowRequestDto: DraftRowRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly foreignKeysService: ForeignKeysService,
     protected readonly draftContext: DraftContextService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
     protected readonly eventBus: EventBus,
+    protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -67,51 +60,20 @@ export class InternalRenameRowHandler extends DraftHandler<
   public async handler({
     data: input,
   }: InternalRenameRowCommand): Promise<InternalRenameRowCommandReturnType> {
-    await this.validateAndPrepare(input);
-    await this.updateForeignKeys(input);
-    await this.renameDraftRow(input);
-
-    return this.buildResult();
-  }
-
-  private async validateAndPrepare(
-    input: InternalRenameRowCommandData,
-  ): Promise<void> {
-    const { revisionId, tableId, rowId, nextRowId } = input;
-
-    this.validateNextRowId(nextRowId);
-    await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
-    await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
-    await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
-    await this.checkRowExistence(nextRowId);
-  }
-
-  private validateNextRowId(rowId: string): void {
-    if (rowId.length < 1) {
-      throw new BadRequestException(
-        'The length of the row name must be greater than or equal to 1',
-      );
-    }
-  }
-
-  private async checkRowExistence(rowId: string): Promise<void> {
-    const existingRow = await this.transaction.row.findFirst({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: this.tableRequestDto.versionId,
-          },
-        },
-      },
-      select: { versionId: true },
+    const result = await this.draftRevisionApi.renameRows({
+      revisionId: input.revisionId,
+      tableId: input.tableId,
+      renames: [{ rowId: input.rowId, nextRowId: input.nextRowId }],
     });
 
-    if (existingRow) {
-      throw new BadRequestException(
-        `A row with this name = ${rowId} already exists in the table`,
-      );
-    }
+    await this.updateForeignKeys(input);
+
+    return {
+      tableVersionId: result.tableVersionId,
+      previousTableVersionId: result.previousTableVersionId,
+      rowVersionId: result.renamedRows[0].rowVersionId,
+      previousRowVersionId: result.renamedRows[0].previousRowVersionId,
+    };
   }
 
   private async updateForeignKeys(
@@ -238,31 +200,5 @@ export class InternalRenameRowHandler extends DraftHandler<
     );
 
     return rows.map((row) => row.id);
-  }
-
-  private async renameDraftRow(
-    input: InternalRenameRowCommandData,
-  ): Promise<void> {
-    await this.transaction.row.update({
-      where: {
-        versionId: this.rowRequestDto.versionId,
-      },
-      data: {
-        updatedAt: new Date(),
-        id: input.nextRowId,
-      },
-      select: {
-        versionId: true,
-      },
-    });
-  }
-
-  private buildResult(): InternalRenameRowCommandReturnType {
-    return {
-      tableVersionId: this.tableRequestDto.versionId,
-      previousTableVersionId: this.tableRequestDto.previousVersionId,
-      rowVersionId: this.rowRequestDto.versionId,
-      previousRowVersionId: this.rowRequestDto.previousVersionId,
-    };
   }
 }

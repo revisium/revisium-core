@@ -392,11 +392,12 @@ export async function prepareRow({
   const draftRowVersionId = nanoid();
 
   // row
+  const now = new Date();
   const row = await prismaService.row.create({
     data: {
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      publishedAt: new Date(),
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: now,
       id: rowId,
       versionId: headRowVersionId,
       createdId: rowCreatedId,

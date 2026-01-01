@@ -27,12 +27,12 @@ describe('CreateTableHandler', () => {
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
       tableId: '',
-      schema: {},
+      schema: { type: 'string', default: '' },
     });
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
     await expect(runTransaction(command)).rejects.toThrow(
-      'It must contain between',
+      'Table ID must be between',
     );
   });
 
@@ -58,7 +58,7 @@ describe('CreateTableHandler', () => {
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
       tableId,
-      schema: {},
+      schema: { type: 'string', default: '' },
     });
 
     await expect(runTransaction(command)).rejects.toThrow(

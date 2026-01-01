@@ -9,7 +9,6 @@ import {
   RenameRowCommand,
   RenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/rename-row.command';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -46,20 +45,15 @@ describe('RenameRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      `A row with this name = ${rowId} already exists in the table`,
+      'New ID must be different from current',
     );
   });
 
   it('should throw an error if the revision does not exist', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareProject(prismaService);
-
-    jest
-      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
-      .mockRejectedValue(new Error('Revision not found'));
+    const { tableId, rowId } = await prepareProject(prismaService);
 
     const command = new RenameRowCommand({
-      revisionId: draftRevisionId,
+      revisionId: 'unreal',
       tableId,
       rowId,
       nextRowId,
@@ -94,7 +88,7 @@ describe('RenameRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name does not exist in the revision',
+      'Row "unrealRow" not found in table',
     );
   });
 
@@ -352,18 +346,12 @@ describe('RenameRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
-  let draftTransactionalCommands: DraftTransactionalCommands;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
-    draftTransactionalCommands = result.draftTransactionalCommands;
-  });
-
-  beforeEach(() => {
-    jest.restoreAllMocks();
   });
 
   afterAll(async () => {

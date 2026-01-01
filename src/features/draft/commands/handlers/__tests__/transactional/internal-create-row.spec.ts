@@ -15,7 +15,6 @@ import {
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import objectHash from 'object-hash';
 
 describe('InternalCreateRowHandler', () => {
@@ -32,16 +31,12 @@ describe('InternalCreateRowHandler', () => {
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
     await expect(runTransaction(command)).rejects.toThrow(
-      'The length of the row name must be greater than or equal to 1',
+      'Row ID must be between 1 and 100 characters',
     );
   });
 
   it('should throw an error if the revision does not exist', async () => {
     await prepareProject(prismaService);
-
-    jest
-      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
-      .mockRejectedValue(new Error('Revision not found'));
 
     const command = new InternalCreateRowCommand({
       revisionId: 'unreal',
@@ -67,7 +62,7 @@ describe('InternalCreateRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name already exists in the table',
+      'Rows already exist:',
     );
   });
 
@@ -236,18 +231,12 @@ describe('InternalCreateRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
-  let draftTransactionalCommands: DraftTransactionalCommands;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
-    draftTransactionalCommands = result.draftTransactionalCommands;
-  });
-
-  beforeEach(() => {
-    jest.restoreAllMocks();
   });
 
   afterAll(async () => {

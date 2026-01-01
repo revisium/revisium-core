@@ -3,6 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { MigrationContextService } from 'src/features/draft/migration-context.service';
 import { PluginModule } from 'src/features/plugin/plugin.module';
+import { DraftRevisionModule } from 'src/features/draft-revision/draft-revision.module';
 import { RevisionModule } from 'src/features/revision';
 import { RowModule } from 'src/features/row/row.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
@@ -22,6 +23,7 @@ import { ShareModule } from 'src/features/share/share.module';
     PluginModule,
     RowModule,
     RevisionModule,
+    DraftRevisionModule,
   ],
   providers: [
     DraftTransactionalCommands,

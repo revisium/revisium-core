@@ -8,7 +8,6 @@ import {
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 
 describe('InternalRenameRowHandler', () => {
   const nextRowId = 'nextRowId';
@@ -26,11 +25,11 @@ describe('InternalRenameRowHandler', () => {
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
     await expect(runTransaction(command)).rejects.toThrow(
-      'The length of the row name must be greater than or equal to 1',
+      'Row ID must be between 1 and 100 characters',
     );
   });
 
-  it('should throw an error if a similar row already exists', async () => {
+  it('should throw an error if rowId equals nextRowId', async () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareProject(prismaService);
 
@@ -42,20 +41,15 @@ describe('InternalRenameRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      `A row with this name = ${rowId} already exists in the table`,
+      'New ID must be different from current',
     );
   });
 
   it('should throw an error if the revision does not exist', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareProject(prismaService);
-
-    jest
-      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
-      .mockRejectedValue(new Error('Revision not found'));
+    const { tableId, rowId } = await prepareProject(prismaService);
 
     const command = new InternalRenameRowCommand({
-      revisionId: draftRevisionId,
+      revisionId: 'unreal',
       tableId,
       rowId,
       nextRowId,
@@ -75,7 +69,7 @@ describe('InternalRenameRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name does not exist in the revision',
+      'Row "unrealRow" not found in table',
     );
   });
 
@@ -295,18 +289,12 @@ describe('InternalRenameRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
-  let draftTransactionalCommands: DraftTransactionalCommands;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
-    draftTransactionalCommands = result.draftTransactionalCommands;
-  });
-
-  beforeEach(() => {
-    jest.restoreAllMocks();
   });
 
   afterAll(async () => {

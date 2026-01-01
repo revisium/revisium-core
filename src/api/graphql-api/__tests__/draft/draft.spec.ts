@@ -57,12 +57,12 @@ describe('graphql - draft', () => {
       });
     });
 
-    it('should throw error if table already exists', async () => {
+    it('should throw error if IDs are the same', async () => {
       return graphqlQueryError({
         ...getRenameQuery(preparedData.project.tableId),
         app,
         token: preparedData.owner.token,
-        error: /A table with this name already exists in the revision/,
+        error: /New ID must be different from current/,
       });
     });
 

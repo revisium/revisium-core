@@ -1,9 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
-import { GetOrCreateDraftRowCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-row.command';
-import { GetOrCreateDraftRowsCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-rows.command';
-import { GetOrCreateDraftTableCommand } from 'src/features/draft/commands/impl/transactional/get-or-create-draft-table.command';
 import { ResolveDraftRevisionCommand } from 'src/features/draft/commands/impl/transactional/resolve-draft-revision.command';
 import {
   ValidateDataCommand,
@@ -16,24 +13,6 @@ import { JsonSchema } from '@revisium/schema-toolkit/types';
 @Injectable()
 export class DraftTransactionalCommands {
   constructor(private readonly commandBus: CommandBus) {}
-
-  public async getOrCreateDraftTable(tableId: string) {
-    return this.commandBus.execute<GetOrCreateDraftTableCommand, string>(
-      new GetOrCreateDraftTableCommand(tableId),
-    );
-  }
-
-  public async getOrCreateDraftRow(rowId: string) {
-    return this.commandBus.execute<GetOrCreateDraftRowCommand, string>(
-      new GetOrCreateDraftRowCommand(rowId),
-    );
-  }
-
-  public async getOrCreateDraftRows(rowIds: string[]) {
-    return this.commandBus.execute<GetOrCreateDraftRowsCommand, void>(
-      new GetOrCreateDraftRowsCommand(rowIds),
-    );
-  }
 
   public async resolveDraftRevision(revisionId: string) {
     return this.commandBus.execute<ResolveDraftRevisionCommand>(

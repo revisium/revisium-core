@@ -1,14 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { RowsDeletedEvent } from 'src/infrastructure/cache';
-import { DiffService } from 'src/features/share/diff.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowsCommand } from 'src/features/draft/commands/impl/remove-rows.command';
 import { RemoveRowsHandlerReturnType } from 'src/features/draft/commands/types/remove-rows.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
@@ -20,6 +18,7 @@ import {
   traverseStore,
 } from '@revisium/schema-toolkit/lib';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 
 @CommandHandler(RemoveRowsCommand)
 export class RemoveRowsHandler extends DraftHandler<
@@ -31,12 +30,11 @@ export class RemoveRowsHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly eventBus: EventBus,
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
-    protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly foreignKeysService: ForeignKeysService,
-    protected readonly diffService: DiffService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
+    protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -66,118 +64,17 @@ export class RemoveRowsHandler extends DraftHandler<
       await this.validateForeignKeys({ ...input, rowIds: uniqueRowIds });
     }
 
-    await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
-
-    const rows = await Promise.all(
-      uniqueRowIds.map((rowId) =>
-        this.shareTransactionalQueries.findRowInTableOrThrow(
-          this.tableRequestDto.versionId,
-          rowId,
-        ),
-      ),
-    );
-
-    await this.disconnectRows(rows.map((row) => row.versionId));
-
-    const hasReadonlyRow = rows.some((row) => row.readonly);
-    const areThereChangesInDraftTable = await this.areTheChangesInDraftTable();
-
-    let wasTableReset = false;
-
-    if (!areThereChangesInDraftTable) {
-      await this.revertTable();
-      wasTableReset = true;
-    }
-
-    const wasTableUpdated =
-      this.tableRequestDto.versionId !== this.tableRequestDto.previousVersionId;
-
-    if (wasTableReset || wasTableUpdated || hasReadonlyRow) {
-      await this.validateRevisionHasChanges();
-    }
+    const result = await this.draftRevisionApi.removeRows({
+      revisionId,
+      tableId,
+      rowIds: uniqueRowIds,
+    });
 
     return {
       branchId: this.revisionRequestDto.branchId,
-      tableVersionId: wasTableReset
-        ? undefined
-        : this.tableRequestDto.versionId,
-      previousTableVersionId: wasTableReset
-        ? undefined
-        : this.tableRequestDto.previousVersionId,
+      tableVersionId: result.tableVersionId,
+      previousTableVersionId: result.previousTableVersionId,
     };
-  }
-
-  private async validateRevisionHasChanges() {
-    const areThereChangesInRevision = await this.diffService.hasTableDiffs({
-      fromRevisionId: this.revisionRequestDto.parentId,
-      toRevisionId: this.revisionRequestDto.id,
-    });
-
-    await this.transaction.revision.update({
-      where: { id: this.revisionRequestDto.id },
-      data: { hasChanges: areThereChangesInRevision },
-    });
-  }
-
-  private async areTheChangesInDraftTable() {
-    return this.diffService.hasRowDiffs({
-      tableCreatedId: this.tableRequestDto.createdId,
-      fromRevisionId: this.revisionRequestDto.parentId,
-      toRevisionId: this.revisionRequestDto.id,
-    });
-  }
-
-  private disconnectRows(rowVersionIds: string[]) {
-    return this.transaction.table.update({
-      where: {
-        versionId: this.tableRequestDto.versionId,
-      },
-      data: {
-        rows: {
-          disconnect: rowVersionIds.map((versionId) => ({ versionId })),
-        },
-      },
-    });
-  }
-
-  private async revertTable() {
-    const headRevision =
-      await this.shareTransactionalQueries.findHeadRevisionInBranchOrThrow(
-        this.revisionRequestDto.branchId,
-      );
-
-    const draftRevision =
-      await this.shareTransactionalQueries.findDraftRevisionInBranchOrThrow(
-        this.revisionRequestDto.branchId,
-      );
-
-    const tableInHead =
-      await this.shareTransactionalQueries.findTableInRevision(
-        headRevision.id,
-        this.tableRequestDto.id,
-      );
-
-    const tableInDraft =
-      await this.shareTransactionalQueries.findTableInRevisionOrThrow(
-        draftRevision.id,
-        this.tableRequestDto.id,
-      );
-
-    await this.transaction.revision.update({
-      where: { id: draftRevision.id },
-      data: {
-        tables: {
-          disconnect: {
-            versionId: tableInDraft.versionId,
-          },
-          ...(tableInHead && {
-            connect: {
-              versionId: tableInHead.versionId,
-            },
-          }),
-        },
-      },
-    });
   }
 
   private async validateForeignKeys(data: RemoveRowsCommand['data']) {
@@ -196,8 +93,6 @@ export class RemoveRowsHandler extends DraftHandler<
     ).map((row) => row.id);
 
     for (const foreignKeyTableId of foreignKeyTableIds) {
-      // TODO move to shared
-
       const foreignKeyTable =
         await this.shareTransactionalQueries.findTableInRevisionOrThrow(
           data.revisionId,

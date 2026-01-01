@@ -1,82 +1,44 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandHandler } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
-import { HashService } from 'src/infrastructure/database/hash.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
+import {
+  InternalUpdateRowsCommand,
+  InternalUpdateRowsCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftRowsRequestDto } from 'src/features/draft/draft-request-dto/rows-request.dto';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 
 @CommandHandler(InternalUpdateRowsCommand)
 export class InternalUpdateRowsHandler extends DraftHandler<
   InternalUpdateRowsCommand,
-  void
+  InternalUpdateRowsCommandReturnType
 > {
   constructor(
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
-    protected readonly tableRequestDto: DraftTableRequestDto,
-    protected readonly rowsRequestDto: DraftRowsRequestDto,
-    protected readonly draftTransactionalCommands: DraftTransactionalCommands,
-    protected readonly hashService: HashService,
+    protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
   }
 
-  protected async handler({ data: input }: InternalUpdateRowsCommand) {
+  protected async handler({
+    data: input,
+  }: InternalUpdateRowsCommand): Promise<InternalUpdateRowsCommandReturnType> {
     const { revisionId, tableId, rows, schemaHash } = input;
 
-    await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
-    await this.draftTransactionalCommands.validateNotSystemTable(tableId);
-    await this.draftTransactionalCommands.validateData({
+    const result = await this.draftRevisionApi.updateRows({
       revisionId,
       tableId,
-      tableSchema: input.tableSchema,
-      rows: rows,
-    });
-
-    await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
-    await this.draftTransactionalCommands.getOrCreateDraftRows(
-      rows.map((row) => row.rowId),
-    );
-
-    const rowIdToVersionIdMap = new Map<string, string>(
-      this.rowsRequestDto.rows.map((row) => [row.id, row.versionId]),
-    );
-
-    await Promise.all(
-      rows.map((row) => {
-        const versionId = rowIdToVersionIdMap.get(row.rowId);
-        if (!versionId) {
-          throw new BadRequestException('Invalid versionId');
-        }
-
-        return this.updateDraftRow(versionId, row.data, schemaHash);
-      }),
-    );
-  }
-
-  private async updateDraftRow(
-    versionId: string,
-    data: Prisma.InputJsonValue,
-    schemaHash: string,
-  ) {
-    return this.transaction.row.update({
-      where: {
-        versionId,
-      },
-      data: {
-        updatedAt: new Date(),
-        data,
-        hash: await this.hashService.hashObject(data),
+      rows: rows.map((row) => ({
+        rowId: row.rowId,
+        data: row.data,
         schemaHash,
-      },
-      select: {
-        versionId: true,
-      },
+      })),
     });
+
+    return {
+      tableVersionId: result.tableVersionId,
+      previousTableVersionId: result.previousTableVersionId,
+    };
   }
 }

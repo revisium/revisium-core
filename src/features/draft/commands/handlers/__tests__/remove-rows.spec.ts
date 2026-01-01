@@ -25,7 +25,7 @@ describe('RemoveRowsHandler', () => {
     await expect(runTransaction(command)).rejects.toThrow('Revision not found');
   });
 
-  it('should throw an error if findRowInTableOrThrow fails', async () => {
+  it('should throw an error if row does not exist', async () => {
     const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RemoveRowsCommand({
@@ -35,7 +35,7 @@ describe('RemoveRowsHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name does not exist in the revision',
+      'Rows not found in table: unreal',
     );
   });
 
@@ -394,7 +394,7 @@ describe('RemoveRowsHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name does not exist in the revision',
+      'Rows not found in table: non-existent-row',
     );
 
     // Verify the existing row was not removed (transaction should rollback)

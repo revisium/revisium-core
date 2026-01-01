@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { RevisionRevertedEvent } from 'src/infrastructure/cache';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -7,6 +6,7 @@ import { RevertChangesHandlerReturnType } from 'src/features/draft/commands/type
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 
 @CommandHandler(RevertChangesCommand)
 export class RevertChangesHandler extends DraftHandler<
@@ -18,6 +18,7 @@ export class RevertChangesHandler extends DraftHandler<
     protected readonly draftContext: DraftContextService,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly eventBus: EventBus,
+    protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -47,58 +48,11 @@ export class RevertChangesHandler extends DraftHandler<
         projectId,
         branchName,
       );
-    const headRevision =
-      await this.shareTransactionalQueries.findHeadRevisionInBranchOrThrow(
-        branchId,
-      );
-    const draftRevision =
-      await this.shareTransactionalQueries.findDraftRevisionInBranchOrThrow(
-        branchId,
-      );
 
-    const { hasChanges } = await this.getRevision(draftRevision.id);
-
-    if (!hasChanges) {
-      throw new BadRequestException('There are no changes');
-    }
-
-    const headRevisionTables = await this.getHeadRevisionTables(
-      headRevision.id,
-    );
-
-    await this.resetDraftRevision(draftRevision.id, headRevisionTables);
-
-    return { branchId, draftRevisionId: draftRevision.id };
-  }
-
-  private getRevision(revisionId: string) {
-    return this.transaction.revision.findUniqueOrThrow({
-      where: { id: revisionId },
+    const { draftRevisionId } = await this.draftRevisionApi.revert({
+      branchId,
     });
-  }
 
-  private getHeadRevisionTables(revisionId: string) {
-    return this.transaction.revision
-      .findUniqueOrThrow({
-        where: { id: revisionId },
-      })
-      .tables({ select: { versionId: true } });
-  }
-
-  private resetDraftRevision(
-    revisionId: string,
-    tables: { versionId: string }[],
-  ) {
-    return this.transaction.revision.update({
-      where: {
-        id: revisionId,
-      },
-      data: {
-        hasChanges: false,
-        tables: {
-          set: tables,
-        },
-      },
-    });
+    return { branchId, draftRevisionId };
   }
 }

@@ -1,8 +1,5 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
-import { RevisionsApiService } from 'src/features/revision';
-import { CacheService, RevisionCommittedEvent } from 'src/infrastructure/cache';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { RevisionCommittedEvent } from 'src/infrastructure/cache';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/types/create-revision.handler.types';
 import { CreateRevisionCommand } from 'src/features/draft/commands/impl/create-revision.command';
@@ -10,6 +7,7 @@ import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { ShareTransactionalCommands } from 'src/features/share/share.transactional.commands';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 
 @CommandHandler(CreateRevisionCommand)
 export class CreateRevisionHandler extends DraftHandler<
@@ -17,14 +15,12 @@ export class CreateRevisionHandler extends DraftHandler<
   CreateRevisionHandlerReturnType
 > {
   constructor(
-    protected readonly idService: IdService,
     protected readonly draftContext: DraftContextService,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly shareTransactionalCommands: ShareTransactionalCommands,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
-    protected readonly cache: CacheService,
-    protected readonly revisionApi: RevisionsApiService,
     protected readonly eventBus: EventBus,
+    protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -44,7 +40,7 @@ export class CreateRevisionHandler extends DraftHandler<
   protected async handler({
     data,
   }: CreateRevisionCommand): Promise<CreateRevisionHandlerReturnType> {
-    const { organizationId, projectName, branchName } = data;
+    const { organizationId, projectName, branchName, comment } = data;
 
     const { id: projectId } =
       await this.shareTransactionalQueries.findProjectInOrganizationOrThrow(
@@ -52,136 +48,33 @@ export class CreateRevisionHandler extends DraftHandler<
         projectName,
       );
 
-    const branchId = await this.getNotTouchedBranchId(projectId, branchName);
-
-    const previousHeadRevision =
-      await this.shareTransactionalQueries.findHeadRevisionInBranchOrThrow(
-        branchId,
-      );
-    const previousDraftRevision =
-      await this.shareTransactionalQueries.findDraftRevisionInBranchOrThrow(
-        branchId,
-      );
-
-    const { hasChanges } = await this.getRevision(previousDraftRevision.id);
-
-    if (!hasChanges) {
-      throw new BadRequestException('There are no changes');
-    }
-
-    const tableIds = await this.getTableIdsByRevisionId(
-      previousDraftRevision.id,
-    );
-
-    await this.updatePreviousHeadRevision(previousHeadRevision.id);
-    await this.updatePreviousDraftRevision(
-      previousDraftRevision.id,
-      data.comment,
-    );
-    const nextDraftRevision = await this.createNextDraftRevision(
-      branchId,
-      previousDraftRevision.id,
-      tableIds,
-    );
-    await this.lockTablesAndRowsInRevision(tableIds);
-
-    const draftEndpoints = await this.shareTransactionalCommands.moveEndpoints({
-      fromRevisionId: previousDraftRevision.id,
-      toRevisionId: nextDraftRevision.id,
-    });
-    const headEndpoints = await this.shareTransactionalCommands.moveEndpoints({
-      fromRevisionId: previousHeadRevision.id,
-      toRevisionId: previousDraftRevision.id,
-    });
-
-    return {
-      previousHeadRevisionId: previousHeadRevision.id,
-      previousDraftRevisionId: previousDraftRevision.id,
-      nextDraftRevisionId: nextDraftRevision.id,
-      draftEndpoints,
-      headEndpoints,
-    };
-  }
-
-  private getRevision(revisionId: string) {
-    return this.transaction.revision.findUniqueOrThrow({
-      where: { id: revisionId },
-    });
-  }
-
-  private async getNotTouchedBranchId(projectId: string, branchName: string) {
-    const branch =
+    const { id: branchId } =
       await this.shareTransactionalQueries.findBranchInProjectOrThrow(
         projectId,
         branchName,
       );
 
-    return branch.id;
-  }
+    const {
+      previousHeadRevisionId,
+      previousDraftRevisionId,
+      nextDraftRevisionId,
+    } = await this.draftRevisionApi.commit({ branchId, comment });
 
-  private getTableIdsByRevisionId(revisionId: string) {
-    return this.transaction.revision
-      .findUniqueOrThrow({ where: { id: revisionId } })
-      .tables({ select: { versionId: true } });
-  }
-
-  private async lockTablesAndRowsInRevision(ids: { versionId: string }[]) {
-    await this.transaction.table.updateMany({
-      where: { OR: ids, readonly: false },
-      data: {
-        readonly: true,
-      },
+    const draftEndpoints = await this.shareTransactionalCommands.moveEndpoints({
+      fromRevisionId: previousDraftRevisionId,
+      toRevisionId: nextDraftRevisionId,
+    });
+    const headEndpoints = await this.shareTransactionalCommands.moveEndpoints({
+      fromRevisionId: previousHeadRevisionId,
+      toRevisionId: previousDraftRevisionId,
     });
 
-    await this.transaction.row.updateMany({
-      where: { readonly: false, tables: { some: { OR: ids } } },
-      data: {
-        readonly: true,
-      },
-    });
-  }
-
-  private updatePreviousHeadRevision(revisionId: string) {
-    return this.transaction.revision.update({
-      where: { id: revisionId },
-      data: { isHead: false, isDraft: false, hasChanges: false },
-    });
-  }
-
-  private updatePreviousDraftRevision(revisionId: string, comment?: string) {
-    return this.transaction.revision.update({
-      where: { id: revisionId },
-      data: { isHead: true, isDraft: false, hasChanges: false, comment },
-    });
-  }
-
-  private createNextDraftRevision(
-    branchId: string,
-    parentRevisionId: string,
-    tableIds: { versionId: string }[],
-  ) {
-    return this.transaction.revision.create({
-      data: {
-        id: this.idService.generate(),
-        isDraft: true,
-        parent: {
-          connect: {
-            id: parentRevisionId,
-          },
-        },
-        tables: {
-          connect: tableIds,
-        },
-        branch: {
-          connect: {
-            id: branchId,
-          },
-        },
-        hasChanges: false,
-      },
-      select: {
-        id: true,
-      },
-    });
+    return {
+      previousHeadRevisionId,
+      previousDraftRevisionId,
+      nextDraftRevisionId,
+      draftEndpoints,
+      headEndpoints,
+    };
   }
 }

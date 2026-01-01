@@ -22,9 +22,6 @@ import { CreateTableHandler } from 'src/features/draft/commands/handlers/create-
 import { RemoveRowsHandler } from 'src/features/draft/commands/handlers/remove-rows.handler';
 import { RemoveTableHandler } from 'src/features/draft/commands/handlers/remove-table.handler';
 import { RevertChangesHandler } from 'src/features/draft/commands/handlers/revert-changes.handler';
-import { GetOrCreateDraftRowHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-row.handler';
-import { GetOrCreateDraftRowsHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-rows.handler';
-import { GetOrCreateDraftTableHandler } from 'src/features/draft/commands/handlers/transactional/get-or-create-draft-table.handler';
 import { InternalCreateRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-create-row.handler';
 import { InternalRenameRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-rename-row.handler';
 import { InternalUpdateRowHandler } from 'src/features/draft/commands/handlers/transactional/internal-update-row.handler';
@@ -56,9 +53,6 @@ export const DRAFT_COMMANDS_HANDLERS = [
   RemoveRowsHandler,
   ApiRemoveRowHandler,
   ApiRemoveRowsHandler,
-  GetOrCreateDraftTableHandler,
-  GetOrCreateDraftRowHandler,
-  GetOrCreateDraftRowsHandler,
   ResolveDraftRevisionHandler,
   ValidateNotSystemTableHandler,
   ValidateDataHandler,
