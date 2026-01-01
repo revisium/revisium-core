@@ -8,9 +8,9 @@ import {
   DraftRevisionGetOrCreateDraftTableCommand,
   DraftRevisionGetOrCreateDraftTableCommandData,
   DraftRevisionGetOrCreateDraftTableCommandReturnType,
+  DraftRevisionRecomputeHasChangesCommand,
 } from 'src/features/draft-revision/commands/impl';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @Injectable()
@@ -18,7 +18,6 @@ export class DraftRevisionInternalService {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly transactionService: TransactionPrismaService,
-    private readonly diffService: DiffService,
     private readonly revisionsApiService: RevisionsApiService,
     private readonly branchApiService: BranchApiService,
   ) {}
@@ -52,17 +51,11 @@ export class DraftRevisionInternalService {
 
   public async recomputeHasChanges(
     revisionId: string,
-    parentRevisionId: string,
+    tableId: string,
   ): Promise<void> {
-    const hasChanges = await this.diffService.hasTableDiffs({
-      fromRevisionId: parentRevisionId,
-      toRevisionId: revisionId,
-    });
-
-    await this.transaction.revision.update({
-      where: { id: revisionId },
-      data: { hasChanges },
-    });
+    await this.commandBus.execute(
+      new DraftRevisionRecomputeHasChangesCommand({ revisionId, tableId }),
+    );
   }
 
   public async findRevisionOrThrow(revisionId: string) {

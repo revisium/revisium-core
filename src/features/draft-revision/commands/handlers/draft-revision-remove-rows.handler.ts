@@ -56,12 +56,7 @@ export class DraftRevisionRemoveRowsHandler
 
     const removedRows = await this.removeRows(tableResult.tableVersionId, rows);
 
-    const parentRevisionId =
-      await this.internalService.findParentRevisionIdOrThrow(revisionId);
-    await this.internalService.recomputeHasChanges(
-      revisionId,
-      parentRevisionId,
-    );
+    await this.internalService.recomputeHasChanges(revisionId, tableId);
 
     return this.buildResult(tableResult, removedRows);
   }

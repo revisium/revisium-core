@@ -9,3 +9,4 @@ export * from 'src/features/draft-revision/commands/impl/draft-revision-remove-r
 export * from 'src/features/draft-revision/commands/impl/draft-revision-get-or-create-draft-row.command';
 export * from 'src/features/draft-revision/commands/impl/draft-revision-commit.command';
 export * from 'src/features/draft-revision/commands/impl/draft-revision-revert.command';
+export * from 'src/features/draft-revision/commands/impl/draft-revision-recompute-has-changes.command';

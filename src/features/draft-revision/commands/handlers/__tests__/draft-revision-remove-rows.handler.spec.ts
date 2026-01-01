@@ -348,7 +348,7 @@ describe('DraftRevisionRemoveRowsHandler', () => {
   });
 
   describe('hasChanges', () => {
-    it('should recompute hasChanges and keep true when table still has changes', async () => {
+    it('should set hasChanges to false when removing all rows from new table', async () => {
       const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
       await createTableAndRows(draftRevisionId, 'test-table', [
         { rowId: 'row-1', data: { test: 'value' } },
@@ -372,7 +372,7 @@ describe('DraftRevisionRemoveRowsHandler', () => {
         where: { id: draftRevisionId },
         select: { hasChanges: true },
       });
-      expect(revisionAfter?.hasChanges).toBe(true);
+      expect(revisionAfter?.hasChanges).toBe(false);
     });
 
     it('should keep hasChanges true when other rows remain', async () => {
