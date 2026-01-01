@@ -32,7 +32,7 @@ describe('CreateTableHandler', () => {
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
     await expect(runTransaction(command)).rejects.toThrow(
-      'It must contain between',
+      'Table ID must be between',
     );
   });
 

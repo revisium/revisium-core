@@ -410,7 +410,7 @@ describe('restapi - row-by-id', () => {
         .send({
           nextRowId: preparedData.project.rowId,
         })
-        .expect(/already exists in the table/);
+        .expect(/New ID must be different from current/);
     });
 
     function getRenameUrl() {

@@ -8,12 +8,10 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { RowPublishedAtPlugin } from 'src/features/plugin/row-published-at/row-published-at.plugin';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { JsonValue } from '@revisium/schema-toolkit/types';
 
 @CommandHandler(UpdateRowCommand)
@@ -25,11 +23,9 @@ export class UpdateRowHandler extends DraftHandler<
     protected readonly commandBus: CommandBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
-    protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly pluginService: PluginService,
     protected readonly rowPublishedAtPlugin: RowPublishedAtPlugin,
-    protected readonly jsonSchemaStore: JsonSchemaStoreService,
   ) {
     super(transactionService, draftContext);
   }
@@ -46,18 +42,8 @@ export class UpdateRowHandler extends DraftHandler<
       tableId,
       rows: [{ rowId, data }],
     });
-    await this.updateRevision(revisionId);
 
     return this.updateRow(input, schemaHash);
-  }
-
-  private async updateRevision(revisionId: string) {
-    return this.transaction.revision.updateMany({
-      where: { id: revisionId, hasChanges: false },
-      data: {
-        hasChanges: true,
-      },
-    });
   }
 
   private async getFirstPublishedAtFromDataOrUndefined(

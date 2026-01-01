@@ -11,11 +11,13 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { InternalUpdateRowCommand } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
-import { InternalUpdateRowsCommand } from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
+import {
+  InternalUpdateRowsCommand,
+  InternalUpdateRowsCommandReturnType,
+} from 'src/features/draft/commands/impl/transactional/internal-update-rows.command';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
@@ -41,7 +43,6 @@ export class UpdateTableHandler extends DraftHandler<
   constructor(
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
-    protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly commandBus: CommandBus,
     protected readonly eventBus: EventBus,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
@@ -90,15 +91,16 @@ export class UpdateTableHandler extends DraftHandler<
       throw new BadRequestException('Table is a system table');
     }
 
-    await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
-
     const { schema: previousSchema } = await this.getTableSchema(data);
-    const { tableSchema, rows } = await this.createNextTable(data);
+    const { tableSchema, rows } = await this.createNextTable(
+      data,
+      table.versionId,
+    );
 
     await this.updateSchema(data, tableSchema);
 
     const { hash: nextSchemaHash } = await this.getTableSchema(data);
-    await this.updateRows({
+    const updateResult = await this.updateRows({
       revisionId: data.revisionId,
       tableId: data.tableId,
       tableSchema,
@@ -108,20 +110,21 @@ export class UpdateTableHandler extends DraftHandler<
 
     await this.migrateViews(revisionId, tableId, data.patches, previousSchema);
 
-    await this.updateRevision(data.revisionId);
-
     return {
-      tableVersionId: this.tableRequestDto.versionId,
-      previousTableVersionId: this.tableRequestDto.previousVersionId,
+      tableVersionId: updateResult.tableVersionId,
+      previousTableVersionId: updateResult.previousTableVersionId,
     };
   }
 
-  private async createNextTable(data: UpdateTableCommand['data']) {
+  private async createNextTable(
+    data: UpdateTableCommand['data'],
+    tableVersionId: string,
+  ) {
     const { schema } = await this.getTableSchema(data);
 
     const schemaTable = new SchemaTable(schema, this.jsonSchemaStore.refs);
 
-    const rows = await this.getRows(this.tableRequestDto.versionId);
+    const rows = await this.getRows(tableVersionId);
     for (const row of rows) {
       schemaTable.addRow(row.id, row.data);
     }
@@ -208,14 +211,17 @@ export class UpdateTableHandler extends DraftHandler<
     tableSchema: JsonSchema;
     schemaHash: string;
     rows: Row[];
-  }) {
+  }): Promise<InternalUpdateRowsCommandReturnType> {
     await this.pluginTable.afterMigrateRows({
       revisionId: data.revisionId,
       tableId: data.tableId,
       rows: data.rows,
     });
 
-    await this.commandBus.execute(
+    return this.commandBus.execute<
+      InternalUpdateRowsCommand,
+      InternalUpdateRowsCommandReturnType
+    >(
       new InternalUpdateRowsCommand({
         revisionId: data.revisionId,
         tableId: data.tableId,
@@ -251,15 +257,6 @@ export class UpdateTableHandler extends DraftHandler<
     }
 
     return false;
-  }
-
-  private async updateRevision(revisionId: string) {
-    return this.transaction.revision.updateMany({
-      where: { id: revisionId, hasChanges: false },
-      data: {
-        hasChanges: true,
-      },
-    });
   }
 
   private async migrateViews(

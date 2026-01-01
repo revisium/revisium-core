@@ -8,77 +8,8 @@ import {
   createTestingModule,
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
-import { SystemTables } from 'src/features/share/system-tables.consts';
 
-describe('UpdateRowsHandler', () => {
-  it('should throw an error if the revision does not exist', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareProject(prismaService);
-
-    jest
-      .spyOn(draftTransactionalCommands, 'resolveDraftRevision')
-      .mockRejectedValue(new Error('Revision not found'));
-
-    const command = new InternalUpdateRowsCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      tableSchema: testSchema,
-      schemaHash: objectHash(testSchema),
-      rows: [
-        {
-          rowId,
-          data: { ver: 3 },
-        },
-      ],
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow('Revision not found');
-  });
-
-  it('should throw an error if the table is a system table', async () => {
-    const { draftRevisionId, rowId } = await prepareProject(prismaService);
-
-    const command = new InternalUpdateRowsCommand({
-      revisionId: draftRevisionId,
-      tableId: SystemTables.Schema,
-      tableSchema: testSchema,
-      schemaHash: objectHash(testSchema),
-      rows: [
-        {
-          rowId,
-          data: { ver: 3 },
-        },
-      ],
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow(
-      'Table is a system table',
-    );
-  });
-
-  it('should throw an error if the data is not valid', async () => {
-    const { draftRevisionId, tableId, rowId } =
-      await prepareProject(prismaService);
-
-    const command = new InternalUpdateRowsCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      tableSchema: testSchema,
-      schemaHash: objectHash(testSchema),
-      rows: [
-        {
-          rowId,
-          data: { unrealKey: 3 },
-        },
-      ],
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow(
-      'missing required property "ver"',
-    );
-  });
-
+describe('InternalUpdateRowsHandler', () => {
   it('should update the row if conditions are met', async () => {
     const {
       draftRevisionId,
@@ -306,18 +237,12 @@ describe('UpdateRowsHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
-  let draftTransactionalCommands: DraftTransactionalCommands;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
-    draftTransactionalCommands = result.draftTransactionalCommands;
-  });
-
-  beforeEach(() => {
-    jest.restoreAllMocks();
   });
 
   afterAll(async () => {

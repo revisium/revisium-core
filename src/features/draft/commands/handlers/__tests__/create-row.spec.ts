@@ -71,7 +71,7 @@ describe('CreateRowHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A row with this name already exists in the table',
+      'Rows already exist:',
     );
   });
 

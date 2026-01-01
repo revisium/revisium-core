@@ -31,7 +31,7 @@ describe('RenameTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'It must contain between',
+      'Table ID must be between',
     );
   });
 
@@ -67,7 +67,7 @@ describe('RenameTableHandler', () => {
     await expect(runTransaction(command)).rejects.toThrow('Table not found');
   });
 
-  it('should throw an error if the table already exist', async () => {
+  it('should throw an error if IDs are the same', async () => {
     const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RenameTableCommand({
@@ -77,7 +77,7 @@ describe('RenameTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'A table with this name already exists in the revision',
+      'New ID must be different from current',
     );
   });
 

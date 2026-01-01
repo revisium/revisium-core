@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import {
   InternalUpdateRowCommand,
@@ -9,13 +10,12 @@ import {
   UploadFileCommandReturnType,
 } from 'src/features/draft/commands/impl/update-file.command';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { JsonValue, JsonSchema } from '@revisium/schema-toolkit/types';
 import { S3Service } from 'src/infrastructure/database/s3.service';
@@ -30,13 +30,12 @@ export class UploadFileHandler extends DraftHandler<
     protected readonly commandBus: CommandBus,
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
-    protected readonly revisionRequestDto: DraftRevisionRequestDto,
-    protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly filePlugin: FilePlugin,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
     protected readonly s3Service: S3Service,
+    protected readonly rowApiService: RowApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -49,10 +48,6 @@ export class UploadFileHandler extends DraftHandler<
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
 
-    await this.draftTransactionalCommands.getOrCreateDraftTable(tableId);
-    const rowVersionId =
-      await this.draftTransactionalCommands.getOrCreateDraftRow(rowId);
-
     const schema = await this.shareTransactionalQueries.getTableSchema(
       revisionId,
       tableId,
@@ -60,11 +55,8 @@ export class UploadFileHandler extends DraftHandler<
 
     const { nextData, fileHash } = await this.fileProcess({
       ...input,
-      rowVersionId,
       schema: schema.schema,
     });
-
-    await this.updateRevision(revisionId);
 
     const result = await this.updateRow({
       revisionId,
@@ -89,11 +81,18 @@ export class UploadFileHandler extends DraftHandler<
 
   private async fileProcess(
     options: UploadFileCommandData & {
-      rowVersionId: string;
       schema: JsonSchema;
     },
   ) {
-    const row = await this.getRow(options.rowVersionId);
+    const row = await this.rowApiService.getRow({
+      revisionId: options.revisionId,
+      tableId: options.tableId,
+      rowId: options.rowId,
+    });
+
+    if (!row) {
+      throw new BadRequestException('Row not found');
+    }
 
     const valueStore = createJsonValueStore(
       this.jsonSchemaStore.create(options.schema),
@@ -121,25 +120,10 @@ export class UploadFileHandler extends DraftHandler<
     };
   }
 
-  private async updateRevision(revisionId: string) {
-    return this.transaction.revision.updateMany({
-      where: { id: revisionId, hasChanges: false },
-      data: {
-        hasChanges: true,
-      },
-    });
-  }
-
   private async updateRow(data: InternalUpdateRowCommand['data']) {
     return this.commandBus.execute<
       InternalUpdateRowCommand,
       InternalUpdateRowCommandReturnType
     >(new InternalUpdateRowCommand(data));
-  }
-
-  private getRow(rowVersionId: string) {
-    return this.transaction.row.findUniqueOrThrow({
-      where: { versionId: rowVersionId },
-    });
   }
 }

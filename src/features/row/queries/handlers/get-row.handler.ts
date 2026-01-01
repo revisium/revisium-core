@@ -1,50 +1,42 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetRowQuery,
   GetRowQueryReturnType,
 } from 'src/features/row/queries/impl/get-row.query';
-import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetRowQuery)
 export class GetRowHandler
   implements IQueryHandler<GetRowQuery, GetRowQueryReturnType>
 {
   constructor(
-    private readonly transactionService: TransactionPrismaService,
-    private readonly shareTransactionalQueries: ShareTransactionalQueries,
+    private readonly prismaService: TransactionPrismaService,
     private readonly pluginService: PluginService,
   ) {}
 
-  private get transaction() {
-    return this.transactionService.getTransaction();
+  private get prisma() {
+    return this.prismaService.getTransactionOrPrisma();
   }
 
   async execute({ data }: GetRowQuery): Promise<GetRowQueryReturnType> {
-    return this.transactionService.run(() => this.transactionHandler(data), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
-  }
-
-  private async transactionHandler(
-    data: GetRowQuery['data'],
-  ): Promise<GetRowQueryReturnType> {
     try {
-      const { versionId: tableVersionId } =
-        await this.shareTransactionalQueries.findTableInRevisionOrThrow(
-          data.revisionId,
-          data.tableId,
-        );
+      const row = await this.prisma.row.findFirst({
+        where: {
+          id: data.rowId,
+          tables: {
+            some: {
+              id: data.tableId,
+              revisions: { some: { id: data.revisionId } },
+            },
+          },
+        },
+      });
 
-      const { versionId: rowVersionId } =
-        await this.shareTransactionalQueries.findRowInTableOrThrow(
-          tableVersionId,
-          data.rowId,
-        );
+      if (!row) {
+        return null;
+      }
 
-      const row = await this.getRow(rowVersionId);
       await this.pluginService.computeRows({
         revisionId: data.revisionId,
         tableId: data.tableId,
@@ -61,11 +53,5 @@ export class GetRowHandler
     } catch {
       return null;
     }
-  }
-
-  private getRow(rowVersionId: string) {
-    return this.transaction.row.findUniqueOrThrow({
-      where: { versionId: rowVersionId },
-    });
   }
 }

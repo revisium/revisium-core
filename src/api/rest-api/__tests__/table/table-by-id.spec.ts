@@ -238,7 +238,7 @@ describe('restapi - table-by-id', () => {
           },
         })
         .expect(400)
-        .expect(/A row with this name already exists in the table/);
+        .expect(/Rows already exist:/);
     });
 
     it('should return structured error response for validation errors', async () => {
@@ -601,14 +601,14 @@ describe('restapi - table-by-id', () => {
         .expect(401);
     });
 
-    it('should throw error if table already exists', async () => {
+    it('should throw error if IDs are the same', async () => {
       return request(app.getHttpServer())
         .patch(getRenameUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .send({
           nextTableId: preparedData.project.tableId,
         })
-        .expect(/A table with this name already exists in the revision/);
+        .expect(/New ID must be different from current/);
     });
 
     function getRenameUrl() {
@@ -676,7 +676,7 @@ describe('restapi - table-by-id', () => {
         .send({
           rowIds: ['non-existent-row-id'],
         })
-        .expect(/A row with this name does not exist in the revision/);
+        .expect(/Rows not found in table/);
     });
 
     function getDeleteRowsUrl() {

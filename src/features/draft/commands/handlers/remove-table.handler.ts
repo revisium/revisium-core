@@ -5,20 +5,19 @@ import {
   CreateRemoveMigrationCommandReturnType,
 } from 'src/features/draft/commands/impl/migration';
 import { TableDeletedEvent } from 'src/infrastructure/cache';
-import { DiffService } from 'src/features/share/diff.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { RemoveRowsCommand } from 'src/features/draft/commands/impl/remove-rows.command';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';
 import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/remove-table.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
-import { DraftTableRequestDto } from 'src/features/draft/draft-request-dto/table-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { ForeignKeysService } from 'src/features/share/foreign-keys.service';
 import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 
 @CommandHandler(RemoveTableCommand)
 export class RemoveTableHandler extends DraftHandler<
@@ -33,9 +32,8 @@ export class RemoveTableHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
-    protected readonly tableRequestDto: DraftTableRequestDto,
     protected readonly foreignKeysService: ForeignKeysService,
-    protected readonly diffService: DiffService,
+    protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
   }
@@ -52,61 +50,18 @@ export class RemoveTableHandler extends DraftHandler<
     const { revisionId, tableId } = data;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
-    const table =
-      await this.shareTransactionalQueries.findTableInRevisionOrThrow(
-        revisionId,
-        tableId,
-      );
 
-    if (table.system) {
-      throw new BadRequestException('Table is a system table');
-    }
-
+    await this.draftTransactionalCommands.validateNotSystemTable(tableId);
     await this.validateForeignKeys(data);
 
-    if (table.readonly) {
-      await this.disconnectTableFromRevision(table.versionId, revisionId);
-    } else {
-      await this.removeTable(table.versionId);
-    }
-
-    this.tableRequestDto.id = tableId;
-    this.tableRequestDto.versionId = table.versionId;
+    await this.draftRevisionApi.removeTable({ revisionId, tableId });
 
     await this.removeSchema(data);
-
-    await this.validateRevisionHasChanges();
 
     return {
       branchId: this.revisionRequestDto.branchId,
       revisionId: this.revisionRequestDto.id,
     };
-  }
-
-  private async validateRevisionHasChanges() {
-    const areThereChangesInRevision = await this.diffService.hasTableDiffs({
-      fromRevisionId: this.revisionRequestDto.parentId,
-      toRevisionId: this.revisionRequestDto.id,
-    });
-
-    await this.transaction.revision.update({
-      where: { id: this.revisionRequestDto.id },
-      data: { hasChanges: areThereChangesInRevision },
-    });
-  }
-
-  private removeTable(tableId: string) {
-    return this.transaction.table.delete({ where: { versionId: tableId } });
-  }
-
-  private async disconnectTableFromRevision(
-    tableId: string,
-    revisionId: string,
-  ) {
-    return this.transaction.table.update({
-      where: { versionId: tableId },
-      data: { revisions: { disconnect: { id: revisionId } } },
-    });
   }
 
   private async removeSchema(data: RemoveTableCommand['data']) {
