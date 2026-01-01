@@ -91,7 +91,6 @@ describe('DraftRevisionRemoveTableHandler', () => {
         'not found in revision',
       );
     });
-
   });
 
   describe('success cases', () => {
