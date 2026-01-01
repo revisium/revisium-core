@@ -19,7 +19,7 @@ describe('getRow', () => {
     const { draftRevisionId, tableId, draftRowVersionId } =
       await prepareProject(prismaService);
 
-    const row = await prismaService.row.findUnique({
+    const row = await prismaService.row.findUniqueOrThrow({
       where: { versionId: draftRowVersionId },
     });
 
@@ -27,7 +27,7 @@ describe('getRow', () => {
       new GetRowQuery({
         revisionId: draftRevisionId,
         tableId,
-        rowId: row!.id,
+        rowId: row.id,
       }),
     );
 
@@ -56,7 +56,7 @@ describe('getRow', () => {
     const { draftRevisionId, draftRowVersionId } =
       await prepareProject(prismaService);
 
-    const row = await prismaService.row.findUnique({
+    const row = await prismaService.row.findUniqueOrThrow({
       where: { versionId: draftRowVersionId },
     });
 
@@ -64,7 +64,7 @@ describe('getRow', () => {
       new GetRowQuery({
         revisionId: draftRevisionId,
         tableId: 'non-existent-table-id',
-        rowId: row!.id,
+        rowId: row.id,
       }),
     );
 
@@ -74,7 +74,7 @@ describe('getRow', () => {
   it('should return null for non-existent revision', async () => {
     const { tableId, draftRowVersionId } = await prepareProject(prismaService);
 
-    const row = await prismaService.row.findUnique({
+    const row = await prismaService.row.findUniqueOrThrow({
       where: { versionId: draftRowVersionId },
     });
 
@@ -82,7 +82,7 @@ describe('getRow', () => {
       new GetRowQuery({
         revisionId: 'non-existent-revision-id',
         tableId,
-        rowId: row!.id,
+        rowId: row.id,
       }),
     );
 

@@ -23,6 +23,39 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 describe('UploadFileHandler', () => {
+  it('should throw error when row not found', async () => {
+    const ids = await prepareProject(prismaService);
+    const {
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = ids;
+
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+      schema: getObjectSchema({
+        file: getRefSchema(SystemSchemaIds.File),
+      }),
+    });
+
+    const command = new UploadFileCommand({
+      revisionId: draftRevisionId,
+      tableId: table.tableId,
+      rowId: 'non-existent-row',
+      fileId: nanoid(),
+      file: createExpressImageFile(),
+    });
+
+    await expect(runTransaction(command)).rejects.toThrow(
+      `Row not found: rowId=non-existent-row, tableId=${table.tableId}, revisionId=${draftRevisionId}`,
+    );
+  });
+
   it('should upload file', async () => {
     const ids = await prepareProject(prismaService);
     const {

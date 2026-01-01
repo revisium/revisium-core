@@ -27,7 +27,7 @@ describe('CreateTableHandler', () => {
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
       tableId: '',
-      schema: {},
+      schema: { type: 'string', default: '' },
     });
 
     await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
@@ -58,7 +58,7 @@ describe('CreateTableHandler', () => {
     const command = new CreateTableCommand({
       revisionId: draftRevisionId,
       tableId,
-      schema: {},
+      schema: { type: 'string', default: '' },
     });
 
     await expect(runTransaction(command)).rejects.toThrow(

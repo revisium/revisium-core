@@ -619,7 +619,9 @@ describe('restapi - revision-by-id', () => {
           tableId,
           schema: {
             type: 'object',
-            properties: { name: { type: 'string' } },
+            properties: { name: { type: 'string', default: '' } },
+            additionalProperties: false,
+            required: ['name'],
           },
         })
         .expect(400);

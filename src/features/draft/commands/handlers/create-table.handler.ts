@@ -48,12 +48,13 @@ export class CreateTableHandler extends DraftHandler<
       );
     }
 
+    await this.draftTransactionalCommands.validateSchema(schema);
+
     const result = await this.draftRevisionApi.createTable({
       revisionId,
       tableId,
     });
 
-    await this.draftTransactionalCommands.validateSchema(schema);
     await this.saveSchema(data);
 
     return {

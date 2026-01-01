@@ -91,7 +91,9 @@ export class UploadFileHandler extends DraftHandler<
     });
 
     if (!row) {
-      throw new BadRequestException('Row not found');
+      throw new BadRequestException(
+        `Row not found: rowId=${options.rowId}, tableId=${options.tableId}, revisionId=${options.revisionId}`,
+      );
     }
 
     const valueStore = createJsonValueStore(
