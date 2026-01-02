@@ -9,6 +9,7 @@ import { CreateRowsHandlerReturnType } from 'src/features/draft/commands/types/c
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { RowApiService } from 'src/features/row/row-api.service';
+import { PluginService } from 'src/features/plugin/plugin.service';
 
 describe('CreateRowsHandler', () => {
   it('should throw an error if any rowId is shorter than 1 character', async () => {
@@ -158,6 +159,47 @@ describe('CreateRowsHandler', () => {
     expect(row?.data).toStrictEqual({ ver: 42 });
   });
 
+  it('should pass isRestore=true to plugin service', async () => {
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+    const afterCreateRowSpy = jest.spyOn(pluginService, 'afterCreateRow');
+
+    const command = new CreateRowsCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      rows: [{ rowId: 'restoreRow', data: { ver: 1 } }],
+      isRestore: true,
+    });
+
+    await runTransaction(command);
+
+    expect(afterCreateRowSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isRestore: true,
+      }),
+    );
+  });
+
+  it('should pass isRestore=false (undefined) to plugin service by default', async () => {
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+    const afterCreateRowSpy = jest.spyOn(pluginService, 'afterCreateRow');
+
+    const command = new CreateRowsCommand({
+      revisionId: draftRevisionId,
+      tableId: tableId,
+      rows: [{ rowId: 'normalRow', data: { ver: 1 } }],
+    });
+
+    await runTransaction(command);
+
+    expect(afterCreateRowSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isRestore: undefined,
+      }),
+    );
+  });
+
   function runTransaction(
     command: CreateRowsCommand,
   ): Promise<CreateRowsHandlerReturnType> {
@@ -169,6 +211,7 @@ describe('CreateRowsHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
   let rowApiService: RowApiService;
+  let pluginService: PluginService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -177,6 +220,7 @@ describe('CreateRowsHandler', () => {
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
     rowApiService = result.module.get(RowApiService);
+    pluginService = result.module.get(PluginService);
   });
 
   beforeEach(() => {
