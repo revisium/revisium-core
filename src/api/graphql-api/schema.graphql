@@ -110,6 +110,23 @@ type CreateRowResultModel {
   table: TableModel!
 }
 
+input CreateRowsInput {
+  revisionId: String!
+  rows: [CreateRowsRowInput!]!
+  tableId: String!
+}
+
+type CreateRowsResultModel {
+  previousVersionTableId: String!
+  rows: [RowModel!]!
+  table: TableModel!
+}
+
+input CreateRowsRowInput {
+  data: JSON!
+  rowId: String!
+}
+
 input CreateTableInput {
   revisionId: String!
   schema: JSON!
@@ -435,6 +452,7 @@ type Mutation {
   createProject(data: CreateProjectInput!): ProjectModel!
   createRevision(data: CreateRevisionInput!): RevisionModel!
   createRow(data: CreateRowInput!): CreateRowResultModel!
+  createRows(data: CreateRowsInput!): CreateRowsResultModel!
   createTable(data: CreateTableInput!): CreateTableResultModel!
   createUser(data: CreateUserInput!): Boolean!
   deleteEndpoint(data: DeleteEndpointInput!): Boolean!
@@ -443,6 +461,7 @@ type Mutation {
   loginGithub(data: LoginGithubInput!): LoginModel!
   loginGoogle(data: LoginGoogleInput!): LoginModel!
   patchRow(data: PatchRowInput!): PatchRowResultModel!
+  patchRows(data: PatchRowsInput!): PatchRowsResultModel!
   removeRow(data: RemoveRowInput!): RemoveRowResultModel!
   removeRows(data: RemoveRowsInput!): RemoveRowsResultModel!
   removeTable(data: RemoveTableInput!): RemoveTableResultModel!
@@ -456,6 +475,7 @@ type Mutation {
   updatePassword(data: UpdatePasswordInput!): Boolean!
   updateProject(data: UpdateProjectInput!): Boolean!
   updateRow(data: UpdateRowInput!): UpdateRowResultModel!
+  updateRows(data: UpdateRowsInput!): UpdateRowsResultModel!
   updateTable(data: UpdateTableInput!): UpdateTableResultModel!
   updateTableViews(data: UpdateTableViewsInput!): TableViewsDataModel!
   updateUserProjectRole(data: UpdateUserProjectRoleInput!): Boolean!
@@ -533,6 +553,23 @@ type PatchRowResultModel {
   previousVersionTableId: String!
   row: RowModel!
   table: TableModel!
+}
+
+input PatchRowsInput {
+  revisionId: String!
+  rows: [PatchRowsRowInput!]!
+  tableId: String!
+}
+
+type PatchRowsResultModel {
+  previousVersionTableId: String!
+  rows: [RowModel!]!
+  table: TableModel!
+}
+
+input PatchRowsRowInput {
+  patches: [PatchRow!]!
+  rowId: String!
 }
 
 type PermissionModel {
@@ -1039,6 +1076,23 @@ type UpdateRowResultModel {
   previousVersionTableId: String!
   row: RowModel!
   table: TableModel!
+}
+
+input UpdateRowsInput {
+  revisionId: String!
+  rows: [UpdateRowsRowInput!]!
+  tableId: String!
+}
+
+type UpdateRowsResultModel {
+  previousVersionTableId: String!
+  rows: [RowModel!]!
+  table: TableModel!
+}
+
+input UpdateRowsRowInput {
+  data: JSON!
+  rowId: String!
 }
 
 input UpdateTableInput {

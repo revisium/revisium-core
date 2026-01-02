@@ -1,14 +1,14 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-import { CommandBus, CommandHandler, EventBus } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
-
 type JsonValue = Prisma.JsonValue;
 import {
-  PatchRowCommand,
-  PatchRowCommandReturnType,
-} from 'src/features/draft/commands/impl/patch-row.command';
-import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
-import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
+  PatchRowsCommand,
+  PatchRowsRowInput,
+} from 'src/features/draft/commands/impl/patch-rows.command';
+import { UpdateRowsCommand } from 'src/features/draft/commands/impl/update-rows.command';
+import { PatchRowsHandlerReturnType } from 'src/features/draft/commands/types/patch-rows.handler.types';
+import { UpdateRowsHandlerReturnType } from 'src/features/draft/commands/types/update-rows.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { RowApiService } from 'src/features/row';
@@ -26,14 +26,16 @@ import {
   JsonBooleanValueStore,
   JsonNumberValueStore,
   JsonObjectValueStore,
+  JsonSchemaStore,
 } from '@revisium/schema-toolkit/model';
 import { JsonArray, JsonObject } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
+import { CommandBus } from '@nestjs/cqrs';
 
-@CommandHandler(PatchRowCommand)
-export class PatchRowHandler extends DraftHandler<
-  PatchRowCommand,
-  PatchRowCommandReturnType
+@CommandHandler(PatchRowsCommand)
+export class PatchRowsHandler extends DraftHandler<
+  PatchRowsCommand,
+  PatchRowsHandlerReturnType
 > {
   constructor(
     protected readonly commandBus: CommandBus,
@@ -47,34 +49,87 @@ export class PatchRowHandler extends DraftHandler<
     super(transactionService, draftContext);
   }
 
-  protected async postActions({ data }: PatchRowCommand) {
-    await this.eventBus.publishAll([
-      new RowUpdatedEvent(data.revisionId, data.tableId, data.rowId),
-    ]);
+  protected async postActions({ data }: PatchRowsCommand) {
+    const events = data.rows.map(
+      (row) => new RowUpdatedEvent(data.revisionId, data.tableId, row.rowId),
+    );
+    await this.eventBus.publishAll(events);
   }
 
   protected async handler({
     data,
-  }: PatchRowCommand): Promise<PatchRowCommandReturnType> {
-    const row = await this.rowApiService.getRow({
-      revisionId: data.revisionId,
-      tableId: data.tableId,
-      rowId: data.rowId,
-    });
-
-    if (!row) {
-      throw new NotFoundException(`Row not found`);
+  }: PatchRowsCommand): Promise<PatchRowsHandlerReturnType> {
+    if (!data.rows.length) {
+      throw new BadRequestException('rows array cannot be empty');
     }
 
-    const patchedData = await this.patchRow(data, row.data);
-    return this.saveRow(data, patchedData);
+    const schemaStore = await this.getSchemaStore(data);
+    const patchedRows = await this.patchAllRows(data, schemaStore);
+
+    const result = await this.commandBus.execute<
+      UpdateRowsCommand,
+      UpdateRowsHandlerReturnType
+    >(
+      new UpdateRowsCommand({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        rows: patchedRows,
+      }),
+    );
+
+    return {
+      tableVersionId: result.tableVersionId,
+      previousTableVersionId: result.previousTableVersionId,
+      patchedRows: result.updatedRows.map((row, index) => ({
+        rowId: data.rows[index].rowId,
+        rowVersionId: row.rowVersionId,
+        previousRowVersionId: row.previousRowVersionId,
+      })),
+    };
   }
 
-  private async patchRow(data: PatchRowCommand['data'], rowData: JsonValue) {
-    const schemaStore = await this.getSchemaStore(data);
-    const rootStore = createJsonValueStore(schemaStore, data.rowId, rowData);
+  private async patchAllRows(
+    data: PatchRowsCommand['data'],
+    schemaStore: JsonSchemaStore,
+  ): Promise<Array<{ rowId: string; data: Prisma.InputJsonValue }>> {
+    const patchedRows = [];
 
-    for (const patch of data.patches) {
+    for (const rowInput of data.rows) {
+      const row = await this.rowApiService.getRow({
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+        rowId: rowInput.rowId,
+      });
+
+      if (!row) {
+        throw new NotFoundException(`Row not found: ${rowInput.rowId}`);
+      }
+
+      const patchedData = this.applyPatches(
+        schemaStore,
+        rowInput.rowId,
+        row.data,
+        rowInput.patches,
+      );
+
+      patchedRows.push({
+        rowId: rowInput.rowId,
+        data: patchedData,
+      });
+    }
+
+    return patchedRows;
+  }
+
+  private applyPatches(
+    schemaStore: JsonSchemaStore,
+    rowId: string,
+    rowData: JsonValue,
+    patches: PatchRowsRowInput['patches'],
+  ): Prisma.InputJsonValue {
+    const rootStore = createJsonValueStore(schemaStore, rowId, rowData);
+
+    for (const patch of patches) {
       let valueStore;
       try {
         valueStore = getJsonValueStoreByPath(rootStore, patch.path);
@@ -91,14 +146,14 @@ export class PatchRowHandler extends DraftHandler<
       if (valueStore instanceof JsonObjectValueStore) {
         const tempStore = createJsonObjectValueStore(
           valueStore.schema,
-          data.rowId,
+          rowId,
           patch.value as JsonObject,
         );
         valueStore.value = tempStore.value;
       } else if (valueStore instanceof JsonArrayValueStore) {
         const tempStore = createJsonArrayValueStore(
           valueStore.schema,
-          data.rowId,
+          rowId,
           patch.value as JsonArray,
         );
         valueStore.value = tempStore.value;
@@ -114,29 +169,12 @@ export class PatchRowHandler extends DraftHandler<
     return rootStore.getPlainValue();
   }
 
-  private async getSchemaStore(data: PatchRowCommand['data']) {
+  private async getSchemaStore(data: PatchRowsCommand['data']) {
     const { schema } = await this.shareTransactionalQueries.getTableSchema(
       data.revisionId,
       data.tableId,
     );
 
     return this.jsonSchemaStore.create(schema);
-  }
-
-  private async saveRow(
-    { revisionId, tableId, rowId }: PatchRowCommand['data'],
-    data: Prisma.InputJsonValue,
-  ) {
-    return this.commandBus.execute<
-      UpdateRowCommand,
-      UpdateRowHandlerReturnType
-    >(
-      new UpdateRowCommand({
-        revisionId,
-        tableId,
-        rowId,
-        data,
-      }),
-    );
   }
 }

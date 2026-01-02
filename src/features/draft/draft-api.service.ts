@@ -10,6 +10,10 @@ import {
   ApiCreateRowCommandData,
 } from 'src/features/draft/commands/impl/api-create-row.command';
 import {
+  ApiCreateRowsCommand,
+  ApiCreateRowsCommandData,
+} from 'src/features/draft/commands/impl/api-create-rows.command';
+import {
   ApiCreateTableCommand,
   ApiCreateTableCommandData,
 } from 'src/features/draft/commands/impl/api-create-table.command';
@@ -18,6 +22,10 @@ import {
   ApiPatchRowCommandData,
   ApiPatchRowCommandReturnType,
 } from 'src/features/draft/commands/impl/api-patch-row.command';
+import {
+  ApiPatchRowsCommand,
+  ApiPatchRowsCommandData,
+} from 'src/features/draft/commands/impl/api-patch-rows.command';
 import {
   ApiRemoveRowCommand,
   ApiRemoveRowCommandData,
@@ -45,6 +53,10 @@ import {
   ApiUpdateRowCommandData,
 } from 'src/features/draft/commands/impl/api-update-row.command';
 import {
+  ApiUpdateRowsCommand,
+  ApiUpdateRowsCommandData,
+} from 'src/features/draft/commands/impl/api-update-rows.command';
+import {
   ApiUpdateTableCommand,
   ApiUpdateTableCommandData,
 } from 'src/features/draft/commands/impl/api-update-table.command';
@@ -59,6 +71,9 @@ import {
   ApplyMigrationsCommand,
 } from 'src/features/draft/commands/impl/migration';
 import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
+import { ApiCreateRowsHandlerReturnType } from 'src/features/draft/commands/types/api-create-rows.handler.types';
+import { ApiPatchRowsHandlerReturnType } from 'src/features/draft/commands/types/api-patch-rows.handler.types';
+import { ApiUpdateRowsHandlerReturnType } from 'src/features/draft/commands/types/api-update-rows.handler.types';
 import { ApiCreateTableHandlerReturnType } from 'src/features/draft/commands/types/api-create-table.handler.types';
 import { ApiRemoveRowHandlerReturnType } from 'src/features/draft/commands/types/api-remove-row.handler.types';
 import { ApiRemoveRowsHandlerReturnType } from 'src/features/draft/commands/types/api-remove-rows.handler.types';
@@ -112,6 +127,13 @@ export class DraftApiService {
     >(new ApiCreateRowCommand(data));
   }
 
+  public apiCreateRows(data: ApiCreateRowsCommandData) {
+    return this.commandBus.execute<
+      ApiCreateRowsCommand,
+      ApiCreateRowsHandlerReturnType
+    >(new ApiCreateRowsCommand(data));
+  }
+
   public apiUpdateRow(data: ApiUpdateRowCommandData) {
     return this.commandBus.execute<
       ApiUpdateRowCommand,
@@ -119,11 +141,25 @@ export class DraftApiService {
     >(new ApiUpdateRowCommand(data));
   }
 
+  public apiUpdateRows(data: ApiUpdateRowsCommandData) {
+    return this.commandBus.execute<
+      ApiUpdateRowsCommand,
+      ApiUpdateRowsHandlerReturnType
+    >(new ApiUpdateRowsCommand(data));
+  }
+
   public apiPatchRow(data: ApiPatchRowCommandData) {
     return this.commandBus.execute<
       ApiPatchRowCommand,
       ApiPatchRowCommandReturnType
     >(new ApiPatchRowCommand(data));
+  }
+
+  public apiPatchRows(data: ApiPatchRowsCommandData) {
+    return this.commandBus.execute<
+      ApiPatchRowsCommand,
+      ApiPatchRowsHandlerReturnType
+    >(new ApiPatchRowsCommand(data));
   }
 
   public apiRenameRow(data: ApiRenameRowCommandData) {
