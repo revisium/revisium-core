@@ -834,7 +834,7 @@ describe('graphql - draft mutations', () => {
             [{ op: 'replace', path: 'ver', value: 1 }],
           ),
         },
-        /Row not found/,
+        /Rows not found/,
       );
     });
   });

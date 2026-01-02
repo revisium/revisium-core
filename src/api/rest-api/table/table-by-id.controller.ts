@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -45,16 +46,22 @@ import {
 } from 'src/api/rest-api/share/utils/transformFromPrismaToTableModel';
 import {
   CreateRowDto,
+  CreateRowsDto,
   GetTableForeignKeysByDto,
   GetTableForeignKeysToDto,
   GetTableRowsDto,
+  PatchRowsDto,
   RemoveRowsDto,
   RenameTableDto,
+  UpdateRowsDto,
   UpdateTableDto,
 } from 'src/api/rest-api/table/dto';
 import {
   CreateRowResponse,
+  CreateRowsResponse,
+  PatchRowsResponse,
   RemoveRowsResponse,
+  UpdateRowsResponse,
 } from 'src/api/rest-api/table/model';
 import {
   TableModel,
@@ -160,6 +167,87 @@ export class TableByIdController {
       table: transformFromPrismaToTableModel(result.table),
       previousVersionTableId: result.previousVersionTableId,
       row: transformFromPrismaToRowModel(result.row),
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.create,
+    subject: PermissionSubject.Row,
+  })
+  @Post('create-rows')
+  @ApiOperation({ operationId: 'createRows' })
+  @ApiBody({ type: CreateRowsDto })
+  @ApiOkResponse({ type: CreateRowsResponse })
+  async createRows(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Body() data: CreateRowsDto,
+  ): Promise<CreateRowsResponse> {
+    const result = await this.draftApi.apiCreateRows({
+      revisionId,
+      tableId,
+      rows: data.rows,
+    });
+
+    return {
+      table: transformFromPrismaToTableModel(result.table),
+      previousVersionTableId: result.previousVersionTableId,
+      rows: result.rows.map(transformFromPrismaToRowModel),
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @Put('update-rows')
+  @ApiOperation({ operationId: 'updateRows' })
+  @ApiBody({ type: UpdateRowsDto })
+  @ApiOkResponse({ type: UpdateRowsResponse })
+  async updateRows(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Body() data: UpdateRowsDto,
+  ): Promise<UpdateRowsResponse> {
+    const result = await this.draftApi.apiUpdateRows({
+      revisionId,
+      tableId,
+      rows: data.rows,
+    });
+
+    return {
+      table: transformFromPrismaToTableModel(result.table),
+      previousVersionTableId: result.previousVersionTableId,
+      rows: result.rows.map(transformFromPrismaToRowModel),
+    };
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.Row,
+  })
+  @Patch('patch-rows')
+  @ApiOperation({ operationId: 'patchRows' })
+  @ApiBody({ type: PatchRowsDto })
+  @ApiOkResponse({ type: PatchRowsResponse })
+  async patchRows(
+    @Param('revisionId') revisionId: string,
+    @Param('tableId') tableId: string,
+    @Body() data: PatchRowsDto,
+  ): Promise<PatchRowsResponse> {
+    const result = await this.draftApi.apiPatchRows({
+      revisionId,
+      tableId,
+      rows: data.rows,
+    });
+
+    return {
+      table: transformFromPrismaToTableModel(result.table),
+      previousVersionTableId: result.previousVersionTableId,
+      rows: result.rows.map(transformFromPrismaToRowModel),
     };
   }
 

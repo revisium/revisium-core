@@ -8,16 +8,19 @@ import {
 import { ApiBaseRowHandler } from 'src/features/draft/commands/handlers/api-base-row.handler';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
+import { ApiCreateRowsCommand } from 'src/features/draft/commands/impl/api-create-rows.command';
 import { CreateRowsCommand } from 'src/features/draft/commands/impl/create-rows.command';
-import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
+import { ApiCreateRowsHandlerReturnType } from 'src/features/draft/commands/types/api-create-rows.handler.types';
 import { CreateRowsHandlerReturnType } from 'src/features/draft/commands/types/create-rows.handler.types';
 import { ShareCommands } from 'src/features/share/share.commands';
+import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-id.query';
+import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
-@CommandHandler(ApiCreateRowCommand)
-export class ApiCreateRowHandler
+@CommandHandler(ApiCreateRowsCommand)
+export class ApiCreateRowsHandler
   extends ApiBaseRowHandler
-  implements ICommandHandler<ApiCreateRowCommand, ApiCreateRowHandlerReturnType>
+  implements
+    ICommandHandler<ApiCreateRowsCommand, ApiCreateRowsHandlerReturnType>
 {
   constructor(
     protected readonly commandBus: CommandBus,
@@ -29,14 +32,15 @@ export class ApiCreateRowHandler
     super(queryBus, shareCommands, rowApi);
   }
 
-  async execute({ data }: ApiCreateRowCommand) {
+  async execute({ data }: ApiCreateRowsCommand) {
     const result: CreateRowsHandlerReturnType =
       await this.transactionService.runSerializable(async () =>
         this.commandBus.execute(
           new CreateRowsCommand({
             revisionId: data.revisionId,
             tableId: data.tableId,
-            rows: [{ rowId: data.rowId, data: data.data }],
+            rows: data.rows,
+            isRestore: data.isRestore,
           }),
         ),
       );
@@ -47,22 +51,43 @@ export class ApiCreateRowHandler
       revisionId: data.revisionId,
     });
 
-    const { table, row } = await this.getTableAndRow({
-      revisionId: data.revisionId,
-      tableVersionId: result.tableVersionId,
-      tableId: data.tableId,
-      rowId: data.rowId,
-      rowVersionId: result.createdRows[0].rowVersionId,
-    });
+    const [table, rows] = await Promise.all([
+      this.queryBus.execute<GetTableByIdQuery, GetTableByIdReturnType>(
+        new GetTableByIdQuery({
+          revisionId: data.revisionId,
+          tableVersionId: result.tableVersionId,
+        }),
+      ),
+      Promise.all(
+        result.createdRows.map((createdRow) =>
+          this.rowApi.getRowById({
+            revisionId: data.revisionId,
+            tableId: data.tableId,
+            rowId: createdRow.rowId,
+            rowVersionId: createdRow.rowVersionId,
+          }),
+        ),
+      ),
+    ]);
 
-    if (!table || !row) {
-      throw new InternalServerErrorException('Invalid ApiCreateRowHandler');
+    if (!table) {
+      throw new InternalServerErrorException('Invalid ApiCreateRowsHandler');
+    }
+
+    const validRows = rows.filter(
+      (row): row is NonNullable<typeof row> => row !== null,
+    );
+
+    if (validRows.length !== result.createdRows.length) {
+      throw new InternalServerErrorException(
+        'Some rows were not found after creation',
+      );
     }
 
     return {
       table,
       previousVersionTableId: result.previousTableVersionId,
-      row,
+      rows: validRows,
     };
   }
 }

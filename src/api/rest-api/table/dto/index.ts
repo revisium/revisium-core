@@ -3,5 +3,8 @@ export * from 'src/api/rest-api/table/dto/get-table-foreign-keys-to.dto';
 export * from 'src/api/rest-api/table/dto/update-table.dto';
 export * from 'src/api/rest-api/table/dto/get-table-rows.dto';
 export * from 'src/api/rest-api/table/dto/create-row.dto';
+export * from 'src/api/rest-api/table/dto/create-rows.dto';
+export * from 'src/api/rest-api/table/dto/update-rows.dto';
+export * from 'src/api/rest-api/table/dto/patch-rows.dto';
 export * from 'src/api/rest-api/table/dto/rename-table.dto';
 export * from 'src/api/rest-api/table/dto/remove-rows.dto';

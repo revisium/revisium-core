@@ -9,7 +9,7 @@ import { testSchema } from 'src/features/draft/commands/handlers/__tests__/utils
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
-import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
+import { UpdateRowsCommand } from 'src/features/draft/commands/impl/update-rows.command';
 
 /**
  * Tests for concurrent update behavior with SERIALIZABLE isolation level.
@@ -80,11 +80,10 @@ describe('Concurrent UpdateRow', () => {
     // Create commands for all rows
     const commands = rowIds.map(
       (rowId, i) =>
-        new UpdateRowCommand({
+        new UpdateRowsCommand({
           revisionId: draftRevisionId,
           tableId,
-          rowId,
-          data: { ver: 1000 + i },
+          rows: [{ rowId, data: { ver: 1000 + i } }],
         }),
     );
 

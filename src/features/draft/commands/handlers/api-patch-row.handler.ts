@@ -1,3 +1,4 @@
+import { InternalServerErrorException } from '@nestjs/common';
 import {
   CommandBus,
   CommandHandler,
@@ -9,10 +10,8 @@ import {
   ApiPatchRowCommand,
   ApiPatchRowCommandReturnType,
 } from 'src/features/draft/commands/impl/api-patch-row.command';
-import {
-  PatchRowCommand,
-  PatchRowCommandReturnType,
-} from 'src/features/draft/commands/impl/patch-row.command';
+import { PatchRowsCommand } from 'src/features/draft/commands/impl/patch-rows.command';
+import { PatchRowsHandlerReturnType } from 'src/features/draft/commands/types/patch-rows.handler.types';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { ShareCommands } from 'src/features/share/share.commands';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -33,37 +32,41 @@ export class ApiPatchRowHandler
   }
 
   async execute({ data }: ApiPatchRowCommand) {
-    const {
-      tableVersionId,
-      previousTableVersionId,
-      rowVersionId,
-      previousRowVersionId,
-    }: PatchRowCommandReturnType =
+    const result: PatchRowsHandlerReturnType =
       await this.transactionService.runSerializable(async () =>
-        this.commandBus.execute(new PatchRowCommand(data)),
+        this.commandBus.execute(
+          new PatchRowsCommand({
+            revisionId: data.revisionId,
+            tableId: data.tableId,
+            rows: [{ rowId: data.rowId, patches: data.patches }],
+          }),
+        ),
       );
 
     await this.tryToNotifyEndpoints({
-      tableVersionId,
-      previousTableVersionId,
+      tableVersionId: result.tableVersionId,
+      previousTableVersionId: result.previousTableVersionId,
       revisionId: data.revisionId,
     });
+
+    const patchedRow = result.patchedRows[0];
+    if (!patchedRow) {
+      throw new InternalServerErrorException('Invalid ApiPatchRowHandler');
+    }
 
     const { table, row } = await this.getTableAndRow({
       revisionId: data.revisionId,
-      tableVersionId,
+      tableVersionId: result.tableVersionId,
       tableId: data.tableId,
       rowId: data.rowId,
-      rowVersionId,
+      rowVersionId: patchedRow.rowVersionId,
     });
 
-    const result: ApiPatchRowCommandReturnType = {
+    return {
       table,
-      previousVersionTableId: previousTableVersionId,
+      previousVersionTableId: result.previousTableVersionId,
       row,
-      previousVersionRowId: previousRowVersionId,
+      previousVersionRowId: patchedRow.previousRowVersionId,
     };
-
-    return result;
   }
 }
