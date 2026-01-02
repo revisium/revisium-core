@@ -150,6 +150,85 @@ describe('restapi - table-by-id', () => {
     }
   });
 
+  describe('POST /revision/:revisionId/tables/:tableId/create-rows', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('owner can create multiple rows', async () => {
+      const result = await request(app.getHttpServer())
+        .post(getCreateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rows: [
+            { rowId: 'row-1', data: { ver: 10 } },
+            { rowId: 'row-2', data: { ver: 20 } },
+          ],
+        })
+        .expect(201)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('table');
+      expect(result).toHaveProperty('rows');
+      expect(result).toHaveProperty('previousVersionTableId');
+      expect(result.rows).toHaveLength(2);
+      expect(result.rows[0].data.ver).toBe(10);
+      expect(result.rows[1].data.ver).toBe(20);
+    });
+
+    it('should accept isRestore flag', async () => {
+      const result = await request(app.getHttpServer())
+        .post(getCreateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rows: [{ rowId: 'restored-row', data: { ver: 5 } }],
+          isRestore: true,
+        })
+        .expect(201)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('table');
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].id).toBe('restored-row');
+    });
+
+    it('another owner cannot create rows (private project)', async () => {
+      return request(app.getHttpServer())
+        .post(getCreateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rows: [{ rowId: 'test-row', data: { ver: 1 } }],
+        })
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    it('cannot create rows without authentication', async () => {
+      return request(app.getHttpServer())
+        .post(getCreateRowsUrl())
+        .send({
+          rows: [{ rowId: 'test-row', data: { ver: 1 } }],
+        })
+        .expect(401);
+    });
+
+    it('should return error for duplicate row id', async () => {
+      return request(app.getHttpServer())
+        .post(getCreateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rows: [{ rowId: preparedData.project.rowId, data: { ver: 3 } }],
+        })
+        .expect(400)
+        .expect(/Rows already exist:/);
+    });
+
+    function getCreateRowsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/create-rows`;
+    }
+  });
+
   describe('POST /revision/:revisionId/tables/:tableId/create-row', () => {
     let preparedData: PrepareDataReturnType;
 
@@ -684,6 +763,117 @@ describe('restapi - table-by-id', () => {
     }
   });
 
+  describe('PUT /revision/:revisionId/tables/:tableId/update-rows', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('owner can update multiple rows', async () => {
+      const result = await request(app.getHttpServer())
+        .put(getUpdateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rows: [{ rowId: preparedData.project.rowId, data: { ver: 100 } }],
+        })
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('table');
+      expect(result).toHaveProperty('rows');
+      expect(result).toHaveProperty('previousVersionTableId');
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].data.ver).toBe(100);
+    });
+
+    it('another owner cannot update rows (private project)', async () => {
+      return request(app.getHttpServer())
+        .put(getUpdateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rows: [{ rowId: preparedData.project.rowId, data: { ver: 100 } }],
+        })
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    it('cannot update rows without authentication', async () => {
+      return request(app.getHttpServer())
+        .put(getUpdateRowsUrl())
+        .send({
+          rows: [{ rowId: preparedData.project.rowId, data: { ver: 100 } }],
+        })
+        .expect(401);
+    });
+
+    function getUpdateRowsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/update-rows`;
+    }
+  });
+
+  describe('PATCH /revision/:revisionId/tables/:tableId/patch-rows', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('owner can patch multiple rows', async () => {
+      const result = await request(app.getHttpServer())
+        .patch(getPatchRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rows: [
+            {
+              rowId: preparedData.project.rowId,
+              patches: [{ op: 'replace', path: 'ver', value: 200 }],
+            },
+          ],
+        })
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('table');
+      expect(result).toHaveProperty('rows');
+      expect(result).toHaveProperty('previousVersionTableId');
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].data.ver).toBe(200);
+    });
+
+    it('another owner cannot patch rows (private project)', async () => {
+      return request(app.getHttpServer())
+        .patch(getPatchRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rows: [
+            {
+              rowId: preparedData.project.rowId,
+              patches: [{ op: 'replace', path: 'ver', value: 200 }],
+            },
+          ],
+        })
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    it('cannot patch rows without authentication', async () => {
+      return request(app.getHttpServer())
+        .patch(getPatchRowsUrl())
+        .send({
+          rows: [
+            {
+              rowId: preparedData.project.rowId,
+              patches: [{ op: 'replace', path: 'ver', value: 200 }],
+            },
+          ],
+        })
+        .expect(401);
+    });
+
+    function getPatchRowsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/patch-rows`;
+    }
+  });
+
   describe('POST /revision/:revisionId/tables/:tableId/rows - orderBy and filtering', () => {
     let preparedData: PrepareDataReturnType;
 
@@ -832,6 +1022,47 @@ describe('restapi - table-by-id', () => {
           rowIds: [preparedData.project.rowId],
         })
         .expect(/You are not allowed to delete on Row/);
+    });
+
+    it('another owner cannot create rows (no create permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .post(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/create-rows`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rows: [{ rowId: 'test-row', data: { ver: 1 } }],
+        })
+        .expect(/You are not allowed to create on Row/);
+    });
+
+    it('another owner cannot update rows (no update permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .put(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/update-rows`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rows: [{ rowId: preparedData.project.rowId, data: { ver: 100 } }],
+        })
+        .expect(/You are not allowed to update on Row/);
+    });
+
+    it('another owner cannot patch rows (no update permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .patch(
+          `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/patch-rows`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send({
+          rows: [
+            {
+              rowId: preparedData.project.rowId,
+              patches: [{ op: 'replace', path: 'ver', value: 200 }],
+            },
+          ],
+        })
+        .expect(/You are not allowed to update on Row/);
     });
   });
 });
