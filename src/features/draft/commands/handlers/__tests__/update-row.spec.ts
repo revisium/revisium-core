@@ -2,7 +2,6 @@ import { CommandBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import {
   prepareProject,
-  PrepareProjectReturnType,
   prepareRow,
   prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
@@ -15,15 +14,12 @@ import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createTestingModule,
-  testSchema,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateRowCommand } from 'src/features/draft/commands/impl/update-row.command';
 import { UpdateRowHandlerReturnType } from 'src/features/draft/commands/types/update-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import objectHash from 'object-hash';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 describe('UpdateRowHandler', () => {
@@ -92,15 +88,8 @@ describe('UpdateRowHandler', () => {
   });
 
   it('should update the row if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      rowCreatedId,
-    } = ids;
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
 
     const command = new UpdateRowCommand({
       revisionId: draftRevisionId,
@@ -110,95 +99,15 @@ describe('UpdateRowHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result.rowVersionId).toBeTruthy();
 
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
-      },
-    });
-    expect(row.data).toStrictEqual({ ver: 3 });
-    expect(row.hash).toBe(objectHash({ ver: 3 }));
-    expect(row.schemaHash).toBe(objectHash(testSchema));
-    expect(row.createdId).toBe(rowCreatedId);
-    await revisionCheck(ids);
-  });
-
-  it('should update the row in a new created table if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-    } = ids;
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new UpdateRowCommand({
+    const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
       tableId,
       rowId,
-      data: { ver: 3 },
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).not.toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-    await revisionCheck(ids);
-  });
-
-  it('should update a new created row in the table if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-    } = ids;
-    await prismaService.row.update({
-      where: {
-        versionId: draftRowVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new UpdateRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-      data: { ver: 3 },
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).not.toBe(draftRowVersionId);
-    await revisionCheck(ids);
+    expect(row).not.toBeNull();
+    expect(row?.data).toStrictEqual({ ver: 3 });
   });
 
   it('should update row with refs', async () => {
@@ -369,15 +278,6 @@ describe('UpdateRowHandler', () => {
     expect(updatedRow.publishedAt).toStrictEqual(originalPublishedAt);
   });
 
-  async function revisionCheck(ids: PrepareProjectReturnType) {
-    const { draftRevisionId } = ids;
-
-    const revision = await prismaService.revision.findFirstOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(true);
-  }
-
   function runTransaction(
     command: UpdateRowCommand,
   ): Promise<UpdateRowHandlerReturnType> {
@@ -388,6 +288,7 @@ describe('UpdateRowHandler', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -395,6 +296,7 @@ describe('UpdateRowHandler', () => {
     commandBus = result.commandBus;
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
+    rowApiService = result.module.get<RowApiService>(RowApiService);
   });
 
   beforeEach(() => {

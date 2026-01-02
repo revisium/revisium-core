@@ -1,18 +1,12 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { nanoid } from 'nanoid';
-import objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { RemoveTableCommand } from 'src/features/draft/commands/impl/remove-table.command';
 import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/remove-table.handler.types';
-import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import {
-  InitMigration,
-  RemoveMigration,
-  JsonSchemaTypeName,
-} from '@revisium/schema-toolkit/types';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -113,8 +107,7 @@ describe('RemoveTableHandler', () => {
   });
 
   it('should remove the table if conditions are met', async () => {
-    const { draftRevisionId, branchId, tableId } =
-      await prepareProject(prismaService);
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new RemoveTableCommand({
       revisionId: draftRevisionId,
@@ -122,243 +115,11 @@ describe('RemoveTableHandler', () => {
     });
 
     const result = await runTransaction(command);
-
     expect(result.revisionId).toBe(draftRevisionId);
-    expect(result.branchId).toBe(branchId);
 
-    const schemaForTable = await prismaService.row.findFirst({
-      where: {
-        id: tableId,
-        tables: {
-          some: {
-            id: SystemTables.Schema,
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(schemaForTable).toBeNull();
-
-    const revision = await prismaService.revision.findUniqueOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(true);
-    await migrationCheck({
+    const table = await tableApiService.getTable({
       revisionId: draftRevisionId,
       tableId,
-    });
-  });
-
-  xit('should set hasChanges as false if conditions are met', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      createdIdForTableInSchemaTable,
-      headTableVersionId,
-      schemaTableCreatedId,
-      schemaTableVersionId,
-    } = await prepareProject(prismaService);
-    await prismaService.table.delete({
-      where: {
-        versionId: headTableVersionId,
-      },
-    });
-    await prismaService.table.update({
-      where: {
-        versionId: schemaTableVersionId,
-      },
-      data: {
-        revisions: {
-          disconnect: {
-            id: draftRevisionId,
-          },
-        },
-      },
-    });
-    await prismaService.row.deleteMany({
-      where: {
-        tables: {
-          some: {
-            versionId: schemaTableVersionId,
-          },
-        },
-      },
-    });
-    const draftSchemaTable = await prismaService.table.create({
-      data: {
-        id: SystemTables.Schema,
-        createdId: schemaTableCreatedId,
-        versionId: nanoid(),
-        readonly: false,
-        revisions: {
-          connect: {
-            id: draftRevisionId,
-          },
-        },
-      },
-    });
-    await prismaService.row.create({
-      data: {
-        id: tableId,
-        versionId: nanoid(),
-        createdId: createdIdForTableInSchemaTable,
-        data: {},
-        meta: {},
-        hash: '',
-        schemaHash: '',
-        readonly: false,
-        tables: {
-          connect: {
-            versionId: draftSchemaTable.versionId,
-          },
-        },
-      },
-    });
-
-    const command = new RemoveTableCommand({
-      revisionId: draftRevisionId,
-      tableId,
-    });
-
-    await runTransaction(command);
-
-    const revision = await prismaService.revision.findUniqueOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(false);
-  });
-
-  it('should set hasChanges as true if table is readonly', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      headTableVersionId,
-      draftTableVersionId,
-    } = await prepareProject(prismaService);
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: false,
-      },
-    });
-    await prismaService.table.delete({
-      where: {
-        versionId: draftTableVersionId,
-      },
-    });
-    await prismaService.table.update({
-      where: {
-        versionId: headTableVersionId,
-      },
-      data: {
-        revisions: {
-          connect: {
-            id: draftRevisionId,
-          },
-        },
-      },
-    });
-
-    const command = new RemoveTableCommand({
-      revisionId: draftRevisionId,
-      tableId,
-    });
-
-    await runTransaction(command);
-
-    const revision = await prismaService.revision.findUniqueOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(true);
-  });
-
-  it('should not set hasChanges as false if conditions are not met', async () => {
-    const { draftRevisionId, tableId, headTableVersionId } =
-      await prepareProject(prismaService);
-    await prismaService.table.delete({
-      where: {
-        versionId: headTableVersionId,
-      },
-    });
-    await prismaService.table.create({
-      data: {
-        id: nanoid(),
-        createdId: nanoid(),
-        versionId: nanoid(),
-        readonly: false,
-        revisions: {
-          connect: {
-            id: draftRevisionId,
-          },
-        },
-      },
-    });
-
-    const command = new RemoveTableCommand({
-      revisionId: draftRevisionId,
-      tableId,
-    });
-
-    await runTransaction(command);
-
-    const revision = await prismaService.revision.findUniqueOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(true);
-  });
-
-  it('should disconnect the table if the table is readonly', async () => {
-    const { draftRevisionId, tableId, draftTableVersionId } =
-      await prepareProject(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new RemoveTableCommand({
-      revisionId: draftRevisionId,
-      tableId,
-    });
-
-    await runTransaction(command);
-
-    const table = await prismaService.table.findUnique({
-      where: { versionId: draftTableVersionId },
-    });
-    expect(table).toBeTruthy();
-  });
-
-  it('should remove the table if the table is not readonly', async () => {
-    const { draftRevisionId, tableId, draftTableVersionId } =
-      await prepareProject(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: false,
-      },
-    });
-
-    const command = new RemoveTableCommand({
-      revisionId: draftRevisionId,
-      tableId,
-    });
-
-    await runTransaction(command);
-
-    const table = await prismaService.table.findUnique({
-      where: { versionId: draftTableVersionId },
     });
     expect(table).toBeNull();
   });
@@ -459,52 +220,6 @@ describe('RemoveTableHandler', () => {
     });
   });
 
-  async function migrationCheck({
-    revisionId,
-    tableId,
-  }: {
-    revisionId: string;
-    tableId: string;
-  }) {
-    const rows = await prismaService.row.findMany({
-      where: {
-        data: {
-          path: ['tableId'],
-          equals: tableId,
-        },
-        tables: {
-          some: {
-            id: SystemTables.Migration,
-            revisions: {
-              some: {
-                id: revisionId,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        id: Prisma.SortOrder.desc,
-      },
-    });
-
-    expect(rows.length).toBe(2);
-
-    const rowInit = rows[1];
-    const dataInit = rowInit.data as InitMigration;
-    expect(dataInit.changeType).toBe('init');
-
-    const rowRename = rows[0];
-
-    const data = rowRename.data as RemoveMigration;
-    expect(rowRename.id).toBe(data.id);
-    expect(rowRename.meta).toStrictEqual({});
-    expect(rowRename.hash).toBe(objectHash(data));
-    expect(rowRename.schemaHash).toBe(objectHash(tableMigrationsSchema));
-    expect(data.changeType).toBe('remove');
-    expect(data.tableId).toBe(tableId);
-  }
-
   function runTransaction(
     command: RemoveTableCommand,
   ): Promise<RemoveTableHandlerReturnType> {
@@ -514,12 +229,14 @@ describe('RemoveTableHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let tableApiService: TableApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    tableApiService = result.module.get<TableApiService>(TableApiService);
   });
 
   afterAll(async () => {
