@@ -111,6 +111,7 @@ type CreateRowResultModel {
 }
 
 input CreateRowsInput {
+  isRestore: Boolean
   revisionId: String!
   rows: [CreateRowsRowInput!]!
   tableId: String!

@@ -277,6 +277,9 @@
       },
       "CreateRowsDto": {
         "properties": {
+          "isRestore": {
+            "type": "boolean"
+          },
           "rows": {
             "items": {
               "$ref": "#/components/schemas/CreateRowsRowDto"
