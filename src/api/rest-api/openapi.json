@@ -5210,7 +5210,7 @@
       }
     },
     "/api/revision/{revisionId}/tables/{tableId}/update-rows": {
-      "patch": {
+      "put": {
         "operationId": "updateRows",
         "parameters": [
           {

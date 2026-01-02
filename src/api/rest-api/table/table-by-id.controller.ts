@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
   UseGuards,
   UseInterceptors,
@@ -201,7 +202,7 @@ export class TableByIdController {
     action: PermissionAction.update,
     subject: PermissionSubject.Row,
   })
-  @Patch('update-rows')
+  @Put('update-rows')
   @ApiOperation({ operationId: 'updateRows' })
   @ApiBody({ type: UpdateRowsDto })
   @ApiOkResponse({ type: UpdateRowsResponse })
