@@ -104,7 +104,7 @@ describe('PatchRowsHandler', () => {
       ],
     });
 
-    await expect(runTransaction(command)).rejects.toThrow('Row not found');
+    await expect(runTransaction(command)).rejects.toThrow('Rows not found');
   });
 
   it('should patch multiple rows if conditions are met', async () => {

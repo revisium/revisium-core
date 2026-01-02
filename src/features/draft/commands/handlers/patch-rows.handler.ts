@@ -91,33 +91,34 @@ export class PatchRowsHandler extends DraftHandler<
     data: PatchRowsCommand['data'],
     schemaStore: JsonSchemaStore,
   ): Promise<Array<{ rowId: string; data: Prisma.InputJsonValue }>> {
-    const patchedRows = [];
+    const rowIds = data.rows.map((r) => r.rowId);
 
-    for (const rowInput of data.rows) {
-      const row = await this.rowApiService.getRow({
-        revisionId: data.revisionId,
-        tableId: data.tableId,
-        rowId: rowInput.rowId,
-      });
+    const result = await this.rowApiService.getRows({
+      revisionId: data.revisionId,
+      tableId: data.tableId,
+      first: rowIds.length,
+      where: { id: { in: rowIds } },
+    });
 
-      if (!row) {
-        throw new NotFoundException(`Row not found: ${rowInput.rowId}`);
-      }
+    const rowMap = new Map(
+      result.edges.map((edge) => [edge.node.id, edge.node]),
+    );
 
+    const missingRows = rowIds.filter((id) => !rowMap.has(id));
+    if (missingRows.length > 0) {
+      throw new NotFoundException(`Rows not found: ${missingRows.join(', ')}`);
+    }
+
+    return data.rows.map((rowInput) => {
+      const row = rowMap.get(rowInput.rowId)!;
       const patchedData = this.applyPatches(
         schemaStore,
         rowInput.rowId,
         row.data,
         rowInput.patches,
       );
-
-      patchedRows.push({
-        rowId: rowInput.rowId,
-        data: patchedData,
-      });
-    }
-
-    return patchedRows;
+      return { rowId: rowInput.rowId, data: patchedData };
+    });
   }
 
   private applyPatches(
