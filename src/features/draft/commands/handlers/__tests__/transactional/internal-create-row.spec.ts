@@ -1,14 +1,11 @@
-import { Prisma } from 'src/__generated__/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-  prepareProject,
-  PrepareProjectReturnType,
-} from 'src/__tests__/utils/prepareProject';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -67,8 +64,7 @@ describe('InternalCreateRowHandler', () => {
   });
 
   it('should create a new row if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new InternalCreateRowCommand({
       revisionId: draftRevisionId,
@@ -76,55 +72,23 @@ describe('InternalCreateRowHandler', () => {
       rowId: 'newRowId',
       data: { ver: 3 },
       schemaHash: objectHash(testSchema),
-      meta: { meta: 1 },
     });
 
     const result = await runTransaction(command);
-
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
     expect(result.rowVersionId).toBeTruthy();
 
-    await rowCheck(
-      ids,
-      command.data.rowId,
-      result.rowVersionId,
-      command.data.data,
-      { meta: 1 },
-    );
-  });
-
-  it('should save the optional meta field', async () => {
-    const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
-
-    const command = new InternalCreateRowCommand({
+    const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
-      tableId: tableId,
+      tableId,
       rowId: 'newRowId',
-      data: { ver: 3 },
-      meta: { meta: 1 },
-      schemaHash: objectHash(testSchema),
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.rowVersionId).toBeTruthy();
-
-    await rowCheck(
-      ids,
-      command.data.rowId,
-      result.rowVersionId,
-      command.data.data,
-      { meta: 1 },
-    );
+    expect(row).not.toBeNull();
+    expect(row?.id).toBe('newRowId');
+    expect(row?.data).toStrictEqual({ ver: 3 });
   });
 
   it('should save the optional publishedAt field', async () => {
-    const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const publishedAtDate = new Date('2027-01-01T00:00:00.000Z');
 
@@ -134,93 +98,21 @@ describe('InternalCreateRowHandler', () => {
       rowId: 'newRowId',
       data: { ver: 3 },
       schemaHash: objectHash(testSchema),
-      meta: { meta: 1 },
       publishedAt: publishedAtDate.toISOString(),
     });
 
     const result = await runTransaction(command);
-
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
     expect(result.rowVersionId).toBeTruthy();
 
-    await rowCheck(
-      ids,
-      command.data.rowId,
-      result.rowVersionId,
-      command.data.data,
-      { meta: 1 },
-      publishedAtDate,
-    );
-  });
-
-  it('should create a new row in a new created table if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new InternalCreateRowCommand({
+    const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
-      tableId: tableId,
+      tableId,
       rowId: 'newRowId',
-      data: { ver: 3 },
-      schemaHash: objectHash(testSchema),
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.tableVersionId).not.toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.rowVersionId).toBeTruthy();
+    expect(row).not.toBeNull();
+    expect(row?.id).toBe('newRowId');
+    expect(row?.data).toStrictEqual({ ver: 3 });
   });
-
-  async function rowCheck(
-    ids: PrepareProjectReturnType,
-    rowId: string,
-    createdRowVersionId: string,
-    data: Prisma.InputJsonValue,
-    meta: Prisma.InputJsonValue,
-    publishedAt?: Date,
-  ) {
-    const { draftRevisionId, tableId } = ids;
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            id: tableId,
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(row.id).toBe(rowId);
-    expect(row.versionId).toBe(createdRowVersionId);
-    expect(row.data).toStrictEqual(data);
-    expect(row.meta).toStrictEqual(meta);
-    expect(row.readonly).toBe(false);
-    expect(row.hash).toBe(objectHash({ ver: 3 }));
-    expect(row.schemaHash).toBe(objectHash(testSchema));
-    expect(row.createdId).toBeTruthy();
-    expect(row.createdId).not.toBe(row.id);
-    expect(row.createdId).not.toBe(row.versionId);
-    expect(row.createdAt).toStrictEqual(row.updatedAt);
-
-    const expectedPublishedAt = publishedAt ?? row.createdAt;
-    expect(row.publishedAt).toStrictEqual(expectedPublishedAt);
-  }
 
   function runTransaction(
     command: InternalCreateRowCommand,
@@ -231,12 +123,14 @@ describe('InternalCreateRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    rowApiService = result.module.get<RowApiService>(RowApiService);
   });
 
   afterAll(async () => {

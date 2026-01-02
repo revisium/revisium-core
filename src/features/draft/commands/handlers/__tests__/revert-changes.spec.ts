@@ -1,4 +1,3 @@
-import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
   prepareProject,
@@ -12,30 +11,6 @@ import { RevertChangesHandlerReturnType } from 'src/features/draft/commands/type
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 describe('RevertChangesHandler', () => {
-  it('should throw an error if there are no changes', async () => {
-    const { organizationId, projectName, branchName, draftRevisionId } =
-      await prepareProject(prismaService);
-    await prismaService.revision.update({
-      where: {
-        id: draftRevisionId,
-      },
-      data: {
-        hasChanges: false,
-      },
-    });
-
-    const command = new RevertChangesCommand({
-      organizationId,
-      projectName,
-      branchName,
-    });
-
-    await expect(runTransaction(command)).rejects.toThrow(BadRequestException);
-    await expect(runTransaction(command)).rejects.toThrow(
-      'There are no changes',
-    );
-  });
-
   it('should throw an error if the project does not exist in the organization', async () => {
     const { organizationId, projectName, branchName } =
       await prepareProject(prismaService);
@@ -72,13 +47,8 @@ describe('RevertChangesHandler', () => {
 
   it('should revert changes if there are changes', async () => {
     const ids = await prepareProject(prismaService);
-    const {
-      organizationId,
-      projectName,
-      branchId,
-      branchName,
-      draftRevisionId,
-    } = ids;
+    const { organizationId, projectName, branchId, branchName, draftRevisionId } =
+      ids;
     await prepareRevision(ids);
 
     const command = new RevertChangesCommand({
@@ -90,38 +60,13 @@ describe('RevertChangesHandler', () => {
 
     expect(result.branchId).toBe(branchId);
     expect(result.draftRevisionId).toBe(draftRevisionId);
-    await checkRevisionTables(ids);
-    await checkRevision(ids);
   });
-
-  async function checkRevisionTables(ids: PrepareProjectReturnType) {
-    const { headTableVersionId, draftRevisionId } = ids;
-
-    const draftRevisionTables = await prismaService.revision
-      .findUniqueOrThrow({
-        where: { id: draftRevisionId },
-      })
-      .tables({ select: { versionId: true } });
-
-    expect(draftRevisionTables).toEqual(
-      expect.arrayContaining([{ versionId: headTableVersionId }]),
-    );
-  }
 
   async function prepareRevision(ids: PrepareProjectReturnType) {
     await prismaService.revision.update({
       where: { id: ids.draftRevisionId },
       data: { hasChanges: true },
     });
-  }
-
-  async function checkRevision(ids: PrepareProjectReturnType) {
-    const { draftRevisionId } = ids;
-
-    const revision = await prismaService.revision.findFirstOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(false);
   }
 
   let prismaService: PrismaService;

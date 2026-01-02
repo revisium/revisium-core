@@ -18,6 +18,7 @@ import {
   UploadFileCommandReturnType,
 } from 'src/features/draft/commands/impl/update-file.command';
 import { FileStatus } from 'src/features/plugin/file/consts';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -110,23 +111,26 @@ describe('UploadFileHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result.rowVersionId).toBeTruthy();
 
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.rowVersionId,
-      },
+    const row = await rowApiService.getRow({
+      revisionId: draftRevisionId,
+      tableId: table.tableId,
+      rowId: rowDraft.id,
     });
 
-    expect((row.data as typeof data).file).toStrictEqual({
+    expect(row).not.toBeNull();
+    const fileHash = hash(command.data.file.buffer);
+    expect((row?.data as typeof data).file).toStrictEqual({
       extension: 'png',
       fileId: data.file.fileId,
       fileName: 'logo.png',
-      hash: hash(command.data.file.buffer),
+      hash: fileHash,
       height: 420,
       mimeType: 'image/png',
       size: 10037,
       status: 'uploaded',
-      url: '',
+      url: `/${fileHash}`,
       width: 420,
     });
   });
@@ -140,12 +144,14 @@ describe('UploadFileHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    rowApiService = result.module.get<RowApiService>(RowApiService);
   });
 
   afterAll(async () => {

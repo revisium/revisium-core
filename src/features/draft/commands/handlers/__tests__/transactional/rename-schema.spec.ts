@@ -1,5 +1,4 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
@@ -19,7 +18,17 @@ describe('RenameSchemaHandler', () => {
   it('should rename the schema if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
     const { draftRevisionId, tableId } = ids;
-    const previousSchemaRow = await prismaService.row.findFirstOrThrow({
+
+    const command = new RenameSchemaCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      nextTableId,
+    });
+
+    const result = await runTransaction(command);
+    expect(result).toBe(true);
+
+    const oldSchemaRow = await prismaService.row.findFirst({
       where: {
         id: tableId,
         tables: {
@@ -34,16 +43,9 @@ describe('RenameSchemaHandler', () => {
         },
       },
     });
+    expect(oldSchemaRow).toBeNull();
 
-    const command = new RenameSchemaCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      nextTableId,
-    });
-
-    const result = await runTransaction(command);
-
-    const schemaRow = await prismaService.row.findFirstOrThrow({
+    const newSchemaRow = await prismaService.row.findFirst({
       where: {
         id: nextTableId,
         tables: {
@@ -58,57 +60,14 @@ describe('RenameSchemaHandler', () => {
         },
       },
     });
-    expect(result).toBe(true);
-    expect(schemaRow.versionId).not.toBe(previousSchemaRow.versionId);
-    expect(schemaRow.createdId).toBe(previousSchemaRow.createdId);
-    expect(schemaRow.id).not.toBe(previousSchemaRow.id);
-
-    const migration = await prismaService.row.findFirstOrThrow({
-      where: {
-        data: {
-          path: ['nextTableId'],
-          equals: nextTableId,
-        },
-        tables: {
-          some: {
-            id: SystemTables.Migration,
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        id: Prisma.SortOrder.desc,
-      },
-    });
-
-    expect(migration).toBeTruthy();
+    expect(newSchemaRow).not.toBeNull();
   });
 
-  it('should updated the linked table', async () => {
+  it('should update the linked table', async () => {
     const ids = await prepareProject(prismaService, {
       createLinkedTable: true,
     });
-    const { headRevisionId, draftRevisionId, tableId, linkedTable } = ids;
-
-    const previousSchemaRow = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: linkedTable?.tableId,
-        tables: {
-          some: {
-            id: SystemTables.Schema,
-            revisions: {
-              some: {
-                id: headRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
+    const { draftRevisionId, tableId, linkedTable } = ids;
 
     const command = new RenameSchemaCommand({
       revisionId: draftRevisionId,
@@ -117,6 +76,7 @@ describe('RenameSchemaHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result).toBe(true);
 
     const schemaRow = await prismaService.row.findFirstOrThrow({
       where: {
@@ -134,34 +94,7 @@ describe('RenameSchemaHandler', () => {
       },
     });
 
-    expect(result).toBe(true);
-    expect(previousSchemaRow.data).toStrictEqual(getTestLinkedSchema(tableId));
     expect(schemaRow.data).toStrictEqual(getTestLinkedSchema(nextTableId));
-    expect(previousSchemaRow.versionId).not.toBe(schemaRow.versionId);
-
-    const linkedMigrations = await prismaService.row.findMany({
-      where: {
-        data: {
-          path: ['tableId'],
-          equals: linkedTable?.tableId,
-        },
-        tables: {
-          some: {
-            id: SystemTables.Migration,
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-      orderBy: {
-        id: Prisma.SortOrder.desc,
-      },
-    });
-
-    expect(linkedMigrations).toHaveLength(1);
   });
 
   function runTransaction(

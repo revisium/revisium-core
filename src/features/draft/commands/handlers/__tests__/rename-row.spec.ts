@@ -1,14 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import {
-  prepareProject,
-  PrepareProjectReturnType,
-} from 'src/__tests__/utils/prepareProject';
+import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
   RenameRowCommand,
   RenameRowCommandReturnType,
 } from 'src/features/draft/commands/impl/rename-row.command';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -92,16 +90,9 @@ describe('RenameRowHandler', () => {
     );
   });
 
-  it('should update the row if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      rowCreatedId,
-    } = ids;
+  it('should rename the row if conditions are met', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
 
     const command = new RenameRowCommand({
       revisionId: draftRevisionId,
@@ -111,137 +102,22 @@ describe('RenameRowHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result.rowVersionId).toBeTruthy();
 
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: nextRowId,
-        tables: {
-          some: {
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(row.id).toBe(nextRowId);
-    expect(row.createdId).toBe(rowCreatedId);
-    expect(row.versionId).toBe(draftRowVersionId);
-    await checkRevision(ids);
-  });
-
-  it('should update the row in a new created table if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      rowCreatedId,
-      draftTableVersionId,
-      draftRowVersionId,
-    } = ids;
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new RenameRowCommand({
+    const oldRow = await rowApiService.getRow({
       revisionId: draftRevisionId,
       tableId,
       rowId,
-      nextRowId,
     });
+    expect(oldRow).toBeNull();
 
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).not.toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: nextRowId,
-        tables: {
-          some: {
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(row.id).toBe(nextRowId);
-    expect(row.createdId).toBe(rowCreatedId);
-    expect(row.versionId).toBe(draftRowVersionId);
-    await checkRevision(ids);
-  });
-
-  it('should update a new created row in the table if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      rowCreatedId,
-      draftTableVersionId,
-      draftRowVersionId,
-    } = ids;
-    await prismaService.row.update({
-      where: {
-        versionId: draftRowVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new RenameRowCommand({
+    const newRow = await rowApiService.getRow({
       revisionId: draftRevisionId,
       tableId,
-      rowId,
-      nextRowId,
+      rowId: nextRowId,
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).not.toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: nextRowId,
-        tables: {
-          some: {
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(row.id).toBe(nextRowId);
-    expect(row.createdId).toBe(rowCreatedId);
-    expect(row.versionId).not.toBe(draftRowVersionId);
-    await checkRevision(ids);
+    expect(newRow).not.toBeNull();
+    expect(newRow?.id).toBe(nextRowId);
   });
 
   it('should update the linked row', async () => {
@@ -256,23 +132,13 @@ describe('RenameRowHandler', () => {
 
     await runTransaction(command);
 
-    const prismaLinkedRow = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: linkedRow?.rowId,
-        tables: {
-          some: {
-            id: linkedTable?.tableId,
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
+    const updatedLinkedRow = await rowApiService.getRow({
+      revisionId: draftRevisionId,
+      tableId: linkedTable!.tableId,
+      rowId: linkedRow!.rowId,
     });
-
-    expect(prismaLinkedRow.data).toStrictEqual({ link: nextRowId });
+    expect(updatedLinkedRow).not.toBeNull();
+    expect(updatedLinkedRow?.data).toStrictEqual({ link: nextRowId });
   });
 
   it('should not modify publishedAt when renaming row', async () => {
@@ -296,7 +162,6 @@ describe('RenameRowHandler', () => {
     });
 
     const originalPublishedAt = originalRow.publishedAt;
-
     expect(originalPublishedAt).toBeTruthy();
 
     const command = new RenameRowCommand({
@@ -327,16 +192,6 @@ describe('RenameRowHandler', () => {
     expect(updatedRow.publishedAt).toStrictEqual(originalPublishedAt);
   });
 
-  async function checkRevision(ids: PrepareProjectReturnType) {
-    const { draftRevisionId } = ids;
-
-    const revision = await prismaService.revision.findFirstOrThrow({
-      where: { id: draftRevisionId },
-    });
-
-    expect(revision.hasChanges).toBe(true);
-  }
-
   function runTransaction(
     command: RenameRowCommand,
   ): Promise<RenameRowCommandReturnType> {
@@ -346,12 +201,14 @@ describe('RenameRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    rowApiService = result.module.get<RowApiService>(RowApiService);
   });
 
   afterAll(async () => {

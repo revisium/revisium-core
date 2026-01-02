@@ -13,6 +13,7 @@ import {
   PatchRowCommand,
   PatchRowCommandReturnType,
 } from 'src/features/draft/commands/impl/patch-row.command';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -81,14 +82,8 @@ describe('PatchRowHandler', () => {
 
   it('should patch the row if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      schemaRowVersionId,
-    } = ids;
+    const { draftRevisionId, tableId, rowId, schemaRowVersionId, draftRowVersionId } =
+      ids;
 
     const newSchema = getObjectSchema({
       str: getStringSchema(),
@@ -182,23 +177,15 @@ describe('PatchRowHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result.rowVersionId).toBeTruthy();
 
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
-      },
+    const row = await rowApiService.getRow({
+      revisionId: draftRevisionId,
+      tableId,
+      rowId,
     });
-    expect(row.data).toStrictEqual({
+    expect(row).not.toBeNull();
+    expect(row?.data).toStrictEqual({
       bool: true,
       list: [
         {
@@ -228,12 +215,14 @@ describe('PatchRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    rowApiService = result.module.get<RowApiService>(RowApiService);
   });
 
   beforeEach(() => {

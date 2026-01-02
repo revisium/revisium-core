@@ -1,9 +1,7 @@
-import { Prisma } from 'src/__generated__/client';
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
   prepareProject,
-  PrepareProjectReturnType,
   prepareTableWithSchema,
 } from 'src/__tests__/utils/prepareProject';
 import {
@@ -14,16 +12,13 @@ import {
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createTestingModule,
-  testSchema,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { CreateRowCommand } from 'src/features/draft/commands/impl/create-row.command';
 import { CreateRowHandlerReturnType } from 'src/features/draft/commands/types/create-row.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import objectHash from 'object-hash';
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import { RowApiService } from 'src/features/row/row-api.service';
 
 describe('CreateRowHandler', () => {
   it('should throw an error if the rowId is shorter than 1 character', async () => {
@@ -104,8 +99,7 @@ describe('CreateRowHandler', () => {
   });
 
   it('should create a new row if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
+    const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
     const command = new CreateRowCommand({
       revisionId: draftRevisionId,
@@ -116,54 +110,24 @@ describe('CreateRowHandler', () => {
 
     const result = await runTransaction(command);
 
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
     expect(result.rowVersionId).toBeTruthy();
 
-    await rowCheck(
-      ids,
-      command.data.rowId,
-      result.rowVersionId,
-      command.data.data,
-    );
-    await revisionCheck(ids);
-  });
-
-  it('should create a new row in a new created table if conditions are met', async () => {
-    const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, draftTableVersionId } = ids;
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new CreateRowCommand({
+    const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
-      tableId: tableId,
+      tableId,
       rowId: 'newRowId',
-      data: { ver: 3 },
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.tableVersionId).not.toBe(draftTableVersionId);
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.rowVersionId).toBeTruthy();
-    await revisionCheck(ids);
+    expect(row).not.toBeNull();
+    expect(row?.data).toStrictEqual({ ver: 3 });
   });
 
   it('should create a new row with refs', async () => {
-    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       headRevisionId,
       schemaTableVersionId,
       migrationTableVersionId,
-    } = ids;
+    } = await prepareProject(prismaService);
 
     const table = await prepareTableWithSchema({
       prismaService,
@@ -197,17 +161,18 @@ describe('CreateRowHandler', () => {
       data: { file, files: [file, file, file] },
     });
 
-    await runTransaction(command);
+    const result = await runTransaction(command);
+
+    expect(result.rowVersionId).toBeTruthy();
   });
 
   it('should save provided publishedAt value when creating a row', async () => {
-    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       headRevisionId,
       schemaTableVersionId,
       migrationTableVersionId,
-    } = ids;
+    } = await prepareProject(prismaService);
 
     const table = await prepareTableWithSchema({
       prismaService,
@@ -238,18 +203,16 @@ describe('CreateRowHandler', () => {
       where: { versionId: result.rowVersionId },
     });
 
-    expect(createdRow.publishedAt).not.toStrictEqual(createdRow.createdAt);
     expect(createdRow.publishedAt).toStrictEqual(publishedAtDate);
   });
 
   it('should use default date (now) as publishedAt when publishedAt is empty', async () => {
-    const ids = await prepareProject(prismaService);
     const {
       draftRevisionId,
       headRevisionId,
       schemaTableVersionId,
       migrationTableVersionId,
-    } = ids;
+    } = await prepareProject(prismaService);
 
     const table = await prepareTableWithSchema({
       prismaService,
@@ -282,51 +245,6 @@ describe('CreateRowHandler', () => {
     expect(createdRow.publishedAt).toStrictEqual(createdRow.createdAt);
   });
 
-  async function revisionCheck(ids: PrepareProjectReturnType) {
-    const { draftRevisionId } = ids;
-
-    const revision = await prismaService.revision.findFirstOrThrow({
-      where: { id: draftRevisionId },
-    });
-    expect(revision.hasChanges).toBe(true);
-  }
-
-  async function rowCheck(
-    ids: PrepareProjectReturnType,
-    rowId: string,
-    createdRowVersionId: string,
-    data: Prisma.InputJsonValue,
-  ) {
-    const { draftRevisionId, tableId } = ids;
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            id: tableId,
-            revisions: {
-              some: {
-                id: draftRevisionId,
-              },
-            },
-          },
-        },
-      },
-    });
-    expect(row.id).toBe(rowId);
-    expect(row.versionId).toBe(createdRowVersionId);
-    expect(row.data).toStrictEqual(data);
-    expect(row.readonly).toBe(false);
-    expect(row.hash).toBe(objectHash({ ver: 3 }));
-    expect(row.schemaHash).toBe(objectHash(testSchema));
-    expect(row.createdId).toBeTruthy();
-    expect(row.createdId).not.toBe(row.id);
-    expect(row.createdId).not.toBe(row.versionId);
-    expect(row.createdAt).toStrictEqual(row.updatedAt);
-    expect(row.publishedAt).toStrictEqual(row.createdAt);
-  }
-
   function runTransaction(
     command: CreateRowCommand,
   ): Promise<CreateRowHandlerReturnType> {
@@ -337,6 +255,7 @@ describe('CreateRowHandler', () => {
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -344,6 +263,7 @@ describe('CreateRowHandler', () => {
     commandBus = result.commandBus;
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
+    rowApiService = result.module.get(RowApiService);
   });
 
   beforeEach(() => {

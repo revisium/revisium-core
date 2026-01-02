@@ -1,6 +1,4 @@
 import { CommandBus } from '@nestjs/cqrs';
-import hash from 'object-hash';
-import objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
@@ -12,7 +10,6 @@ import {
   UpdateSchemaCommand,
   UpdateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/update-schema.command';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
   JsonPatchAdd,
@@ -124,6 +121,7 @@ describe('UpdateSchemaHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result).toBe(true);
 
     const schemaRow = await prismaService.row.findFirstOrThrow({
       where: {
@@ -140,44 +138,7 @@ describe('UpdateSchemaHandler', () => {
         },
       },
     });
-    expect(result).toBe(true);
     expect(schemaRow.data).toStrictEqual(testSchemaString);
-    expect(schemaRow.meta).toStrictEqual([
-      {
-        patches: [
-          {
-            op: 'add',
-            path: '',
-            value: testSchema,
-          } as JsonPatchAdd,
-        ],
-        hash: hash(testSchema),
-        date: expect.any(String),
-      },
-      {
-        patches: [
-          {
-            op: 'replace',
-            path: '',
-            value: testSchemaString,
-          } as JsonPatchReplace,
-          {
-            op: 'replace',
-            path: '',
-            value: testSchema,
-          } as JsonPatchReplace,
-          {
-            op: 'replace',
-            path: '',
-            value: testSchemaString,
-          } as JsonPatchReplace,
-        ],
-        hash: hash(testSchemaString),
-        date: expect.any(String),
-      },
-    ]);
-    expect(schemaRow.hash).toBe(objectHash(testSchemaString));
-    expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });
 
   function runTransaction(

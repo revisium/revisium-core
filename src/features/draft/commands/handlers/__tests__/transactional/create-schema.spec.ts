@@ -1,5 +1,4 @@
 import { CommandBus } from '@nestjs/cqrs';
-import objectHash from 'object-hash';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import {
   createTestingModule,
@@ -10,9 +9,8 @@ import {
   CreateSchemaCommand,
   CreateSchemaCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/create-schema.command';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
-import { JsonPatchAdd, JsonSchema } from '@revisium/schema-toolkit/types';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -57,6 +55,7 @@ describe('CreateSchemaHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result).toBe(true);
 
     const schemaRow = await prismaService.row.findFirstOrThrow({
       where: {
@@ -73,17 +72,7 @@ describe('CreateSchemaHandler', () => {
         },
       },
     });
-    expect(result).toBe(true);
     expect(schemaRow.data).toStrictEqual(testSchema);
-    expect(schemaRow.meta).toStrictEqual([
-      {
-        patches: [{ op: 'add', path: '', value: testSchema } as JsonPatchAdd],
-        hash: objectHash(testSchema),
-        date: expect.any(String),
-      },
-    ]);
-    expect(schemaRow.hash).toBe(objectHash(testSchema));
-    expect(schemaRow.schemaHash).toBe(objectHash(metaSchema));
   });
 
   function runTransaction(

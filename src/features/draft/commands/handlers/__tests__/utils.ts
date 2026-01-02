@@ -25,6 +25,7 @@ import { RevisionModule } from 'src/features/revision';
 import { ViewsModule } from 'src/features/views/views.module';
 import { REVISION_QUERIES_HANDLERS } from 'src/features/revision/queries/commands';
 import { InternalRowApiService } from 'src/features/row/internal-row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
 import { GetRowHandler } from 'src/features/row/queries/handlers/get-row.handler';
 import { GetRowsHandler } from 'src/features/row/queries/handlers/get-rows.handler';
 import { ResolveRowForeignKeysByHandler } from 'src/features/row/queries/handlers/resolve-row-foreign-keys-by.handler';
@@ -47,6 +48,8 @@ import {
   JsonSchemaTypeName,
 } from '@revisium/schema-toolkit/types';
 import { GetTableByIdHandler } from 'src/features/table/queries/handlers/get-table-by-id.handler';
+import { GetTableHandler } from 'src/features/table/queries/handlers/get-table.handler';
+import { ResolveTableSchemaHandler } from 'src/features/table/queries/handlers/resolve-table-schema.handler';
 import { CacheService, RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -136,6 +139,7 @@ export const createTestingModule = async () => {
       DraftTransactionalCommands,
       DraftApiService,
       RowApiService,
+      TableApiService,
       InternalRowApiService,
       DraftContextService,
       MigrationContextService,
@@ -150,6 +154,8 @@ export const createTestingModule = async () => {
       GetRevisionHandler,
       GetBranchByIdHandler,
       GetTableByIdHandler,
+      GetTableHandler,
+      ResolveTableSchemaHandler,
       GetRowByIdHandler,
       GetRowsHandler,
       GetRowHandler,

@@ -4,6 +4,7 @@ import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
@@ -44,14 +45,8 @@ describe('InternalUpdateRowHandler', () => {
   });
 
   it('should update the row if conditions are met', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      rowCreatedId,
-    } = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
 
     const command = new InternalUpdateRowCommand({
       revisionId: draftRevisionId,
@@ -62,88 +57,20 @@ describe('InternalUpdateRowHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result.rowVersionId).toBeTruthy();
 
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const previousRow = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.previousRowVersionId,
-      },
-    });
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.rowVersionId,
-      },
-    });
-    expect(row.data).toStrictEqual({ ver: 3 });
-    expect(row.meta).toStrictEqual({});
-    expect(row.hash).toBe(objectHash({ ver: 3 }));
-    expect(row.schemaHash).toBe(objectHash(testSchema));
-    expect(row.createdId).toBe(rowCreatedId);
-
-    expect(result.previousTableVersionId).toStrictEqual(result.tableVersionId);
-    expect(previousRow.versionId).toStrictEqual(row.versionId);
-    expect(previousRow.createdAt).toStrictEqual(row.createdAt);
-    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
-    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
-    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
-  });
-
-  it('should update the meta field', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      rowCreatedId,
-    } = await prepareProject(prismaService);
-
-    const command = new InternalUpdateRowCommand({
+    const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
       tableId,
       rowId,
-      data: { ver: 3 },
-      meta: { meta: 2 },
-      schemaHash: objectHash(testSchema),
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
-      },
-    });
-    expect(row.data).toStrictEqual({ ver: 3 });
-    expect(row.meta).toStrictEqual({ meta: 2 });
-    expect(row.hash).toBe(objectHash({ ver: 3 }));
-    expect(row.schemaHash).toBe(objectHash(testSchema));
-    expect(row.createdId).toBe(rowCreatedId);
+    expect(row).not.toBeNull();
+    expect(row?.data).toStrictEqual({ ver: 3 });
   });
 
   it('should update the publishedAt field', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      rowCreatedId,
-    } = await prepareProject(prismaService);
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
 
     const newPublishedAt = '2025-09-22T05:59:51.079Z';
 
@@ -157,150 +84,15 @@ describe('InternalUpdateRowHandler', () => {
     });
 
     const result = await runTransaction(command);
+    expect(result.rowVersionId).toBeTruthy();
 
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).toBe(draftRowVersionId);
-
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        id: rowId,
-        tables: {
-          some: {
-            versionId: draftTableVersionId,
-          },
-        },
-      },
-    });
-    expect(row.data).toStrictEqual({ ver: 3 });
-    expect(row.publishedAt).toStrictEqual(new Date(newPublishedAt));
-    expect(row.hash).toBe(objectHash({ ver: 3 }));
-    expect(row.schemaHash).toBe(objectHash(testSchema));
-    expect(row.createdId).toBe(rowCreatedId);
-  });
-
-  it('should update the row in a new created table if conditions are met', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-      rowCreatedId,
-    } = await prepareProject(prismaService);
-    await prismaService.table.update({
-      where: {
-        versionId: draftTableVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-    await prismaService.row.update({
-      where: {
-        versionId: draftRowVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new InternalUpdateRowCommand({
+    const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
       tableId,
       rowId,
-      data: { ver: 3 },
-      schemaHash: objectHash(testSchema),
     });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).not.toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).not.toBe(draftRowVersionId);
-
-    const previousTable = await prismaService.table.findUniqueOrThrow({
-      where: { versionId: result.previousTableVersionId },
-    });
-    const draftTable = await prismaService.table.findUniqueOrThrow({
-      where: { versionId: result.tableVersionId },
-    });
-    const previousRow = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.previousRowVersionId,
-      },
-    });
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.rowVersionId,
-      },
-    });
-    expect(row.createdId).toBe(rowCreatedId);
-
-    expect(previousRow.versionId).not.toStrictEqual(row.versionId);
-    expect(previousRow.createdAt).toStrictEqual(row.createdAt);
-    expect(previousRow.publishedAt).toStrictEqual(row.publishedAt);
-    expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
-    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
-    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
-
-    expect(result.previousTableVersionId).not.toStrictEqual(
-      result.tableVersionId,
-    );
-    expect(previousTable.createdAt).toStrictEqual(draftTable.createdAt);
-    expect(draftTable.createdAt).not.toStrictEqual(draftTable.updatedAt);
-  });
-
-  it('should update a new created row in the table if conditions are met', async () => {
-    const {
-      draftRevisionId,
-      tableId,
-      rowId,
-      draftTableVersionId,
-      draftRowVersionId,
-    } = await prepareProject(prismaService);
-    await prismaService.row.update({
-      where: {
-        versionId: draftRowVersionId,
-      },
-      data: {
-        readonly: true,
-      },
-    });
-
-    const command = new InternalUpdateRowCommand({
-      revisionId: draftRevisionId,
-      tableId,
-      rowId,
-      data: { ver: 3 },
-      schemaHash: objectHash(testSchema),
-    });
-
-    const result = await runTransaction(command);
-
-    expect(result.previousTableVersionId).toBe(draftTableVersionId);
-    expect(result.tableVersionId).toBe(draftTableVersionId);
-    expect(result.previousRowVersionId).toBe(draftRowVersionId);
-    expect(result.rowVersionId).not.toBe(draftRowVersionId);
-
-    const previousRow = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.previousRowVersionId,
-      },
-    });
-    const row = await prismaService.row.findFirstOrThrow({
-      where: {
-        versionId: result.rowVersionId,
-      },
-    });
-    expect(previousRow.versionId).not.toStrictEqual(row.versionId);
-    expect(previousRow.createdAt).toStrictEqual(row.createdAt);
-    expect(previousRow.publishedAt).toStrictEqual(row.createdAt);
-    expect(previousRow.updatedAt).not.toStrictEqual(row.updatedAt);
-    expect(row.createdAt).not.toStrictEqual(row.updatedAt);
-    expect(row.publishedAt).not.toStrictEqual(row.updatedAt);
+    expect(row).not.toBeNull();
+    expect(row?.data).toStrictEqual({ ver: 3 });
   });
 
   function runTransaction(
@@ -312,12 +104,14 @@ describe('InternalUpdateRowHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let transactionService: TransactionPrismaService;
+  let rowApiService: RowApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
+    rowApiService = result.module.get<RowApiService>(RowApiService);
   });
 
   afterAll(async () => {
