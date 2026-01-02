@@ -188,6 +188,7 @@ export class TableByIdController {
       revisionId,
       tableId,
       rows: data.rows,
+      isRestore: data.isRestore,
     });
 
     return {

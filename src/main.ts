@@ -2,8 +2,11 @@ import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import compression from 'compression';
+import bodyParser from 'body-parser';
 import { initSwagger } from 'src/api/rest-api/init-swagger';
 import { AppModule } from 'src/app.module';
+
+const DEFAULT_BODY_LIMIT = '10mb';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -13,6 +16,11 @@ async function bootstrap() {
     }),
   });
 
+  const config = app.get(ConfigService);
+  const bodyLimit = config.get('BODY_LIMIT') ?? DEFAULT_BODY_LIMIT;
+
+  app.use(bodyParser.json({ limit: bodyLimit }));
+  app.use(bodyParser.urlencoded({ limit: bodyLimit, extended: true }));
   app.use(compression());
   app.enableCors();
 
@@ -24,7 +32,6 @@ async function bootstrap() {
 
   initSwagger(app);
 
-  const config = app.get(ConfigService);
   const port = config.get('PORT') ?? 8080;
 
   app.enableShutdownHooks();
