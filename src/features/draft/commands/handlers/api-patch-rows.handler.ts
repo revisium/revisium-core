@@ -1,4 +1,3 @@
-import { InternalServerErrorException } from '@nestjs/common';
 import {
   CommandBus,
   CommandHandler,
@@ -13,8 +12,6 @@ import { PatchRowsCommand } from 'src/features/draft/commands/impl/patch-rows.co
 import { ApiPatchRowsHandlerReturnType } from 'src/features/draft/commands/types/api-patch-rows.handler.types';
 import { PatchRowsHandlerReturnType } from 'src/features/draft/commands/types/patch-rows.handler.types';
 import { ShareCommands } from 'src/features/share/share.commands';
-import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-id.query';
-import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 @CommandHandler(ApiPatchRowsCommand)
 export class ApiPatchRowsHandler
@@ -43,49 +40,12 @@ export class ApiPatchRowsHandler
         ),
       );
 
-    await this.tryToNotifyEndpoints({
-      tableVersionId: result.tableVersionId,
-      previousTableVersionId: result.previousTableVersionId,
+    return this.getTableAndRows({
       revisionId: data.revisionId,
+      tableId: data.tableId,
+      result,
+      affectedRows: result.patchedRows,
+      operationName: 'patch',
     });
-
-    const [table, rows] = await Promise.all([
-      this.queryBus.execute<GetTableByIdQuery, GetTableByIdReturnType>(
-        new GetTableByIdQuery({
-          revisionId: data.revisionId,
-          tableVersionId: result.tableVersionId,
-        }),
-      ),
-      Promise.all(
-        result.patchedRows.map((patchedRow) =>
-          this.rowApi.getRowById({
-            revisionId: data.revisionId,
-            tableId: data.tableId,
-            rowId: patchedRow.rowId,
-            rowVersionId: patchedRow.rowVersionId,
-          }),
-        ),
-      ),
-    ]);
-
-    if (!table) {
-      throw new InternalServerErrorException('Invalid ApiPatchRowsHandler');
-    }
-
-    const validRows = rows.filter(
-      (row): row is NonNullable<typeof row> => row !== null,
-    );
-
-    if (validRows.length !== result.patchedRows.length) {
-      throw new InternalServerErrorException(
-        'Some rows were not found after patch',
-      );
-    }
-
-    return {
-      table,
-      previousVersionTableId: result.previousTableVersionId,
-      rows: validRows,
-    };
   }
 }
