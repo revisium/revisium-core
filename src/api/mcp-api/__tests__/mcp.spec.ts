@@ -139,6 +139,10 @@ describe('MCP API', () => {
       expect(toolNames).toContain('createTable');
       expect(toolNames).toContain('getRows');
       expect(toolNames).toContain('createRow');
+      expect(toolNames).toContain('createRows');
+      expect(toolNames).toContain('updateRows');
+      expect(toolNames).toContain('patchRows');
+      expect(toolNames).toContain('removeRows');
       expect(toolNames).toContain('commitRevision');
       expect(toolNames).toContain('uploadFile');
     });
@@ -577,6 +581,154 @@ describe('MCP API', () => {
       const data = parseResponse(res);
       const content = JSON.parse(data.result.content[0].text);
       expect(content.id).toBe(fixture.project.headRevisionId);
+    });
+
+    it('should create multiple rows with createRows', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'createRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rows: [
+              { rowId: 'bulk-row-1', data: { ver: 1 } },
+              { rowId: 'bulk-row-2', data: { ver: 2 } },
+            ],
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.rows).toHaveLength(2);
+    });
+
+    it('should update multiple rows with updateRows', async () => {
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'createRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rows: [
+              { rowId: 'update-row-1', data: { ver: 1 } },
+              { rowId: 'update-row-2', data: { ver: 2 } },
+            ],
+          },
+        },
+      });
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'updateRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rows: [
+              { rowId: 'update-row-1', data: { ver: 100 } },
+              { rowId: 'update-row-2', data: { ver: 200 } },
+            ],
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.rows).toHaveLength(2);
+    });
+
+    it('should patch multiple rows with patchRows', async () => {
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'createRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rows: [
+              { rowId: 'patch-row-1', data: { ver: 1 } },
+              { rowId: 'patch-row-2', data: { ver: 2 } },
+            ],
+          },
+        },
+      });
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'patchRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rows: [
+              {
+                rowId: 'patch-row-1',
+                patches: [{ op: 'replace', path: 'ver', value: 100 }],
+              },
+              {
+                rowId: 'patch-row-2',
+                patches: [{ op: 'replace', path: 'ver', value: 200 }],
+              },
+            ],
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.rows).toHaveLength(2);
+    });
+
+    it('should remove multiple rows with removeRows', async () => {
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'createRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rows: [
+              { rowId: 'remove-row-1', data: { ver: 1 } },
+              { rowId: 'remove-row-2', data: { ver: 2 } },
+            ],
+          },
+        },
+      });
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'removeRows',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowIds: ['remove-row-1', 'remove-row-2'],
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
     });
   });
 

@@ -8,7 +8,6 @@ import {
 } from 'src/features/draft/commands/impl/create-rows.command';
 import { CreateRowsHandlerReturnType } from 'src/features/draft/commands/types/create-rows.handler.types';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
-import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
@@ -29,7 +28,6 @@ export class CreateRowsHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly eventBus: EventBus,
-    protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly draftTransactionalCommands: DraftTransactionalCommands,
     protected readonly draftRevisionApi: DraftRevisionApiService,
     protected readonly pluginService: PluginService,
@@ -101,6 +99,7 @@ export class CreateRowsHandler extends DraftHandler<
         tableId: input.tableId,
         rowId: row.rowId,
         data: row.data,
+        isRestore: input.isRestore,
       });
 
       const publishedAt = this.getPublishedAtFromData(

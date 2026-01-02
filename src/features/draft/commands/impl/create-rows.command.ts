@@ -11,6 +11,7 @@ export class CreateRowsCommand {
       revisionId: string;
       tableId: string;
       rows: CreateRowsRowInput[];
+      isRestore?: boolean;
     },
   ) {}
 }

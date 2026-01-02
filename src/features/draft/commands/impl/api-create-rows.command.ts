@@ -11,6 +11,7 @@ export class ApiCreateRowsCommand {
       revisionId: string;
       tableId: string;
       rows: ApiCreateRowsRowInput[];
+      isRestore?: boolean;
     },
   ) {}
 }

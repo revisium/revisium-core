@@ -25,4 +25,7 @@ export class CreateRowsInput {
   @ArrayNotEmpty({ message: 'rows array cannot be empty' })
   @ArrayMaxSize(1000, { message: 'rows array cannot exceed 1000 items' })
   rows: CreateRowsRowInput[];
+
+  @Field({ nullable: true })
+  isRestore?: boolean;
 }

@@ -194,6 +194,172 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
+      'createRows',
+      {
+        description:
+          'Create multiple rows in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first.',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rows: z
+            .array(
+              z.object({
+                rowId: z.string().describe('Row ID (URL-friendly)'),
+                data: z.record(z.string(), z.unknown()).describe('Row data'),
+              }),
+            )
+            .max(1000)
+            .describe('Array of rows to create (max 1000)'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      async ({ revisionId, tableId, rows }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
+          session.userId,
+        );
+        const result = await this.draftApi.apiCreateRows({
+          revisionId,
+          tableId,
+          rows: rows.map((r) => ({
+            rowId: r.rowId,
+            data: r.data as Prisma.InputJsonValue,
+          })),
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
+      'updateRows',
+      {
+        description: 'Update multiple rows (replace all data for each row)',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rows: z
+            .array(
+              z.object({
+                rowId: z.string().describe('Row ID'),
+                data: z
+                  .record(z.string(), z.unknown())
+                  .describe('New row data'),
+              }),
+            )
+            .max(1000)
+            .describe('Array of rows to update (max 1000)'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      async ({ revisionId, tableId, rows }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
+          session.userId,
+        );
+        const result = await this.draftApi.apiUpdateRows({
+          revisionId,
+          tableId,
+          rows: rows.map((r) => ({
+            rowId: r.rowId,
+            data: r.data as Prisma.InputJsonValue,
+          })),
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
+      'patchRows',
+      {
+        description:
+          'Patch multiple rows using JSON Patch operations. ONLY "replace" operation is supported.',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rows: z
+            .array(
+              z.object({
+                rowId: z.string().describe('Row ID'),
+                patches: z
+                  .array(z.record(z.string(), z.unknown()))
+                  .describe('JSON Patch operations'),
+              }),
+            )
+            .max(1000)
+            .describe('Array of rows to patch (max 1000)'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      async ({ revisionId, tableId, rows }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
+          session.userId,
+        );
+        const result = await this.draftApi.apiPatchRows({
+          revisionId,
+          tableId,
+          rows: rows.map((r) => ({
+            rowId: r.rowId,
+            patches: r.patches as JsonValuePatchReplace[],
+          })),
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
+      'removeRows',
+      {
+        description: 'Remove multiple rows',
+        inputSchema: {
+          revisionId: z.string().describe('Draft revision ID'),
+          tableId: z.string().describe('Table ID'),
+          rowIds: z
+            .array(z.string())
+            .max(1000)
+            .describe('Array of row IDs to remove (max 1000)'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
+      },
+      async ({ revisionId, tableId, rowIds }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
+          session.userId,
+        );
+        const result = await this.draftApi.apiRemoveRows({
+          revisionId,
+          tableId,
+          rowIds,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'renameRow',
       {
         description: 'Rename a row (change row ID)',
