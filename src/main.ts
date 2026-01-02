@@ -1,15 +1,15 @@
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import compression from 'compression';
-import bodyParser from 'body-parser';
 import { initSwagger } from 'src/api/rest-api/init-swagger';
 import { AppModule } from 'src/app.module';
 
 const DEFAULT_BODY_LIMIT = '10mb';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new ConsoleLogger({
       json: true,
       colors: true,
@@ -19,8 +19,7 @@ async function bootstrap() {
   const config = app.get(ConfigService);
   const bodyLimit = config.get('BODY_LIMIT') ?? DEFAULT_BODY_LIMIT;
 
-  app.use(bodyParser.json({ limit: bodyLimit }));
-  app.use(bodyParser.urlencoded({ limit: bodyLimit, extended: true }));
+  app.useBodyParser('json', { limit: bodyLimit });
   app.use(compression());
   app.enableCors();
 
