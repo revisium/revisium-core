@@ -47,8 +47,13 @@ describe('RevertChangesHandler', () => {
 
   it('should revert changes if there are changes', async () => {
     const ids = await prepareProject(prismaService);
-    const { organizationId, projectName, branchId, branchName, draftRevisionId } =
-      ids;
+    const {
+      organizationId,
+      projectName,
+      branchId,
+      branchName,
+      draftRevisionId,
+    } = ids;
     await prepareRevision(ids);
 
     const command = new RevertChangesCommand({

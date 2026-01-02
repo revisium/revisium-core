@@ -82,8 +82,13 @@ describe('PatchRowHandler', () => {
 
   it('should patch the row if conditions are met', async () => {
     const ids = await prepareProject(prismaService);
-    const { draftRevisionId, tableId, rowId, schemaRowVersionId, draftRowVersionId } =
-      ids;
+    const {
+      draftRevisionId,
+      tableId,
+      rowId,
+      schemaRowVersionId,
+      draftRowVersionId,
+    } = ids;
 
     const newSchema = getObjectSchema({
       str: getStringSchema(),
