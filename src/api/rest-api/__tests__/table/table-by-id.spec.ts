@@ -787,6 +787,22 @@ describe('restapi - table-by-id', () => {
       expect(result.rows[0].data.ver).toBe(100);
     });
 
+    it('should accept isRestore flag', async () => {
+      const result = await request(app.getHttpServer())
+        .put(getUpdateRowsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send({
+          rows: [{ rowId: preparedData.project.rowId, data: { ver: 200 } }],
+          isRestore: true,
+        })
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(result).toHaveProperty('table');
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].data.ver).toBe(200);
+    });
+
     it('another owner cannot update rows (private project)', async () => {
       return request(app.getHttpServer())
         .put(getUpdateRowsUrl())

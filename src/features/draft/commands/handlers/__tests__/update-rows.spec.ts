@@ -11,6 +11,7 @@ import { UpdateRowsHandlerReturnType } from 'src/features/draft/commands/types/u
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { PluginService } from 'src/features/plugin/plugin.service';
 
 describe('UpdateRowsHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
@@ -167,6 +168,49 @@ describe('UpdateRowsHandler', () => {
     expect(row?.data).toStrictEqual({ ver: 999 });
   });
 
+  it('should pass isRestore=true to plugin service', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
+
+    const afterUpdateRowSpy = jest.spyOn(pluginService, 'afterUpdateRow');
+
+    const command = new UpdateRowsCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rows: [{ rowId, data: { ver: 42 } }],
+      isRestore: true,
+    });
+
+    await runTransaction(command);
+
+    expect(afterUpdateRowSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isRestore: true,
+      }),
+    );
+  });
+
+  it('should pass isRestore=false (undefined) to plugin service by default', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
+
+    const afterUpdateRowSpy = jest.spyOn(pluginService, 'afterUpdateRow');
+
+    const command = new UpdateRowsCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rows: [{ rowId, data: { ver: 42 } }],
+    });
+
+    await runTransaction(command);
+
+    expect(afterUpdateRowSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isRestore: undefined,
+      }),
+    );
+  });
+
   function runTransaction(
     command: UpdateRowsCommand,
   ): Promise<UpdateRowsHandlerReturnType> {
@@ -178,6 +222,7 @@ describe('UpdateRowsHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
   let rowApiService: RowApiService;
+  let pluginService: PluginService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -186,6 +231,7 @@ describe('UpdateRowsHandler', () => {
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
     rowApiService = result.module.get<RowApiService>(RowApiService);
+    pluginService = result.module.get<PluginService>(PluginService);
   });
 
   beforeEach(() => {

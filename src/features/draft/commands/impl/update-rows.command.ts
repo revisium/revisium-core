@@ -11,6 +11,7 @@ export class UpdateRowsCommand {
       revisionId: string;
       tableId: string;
       rows: UpdateRowsRowInput[];
+      isRestore?: boolean;
     },
   ) {}
 }

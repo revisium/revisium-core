@@ -97,6 +97,7 @@ export class UpdateRowsHandler extends DraftHandler<
         tableId: input.tableId,
         rowId: row.rowId,
         data: row.data,
+        isRestore: input.isRestore,
       });
 
       const publishedAt = this.getPublishedAtFromData(
