@@ -1945,7 +1945,7 @@
     "contact": {},
     "description": "",
     "title": "Revisium API",
-    "version": "2.6.0-alpha.1"
+    "version": "2.6.0-alpha.2"
   },
   "openapi": "3.0.0",
   "paths": {
