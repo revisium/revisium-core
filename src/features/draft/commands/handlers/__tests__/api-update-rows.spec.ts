@@ -8,6 +8,7 @@ import {
   testSchema,
 } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
+import { PluginService } from 'src/features/plugin/plugin.service';
 
 describe('ApiUpdateRowsHandler', () => {
   it('should update multiple rows', async () => {
@@ -115,9 +116,55 @@ describe('ApiUpdateRowsHandler', () => {
     );
   });
 
+  it('should pass isRestore=true to plugin service', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
+
+    const afterUpdateRowSpy = jest.spyOn(pluginService, 'afterUpdateRow');
+
+    const command = new ApiUpdateRowsCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rows: [{ rowId, data: { ver: 42 } }],
+      isRestore: true,
+    });
+
+    await execute(command);
+
+    expect(afterUpdateRowSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isRestore: true,
+      }),
+    );
+  });
+
+  it('should pass isRestore=false (undefined) to plugin service by default', async () => {
+    const { draftRevisionId, tableId, rowId } =
+      await prepareProject(prismaService);
+    jest.spyOn(endpointNotificationService, 'update').mockResolvedValue(void 0);
+
+    const afterUpdateRowSpy = jest.spyOn(pluginService, 'afterUpdateRow');
+
+    const command = new ApiUpdateRowsCommand({
+      revisionId: draftRevisionId,
+      tableId,
+      rows: [{ rowId, data: { ver: 42 } }],
+    });
+
+    await execute(command);
+
+    expect(afterUpdateRowSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        isRestore: undefined,
+      }),
+    );
+  });
+
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
+  let pluginService: PluginService;
 
   function execute(
     command: ApiUpdateRowsCommand,
@@ -130,6 +177,7 @@ describe('ApiUpdateRowsHandler', () => {
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+    pluginService = result.module.get<PluginService>(PluginService);
   });
 
   beforeEach(() => {

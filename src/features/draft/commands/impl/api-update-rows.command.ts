@@ -11,6 +11,7 @@ export class ApiUpdateRowsCommand {
       revisionId: string;
       tableId: string;
       rows: ApiUpdateRowsRowInput[];
+      isRestore?: boolean;
     },
   ) {}
 }

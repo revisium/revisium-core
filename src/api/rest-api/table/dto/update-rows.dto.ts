@@ -24,4 +24,7 @@ export class UpdateRowsDto {
   @ValidateNested({ each: true })
   @Type(() => UpdateRowsRowDto)
   rows: UpdateRowsRowDto[];
+
+  @ApiProperty({ required: false })
+  isRestore?: boolean;
 }

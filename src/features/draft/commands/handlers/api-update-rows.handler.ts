@@ -37,6 +37,7 @@ export class ApiUpdateRowsHandler
             revisionId: data.revisionId,
             tableId: data.tableId,
             rows: data.rows,
+            isRestore: data.isRestore,
           }),
         ),
       );
