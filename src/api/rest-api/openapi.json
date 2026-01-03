@@ -1707,6 +1707,9 @@
       },
       "UpdateRowsDto": {
         "properties": {
+          "isRestore": {
+            "type": "boolean"
+          },
           "rows": {
             "items": {
               "$ref": "#/components/schemas/UpdateRowsRowDto"
@@ -1945,7 +1948,7 @@
     "contact": {},
     "description": "",
     "title": "Revisium API",
-    "version": "2.6.0-alpha.2"
+    "version": "2.6.0-alpha.3"
   },
   "openapi": "3.0.0",
   "paths": {
