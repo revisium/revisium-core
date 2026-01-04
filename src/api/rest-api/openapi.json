@@ -768,6 +768,27 @@
         ],
         "type": "object"
       },
+      "MeModel": {
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "hasPassword": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "hasPassword"
+        ],
+        "type": "object"
+      },
       "OrderByDto": {
         "properties": {
           "aggregation": {
@@ -5275,7 +5296,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserModel"
+                  "$ref": "#/components/schemas/MeModel"
                 }
               }
             },
