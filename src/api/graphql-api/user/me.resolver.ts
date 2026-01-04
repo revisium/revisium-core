@@ -4,6 +4,7 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { IAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { MeModel } from 'src/api/graphql-api/user/model/me.model';
+import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { RoleApiService } from 'src/features/role/role-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 
@@ -13,6 +14,7 @@ export class MeResolver {
   constructor(
     private readonly userApiService: UserApiService,
     private readonly roleApiService: RoleApiService,
+    private readonly organizationApiService: OrganizationApiService,
   ) {}
 
   @Query(() => MeModel)
@@ -31,5 +33,15 @@ export class MeResolver {
       return null;
     }
     return this.roleApiService.getRole({ roleId: parent.roleId });
+  }
+
+  @ResolveField()
+  async organization(@Parent() parent: MeModel) {
+    if (!parent.username) {
+      return null;
+    }
+    return this.organizationApiService.organization({
+      organizationId: parent.username,
+    });
   }
 }

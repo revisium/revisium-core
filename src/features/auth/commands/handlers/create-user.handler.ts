@@ -63,7 +63,9 @@ export class CreateUserHandler
           id: data.roleId,
         },
       },
-      password: await this.authService.hashPassword(data.password),
+      password: data.password
+        ? await this.authService.hashPassword(data.password)
+        : '',
     };
 
     if (data.username) {
