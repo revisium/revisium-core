@@ -1,7 +1,6 @@
 import {
   GetProjectsByUserIdHandler,
   GetUserHandler,
-  DeprecatedGetOwnedUserOrganizationHandler,
   GetUserProjectHandler,
   SearchUsersHandler,
   GetUserOrganizationHandler,
@@ -9,7 +8,6 @@ import {
 
 export const USER_QUERIES = [
   GetUserHandler,
-  DeprecatedGetOwnedUserOrganizationHandler,
   GetUserProjectHandler,
   GetProjectsByUserIdHandler,
   SearchUsersHandler,

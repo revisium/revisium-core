@@ -12,9 +12,6 @@ import {
   UpdatePasswordCommandReturnType,
 } from 'src/features/user/commands/impl';
 import {
-  DeprecatedGetOwnedUserOrganizationQuery,
-  DeprecatedGetOwnedUserOrganizationQueryData,
-  DeprecatedGetOwnedUserOrganizationQueryReturnType,
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryData,
   GetProjectsByUserIdQueryReturnType,
@@ -57,15 +54,6 @@ export class UserApiService {
       GetUserProjectQuery,
       GetUserProjectQueryReturnType
     >(new GetUserProjectQuery(data));
-  }
-
-  public deprecatedGetOwnedUserOrganization(
-    data: DeprecatedGetOwnedUserOrganizationQueryData,
-  ) {
-    return this.queryBus.execute<
-      DeprecatedGetOwnedUserOrganizationQuery,
-      DeprecatedGetOwnedUserOrganizationQueryReturnType
-    >(new DeprecatedGetOwnedUserOrganizationQuery(data));
   }
 
   public updatePassword(data: UpdatePasswordCommandData) {

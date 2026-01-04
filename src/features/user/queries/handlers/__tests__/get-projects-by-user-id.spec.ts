@@ -12,7 +12,6 @@ import {
   UserProjectRoles,
 } from 'src/features/auth/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { DeprecatedGetOwnedUserOrganizationHandler } from 'src/features/user/queries/handlers/deprecated-get-owned-user-organization.handler';
 import {
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryReturnType,
@@ -114,11 +113,7 @@ describe('GetProjectsByUserIdHandler', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule],
-      providers: [
-        PrismaService,
-        GetProjectsByUserIdHandler,
-        DeprecatedGetOwnedUserOrganizationHandler,
-      ],
+      providers: [PrismaService, GetProjectsByUserIdHandler],
     }).compile();
 
     await module.init();

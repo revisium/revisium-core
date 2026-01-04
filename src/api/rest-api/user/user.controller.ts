@@ -15,7 +15,7 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { IAuthUser } from 'src/features/auth/types';
 import { UserApiService } from 'src/features/user/user-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import { UserModel } from 'src/api/rest-api/user/model';
+import { MeModel } from 'src/api/rest-api/user/model';
 
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('User')
@@ -27,7 +27,7 @@ export class UserController {
   @UseGuards(HttpJwtAuthGuard)
   @Get('me')
   @ApiOperation({ operationId: 'me' })
-  @ApiOkResponse({ type: UserModel })
+  @ApiOkResponse({ type: MeModel })
   me(@Request() req: { user: IAuthUser }) {
     return this.userApiService.getUser({ userId: req.user.userId });
   }

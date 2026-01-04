@@ -21,13 +21,8 @@ export class MeResolver {
   }
 
   @ResolveField()
-  async organizationId(@Parent() parent: MeModel) {
-    const ownerRole =
-      await this.userApiService.deprecatedGetOwnedUserOrganization({
-        userId: parent.id,
-      });
-
-    return ownerRole?.organizationId;
+  organizationId(@Parent() parent: MeModel) {
+    return parent.username ?? null;
   }
 
   @ResolveField()
