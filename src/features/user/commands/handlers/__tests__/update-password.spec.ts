@@ -23,6 +23,19 @@ describe('UpdatePasswordHandler', () => {
     await expect(handler.execute(command)).rejects.toThrow('Not found user');
   });
 
+  it('should throw an error if the old password is not provided', async () => {
+    prismaService.user.findUnique = createMock({
+      id: 'userId',
+      password: 'hashedPassword',
+    });
+    const command = createCommand({ oldPassword: '' });
+
+    await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
+    await expect(handler.execute(command)).rejects.toThrow(
+      'Current password is required',
+    );
+  });
+
   it('should throw an error if the old password is incorrect', async () => {
     prismaService.user.findUnique = createMock({
       id: 'userId',
@@ -81,8 +94,12 @@ describe('UpdatePasswordHandler', () => {
       });
       const command = createCommand({ oldPassword: 'somePassword' });
 
-      await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
-      await expect(handler.execute(command)).rejects.toThrow('Invalid password');
+      await expect(handler.execute(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(command)).rejects.toThrow(
+        'Invalid password',
+      );
     });
   });
 

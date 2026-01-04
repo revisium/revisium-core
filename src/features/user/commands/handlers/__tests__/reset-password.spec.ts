@@ -88,9 +88,7 @@ describe('ResetPasswordHandler', () => {
     authService = module.get<AuthService>(AuthService);
   });
 
-  const createCommand = (
-    data: Partial<ResetPasswordCommand['data']> = {},
-  ) => {
+  const createCommand = (data: Partial<ResetPasswordCommand['data']> = {}) => {
     return new ResetPasswordCommand({
       newPassword: 'newPassword123',
       userId: 'userId',

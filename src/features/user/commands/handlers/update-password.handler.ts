@@ -32,8 +32,15 @@ export class UpdatePasswordHandler
     const isOldPasswordEmpty = !data.oldPassword;
 
     if (hasExistingPassword) {
+      if (isOldPasswordEmpty) {
+        throw new BadRequestException('Current password is required');
+      }
+
       if (
-        !(await this.authService.comparePassword(data.oldPassword, user.password))
+        !(await this.authService.comparePassword(
+          data.oldPassword,
+          user.password,
+        ))
       ) {
         throw new BadRequestException('Invalid password');
       }

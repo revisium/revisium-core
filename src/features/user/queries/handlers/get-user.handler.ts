@@ -12,7 +12,9 @@ export class GetUserHandler
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async execute({ data }: GetUserQuery): Promise<GetUserQueryReturnType> {
+  public async execute({
+    data,
+  }: GetUserQuery): Promise<GetUserQueryReturnType> {
     const user = await this.prisma.user.findUnique({
       where: { id: data.userId },
       select: {

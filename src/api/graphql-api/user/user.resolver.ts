@@ -100,5 +100,4 @@ export class UserResolver {
     }
     return this.roleApiService.getRole({ roleId: parent.roleId });
   }
-
 }

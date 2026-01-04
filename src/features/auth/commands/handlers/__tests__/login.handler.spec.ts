@@ -10,8 +10,12 @@ describe('LoginHandler', () => {
     prismaService.user.findFirst = createMock(null);
     const command = createCommand();
 
-    await expect(handler.execute(command)).rejects.toThrow(UnauthorizedException);
-    await expect(handler.execute(command)).rejects.toThrow('User does not exist');
+    await expect(handler.execute(command)).rejects.toThrow(
+      UnauthorizedException,
+    );
+    await expect(handler.execute(command)).rejects.toThrow(
+      'User does not exist',
+    );
   });
 
   it('should throw an error if user has no password (OAuth user)', async () => {
@@ -24,7 +28,9 @@ describe('LoginHandler', () => {
     });
     const command = createCommand();
 
-    await expect(handler.execute(command)).rejects.toThrow(UnauthorizedException);
+    await expect(handler.execute(command)).rejects.toThrow(
+      UnauthorizedException,
+    );
     await expect(handler.execute(command)).rejects.toThrow(
       'Password login is not available',
     );
@@ -41,7 +47,9 @@ describe('LoginHandler', () => {
     authService.comparePassword = createMock(false);
     const command = createCommand();
 
-    await expect(handler.execute(command)).rejects.toThrow(UnauthorizedException);
+    await expect(handler.execute(command)).rejects.toThrow(
+      UnauthorizedException,
+    );
     await expect(handler.execute(command)).rejects.toThrow('Invalid password');
   });
 
@@ -56,8 +64,12 @@ describe('LoginHandler', () => {
     authService.comparePassword = createMock(true);
     const command = createCommand();
 
-    await expect(handler.execute(command)).rejects.toThrow(UnauthorizedException);
-    await expect(handler.execute(command)).rejects.toThrow('Email is not confirmed');
+    await expect(handler.execute(command)).rejects.toThrow(
+      UnauthorizedException,
+    );
+    await expect(handler.execute(command)).rejects.toThrow(
+      'Email is not confirmed',
+    );
   });
 
   it('should return access token on successful login', async () => {

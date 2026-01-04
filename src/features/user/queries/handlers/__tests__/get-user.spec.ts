@@ -21,7 +21,10 @@ describe('GetUserHandler', () => {
 
   it('should return hasPassword true when password is set', async () => {
     const userId = nanoid();
-    await testCreateUser(prismaService, { id: userId, password: 'hashed-password' });
+    await testCreateUser(prismaService, {
+      id: userId,
+      password: 'hashed-password',
+    });
 
     const query = createQuery({ userId });
     const result = await queryBus.execute(query);
