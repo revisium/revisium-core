@@ -17,7 +17,7 @@ Available on [npm](https://www.npmjs.com/package/@revisium/core) | [Docker Hub](
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                      API Layer                          │
 ├─────────────────┬─────────────────┬─────────────────────┤
@@ -73,7 +73,7 @@ CQRS pattern separates read and write operations:
 | Package | Description |
 |---------|-------------|
 | [@revisium/endpoint](https://github.com/revisium/revisium-endpoint) | Dynamic GraphQL/REST API generator |
-| [@revisium/schema-toolkit](https://github.com/revisium/revisium-schema-toolkit) | JSON Schema utilities, validation, and transformation helpers |
+| [@revisium/schema-toolkit](https://github.com/revisium/schema-toolkit) | JSON Schema utilities, validation, and transformation helpers |
 | [revisium-cli](https://github.com/revisium/revisium-cli) | CLI for migrations — save and apply schema & data changes across environments |
 
 ## License
