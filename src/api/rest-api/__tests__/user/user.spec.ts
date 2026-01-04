@@ -30,8 +30,10 @@ describe('restapi - user', () => {
 
       expect(result).toHaveProperty('id');
       expect(result).toHaveProperty('username');
+      expect(result).toHaveProperty('hasPassword');
       expect(result.id).toBe(fixture.owner.user.id);
       expect(result.username).toBe(fixture.owner.user.username);
+      expect(typeof result.hasPassword).toBe('boolean');
     });
 
     it('returns correct user for different users', async () => {

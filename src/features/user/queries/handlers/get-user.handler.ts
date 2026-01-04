@@ -12,7 +12,7 @@ export class GetUserHandler
 {
   constructor(private readonly prisma: PrismaService) {}
 
-  public async execute({ data }: GetUserQuery) {
+  public async execute({ data }: GetUserQuery): Promise<GetUserQueryReturnType> {
     const user = await this.prisma.user.findUnique({
       where: { id: data.userId },
       select: {
@@ -20,6 +20,7 @@ export class GetUserHandler
         username: true,
         email: true,
         roleId: true,
+        password: true,
       },
     });
 
@@ -27,6 +28,12 @@ export class GetUserHandler
       throw new NotFoundException('Not found user');
     }
 
-    return user;
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      roleId: user.roleId,
+      hasPassword: Boolean(user.password),
+    };
   }
 }

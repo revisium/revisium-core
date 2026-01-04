@@ -8,23 +8,47 @@ import { GetUserQuery } from 'src/features/user/queries/impl';
 import { GetUserHandler } from 'src/features/user/queries/handlers/get-user.handler';
 
 describe('GetUserHandler', () => {
-  it('should return user data', async () => {
+  it('should return user data with hasPassword false when password is empty', async () => {
     const userId = nanoid();
-    await testCreateUser(prismaService, { id: userId });
+    await testCreateUser(prismaService, { id: userId, password: '' });
 
     const query = createQuery({ userId });
     const result = await queryBus.execute(query);
 
-    const user = await prismaService.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        username: true,
-        email: true,
-        roleId: true,
-      },
+    expect(result.id).toBe(userId);
+    expect(result.hasPassword).toBe(false);
+  });
+
+  it('should return hasPassword true when password is set', async () => {
+    const userId = nanoid();
+    await testCreateUser(prismaService, { id: userId, password: 'hashed-password' });
+
+    const query = createQuery({ userId });
+    const result = await queryBus.execute(query);
+
+    expect(result.id).toBe(userId);
+    expect(result.hasPassword).toBe(true);
+  });
+
+  it('should return all user fields', async () => {
+    const userId = nanoid();
+    await testCreateUser(prismaService, {
+      id: userId,
+      username: `user-${userId}`,
+      email: `${userId}@test.com`,
+      password: 'test-password',
     });
-    expect(result).toEqual(user);
+
+    const query = createQuery({ userId });
+    const result = await queryBus.execute(query);
+
+    expect(result).toEqual({
+      id: userId,
+      username: `user-${userId}`,
+      email: `${userId}@test.com`,
+      roleId: expect.any(String),
+      hasPassword: true,
+    });
   });
 
   it('should throw an error if the user is not found', async () => {

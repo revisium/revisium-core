@@ -9,4 +9,4 @@ export type GetUserQueryData = GetUserQuery['data'];
 export type GetUserQueryReturnType = Pick<
   User,
   'id' | 'username' | 'email' | 'roleId'
->;
+> & { hasPassword: boolean };

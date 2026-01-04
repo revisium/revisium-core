@@ -9,4 +9,7 @@ export class UserModel {
 
   @ApiProperty({ required: false })
   email?: string;
+
+  @ApiProperty()
+  hasPassword: boolean;
 }

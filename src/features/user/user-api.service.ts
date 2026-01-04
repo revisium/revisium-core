@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
+  ResetPasswordCommand,
+  ResetPasswordCommandData,
+  ResetPasswordCommandReturnType,
   SetUsernameCommand,
   SetUsernameCommandData,
   SetUsernameCommandReturnType,
@@ -90,5 +93,12 @@ export class UserApiService {
       SetUsernameCommand,
       SetUsernameCommandReturnType
     >(new SetUsernameCommand(data));
+  }
+
+  public resetPassword(data: ResetPasswordCommandData) {
+    return this.commandBus.execute<
+      ResetPasswordCommand,
+      ResetPasswordCommandReturnType
+    >(new ResetPasswordCommand(data));
   }
 }

@@ -23,6 +23,10 @@ export class LoginHandler
       throw new UnauthorizedException('User does not exist');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException('Password login is not available');
+    }
+
     if (
       !(await this.authService.comparePassword(data.password, user.password))
     ) {

@@ -28,10 +28,19 @@ export class UpdatePasswordHandler
       throw new BadRequestException('Not found user');
     }
 
-    if (
-      !(await this.authService.comparePassword(data.oldPassword, user.password))
-    ) {
-      throw new BadRequestException('Invalid password');
+    const hasExistingPassword = Boolean(user.password);
+    const isOldPasswordEmpty = !data.oldPassword;
+
+    if (hasExistingPassword) {
+      if (
+        !(await this.authService.comparePassword(data.oldPassword, user.password))
+      ) {
+        throw new BadRequestException('Invalid password');
+      }
+    } else {
+      if (!isOldPasswordEmpty) {
+        throw new BadRequestException('Invalid password');
+      }
     }
 
     await this.savePassword(data);

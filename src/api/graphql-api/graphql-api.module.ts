@@ -26,6 +26,7 @@ import { RevisionResolver } from 'src/api/graphql-api/revision/revision.resolver
 import { RowResolver } from 'src/api/graphql-api/row/row.resolver';
 import { SearchRowsResolver } from 'src/api/graphql-api/row/resolver/search-rows.resolver';
 import { TableResolver } from 'src/api/graphql-api/table/table.resolver';
+import { MeResolver } from 'src/api/graphql-api/user/me.resolver';
 import { UserResolver } from 'src/api/graphql-api/user/user.resolver';
 import { RevisionModule } from 'src/features/revision';
 import { RoleModule } from 'src/features/role/role.module';
@@ -91,6 +92,7 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
   providers: [
     ConfigurationResolver,
     AuthResolver,
+    MeResolver,
     UserResolver,
     OrganizationResolver,
     UsersOrganizationResolver,
