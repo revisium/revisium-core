@@ -1,3 +1,5 @@
+<div align="center">
+
 # @revisium/core
 
 Backend API for [Revisium](https://github.com/revisium/revisium) — unopinionated data platform for hierarchical structures.
@@ -15,7 +17,11 @@ Backend API for [Revisium](https://github.com/revisium/revisium) — unopinionat
 Part of the [Revisium](https://github.com/revisium/revisium) ecosystem.
 Available on [npm](https://www.npmjs.com/package/@revisium/core) | [Docker Hub](https://hub.docker.com/r/revisium/revisium-core).
 
+</div>
+
 ## Architecture
+
+<div align="center">
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -37,6 +43,8 @@ Available on [npm](https://www.npmjs.com/package/@revisium/core) | [Docker Hub](
 │ (Prisma)  │ (Cache) │ (Files)   │       (Email)         │
 └───────────┴─────────┴───────────┴───────────────────────┘
 ```
+
+</div>
 
 ### API Layer
 
