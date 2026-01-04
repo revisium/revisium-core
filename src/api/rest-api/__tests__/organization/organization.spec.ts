@@ -42,7 +42,7 @@ describe('restapi - organization', () => {
         app,
         `/api/organization/${preparedData.project.organizationId}/projects`,
         preparedData.owner.token,
-        { projectName, branchName: 'main' },
+        { projectName, branchName: 'master' },
       )
         .expect(201)
         .then((res) => res.body);
@@ -57,7 +57,7 @@ describe('restapi - organization', () => {
         app,
         `/api/organization/${preparedData.project.organizationId}/projects`,
         preparedData.anotherOwner.token,
-        { projectName: 'test-project', branchName: 'main' },
+        { projectName: 'test-project', branchName: 'master' },
       ).expect(/You are not allowed to create on Project/);
     });
 
@@ -65,7 +65,7 @@ describe('restapi - organization', () => {
       await anonPost(
         app,
         `/api/organization/${preparedData.project.organizationId}/projects`,
-        { projectName: 'test-project', branchName: 'main' },
+        { projectName: 'test-project', branchName: 'master' },
       ).expect(401);
     });
 
@@ -75,7 +75,7 @@ describe('restapi - organization', () => {
         app,
         `/api/organization/${preparedData.project.organizationId}/projects?fromRevisionId=${preparedData.project.headRevisionId}`,
         preparedData.owner.token,
-        { projectName, branchName: 'main' },
+        { projectName, branchName: 'master' },
       )
         .expect(201)
         .then((res) => res.body);
@@ -377,7 +377,7 @@ describe('restapi - organization', () => {
         app,
         '/api/organization/non-existent/projects',
         preparedData.owner.token,
-        { projectName: 'test-project', branchName: 'main' },
+        { projectName: 'test-project', branchName: 'master' },
       ).expect(403);
     });
 
@@ -386,7 +386,7 @@ describe('restapi - organization', () => {
       await anonPost(
         app,
         `/api/organization/${preparedData.project.organizationId}/projects`,
-        { projectName: 'test', branchName: 'main' },
+        { projectName: 'test', branchName: 'master' },
       ).expect(401);
 
       // Test add user endpoint

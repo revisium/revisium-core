@@ -20,11 +20,17 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
-  ApiNotFoundResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiDraftRevisionTableRowParams,
+  ApiFileIdParam,
+  ApiNotFoundError,
+  ApiRevisionTableRowParams,
+} from 'src/api/rest-api/share/decorators';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -49,7 +55,6 @@ import {
   UpdateRowResponse,
   UploadFileResponse,
 } from 'src/api/rest-api/row/model';
-import { ErrorModel } from 'src/api/rest-api/share/model/error.model';
 import { transformFromPrismaToBranchModel } from 'src/api/rest-api/share/utils/transformFromPrismaToBranchModel';
 import {
   transformFromPaginatedPrismaToRowModel,
@@ -73,9 +78,11 @@ export class RowByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
-  @ApiOperation({ operationId: 'row' })
+  @ApiRevisionTableRowParams()
+  @ApiOperation({ operationId: 'row', summary: 'Get row by ID' })
   @ApiOkResponse({ type: RowModel })
-  @ApiNotFoundResponse({ description: 'Row not found', type: ErrorModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async row(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -92,10 +99,14 @@ export class RowByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('count-foreign-keys-by')
-  @ApiOperation({ operationId: 'rowCountForeignKeysBy' })
-  @ApiOkResponse({
-    type: Number,
+  @ApiRevisionTableRowParams()
+  @ApiOperation({
+    operationId: 'rowCountForeignKeysBy',
+    summary: 'Count rows that reference this row',
   })
+  @ApiOkResponse({ type: Number })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async countForeignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -110,8 +121,14 @@ export class RowByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('foreign-keys-by')
-  @ApiOperation({ operationId: 'rowForeignKeysBy' })
+  @ApiRevisionTableRowParams()
+  @ApiOperation({
+    operationId: 'rowForeignKeysBy',
+    summary: 'List rows that reference this row',
+  })
   @ApiOkResponse({ type: RowsConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async foreignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -132,10 +149,14 @@ export class RowByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('count-foreign-keys-to')
-  @ApiOperation({ operationId: 'rowCountForeignKeysTo' })
-  @ApiOkResponse({
-    type: Number,
+  @ApiRevisionTableRowParams()
+  @ApiOperation({
+    operationId: 'rowCountForeignKeysTo',
+    summary: 'Count rows this row references',
   })
+  @ApiOkResponse({ type: Number })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async countForeignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -150,8 +171,14 @@ export class RowByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('foreign-keys-to')
-  @ApiOperation({ operationId: 'rowForeignKeysTo' })
+  @ApiRevisionTableRowParams()
+  @ApiOperation({
+    operationId: 'rowForeignKeysTo',
+    summary: 'List rows this row references',
+  })
   @ApiOkResponse({ type: RowsConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async foreignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -176,8 +203,11 @@ export class RowByIdController {
     subject: PermissionSubject.Row,
   })
   @Delete()
-  @ApiOperation({ operationId: 'deleteRow' })
+  @ApiDraftRevisionTableRowParams()
+  @ApiOperation({ operationId: 'deleteRow', summary: 'Delete a row' })
   @ApiOkResponse({ type: RemoveRowResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async deleteRow(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -204,9 +234,12 @@ export class RowByIdController {
     subject: PermissionSubject.Row,
   })
   @Put()
-  @ApiOperation({ operationId: 'updateRow' })
+  @ApiDraftRevisionTableRowParams()
+  @ApiOperation({ operationId: 'updateRow', summary: 'Replace row data' })
   @ApiBody({ type: UpdateRowDto })
   @ApiOkResponse({ type: UpdateRowResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async updateRow(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -236,9 +269,15 @@ export class RowByIdController {
     subject: PermissionSubject.Row,
   })
   @Patch()
-  @ApiOperation({ operationId: 'patchRow' })
+  @ApiDraftRevisionTableRowParams()
+  @ApiOperation({
+    operationId: 'patchRow',
+    summary: 'Patch row data using JSON Patch',
+  })
   @ApiBody({ type: PatchRowDto })
   @ApiOkResponse({ type: PatchRowResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async patchRow(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -268,9 +307,12 @@ export class RowByIdController {
     subject: PermissionSubject.Row,
   })
   @Patch('rename')
-  @ApiOperation({ operationId: 'renameRow' })
+  @ApiDraftRevisionTableRowParams()
+  @ApiOperation({ operationId: 'renameRow', summary: 'Rename a row' })
   @ApiBody({ type: RenameRowDto })
   @ApiOkResponse({ type: RenameRowResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row')
   async renameRow(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -299,9 +341,16 @@ export class RowByIdController {
     action: PermissionAction.update,
     subject: PermissionSubject.Row,
   })
-  @ApiOperation({ operationId: 'uploadFile' })
+  @Post('upload/:fileId')
+  @ApiDraftRevisionTableRowParams()
+  @ApiFileIdParam()
+  @ApiOperation({
+    operationId: 'uploadFile',
+    summary: 'Upload a file to a row field',
+  })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
+    description: 'File to upload (max 50MB)',
     schema: {
       type: 'object',
       properties: {
@@ -313,8 +362,9 @@ export class RowByIdController {
       required: ['file'],
     },
   })
-  @Post('upload/:fileId')
   @ApiOkResponse({ type: UploadFileResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Row or File field')
   @UseInterceptors(FileInterceptor('file'))
   async uploadFile(
     @Param('revisionId') revisionId: string,

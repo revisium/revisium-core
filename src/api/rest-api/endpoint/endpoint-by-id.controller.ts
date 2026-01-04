@@ -12,6 +12,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiEndpointIdParam,
+  ApiNotFoundError,
+} from 'src/api/rest-api/share/decorators';
 import { GetEndpointResultDto } from 'src/api/rest-api/endpoint/dto';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
@@ -34,11 +39,14 @@ export class EndpointByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('relatives')
+  @ApiEndpointIdParam()
   @ApiOperation({
     operationId: 'endpointRelatives',
-    summary: 'Retrieve all related entities for a given endpoint',
+    summary: 'Get endpoint with all related entities',
   })
   @ApiOkResponse({ type: GetEndpointResultDto })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Endpoint')
   async endpointRelatives(
     @Param('endpointId') endpointId: string,
   ): Promise<GetEndpointResultDto> {
@@ -51,8 +59,14 @@ export class EndpointByIdController {
     action: PermissionAction.delete,
     subject: PermissionSubject.Endpoint,
   })
-  @ApiOperation({ operationId: 'deleteEndpoint' })
+  @ApiEndpointIdParam()
+  @ApiOperation({
+    operationId: 'deleteEndpoint',
+    summary: 'Delete an endpoint',
+  })
   @ApiOkResponse({ type: Boolean })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Endpoint')
   async deleteEndpoint(@Param('endpointId') endpointId: string): Promise<true> {
     await this.endpointApi.deleteEndpoint({ endpointId });
 

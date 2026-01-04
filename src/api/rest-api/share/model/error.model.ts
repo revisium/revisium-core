@@ -1,10 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class ErrorModel {
-  @ApiProperty()
+  @ApiProperty({
+    description: 'HTTP status code',
+    example: 400,
+  })
   statusCode: number;
-  @ApiProperty()
+
+  @ApiProperty({
+    description: 'Detailed error message',
+    example: 'Validation failed',
+  })
   message: string;
-  @ApiProperty()
+
+  @ApiProperty({
+    description: 'Error type',
+    example: 'Bad Request',
+  })
   error: string;
 }

@@ -16,6 +16,12 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiNotFoundError,
+  ApiOrgProjectParams,
+  ApiUserIdParam,
+} from 'src/api/rest-api/share/decorators';
 import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
@@ -48,8 +54,11 @@ export class ProjectController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get(':projectName')
-  @ApiOperation({ operationId: 'project' })
+  @ApiOrgProjectParams()
+  @ApiOperation({ operationId: 'project', summary: 'Get project by name' })
   @ApiOkResponse({ type: ProjectModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async projectByName(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -62,8 +71,14 @@ export class ProjectController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get(':projectName/root-branch')
-  @ApiOperation({ operationId: 'rootBranch' })
+  @ApiOrgProjectParams()
+  @ApiOperation({
+    operationId: 'rootBranch',
+    summary: 'Get root branch of the project',
+  })
   @ApiOkResponse({ type: BranchModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async rootBranch(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -78,8 +93,14 @@ export class ProjectController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get(':projectName/branches')
-  @ApiOperation({ operationId: 'branches' })
+  @ApiOrgProjectParams()
+  @ApiOperation({
+    operationId: 'branches',
+    summary: 'List all branches in the project',
+  })
   @ApiOkResponse({ type: BranchesConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async allBranches(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -102,8 +123,11 @@ export class ProjectController {
     subject: PermissionSubject.Project,
   })
   @Delete(':projectName')
-  @ApiOperation({ operationId: 'deleteProject' })
+  @ApiOrgProjectParams()
+  @ApiOperation({ operationId: 'deleteProject', summary: 'Delete a project' })
   @ApiOkResponse({ type: SuccessModelDto })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async deleteProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -124,8 +148,14 @@ export class ProjectController {
     subject: PermissionSubject.Project,
   })
   @Put(':projectName')
-  @ApiOperation({ operationId: 'updateProject' })
+  @ApiOrgProjectParams()
+  @ApiOperation({
+    operationId: 'updateProject',
+    summary: 'Update project settings',
+  })
   @ApiOkResponse({ type: SuccessModelDto })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async updateProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -148,8 +178,14 @@ export class ProjectController {
     subject: PermissionSubject.User,
   })
   @Get(':projectName/users')
-  @ApiOperation({ operationId: 'usersProject' })
+  @ApiOrgProjectParams()
+  @ApiOperation({
+    operationId: 'usersProject',
+    summary: 'List users with access to the project',
+  })
   @ApiOkResponse({ type: UsersProjectConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async usersProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -170,8 +206,14 @@ export class ProjectController {
     subject: PermissionSubject.User,
   })
   @Post(':projectName/users')
-  @ApiOperation({ operationId: 'addUserToProject' })
+  @ApiOrgProjectParams()
+  @ApiOperation({
+    operationId: 'addUserToProject',
+    summary: 'Add a user to the project',
+  })
   @ApiOkResponse({ type: SuccessModelDto })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project')
   async addUserToProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -194,8 +236,15 @@ export class ProjectController {
     subject: PermissionSubject.User,
   })
   @Delete(':projectName/users/:userId')
-  @ApiOperation({ operationId: 'removeUserFromProject' })
+  @ApiOrgProjectParams()
+  @ApiUserIdParam()
+  @ApiOperation({
+    operationId: 'removeUserFromProject',
+    summary: 'Remove a user from the project',
+  })
   @ApiOkResponse({ type: SuccessModelDto })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Project or User')
   async removeUserFromProject(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,

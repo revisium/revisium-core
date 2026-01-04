@@ -14,8 +14,14 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiNotFoundError,
+  ApiOrganizationIdParam,
+} from 'src/api/rest-api/share/decorators';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -55,8 +61,14 @@ export class OrganizationController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPOrganizationGuard)
   @Get(':organizationId/projects')
-  @ApiOperation({ operationId: 'projects' })
+  @ApiOrganizationIdParam()
+  @ApiOperation({
+    operationId: 'projects',
+    summary: 'List projects in organization',
+  })
   @ApiOkResponse({ type: ProjectsConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Organization')
   projects(
     @Param('organizationId') organizationId: string,
     @Query() data: GetProjectsDto,
@@ -78,8 +90,19 @@ export class OrganizationController {
     subject: PermissionSubject.Project,
   })
   @Post(':organizationId/projects')
-  @ApiOperation({ operationId: 'createProject' })
+  @ApiOrganizationIdParam()
+  @ApiOperation({
+    operationId: 'createProject',
+    summary: 'Create a new project',
+  })
+  @ApiQuery({
+    name: 'fromRevisionId',
+    required: false,
+    description: 'Clone from existing revision',
+  })
   @ApiOkResponse({ type: ProjectModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Organization')
   createProject(
     @Param('organizationId') organizationId: string,
     @Body() data: CreateProjectDto,
@@ -98,8 +121,14 @@ export class OrganizationController {
     subject: PermissionSubject.User,
   })
   @Get(':organizationId/users')
-  @ApiOperation({ operationId: 'usersOrganization' })
+  @ApiOrganizationIdParam()
+  @ApiOperation({
+    operationId: 'usersOrganization',
+    summary: 'List users in organization',
+  })
   @ApiOkResponse({ type: UsersOrganizationConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Organization')
   async usersOrganizations(
     @Param('organizationId') organizationId: string,
     @Query() data: GetUsersOrganizationDto,
@@ -118,8 +147,14 @@ export class OrganizationController {
     subject: PermissionSubject.User,
   })
   @Post(':organizationId/users')
-  @ApiOperation({ operationId: 'addUserToOrganization' })
+  @ApiOrganizationIdParam()
+  @ApiOperation({
+    operationId: 'addUserToOrganization',
+    summary: 'Add a user to the organization',
+  })
   @ApiOkResponse({ type: Boolean })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Organization')
   addUserToOrganization(
     @Param('organizationId') organizationId: string,
     @Body() data: AddUserToOrganizationDto,
@@ -136,8 +171,14 @@ export class OrganizationController {
     subject: PermissionSubject.User,
   })
   @Delete(':organizationId/users')
-  @ApiOperation({ operationId: 'removeUserFromOrganization' })
+  @ApiOrganizationIdParam()
+  @ApiOperation({
+    operationId: 'removeUserFromOrganization',
+    summary: 'Remove a user from the organization',
+  })
   @ApiOkResponse({ type: Boolean })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Organization')
   removeUserFromOrganization(
     @Param('organizationId') organizationId: string,
     @Body() data: RemoveUserFromOrganizationDto,
