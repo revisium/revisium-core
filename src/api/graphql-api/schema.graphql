@@ -432,6 +432,7 @@ type MeModel {
   email: String
   hasPassword: Boolean!
   id: String!
+  organization: OrganizationModel
   organizationId: String
   role: RoleModel
   username: String
