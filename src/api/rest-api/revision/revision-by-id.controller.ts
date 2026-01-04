@@ -17,6 +17,12 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiDraftRevisionIdParam,
+  ApiNotFoundError,
+  ApiRevisionIdParam,
+} from 'src/api/rest-api/share/decorators';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -81,8 +87,11 @@ export class RevisionByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
-  @ApiOperation({ operationId: 'revision' })
+  @ApiRevisionIdParam()
+  @ApiOperation({ operationId: 'revision', summary: 'Get revision by ID' })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async revisionById(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
       await this.revisionApi.revision({ revisionId }),
@@ -91,8 +100,11 @@ export class RevisionByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('parent-revision')
-  @ApiOperation({ operationId: 'parentRevision' })
+  @ApiRevisionIdParam()
+  @ApiOperation({ operationId: 'parentRevision', summary: 'Get parent revision' })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async parent(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
       await this.revisionApi.resolveParentByRevision(revisionId),
@@ -101,8 +113,11 @@ export class RevisionByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('child-revision')
-  @ApiOperation({ operationId: 'childRevision' })
+  @ApiRevisionIdParam()
+  @ApiOperation({ operationId: 'childRevision', summary: 'Get child revision' })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async child(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
       await this.revisionApi.resolveChildByRevision(revisionId),
@@ -111,16 +126,25 @@ export class RevisionByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('child-branches')
-  @ApiOperation({ operationId: 'childBranches' })
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'childBranches',
+    summary: 'List branches created from this revision',
+  })
   @ApiOkResponse({ type: [ChildBranchResponse] })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async childBranches(@Param('revisionId') revisionId: string) {
     return this.revisionApi.resolveChildBranchesByRevision(revisionId);
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('tables')
-  @ApiOperation({ operationId: 'tables' })
+  @ApiRevisionIdParam()
+  @ApiOperation({ operationId: 'tables', summary: 'List tables in revision' })
   @ApiOkResponse({ type: TablesConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async tables(
     @Param('revisionId') revisionId: string,
     @Query() data: GetRevisionTablesDto,
@@ -135,8 +159,14 @@ export class RevisionByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('endpoints')
-  @ApiOperation({ operationId: 'endpoints' })
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'endpoints',
+    summary: 'List API endpoints for this revision',
+  })
   @ApiOkResponse({ type: [EndpointModel] })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async getEndpoints(
     @Param('revisionId') revisionId: string,
   ): Promise<EndpointModel[]> {
@@ -147,9 +177,13 @@ export class RevisionByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('migrations')
-  @ApiOperation({ operationId: 'migrations' })
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'migrations',
+    summary: 'Get schema migrations from this revision',
+  })
   @ApiOkResponse({
-    description: 'Retrieves all table migrations',
+    description: 'List of table migrations (init, update, rename, remove)',
     schema: {
       type: 'array',
       items: {
@@ -162,6 +196,8 @@ export class RevisionByIdController {
       },
     },
   })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async getMigrations(
     @Param('revisionId') revisionId: string,
   ): Promise<Migration[]> {
@@ -174,9 +210,15 @@ export class RevisionByIdController {
     subject: PermissionSubject.Branch,
   })
   @Post('child-branches')
-  @ApiOperation({ operationId: 'createBranch' })
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'createBranch',
+    summary: 'Create a new branch from this revision',
+  })
   @ApiBody({ type: CreateBranchByRevisionDto })
   @ApiOkResponse({ type: BranchModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async createBranch(
     @Param('revisionId') revisionId: string,
     @Body() data: CreateBranchByRevisionDto,
@@ -195,9 +237,15 @@ export class RevisionByIdController {
     subject: PermissionSubject.Endpoint,
   })
   @Post('endpoints')
-  @ApiOperation({ operationId: 'createEndpoint' })
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'createEndpoint',
+    summary: 'Create an API endpoint for this revision',
+  })
   @ApiBody({ type: CreateEndpointDto })
   @ApiOkResponse({ type: EndpointModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async createEndpoint(
     @Param('revisionId') revisionId: string,
     @Body() data: CreateEndpointDto,
@@ -216,9 +264,12 @@ export class RevisionByIdController {
     subject: PermissionSubject.Table,
   })
   @Post('tables')
-  @ApiOperation({ operationId: 'createTable' })
+  @ApiDraftRevisionIdParam()
+  @ApiOperation({ operationId: 'createTable', summary: 'Create a new table' })
   @ApiBody({ type: CreateTableDto })
   @ApiOkResponse({ type: CreateTableResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async createTable(
     @Param('revisionId') revisionId: string,
     @Body() data: CreateTableDto,
@@ -240,8 +291,13 @@ export class RevisionByIdController {
     subject: PermissionSubject.Table,
   })
   @Post('apply-migrations')
-  @ApiOperation({ operationId: 'applyMigrations' })
+  @ApiDraftRevisionIdParam()
+  @ApiOperation({
+    operationId: 'applyMigrations',
+    summary: 'Apply schema migrations to this revision',
+  })
   @ApiBody({
+    description: 'Array of migration operations to apply',
     schema: {
       type: 'array',
       items: {
@@ -255,6 +311,8 @@ export class RevisionByIdController {
     },
   })
   @ApiOkResponse({ type: ApplyMigrationsResponseDto, isArray: true })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
   async applyMigrations(
     @Param('revisionId') revisionId: string,
     @Body() migrations: MigrationDto[],

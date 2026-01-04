@@ -15,6 +15,11 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiNotFoundError,
+  ApiOrgProjectBranchParams,
+} from 'src/api/rest-api/share/decorators';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -60,8 +65,11 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
-  @ApiOperation({ operationId: 'branch' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({ operationId: 'branch', summary: 'Get branch by name' })
   @ApiOkResponse({ type: BranchModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async branchByName(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -72,8 +80,14 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('touched')
-  @ApiOperation({ operationId: 'branchTouched' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'branchTouched',
+    summary: 'Check if branch has uncommitted changes',
+  })
   @ApiOkResponse({ type: TouchedModelDto })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async getTouched(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -92,8 +106,14 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('parent-branch')
-  @ApiOperation({ operationId: 'parentBranch' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'parentBranch',
+    summary: 'Get parent branch (if created from another branch)',
+  })
   @ApiOkResponse({ type: ParentBranchResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async parentBranch(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -110,8 +130,14 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('start-revision')
-  @ApiOperation({ operationId: 'startRevision' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'startRevision',
+    summary: 'Get the first revision of the branch',
+  })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async start(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -130,8 +156,14 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('head-revision')
-  @ApiOperation({ operationId: 'headRevision' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'headRevision',
+    summary: 'Get the latest committed revision',
+  })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async head(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -150,8 +182,14 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('draft-revision')
-  @ApiOperation({ operationId: 'draftRevision' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'draftRevision',
+    summary: 'Get the draft (working) revision for modifications',
+  })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async draft(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -170,8 +208,14 @@ export class BranchByNameController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('revisions')
-  @ApiOperation({ operationId: 'revisions' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'revisions',
+    summary: 'List all revisions in the branch',
+  })
   @ApiOkResponse({ type: RevisionsConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async revisions(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -198,9 +242,15 @@ export class BranchByNameController {
     subject: PermissionSubject.Revision,
   })
   @Post('create-revision')
-  @ApiOperation({ operationId: 'createRevision' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'createRevision',
+    summary: 'Commit changes and create a new revision',
+  })
   @ApiBody({ type: CreateRevisionDto })
   @ApiOkResponse({ type: RevisionModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async createRevision(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
@@ -223,8 +273,14 @@ export class BranchByNameController {
     subject: PermissionSubject.Revision,
   })
   @Post('revert-changes')
-  @ApiOperation({ operationId: 'revertChanges' })
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'revertChanges',
+    summary: 'Discard all uncommitted changes',
+  })
   @ApiOkResponse({ type: BranchModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
   async revertChanges(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,

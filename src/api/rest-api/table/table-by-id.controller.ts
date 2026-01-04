@@ -22,6 +22,12 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import {
+  ApiCommonErrors,
+  ApiDraftRevisionTableParams,
+  ApiNotFoundError,
+  ApiRevisionTableParams,
+} from 'src/api/rest-api/share/decorators';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 import { RenameTableResponse } from 'src/api/rest-api/table/model/rename-table.response';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
@@ -87,8 +93,11 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
-  @ApiOperation({ operationId: 'table' })
+  @ApiRevisionTableParams()
+  @ApiOperation({ operationId: 'table', summary: 'Get table by ID' })
   @ApiOkResponse({ type: TableModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async table(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -100,8 +109,11 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('count-rows')
-  @ApiOperation({ operationId: 'tableCountRows' })
+  @ApiRevisionTableParams()
+  @ApiOperation({ operationId: 'tableCountRows', summary: 'Get row count in table' })
   @ApiOkResponse({ type: Number })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async countRows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -122,8 +134,14 @@ export class TableByIdController {
   )
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Post('rows')
-  @ApiOperation({ operationId: 'rows' })
+  @ApiRevisionTableParams()
+  @ApiOperation({
+    operationId: 'rows',
+    summary: 'List rows in table with filtering and sorting',
+  })
   @ApiOkResponse({ type: RowsConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   @HttpCode(HttpStatus.OK)
   async rows(
     @Param('revisionId') revisionId: string,
@@ -149,9 +167,12 @@ export class TableByIdController {
     subject: PermissionSubject.Row,
   })
   @Post('create-row')
-  @ApiOperation({ operationId: 'createRow' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({ operationId: 'createRow', summary: 'Create a new row' })
   @ApiBody({ type: CreateRowDto })
   @ApiOkResponse({ type: CreateRowResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async createRow(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -176,9 +197,12 @@ export class TableByIdController {
     subject: PermissionSubject.Row,
   })
   @Post('create-rows')
-  @ApiOperation({ operationId: 'createRows' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({ operationId: 'createRows', summary: 'Create multiple rows' })
   @ApiBody({ type: CreateRowsDto })
   @ApiOkResponse({ type: CreateRowsResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async createRows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -204,9 +228,15 @@ export class TableByIdController {
     subject: PermissionSubject.Row,
   })
   @Put('update-rows')
-  @ApiOperation({ operationId: 'updateRows' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({
+    operationId: 'updateRows',
+    summary: 'Replace data for multiple rows',
+  })
   @ApiBody({ type: UpdateRowsDto })
   @ApiOkResponse({ type: UpdateRowsResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async updateRows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -232,9 +262,15 @@ export class TableByIdController {
     subject: PermissionSubject.Row,
   })
   @Patch('patch-rows')
-  @ApiOperation({ operationId: 'patchRows' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({
+    operationId: 'patchRows',
+    summary: 'Patch multiple rows using JSON Patch',
+  })
   @ApiBody({ type: PatchRowsDto })
   @ApiOkResponse({ type: PatchRowsResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async patchRows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -259,9 +295,12 @@ export class TableByIdController {
     subject: PermissionSubject.Row,
   })
   @Delete('rows')
-  @ApiOperation({ operationId: 'deleteRows' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({ operationId: 'deleteRows', summary: 'Delete multiple rows' })
   @ApiBody({ type: RemoveRowsDto })
   @ApiOkResponse({ type: RemoveRowsResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async deleteRows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -284,10 +323,14 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('schema')
-  @ApiOperation({ operationId: 'tableSchema' })
+  @ApiRevisionTableParams()
+  @ApiOperation({ operationId: 'tableSchema', summary: 'Get table JSON Schema' })
   @ApiOkResponse({
+    description: 'JSON Schema defining the table structure',
     schema: { type: 'object' },
   })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async schema(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -297,10 +340,14 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('count-foreign-keys-by')
-  @ApiOperation({ operationId: 'tableCountForeignKeysBy' })
-  @ApiOkResponse({
-    type: Number,
+  @ApiRevisionTableParams()
+  @ApiOperation({
+    operationId: 'tableCountForeignKeysBy',
+    summary: 'Count tables that reference this table',
   })
+  @ApiOkResponse({ type: Number })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async countForeignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -313,8 +360,14 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('foreign-keys-by')
-  @ApiOperation({ operationId: 'tableForeignKeysBy' })
+  @ApiRevisionTableParams()
+  @ApiOperation({
+    operationId: 'tableForeignKeysBy',
+    summary: 'List tables that reference this table',
+  })
   @ApiOkResponse({ type: TablesConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async foreignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -331,10 +384,14 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('count-foreign-keys-to')
-  @ApiOperation({ operationId: 'tableCountForeignKeysTo' })
-  @ApiOkResponse({
-    type: Number,
+  @ApiRevisionTableParams()
+  @ApiOperation({
+    operationId: 'tableCountForeignKeysTo',
+    summary: 'Count tables this table references',
   })
+  @ApiOkResponse({ type: Number })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async countForeignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -347,8 +404,14 @@ export class TableByIdController {
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('foreign-keys-to')
-  @ApiOperation({ operationId: 'tableForeignKeysTo' })
+  @ApiRevisionTableParams()
+  @ApiOperation({
+    operationId: 'tableForeignKeysTo',
+    summary: 'List tables this table references',
+  })
   @ApiOkResponse({ type: TablesConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async foreignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -369,8 +432,11 @@ export class TableByIdController {
     subject: PermissionSubject.Table,
   })
   @Delete()
-  @ApiOperation({ operationId: 'deleteTable' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({ operationId: 'deleteTable', summary: 'Delete a table' })
   @ApiOkResponse({ type: BranchModel })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async deleteTable(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -386,9 +452,15 @@ export class TableByIdController {
     subject: PermissionSubject.Table,
   })
   @Patch()
-  @ApiOperation({ operationId: 'updateTable' })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({
+    operationId: 'updateTable',
+    summary: 'Update table schema using JSON Patch',
+  })
   @ApiBody({ type: UpdateTableDto })
   @ApiOkResponse({ type: UpdateTableResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async updateTable(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
@@ -414,9 +486,12 @@ export class TableByIdController {
     subject: PermissionSubject.Table,
   })
   @Patch('rename')
-  @ApiOperation({ operationId: 'renameTable' })
-  @ApiBody({ type: UpdateTableDto })
-  @ApiOkResponse({ type: UpdateTableResponse })
+  @ApiDraftRevisionTableParams()
+  @ApiOperation({ operationId: 'renameTable', summary: 'Rename a table' })
+  @ApiBody({ type: RenameTableDto })
+  @ApiOkResponse({ type: RenameTableResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Table')
   async renameTable(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,

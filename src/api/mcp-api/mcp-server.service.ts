@@ -87,7 +87,7 @@ DO NOT assume or guess credentials.
 
 DATA STRUCTURE:
 - Organization: contains projects (organizationId is usually the owner's username)
-- Project: has a default branch (usually "main"), contains tables and rows
+- Project: has a default branch (usually "master"), contains tables and rows
 - Branch: has headRevisionId (committed state) and draftRevisionId (working state)
 - Revision: immutable snapshot; use draftRevisionId for all changes
 - Table: has schema (JSON Schema) and rows

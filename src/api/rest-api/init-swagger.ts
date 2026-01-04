@@ -14,6 +14,46 @@ export function initSwagger(app: INestApplication<any>) {
       },
       'access-token',
     )
+    .addTag(
+      'Configuration',
+      'System configuration and feature flags',
+    )
+    .addTag(
+      'Auth',
+      'Authentication, user registration, and password management',
+    )
+    .addTag(
+      'User',
+      'Current user profile and preferences',
+    )
+    .addTag(
+      'Organization',
+      'Organization management, projects, and team members',
+    )
+    .addTag(
+      'Project',
+      'Project lifecycle, branches, and endpoint management',
+    )
+    .addTag(
+      'Branch',
+      'Branch operations, commits, reverts, and merges',
+    )
+    .addTag(
+      'Revision',
+      'Revision snapshots, tables, rows, and change history',
+    )
+    .addTag(
+      'Table',
+      'Table schema and row CRUD operations within a revision',
+    )
+    .addTag(
+      'Row',
+      'Individual row operations, data updates, and file uploads',
+    )
+    .addTag(
+      'Endpoint',
+      'API endpoint configuration for GraphQL and REST access',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, documentBuilder);

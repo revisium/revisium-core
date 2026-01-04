@@ -13,6 +13,7 @@ import {
   ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
+import { ApiCommonErrors } from 'src/api/rest-api/share/decorators';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
@@ -36,8 +37,12 @@ export class AuthController {
   ) {}
 
   @Post('login')
-  @ApiOperation({ operationId: 'login' })
+  @ApiOperation({
+    operationId: 'login',
+    summary: 'Authenticate and get access token',
+  })
   @ApiOkResponse({ type: LoginResponse })
+  @ApiCommonErrors()
   login(@Body() data: LoginDto) {
     return this.authApiService.login(data);
   }
@@ -48,8 +53,12 @@ export class AuthController {
     subject: PermissionSubject.User,
   })
   @Post('user')
-  @ApiOperation({ operationId: 'createUser' })
+  @ApiOperation({
+    operationId: 'createUser',
+    summary: 'Create a new user (admin only)',
+  })
   @ApiOkResponse({ type: Boolean })
+  @ApiCommonErrors()
   async createUser(@Body() data: CreateUserDto): Promise<boolean> {
     await this.authApiService.createUser({ ...data, isEmailConfirmed: true });
 
@@ -58,8 +67,9 @@ export class AuthController {
 
   @UseGuards(HttpJwtAuthGuard)
   @Put('password')
-  @ApiOperation({ operationId: 'updatePassword' })
+  @ApiOperation({ operationId: 'updatePassword', summary: 'Update your password' })
   @ApiOkResponse({ type: Boolean })
+  @ApiCommonErrors()
   updatePassword(
     @Body() data: UpdatePasswordDto,
     @Request()

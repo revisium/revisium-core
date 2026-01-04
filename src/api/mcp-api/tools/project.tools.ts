@@ -85,7 +85,7 @@ export class ProjectTools implements McpToolRegistrar {
           branchName: z
             .string()
             .optional()
-            .describe('Initial branch name (default: main)'),
+            .describe('Initial branch name (default: master)'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
@@ -100,7 +100,7 @@ export class ProjectTools implements McpToolRegistrar {
         const branch = await this.branchApi.getBranch({
           organizationId,
           projectName,
-          branchName: branchName || 'main',
+          branchName: branchName || 'master',
         });
 
         const draftRevision = await this.branchApi.getDraftRevision(branch.id);

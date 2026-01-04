@@ -91,19 +91,28 @@
       "BranchModel": {
         "properties": {
           "createdAt": {
+            "description": "Timestamp when the branch was created",
+            "example": "2024-01-15T10:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "id": {
+            "description": "Unique branch identifier",
+            "example": "V1StGXR8_Z5jdHi6B-myT",
             "type": "string"
           },
           "isRoot": {
+            "description": "Whether this is the root (default) branch of the project. Each project has exactly one root branch.",
             "type": "boolean"
           },
           "name": {
+            "description": "Branch name",
+            "example": "master",
             "type": "string"
           },
           "projectId": {
+            "description": "Project this branch belongs to",
+            "example": "X2TuHYS9_A6keJj7C-nzU",
             "type": "string"
           }
         },
@@ -119,6 +128,8 @@
       "BranchModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -134,15 +145,22 @@
       "BranchesConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/BranchModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -455,12 +473,18 @@
       "ErrorModel": {
         "properties": {
           "error": {
+            "description": "Error type",
+            "example": "Bad Request",
             "type": "string"
           },
           "message": {
+            "description": "Detailed error message",
+            "example": "Validation failed",
             "type": "string"
           },
           "statusCode": {
+            "description": "HTTP status code",
+            "example": 400,
             "type": "number"
           }
         },
@@ -841,15 +865,21 @@
       "PageInfo": {
         "properties": {
           "endCursor": {
+            "description": "Cursor pointing to the last item. Use as \"after\" parameter for next page.",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "hasNextPage": {
+            "description": "Whether more items exist after the current page",
             "type": "boolean"
           },
           "hasPreviousPage": {
+            "description": "Whether items exist before the current page",
             "type": "boolean"
           },
           "startCursor": {
+            "description": "Cursor pointing to the first item",
+            "example": "eyJpZCI6IjEifQ",
             "type": "string"
           }
         },
@@ -1010,16 +1040,24 @@
       "ProjectModel": {
         "properties": {
           "createdAt": {
+            "description": "Timestamp when the project was created",
+            "example": "2024-01-15T10:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "id": {
+            "description": "Unique project identifier",
+            "example": "V1StGXR8_Z5jdHi6B-myT",
             "type": "string"
           },
           "name": {
+            "description": "URL-friendly project name (lowercase letters, numbers, hyphens)",
+            "example": "my-blog",
             "type": "string"
           },
           "organizationId": {
+            "description": "Organization that owns this project",
+            "example": "acme-corp",
             "type": "string"
           }
         },
@@ -1034,6 +1072,8 @@
       "ProjectModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -1049,15 +1089,22 @@
       "ProjectsConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/ProjectModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -1213,19 +1260,50 @@
         },
         "type": "object"
       },
+      "RenameTableDto": {
+        "properties": {
+          "nextTableId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "nextTableId"
+        ],
+        "type": "object"
+      },
+      "RenameTableResponse": {
+        "properties": {
+          "previousVersionTableId": {
+            "type": "string"
+          },
+          "table": {
+            "$ref": "#/components/schemas/TableModel"
+          }
+        },
+        "required": [
+          "previousVersionTableId"
+        ],
+        "type": "object"
+      },
       "RevisionModel": {
         "properties": {
           "createdAt": {
+            "description": "Timestamp when the revision was created",
+            "example": "2024-01-15T10:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "id": {
+            "description": "Unique revision identifier",
+            "example": "V1StGXR8_Z5jdHi6B-myT",
             "type": "string"
           },
           "isDraft": {
+            "description": "Whether this is the draft revision. Draft revisions can be modified; use for all write operations.",
             "type": "boolean"
           },
           "isHead": {
+            "description": "Whether this is the head (latest committed) revision. Head is immutable and represents the published state.",
             "type": "boolean"
           }
         },
@@ -1240,6 +1318,8 @@
       "RevisionModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -1255,15 +1335,22 @@
       "RevisionsConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/RevisionModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -1292,31 +1379,51 @@
       "RowModel": {
         "properties": {
           "createdAt": {
+            "description": "Timestamp when the row was first created",
+            "example": "2024-01-15T10:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "createdId": {
+            "description": "Original row identifier when first created",
+            "example": "post-001",
             "type": "string"
           },
           "data": {
             "additionalProperties": true,
+            "description": "Row data matching the table schema",
+            "example": {
+              "content": "My first post",
+              "status": "draft",
+              "title": "Hello World"
+            },
             "type": "object"
           },
           "id": {
+            "description": "Current row identifier (may differ from createdId if renamed)",
+            "example": "post-001",
             "type": "string"
           },
           "publishedAt": {
+            "description": "Timestamp when the row was first published (committed). Null if never committed.",
+            "example": "2024-01-16T09:00:00.000Z",
             "format": "date-time",
+            "nullable": true,
             "type": "string"
           },
           "readonly": {
+            "description": "Whether the row is read-only (true in committed revisions, false in draft)",
             "type": "boolean"
           },
           "updatedAt": {
+            "description": "Timestamp of the last modification",
+            "example": "2024-01-20T14:45:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "versionId": {
+            "description": "Internal version identifier. Changes when row data is modified.",
+            "example": "V1StGXR8_Z5jdHi6B-myT",
             "type": "string"
           }
         },
@@ -1335,6 +1442,8 @@
       "RowModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -1464,15 +1573,22 @@
       "RowsConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/RowModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -1550,23 +1666,34 @@
       "TableModel": {
         "properties": {
           "createdAt": {
+            "description": "Timestamp when the table was first created",
+            "example": "2024-01-15T10:30:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "createdId": {
+            "description": "Original table identifier when first created",
+            "example": "posts",
             "type": "string"
           },
           "id": {
+            "description": "Current table identifier (may differ from createdId if renamed)",
+            "example": "posts",
             "type": "string"
           },
           "readonly": {
+            "description": "Whether the table is read-only (true in committed revisions, false in draft)",
             "type": "boolean"
           },
           "updatedAt": {
+            "description": "Timestamp of the last modification",
+            "example": "2024-01-20T14:45:00.000Z",
             "format": "date-time",
             "type": "string"
           },
           "versionId": {
+            "description": "Internal version identifier. Changes when table schema or data is modified.",
+            "example": "V1StGXR8_Z5jdHi6B-myT",
             "type": "string"
           }
         },
@@ -1583,6 +1710,8 @@
       "TableModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -1598,15 +1727,22 @@
       "TablesConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/TableModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -1847,15 +1983,22 @@
       "UsersOrganizationConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/UsersOrganizationModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -1888,6 +2031,8 @@
       "UsersOrganizationModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -1903,15 +2048,22 @@
       "UsersProjectConnection": {
         "properties": {
           "edges": {
+            "description": "List of items with cursors",
             "items": {
               "$ref": "#/components/schemas/UsersProjectModelEdgeType"
             },
             "type": "array"
           },
           "pageInfo": {
-            "$ref": "#/components/schemas/PageInfo"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
           },
           "totalCount": {
+            "description": "Total number of items available",
             "type": "number"
           }
         },
@@ -1944,6 +2096,8 @@
       "UsersProjectModelEdgeType": {
         "properties": {
           "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
             "type": "string"
           },
           "node": {
@@ -1997,6 +2151,36 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
           }
         },
         "security": [
@@ -2004,7 +2188,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Authenticate and get access token",
         "tags": [
           "Auth"
         ]
@@ -2034,6 +2218,36 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
           }
         },
         "security": [
@@ -2041,7 +2255,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Update your password",
         "tags": [
           "Auth"
         ]
@@ -2071,6 +2285,36 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
           }
         },
         "security": [
@@ -2078,7 +2322,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create a new user (admin only)",
         "tags": [
           "Auth"
         ]
@@ -2100,7 +2344,7 @@
             "description": ""
           }
         },
-        "summary": "",
+        "summary": "Get system configuration",
         "tags": [
           "Configuration"
         ]
@@ -2111,6 +2355,7 @@
         "operationId": "deleteEndpoint",
         "parameters": [
           {
+            "description": "Endpoint identifier",
             "in": "path",
             "name": "endpointId",
             "required": true,
@@ -2129,6 +2374,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Endpoint not found"
           }
         },
         "security": [
@@ -2136,7 +2421,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Delete an endpoint",
         "tags": [
           "Endpoint"
         ]
@@ -2147,6 +2432,7 @@
         "operationId": "endpointRelatives",
         "parameters": [
           {
+            "description": "Endpoint identifier",
             "in": "path",
             "name": "endpointId",
             "required": true,
@@ -2165,6 +2451,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Endpoint not found"
           }
         },
         "security": [
@@ -2172,7 +2498,7 @@
             "access-token": []
           }
         ],
-        "summary": "Retrieve all related entities for a given endpoint",
+        "summary": "Get endpoint with all related entities",
         "tags": [
           "Endpoint"
         ]
@@ -2183,6 +2509,7 @@
         "operationId": "projects",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2218,6 +2545,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Organization not found"
           }
         },
         "security": [
@@ -2225,7 +2592,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List projects in organization",
         "tags": [
           "Organization"
         ]
@@ -2234,6 +2601,7 @@
         "operationId": "createProject",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2242,9 +2610,10 @@
             }
           },
           {
+            "description": "Clone from existing revision",
             "in": "query",
             "name": "fromRevisionId",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2270,6 +2639,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Organization not found"
           }
         },
         "security": [
@@ -2277,7 +2686,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create a new project",
         "tags": [
           "Organization"
         ]
@@ -2288,6 +2697,7 @@
         "operationId": "deleteProject",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2296,6 +2706,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2314,6 +2725,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -2321,7 +2772,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Delete a project",
         "tags": [
           "Project"
         ]
@@ -2330,6 +2781,7 @@
         "operationId": "project",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2338,6 +2790,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2356,6 +2809,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -2363,7 +2856,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get project by name",
         "tags": [
           "Project"
         ]
@@ -2372,6 +2865,7 @@
         "operationId": "updateProject",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2380,6 +2874,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2408,6 +2903,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -2415,7 +2950,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Update project settings",
         "tags": [
           "Project"
         ]
@@ -2426,6 +2961,7 @@
         "operationId": "branches",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2434,6 +2970,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2469,6 +3006,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -2476,7 +3053,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List all branches in the project",
         "tags": [
           "Project"
         ]
@@ -2487,6 +3064,7 @@
         "operationId": "branch",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2495,6 +3073,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2503,6 +3082,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2521,6 +3101,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2528,7 +3148,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get branch by name",
         "tags": [
           "Branch"
         ]
@@ -2539,6 +3159,7 @@
         "operationId": "createRevision",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2547,6 +3168,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2555,6 +3177,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2583,6 +3206,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2590,7 +3253,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Commit changes and create a new revision",
         "tags": [
           "Branch"
         ]
@@ -2601,6 +3264,7 @@
         "operationId": "draftRevision",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2609,6 +3273,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2617,6 +3282,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2635,6 +3301,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2642,7 +3348,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get the draft (working) revision for modifications",
         "tags": [
           "Branch"
         ]
@@ -2653,6 +3359,7 @@
         "operationId": "headRevision",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2661,6 +3368,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2669,6 +3377,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2687,6 +3396,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2694,7 +3443,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get the latest committed revision",
         "tags": [
           "Branch"
         ]
@@ -2705,6 +3454,7 @@
         "operationId": "parentBranch",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2713,6 +3463,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2721,6 +3472,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2739,6 +3491,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2746,7 +3538,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get parent branch (if created from another branch)",
         "tags": [
           "Branch"
         ]
@@ -2757,6 +3549,7 @@
         "operationId": "revertChanges",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2765,6 +3558,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2773,6 +3567,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2791,6 +3586,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2798,7 +3633,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Discard all uncommitted changes",
         "tags": [
           "Branch"
         ]
@@ -2809,6 +3644,7 @@
         "operationId": "revisions",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2817,6 +3653,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2825,6 +3662,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2889,6 +3727,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2896,7 +3774,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List all revisions in the branch",
         "tags": [
           "Branch"
         ]
@@ -2907,6 +3785,7 @@
         "operationId": "startRevision",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2915,6 +3794,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2923,6 +3803,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2941,6 +3822,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -2948,7 +3869,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get the first revision of the branch",
         "tags": [
           "Branch"
         ]
@@ -2959,6 +3880,7 @@
         "operationId": "branchTouched",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -2967,6 +3889,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -2975,6 +3898,7 @@
             }
           },
           {
+            "description": "Branch name",
             "in": "path",
             "name": "branchName",
             "required": true,
@@ -2993,6 +3917,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Branch not found"
           }
         },
         "security": [
@@ -3000,7 +3964,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Check if branch has uncommitted changes",
         "tags": [
           "Branch"
         ]
@@ -3011,6 +3975,7 @@
         "operationId": "rootBranch",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3019,6 +3984,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -3037,6 +4003,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -3044,7 +4050,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get root branch of the project",
         "tags": [
           "Project"
         ]
@@ -3055,6 +4061,7 @@
         "operationId": "usersProject",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3063,6 +4070,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -3098,6 +4106,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -3105,7 +4153,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List users with access to the project",
         "tags": [
           "Project"
         ]
@@ -3114,6 +4162,7 @@
         "operationId": "addUserToProject",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3122,6 +4171,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -3150,6 +4200,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project not found"
           }
         },
         "security": [
@@ -3157,7 +4247,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Add a user to the project",
         "tags": [
           "Project"
         ]
@@ -3168,6 +4258,7 @@
         "operationId": "removeUserFromProject",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3176,6 +4267,7 @@
             }
           },
           {
+            "description": "URL-friendly project name (lowercase, numbers, hyphens allowed)",
             "in": "path",
             "name": "projectName",
             "required": true,
@@ -3184,6 +4276,7 @@
             }
           },
           {
+            "description": "User identifier",
             "in": "path",
             "name": "userId",
             "required": true,
@@ -3202,6 +4295,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Project or User not found"
           }
         },
         "security": [
@@ -3209,7 +4342,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Remove a user from the project",
         "tags": [
           "Project"
         ]
@@ -3220,6 +4353,7 @@
         "operationId": "removeUserFromOrganization",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3248,6 +4382,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Organization not found"
           }
         },
         "security": [
@@ -3255,7 +4429,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Remove a user from the organization",
         "tags": [
           "Organization"
         ]
@@ -3264,6 +4438,7 @@
         "operationId": "usersOrganization",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3299,6 +4474,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Organization not found"
           }
         },
         "security": [
@@ -3306,7 +4521,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List users in organization",
         "tags": [
           "Organization"
         ]
@@ -3315,6 +4530,7 @@
         "operationId": "addUserToOrganization",
         "parameters": [
           {
+            "description": "Organization identifier (typically the owner username)",
             "in": "path",
             "name": "organizationId",
             "required": true,
@@ -3343,6 +4559,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Organization not found"
           }
         },
         "security": [
@@ -3350,7 +4606,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Add a user to the organization",
         "tags": [
           "Organization"
         ]
@@ -3361,6 +4617,7 @@
         "operationId": "revision",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3379,6 +4636,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3386,7 +4683,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get revision by ID",
         "tags": [
           "Revision"
         ]
@@ -3397,6 +4694,7 @@
         "operationId": "applyMigrations",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3429,6 +4727,7 @@
               }
             }
           },
+          "description": "Array of migration operations to apply",
           "required": true
         },
         "responses": {
@@ -3444,6 +4743,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3451,7 +4790,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Apply schema migrations to this revision",
         "tags": [
           "Revision"
         ]
@@ -3462,6 +4801,7 @@
         "operationId": "childBranches",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3483,6 +4823,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3490,7 +4870,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List branches created from this revision",
         "tags": [
           "Revision"
         ]
@@ -3499,6 +4879,7 @@
         "operationId": "createBranch",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3527,6 +4908,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3534,7 +4955,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create a new branch from this revision",
         "tags": [
           "Revision"
         ]
@@ -3545,6 +4966,7 @@
         "operationId": "childRevision",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3563,6 +4985,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3570,7 +5032,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get child revision",
         "tags": [
           "Revision"
         ]
@@ -3581,6 +5043,7 @@
         "operationId": "endpoints",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3602,6 +5065,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3609,7 +5112,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List API endpoints for this revision",
         "tags": [
           "Revision"
         ]
@@ -3618,6 +5121,7 @@
         "operationId": "createEndpoint",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3646,6 +5150,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3653,7 +5197,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create an API endpoint for this revision",
         "tags": [
           "Revision"
         ]
@@ -3664,6 +5208,7 @@
         "operationId": "migrations",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3697,7 +5242,47 @@
                 }
               }
             },
-            "description": "Retrieves all table migrations"
+            "description": "List of table migrations (init, update, rename, remove)"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3705,7 +5290,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get schema migrations from this revision",
         "tags": [
           "Revision"
         ]
@@ -3716,6 +5301,7 @@
         "operationId": "parentRevision",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3734,6 +5320,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3741,7 +5367,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get parent revision",
         "tags": [
           "Revision"
         ]
@@ -3752,6 +5378,7 @@
         "operationId": "tables",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3787,6 +5414,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3794,7 +5461,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List tables in revision",
         "tags": [
           "Revision"
         ]
@@ -3803,6 +5470,7 @@
         "operationId": "createTable",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3831,6 +5499,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
           }
         },
         "security": [
@@ -3838,7 +5546,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create a new table",
         "tags": [
           "Revision"
         ]
@@ -3849,6 +5557,7 @@
         "operationId": "deleteTable",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3857,6 +5566,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -3875,6 +5585,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -3882,7 +5632,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Delete a table",
         "tags": [
           "Table"
         ]
@@ -3891,6 +5641,7 @@
         "operationId": "table",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3899,6 +5650,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -3917,6 +5669,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -3924,7 +5716,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get table by ID",
         "tags": [
           "Table"
         ]
@@ -3933,6 +5725,7 @@
         "operationId": "updateTable",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3941,6 +5734,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -3969,6 +5763,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -3976,7 +5810,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Update table schema using JSON Patch",
         "tags": [
           "Table"
         ]
@@ -3987,6 +5821,7 @@
         "operationId": "tableCountForeignKeysBy",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -3995,6 +5830,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4013,6 +5849,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4020,7 +5896,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Count tables that reference this table",
         "tags": [
           "Table"
         ]
@@ -4031,6 +5907,7 @@
         "operationId": "tableCountForeignKeysTo",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4039,6 +5916,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4057,6 +5935,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4064,7 +5982,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Count tables this table references",
         "tags": [
           "Table"
         ]
@@ -4075,6 +5993,7 @@
         "operationId": "tableCountRows",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4083,6 +6002,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4101,6 +6021,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4108,7 +6068,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get row count in table",
         "tags": [
           "Table"
         ]
@@ -4119,6 +6079,7 @@
         "operationId": "createRow",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4127,6 +6088,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4155,6 +6117,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4162,7 +6164,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create a new row",
         "tags": [
           "Table"
         ]
@@ -4173,6 +6175,7 @@
         "operationId": "createRows",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4181,6 +6184,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4209,6 +6213,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4216,7 +6260,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Create multiple rows",
         "tags": [
           "Table"
         ]
@@ -4227,6 +6271,7 @@
         "operationId": "tableForeignKeysBy",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4235,6 +6280,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4270,6 +6316,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4277,7 +6363,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List tables that reference this table",
         "tags": [
           "Table"
         ]
@@ -4288,6 +6374,7 @@
         "operationId": "tableForeignKeysTo",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4296,6 +6383,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4331,6 +6419,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4338,7 +6466,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List tables this table references",
         "tags": [
           "Table"
         ]
@@ -4349,6 +6477,7 @@
         "operationId": "patchRows",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4357,6 +6486,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4385,6 +6515,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4392,7 +6562,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Patch multiple rows using JSON Patch",
         "tags": [
           "Table"
         ]
@@ -4403,6 +6573,7 @@
         "operationId": "renameTable",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4411,6 +6582,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4423,7 +6595,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/UpdateTableDto"
+                "$ref": "#/components/schemas/RenameTableDto"
               }
             }
           },
@@ -4434,11 +6606,51 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UpdateTableResponse"
+                  "$ref": "#/components/schemas/RenameTableResponse"
                 }
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4446,7 +6658,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Rename a table",
         "tags": [
           "Table"
         ]
@@ -4457,6 +6669,7 @@
         "operationId": "deleteRows",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4465,6 +6678,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4493,6 +6707,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4500,7 +6754,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Delete multiple rows",
         "tags": [
           "Table"
         ]
@@ -4509,6 +6763,7 @@
         "operationId": "rows",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4517,6 +6772,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4545,6 +6801,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -4552,7 +6848,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List rows in table with filtering and sorting",
         "tags": [
           "Table"
         ]
@@ -4563,6 +6859,7 @@
         "operationId": "deleteRow",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4571,6 +6868,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4579,6 +6877,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4597,6 +6896,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -4604,7 +6943,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Delete a row",
         "tags": [
           "Row"
         ]
@@ -4613,6 +6952,7 @@
         "operationId": "row",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4621,6 +6961,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4629,6 +6970,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4648,6 +6990,36 @@
             },
             "description": ""
           },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4664,7 +7036,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get row by ID",
         "tags": [
           "Row"
         ]
@@ -4673,6 +7045,7 @@
         "operationId": "patchRow",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4681,6 +7054,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4689,6 +7063,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4717,6 +7092,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -4724,7 +7139,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Patch row data using JSON Patch",
         "tags": [
           "Row"
         ]
@@ -4733,6 +7148,7 @@
         "operationId": "updateRow",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4741,6 +7157,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4749,6 +7166,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4777,6 +7195,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -4784,7 +7242,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Replace row data",
         "tags": [
           "Row"
         ]
@@ -4795,6 +7253,7 @@
         "operationId": "rowCountForeignKeysBy",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4803,6 +7262,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4811,6 +7271,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4829,6 +7290,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -4836,7 +7337,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Count rows that reference this row",
         "tags": [
           "Row"
         ]
@@ -4847,6 +7348,7 @@
         "operationId": "rowCountForeignKeysTo",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4855,6 +7357,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4863,6 +7366,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4881,6 +7385,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -4888,7 +7432,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Count rows this row references",
         "tags": [
           "Row"
         ]
@@ -4899,6 +7443,7 @@
         "operationId": "rowForeignKeysBy",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4907,6 +7452,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4915,6 +7461,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -4958,6 +7505,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -4965,7 +7552,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List rows that reference this row",
         "tags": [
           "Row"
         ]
@@ -4976,6 +7563,7 @@
         "operationId": "rowForeignKeysTo",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -4984,6 +7572,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -4992,6 +7581,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -5035,6 +7625,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -5042,7 +7672,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "List rows this row references",
         "tags": [
           "Row"
         ]
@@ -5053,6 +7683,7 @@
         "operationId": "renameRow",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -5061,6 +7692,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -5069,6 +7701,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -5097,6 +7730,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row not found"
           }
         },
         "security": [
@@ -5104,7 +7777,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Rename a row",
         "tags": [
           "Row"
         ]
@@ -5115,6 +7788,7 @@
         "operationId": "uploadFile",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -5123,6 +7797,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -5131,6 +7806,7 @@
             }
           },
           {
+            "description": "URL-friendly row identifier",
             "in": "path",
             "name": "rowId",
             "required": true,
@@ -5139,6 +7815,7 @@
             }
           },
           {
+            "description": "File identifier (generated when row was created)",
             "in": "path",
             "name": "fileId",
             "required": true,
@@ -5164,6 +7841,7 @@
               }
             }
           },
+          "description": "File to upload (max 50MB)",
           "required": true
         },
         "responses": {
@@ -5176,6 +7854,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Row or File field not found"
           }
         },
         "security": [
@@ -5183,7 +7901,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Upload a file to a row field",
         "tags": [
           "Row"
         ]
@@ -5194,6 +7912,7 @@
         "operationId": "tableSchema",
         "parameters": [
           {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -5202,6 +7921,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -5219,7 +7939,47 @@
                 }
               }
             },
-            "description": ""
+            "description": "JSON Schema defining the table structure"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -5227,7 +7987,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get table JSON Schema",
         "tags": [
           "Table"
         ]
@@ -5238,6 +7998,7 @@
         "operationId": "updateRows",
         "parameters": [
           {
+            "description": "Draft revision identifier (modifications are only allowed in draft revisions)",
             "in": "path",
             "name": "revisionId",
             "required": true,
@@ -5246,6 +8007,7 @@
             }
           },
           {
+            "description": "URL-friendly table identifier",
             "in": "path",
             "name": "tableId",
             "required": true,
@@ -5274,6 +8036,46 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Table not found"
           }
         },
         "security": [
@@ -5281,7 +8083,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Replace data for multiple rows",
         "tags": [
           "Table"
         ]
@@ -5301,6 +8103,36 @@
               }
             },
             "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
           }
         },
         "security": [
@@ -5308,7 +8140,7 @@
             "access-token": []
           }
         ],
-        "summary": "",
+        "summary": "Get current authenticated user",
         "tags": [
           "User"
         ]
@@ -5654,5 +8486,46 @@
     }
   },
   "servers": [],
-  "tags": []
+  "tags": [
+    {
+      "description": "System configuration and feature flags",
+      "name": "Configuration"
+    },
+    {
+      "description": "Authentication, user registration, and password management",
+      "name": "Auth"
+    },
+    {
+      "description": "Current user profile and preferences",
+      "name": "User"
+    },
+    {
+      "description": "Organization management, projects, and team members",
+      "name": "Organization"
+    },
+    {
+      "description": "Project lifecycle, branches, and endpoint management",
+      "name": "Project"
+    },
+    {
+      "description": "Branch operations, commits, reverts, and merges",
+      "name": "Branch"
+    },
+    {
+      "description": "Revision snapshots, tables, rows, and change history",
+      "name": "Revision"
+    },
+    {
+      "description": "Table schema and row CRUD operations within a revision",
+      "name": "Table"
+    },
+    {
+      "description": "Individual row operations, data updates, and file uploads",
+      "name": "Row"
+    },
+    {
+      "description": "API endpoint configuration for GraphQL and REST access",
+      "name": "Endpoint"
+    }
+  ]
 }

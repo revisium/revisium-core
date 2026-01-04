@@ -13,7 +13,10 @@ export class ConfigurationController {
   ) {}
 
   @Get()
-  @ApiOperation({ operationId: 'getConfiguration' })
+  @ApiOperation({
+    operationId: 'getConfiguration',
+    summary: 'Get system configuration',
+  })
   @ApiOkResponse({ type: ConfigurationResponse })
   configuration(): Promise<ConfigurationResponse> {
     return this.configurationApiService.getConfiguration();
