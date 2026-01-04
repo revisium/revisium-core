@@ -9,7 +9,8 @@ export class TableModel {
   createdId: string;
 
   @ApiProperty({
-    description: 'Current table identifier (may differ from createdId if renamed)',
+    description:
+      'Current table identifier (may differ from createdId if renamed)',
     example: 'posts',
   })
   id: string;

@@ -10,7 +10,8 @@ export class RowModel {
   createdId: string;
 
   @ApiProperty({
-    description: 'Current row identifier (may differ from createdId if renamed)',
+    description:
+      'Current row identifier (may differ from createdId if renamed)',
     example: 'post-001',
   })
   id: string;
@@ -55,7 +56,11 @@ export class RowModel {
     description: 'Row data matching the table schema',
     type: 'object',
     additionalProperties: true,
-    example: { title: 'Hello World', content: 'My first post', status: 'draft' },
+    example: {
+      title: 'Hello World',
+      content: 'My first post',
+      status: 'draft',
+    },
   })
   data: Prisma.JsonValue;
 }

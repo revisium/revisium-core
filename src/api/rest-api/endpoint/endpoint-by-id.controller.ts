@@ -60,7 +60,10 @@ export class EndpointByIdController {
     subject: PermissionSubject.Endpoint,
   })
   @ApiEndpointIdParam()
-  @ApiOperation({ operationId: 'deleteEndpoint', summary: 'Delete an endpoint' })
+  @ApiOperation({
+    operationId: 'deleteEndpoint',
+    summary: 'Delete an endpoint',
+  })
   @ApiOkResponse({ type: Boolean })
   @ApiCommonErrors()
   @ApiNotFoundError('Endpoint')

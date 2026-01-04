@@ -3,7 +3,8 @@ import { Type } from '@nestjs/common';
 
 export class PageInfo {
   @ApiProperty({
-    description: 'Cursor pointing to the last item. Use as "after" parameter for next page.',
+    description:
+      'Cursor pointing to the last item. Use as "after" parameter for next page.',
     required: false,
     example: 'eyJpZCI6IjEyMyJ9',
   })
@@ -42,7 +43,10 @@ export function Paginated<T>(classRef: Type<T>, name: string): Type<any> {
   Object.defineProperty(EdgeType, 'name', { value: `${name}EdgeType` });
 
   class PaginatedType {
-    @ApiProperty({ type: [EdgeType], description: 'List of items with cursors' })
+    @ApiProperty({
+      type: [EdgeType],
+      description: 'List of items with cursors',
+    })
     edges: EdgeType[];
 
     @ApiProperty({ description: 'Total number of items available' })

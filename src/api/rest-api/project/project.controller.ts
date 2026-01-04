@@ -149,7 +149,10 @@ export class ProjectController {
   })
   @Put(':projectName')
   @ApiOrgProjectParams()
-  @ApiOperation({ operationId: 'updateProject', summary: 'Update project settings' })
+  @ApiOperation({
+    operationId: 'updateProject',
+    summary: 'Update project settings',
+  })
   @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Project')

@@ -91,7 +91,10 @@ export class OrganizationController {
   })
   @Post(':organizationId/projects')
   @ApiOrganizationIdParam()
-  @ApiOperation({ operationId: 'createProject', summary: 'Create a new project' })
+  @ApiOperation({
+    operationId: 'createProject',
+    summary: 'Create a new project',
+  })
   @ApiQuery({
     name: 'fromRevisionId',
     required: false,

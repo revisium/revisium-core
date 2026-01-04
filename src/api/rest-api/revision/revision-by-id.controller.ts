@@ -101,7 +101,10 @@ export class RevisionByIdController {
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('parent-revision')
   @ApiRevisionIdParam()
-  @ApiOperation({ operationId: 'parentRevision', summary: 'Get parent revision' })
+  @ApiOperation({
+    operationId: 'parentRevision',
+    summary: 'Get parent revision',
+  })
   @ApiOkResponse({ type: RevisionModel })
   @ApiCommonErrors()
   @ApiNotFoundError('Revision')

@@ -110,7 +110,10 @@ export class TableByIdController {
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('count-rows')
   @ApiRevisionTableParams()
-  @ApiOperation({ operationId: 'tableCountRows', summary: 'Get row count in table' })
+  @ApiOperation({
+    operationId: 'tableCountRows',
+    summary: 'Get row count in table',
+  })
   @ApiOkResponse({ type: Number })
   @ApiCommonErrors()
   @ApiNotFoundError('Table')
@@ -324,7 +327,10 @@ export class TableByIdController {
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get('schema')
   @ApiRevisionTableParams()
-  @ApiOperation({ operationId: 'tableSchema', summary: 'Get table JSON Schema' })
+  @ApiOperation({
+    operationId: 'tableSchema',
+    summary: 'Get table JSON Schema',
+  })
   @ApiOkResponse({
     description: 'JSON Schema defining the table structure',
     schema: { type: 'object' },

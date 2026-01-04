@@ -67,7 +67,10 @@ export class AuthController {
 
   @UseGuards(HttpJwtAuthGuard)
   @Put('password')
-  @ApiOperation({ operationId: 'updatePassword', summary: 'Update your password' })
+  @ApiOperation({
+    operationId: 'updatePassword',
+    summary: 'Update your password',
+  })
   @ApiOkResponse({ type: Boolean })
   @ApiCommonErrors()
   updatePassword(

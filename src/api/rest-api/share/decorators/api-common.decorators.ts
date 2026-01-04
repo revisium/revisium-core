@@ -61,7 +61,8 @@ export const ApiRevisionIdParam = () =>
   applyDecorators(
     ApiParam({
       name: 'revisionId',
-      description: 'Revision identifier (any revision: draft, head, or historical)',
+      description:
+        'Revision identifier (any revision: draft, head, or historical)',
     }),
   );
 
@@ -134,4 +135,8 @@ export const ApiRevisionTableRowParams = () =>
   applyDecorators(ApiRevisionIdParam(), ApiTableIdParam(), ApiRowIdParam());
 
 export const ApiDraftRevisionTableRowParams = () =>
-  applyDecorators(ApiDraftRevisionIdParam(), ApiTableIdParam(), ApiRowIdParam());
+  applyDecorators(
+    ApiDraftRevisionIdParam(),
+    ApiTableIdParam(),
+    ApiRowIdParam(),
+  );
