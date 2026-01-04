@@ -10,3 +10,8 @@ export class UserModel {
   @ApiProperty({ required: false })
   email?: string;
 }
+
+export class MeModel extends UserModel {
+  @ApiProperty()
+  hasPassword: boolean;
+}

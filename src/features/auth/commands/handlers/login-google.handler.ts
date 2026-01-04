@@ -1,6 +1,5 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { CommandBus, CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { nanoid } from 'nanoid';
 import { AuthService } from 'src/features/auth/auth.service';
 import {
   CreateUserCommand,
@@ -56,7 +55,7 @@ export class LoginGoogleHandler
     >(
       new CreateUserCommand({
         email,
-        password: await this.authService.hashPassword(nanoid()),
+        password: '',
         isEmailConfirmed: true,
         roleId: UserSystemRoles.systemUser,
       }),

@@ -7,12 +7,16 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
+import { PermissionParams } from 'src/features/auth/guards/permission-params';
+import { GQLSystemGuard } from 'src/features/auth/guards/system.guard';
 import { IAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ProjectsConnection } from 'src/api/graphql-api/project/model/projects.connection';
 import {
   GetMeProjectsInput,
+  ResetPasswordInput,
   SearchUsersInput,
   SetUsernameInput,
   UpdatePasswordInput,
@@ -29,11 +33,6 @@ export class UserResolver {
     private readonly userApiService: UserApiService,
     private readonly roleApiService: RoleApiService,
   ) {}
-
-  @Query(() => UserModel)
-  async me(@CurrentUser() user: IAuthUser) {
-    return this.userApiService.getUser({ userId: user.userId });
-  }
 
   @UseGuards(GqlJwtAuthGuard)
   @Query(() => ProjectsConnection)
@@ -77,14 +76,21 @@ export class UserResolver {
     });
   }
 
-  @ResolveField()
-  async organizationId(@Parent() parent: UserModel) {
-    const ownerRole =
-      await this.userApiService.deprecatedGetOwnedUserOrganization({
-        userId: parent.id,
-      });
+  @UseGuards(GqlJwtAuthGuard, GQLSystemGuard)
+  @PermissionParams({
+    action: PermissionAction.update,
+    subject: PermissionSubject.User,
+  })
+  @Mutation(() => Boolean)
+  public async resetPassword(
+    @Args('data') data: ResetPasswordInput,
+  ): Promise<boolean> {
+    return this.userApiService.resetPassword(data);
+  }
 
-    return ownerRole?.organizationId;
+  @ResolveField()
+  organizationId(@Parent() parent: UserModel) {
+    return parent.username ?? null;
   }
 
   @ResolveField()

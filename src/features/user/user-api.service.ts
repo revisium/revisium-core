@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
+  ResetPasswordCommand,
+  ResetPasswordCommandData,
+  ResetPasswordCommandReturnType,
   SetUsernameCommand,
   SetUsernameCommandData,
   SetUsernameCommandReturnType,
@@ -9,9 +12,6 @@ import {
   UpdatePasswordCommandReturnType,
 } from 'src/features/user/commands/impl';
 import {
-  DeprecatedGetOwnedUserOrganizationQuery,
-  DeprecatedGetOwnedUserOrganizationQueryData,
-  DeprecatedGetOwnedUserOrganizationQueryReturnType,
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryData,
   GetProjectsByUserIdQueryReturnType,
@@ -56,15 +56,6 @@ export class UserApiService {
     >(new GetUserProjectQuery(data));
   }
 
-  public deprecatedGetOwnedUserOrganization(
-    data: DeprecatedGetOwnedUserOrganizationQueryData,
-  ) {
-    return this.queryBus.execute<
-      DeprecatedGetOwnedUserOrganizationQuery,
-      DeprecatedGetOwnedUserOrganizationQueryReturnType
-    >(new DeprecatedGetOwnedUserOrganizationQuery(data));
-  }
-
   public updatePassword(data: UpdatePasswordCommandData) {
     return this.commandBus.execute<
       UpdatePasswordCommand,
@@ -90,5 +81,12 @@ export class UserApiService {
       SetUsernameCommand,
       SetUsernameCommandReturnType
     >(new SetUsernameCommand(data));
+  }
+
+  public resetPassword(data: ResetPasswordCommandData) {
+    return this.commandBus.execute<
+      ResetPasswordCommand,
+      ResetPasswordCommandReturnType
+    >(new ResetPasswordCommand(data));
   }
 }

@@ -30,7 +30,7 @@ export class CreateUserHandler
       throw new BadRequestException('Invalid SystemRole');
     }
 
-    if (data.password.length < 8) {
+    if (data.password && data.password.length < 8) {
       throw new BadRequestException('Password must be at least 8 characters');
     }
 

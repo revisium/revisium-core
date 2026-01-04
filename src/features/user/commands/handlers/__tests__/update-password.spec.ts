@@ -23,6 +23,19 @@ describe('UpdatePasswordHandler', () => {
     await expect(handler.execute(command)).rejects.toThrow('Not found user');
   });
 
+  it('should throw an error if the old password is not provided', async () => {
+    prismaService.user.findUnique = createMock({
+      id: 'userId',
+      password: 'hashedPassword',
+    });
+    const command = createCommand({ oldPassword: '' });
+
+    await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
+    await expect(handler.execute(command)).rejects.toThrow(
+      'Current password is required',
+    );
+  });
+
   it('should throw an error if the old password is incorrect', async () => {
     prismaService.user.findUnique = createMock({
       id: 'userId',
@@ -51,6 +64,42 @@ describe('UpdatePasswordHandler', () => {
     expect(prismaService.user.update).toHaveBeenCalledWith({
       where: { id: 'userId' },
       data: { password: 'newHashedPassword' },
+    });
+  });
+
+  describe('user without password (OAuth)', () => {
+    it('should set password when user has no password and oldPassword is empty', async () => {
+      prismaService.user.findUnique = createMock({
+        id: 'userId',
+        password: '',
+      });
+      authService.hashPassword = createMock('newHashedPassword');
+      prismaService.user.update = createMock(true);
+      const command = createCommand({ oldPassword: '' });
+
+      const result = await handler.execute(command);
+
+      expect(result).toBe(true);
+      expect(authService.comparePassword).not.toHaveBeenCalled();
+      expect(prismaService.user.update).toHaveBeenCalledWith({
+        where: { id: 'userId' },
+        data: { password: 'newHashedPassword' },
+      });
+    });
+
+    it('should throw error when user has no password but oldPassword is provided', async () => {
+      prismaService.user.findUnique = createMock({
+        id: 'userId',
+        password: '',
+      });
+      const command = createCommand({ oldPassword: 'somePassword' });
+
+      await expect(handler.execute(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(handler.execute(command)).rejects.toThrow(
+        'Invalid password',
+      );
     });
   });
 

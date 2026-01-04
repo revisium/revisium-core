@@ -28,15 +28,33 @@ export class UpdatePasswordHandler
       throw new BadRequestException('Not found user');
     }
 
-    if (
-      !(await this.authService.comparePassword(data.oldPassword, user.password))
-    ) {
-      throw new BadRequestException('Invalid password');
-    }
-
+    await this.validateOldPassword(user.password, data.oldPassword);
     await this.savePassword(data);
 
     return true;
+  }
+
+  private async validateOldPassword(
+    existingPassword: string,
+    oldPassword: string,
+  ): Promise<void> {
+    const hasExistingPassword = Boolean(existingPassword);
+    const hasOldPassword = Boolean(oldPassword);
+
+    if (hasExistingPassword && !hasOldPassword) {
+      throw new BadRequestException('Current password is required');
+    }
+
+    if (!hasExistingPassword && hasOldPassword) {
+      throw new BadRequestException('Invalid password');
+    }
+
+    if (
+      hasExistingPassword &&
+      !(await this.authService.comparePassword(oldPassword, existingPassword))
+    ) {
+      throw new BadRequestException('Invalid password');
+    }
   }
 
   private async savePassword(data: UpdatePasswordCommand['data']) {

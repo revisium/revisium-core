@@ -428,6 +428,15 @@ type LoginModel {
   accessToken: String!
 }
 
+type MeModel {
+  email: String
+  hasPassword: Boolean!
+  id: String!
+  organizationId: String
+  role: RoleModel
+  username: String
+}
+
 enum MigrationType {
   INIT
   REMOVE
@@ -470,6 +479,7 @@ type Mutation {
   removeUserFromProject(data: RemoveUserFromProjectInput!): Boolean!
   renameRow(data: RenameRowInput!): RenameRowResultModel!
   renameTable(data: RenameTableInput!): RenameTableResultModel!
+  resetPassword(data: ResetPasswordInput!): Boolean!
   revertChanges(data: RevertChangesInput!): BranchModel!
   setUsername(data: SetUsernameInput!): Boolean!
   signUp(data: SignUpInput!): Boolean!
@@ -612,7 +622,7 @@ type Query {
   branches(data: GetBranchesInput!): BranchesConnection!
   configuration: ConfigurationModel!
   getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int! @deprecated(reason: "use RowModel.rowForeignKeysBy.totalCount")
-  me: UserModel!
+  me: MeModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
   project(data: GetProjectInput!): ProjectModel!
   projectEndpoints(data: GetProjectEndpointsInput!): EndpointsConnection!
@@ -711,6 +721,11 @@ input RenameTableInput {
 type RenameTableResultModel {
   previousVersionTableId: String!
   table: TableModel!
+}
+
+input ResetPasswordInput {
+  newPassword: String!
+  userId: String!
 }
 
 input RevertChangesInput {
