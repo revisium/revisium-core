@@ -12,6 +12,12 @@ import {
   UpdatePasswordCommandReturnType,
 } from 'src/features/user/commands/impl';
 import {
+  AdminUserQuery,
+  AdminUserQueryData,
+  AdminUserQueryReturnType,
+  AdminUsersQuery,
+  AdminUsersQueryData,
+  AdminUsersQueryReturnType,
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryData,
   GetProjectsByUserIdQueryReturnType,
@@ -73,6 +79,18 @@ export class UserApiService {
   public searchUsers(data: SearchUsersQueryData) {
     return this.queryBus.execute<SearchUsersQuery, SearchUsersQueryReturnType>(
       new SearchUsersQuery(data),
+    );
+  }
+
+  public adminUsers(data: AdminUsersQueryData) {
+    return this.queryBus.execute<AdminUsersQuery, AdminUsersQueryReturnType>(
+      new AdminUsersQuery(data),
+    );
+  }
+
+  public adminUser(data: AdminUserQueryData) {
+    return this.queryBus.execute<AdminUserQuery, AdminUserQueryReturnType>(
+      new AdminUserQuery(data),
     );
   }
 

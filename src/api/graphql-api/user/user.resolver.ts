@@ -15,12 +15,14 @@ import { IAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ProjectsConnection } from 'src/api/graphql-api/project/model/projects.connection';
 import {
+  AdminUserInput,
   GetMeProjectsInput,
   ResetPasswordInput,
   SearchUsersInput,
   SetUsernameInput,
   UpdatePasswordInput,
 } from 'src/api/graphql-api/user/inputs';
+import { SearchUsersConnection } from 'src/api/graphql-api/user/model/search-users.connection';
 import { UserModel } from 'src/api/graphql-api/user/model/user.model';
 import { UsersConnection } from 'src/api/graphql-api/user/model/users.connection';
 import { RoleApiService } from 'src/features/role/role-api.service';
@@ -47,9 +49,29 @@ export class UserResolver {
   }
 
   @UseGuards(GqlJwtAuthGuard)
-  @Query(() => UsersConnection)
+  @Query(() => SearchUsersConnection)
   async searchUsers(@Args('data') data: SearchUsersInput) {
     return this.userApiService.searchUsers(data);
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLSystemGuard)
+  @PermissionParams({
+    action: PermissionAction.read,
+    subject: PermissionSubject.User,
+  })
+  @Query(() => UsersConnection)
+  async adminUsers(@Args('data') data: SearchUsersInput) {
+    return this.userApiService.adminUsers(data);
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLSystemGuard)
+  @PermissionParams({
+    action: PermissionAction.read,
+    subject: PermissionSubject.User,
+  })
+  @Query(() => UserModel, { nullable: true })
+  async adminUser(@Args('data') data: AdminUserInput) {
+    return this.userApiService.adminUser(data);
   }
 
   @UseGuards(GqlJwtAuthGuard)
