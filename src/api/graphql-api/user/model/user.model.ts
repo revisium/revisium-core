@@ -15,9 +15,9 @@ export class UserModel {
   @Field({ nullable: true })
   email?: string;
 
-  @Field(() => RoleModel)
-  role: RoleModel;
+  @Field(() => RoleModel, { nullable: true })
+  role?: RoleModel;
 
-  @Field()
-  roleId: string;
+  @Field({ nullable: true })
+  roleId?: string;
 }

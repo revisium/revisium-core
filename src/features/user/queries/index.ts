@@ -1,6 +1,5 @@
 import {
   AdminUserHandler,
-  AdminUsersHandler,
   GetProjectsByUserIdHandler,
   GetUserHandler,
   GetUserProjectHandler,
@@ -14,6 +13,5 @@ export const USER_QUERIES = [
   GetProjectsByUserIdHandler,
   SearchUsersHandler,
   GetUserOrganizationHandler,
-  AdminUsersHandler,
   AdminUserHandler,
 ];

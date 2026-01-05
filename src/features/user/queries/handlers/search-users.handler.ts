@@ -33,6 +33,7 @@ export class SearchUsersHandler
         id: true,
         username: true,
         email: true,
+        roleId: true,
       },
     });
   }

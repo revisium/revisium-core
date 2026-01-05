@@ -15,9 +15,6 @@ import {
   AdminUserQuery,
   AdminUserQueryData,
   AdminUserQueryReturnType,
-  AdminUsersQuery,
-  AdminUsersQueryData,
-  AdminUsersQueryReturnType,
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryData,
   GetProjectsByUserIdQueryReturnType,
@@ -82,9 +79,9 @@ export class UserApiService {
     );
   }
 
-  public adminUsers(data: AdminUsersQueryData) {
-    return this.queryBus.execute<AdminUsersQuery, AdminUsersQueryReturnType>(
-      new AdminUsersQuery(data),
+  public adminUsers(data: SearchUsersQueryData) {
+    return this.queryBus.execute<SearchUsersQuery, SearchUsersQueryReturnType>(
+      new SearchUsersQuery(data),
     );
   }
 
