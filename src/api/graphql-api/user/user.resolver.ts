@@ -117,9 +117,6 @@ export class UserResolver {
 
   @ResolveField()
   async role(@Parent() parent: UserModel) {
-    if (!parent.roleId) {
-      return null;
-    }
     return this.roleApiService.getRole({ roleId: parent.roleId });
   }
 }
