@@ -80,9 +80,7 @@ export class UserApiService {
   }
 
   public adminUsers(data: SearchUsersQueryData) {
-    return this.queryBus.execute<SearchUsersQuery, SearchUsersQueryReturnType>(
-      new SearchUsersQuery(data),
-    );
+    return this.searchUsers(data);
   }
 
   public adminUser(data: AdminUserQueryData) {
