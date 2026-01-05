@@ -18,6 +18,10 @@ type AddedRowChangeModel {
   table: RowChangeTableModel!
 }
 
+input AdminUserInput {
+  userId: String!
+}
+
 input BooleanFilter {
   equals: Boolean
   not: Boolean
@@ -619,6 +623,8 @@ type ProjectsConnection {
 }
 
 type Query {
+  adminUser(data: AdminUserInput!): UserModel
+  adminUsers(data: SearchUsersInput!): UsersConnection!
   branch(data: GetBranchInput!): BranchModel!
   branches(data: GetBranchesInput!): BranchesConnection!
   configuration: ConfigurationModel!
@@ -634,7 +640,7 @@ type Query {
   rowChanges(data: GetRowChangesInput!): RowChangesConnection!
   rows(data: GetRowsInput!): RowsConnection!
   searchRows(data: SearchRowsInput!): SearchResultsConnection!
-  searchUsers(data: SearchUsersInput!): UsersConnection!
+  searchUsers(data: SearchUsersInput!): SearchUsersConnection!
   table(data: GetTableInput!): TableModel
   tableChanges(data: GetTableChangesInput!): TableChangesConnection!
   tableViews(data: GetTableViewsInput!): TableViewsDataModel!
@@ -961,6 +967,23 @@ enum SearchType {
   tsquery
 }
 
+type SearchUserModel {
+  email: String
+  id: String!
+  username: String
+}
+
+type SearchUserModelEdge {
+  cursor: String!
+  node: SearchUserModel!
+}
+
+type SearchUsersConnection {
+  edges: [SearchUserModelEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 input SearchUsersInput {
   after: String
   first: Int!
@@ -1140,7 +1163,8 @@ type UserModel {
   email: String
   id: String!
   organizationId: String
-  role: RoleModel
+  role: RoleModel!
+  roleId: String!
   username: String
 }
 
