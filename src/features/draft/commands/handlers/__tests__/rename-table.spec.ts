@@ -25,7 +25,7 @@ describe('RenameTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'Table ID must be between',
+      'Table ID must be 1 to 64 characters, start with a letter or underscore, and contain only letters (a-z, A-Z), digits (0-9), underscores (_), and hyphens (-).',
     );
   });
 
