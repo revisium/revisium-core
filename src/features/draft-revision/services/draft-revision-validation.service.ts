@@ -1,8 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import {
-  MAX_ID_LENGTH,
-  MIN_ID_LENGTH,
-} from 'src/features/draft-revision/draft-revision.constants';
+import { validateRowId } from 'src/features/share/utils/validateUrlLikeId/validateRowId';
+import { validateTableId } from 'src/features/share/utils/validateUrlLikeId/validateTableId';
 
 @Injectable()
 export class DraftRevisionValidationService {
@@ -23,28 +21,16 @@ export class DraftRevisionValidationService {
   }
 
   ensureValidTableId(tableId: string): void {
-    if (!this.isValidId(tableId)) {
-      throw new BadRequestException(
-        `Table ID must be between ${MIN_ID_LENGTH} and ${MAX_ID_LENGTH} characters`,
-      );
-    }
+    validateTableId(tableId);
   }
 
   ensureValidRowId(rowId: string): void {
-    if (!this.isValidId(rowId)) {
-      throw new BadRequestException(
-        `Row ID must be between ${MIN_ID_LENGTH} and ${MAX_ID_LENGTH} characters`,
-      );
-    }
+    validateRowId(rowId);
   }
 
   ensureIdsDifferent(currentId: string, newId: string): void {
     if (currentId === newId) {
       throw new BadRequestException('New ID must be different from current');
     }
-  }
-
-  private isValidId(id: string): boolean {
-    return id.length >= MIN_ID_LENGTH && id.length <= MAX_ID_LENGTH;
   }
 }
