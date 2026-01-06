@@ -12,28 +12,15 @@ on:
     branches: [master]
 
 jobs:
-  checks:
+  lint-and-build:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        shell: bash
-
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24.11.1
+          node-version: 22.x
           cache: 'npm'
-
-      - name: Create test .env
-        uses: canastro/copy-file-action@ae66602ce7d214dbd2e298c1db67a81388755a0a #canastro/copy-file-action@master
-        with:
-          source: '.env.example'
-          target: '.env'
 
       - run: npm ci
 
@@ -41,15 +28,105 @@ jobs:
 
       - run: npm run tsc
 
-      - run: npm run docker:test-container-up
-      - run: npm run test:cov
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+
+    services:
+      postgres:
+        image: postgres:15.4
+        env:
+          POSTGRES_USER: prisma
+          POSTGRES_PASSWORD: prisma
+          POSTGRES_DB: tests
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6381:6379
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - name: Create test .env
+        uses: canastro/copy-file-action@ae66602ce7d214dbd2e298c1db67a81388755a0a
+        with:
+          source: '.env.example'
+          target: '.env'
+
+      - run: npm ci
+
+      - name: Run Prisma migrations
+        run: npm run prisma:migrate:deploy
+        env:
+          DATABASE_URL: postgresql://prisma:prisma@localhost:5434/tests
+
+      - name: Seed database
+        run: npm run seed
+        env:
+          DATABASE_URL: postgresql://prisma:prisma@localhost:5434/tests
+
+      - name: Run tests with coverage (shard ${{ matrix.shard }}/4)
+        run: npm run test:cov -- --shard=${{ matrix.shard }}/4
+        env:
+          DATABASE_URL: postgresql://prisma:prisma@localhost:5434/tests
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.shard }}
+          path: coverage/lcov.info
+          retention-days: 1
+
+  coverage:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage-artifacts
+          pattern: coverage-*
+
+      - name: Merge coverage reports
+        run: |
+          npm install -g lcov-result-merger
+          mkdir -p coverage
+          lcov-result-merger 'coverage-artifacts/*/lcov.info' 'coverage/lcov.info'
 
       - name: SonarQube Scan
-        uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9 #SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
       - name: Upload results to Codecov
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 #codecov/codecov-action@v5
+        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: coverage/lcov.info
