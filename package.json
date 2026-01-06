@@ -24,6 +24,7 @@
     "generate:seed:load": "ts-node prisma/seed/loadFromSeedApi.ts",
     "seed": "ts-node prisma/seed.ts",
     "seed:prod": "node --experimental-require-module dist/prisma/seed.js",
+    "fixtures:snapshot": "dotenv -e .env.test ts-node src/__tests__/fixtures/scripts/generate-snapshot.ts",
     "build": "nest build && tsc-alias -p tsconfig.build.json",
     "prepublishOnly": "npm run build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

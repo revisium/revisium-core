@@ -150,7 +150,9 @@ describe('MCP API', () => {
         expect(data.result.tools).toBeDefined();
         expect(Array.isArray(data.result.tools)).toBe(true);
 
-        const toolNames = data.result.tools.map((t: { name: string }) => t.name);
+        const toolNames = data.result.tools.map(
+          (t: { name: string }) => t.name,
+        );
         expect(toolNames).toContain('login');
         expect(toolNames).toContain('loginWithToken');
         expect(toolNames).toContain('me');

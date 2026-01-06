@@ -203,7 +203,9 @@ describe('restapi - revision-by-id', () => {
     describe('GET /revision/:revisionId/endpoints', () => {
       it('owner can get endpoints', async () => {
         const result = await request(app.getHttpServer())
-          .get(`/api/revision/${preparedData.project.draftRevisionId}/endpoints`)
+          .get(
+            `/api/revision/${preparedData.project.draftRevisionId}/endpoints`,
+          )
           .set('Authorization', `Bearer ${preparedData.owner.token}`)
           .expect(200)
           .then((res) => res.body);
@@ -213,7 +215,9 @@ describe('restapi - revision-by-id', () => {
 
       it('another owner cannot get endpoints (private project)', async () => {
         return request(app.getHttpServer())
-          .get(`/api/revision/${preparedData.project.draftRevisionId}/endpoints`)
+          .get(
+            `/api/revision/${preparedData.project.draftRevisionId}/endpoints`,
+          )
           .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
           .expect(403)
           .expect(/You are not allowed to read on Project/);
@@ -221,7 +225,9 @@ describe('restapi - revision-by-id', () => {
 
       it('cannot get endpoints without authentication (private project)', async () => {
         return request(app.getHttpServer())
-          .get(`/api/revision/${preparedData.project.draftRevisionId}/endpoints`)
+          .get(
+            `/api/revision/${preparedData.project.draftRevisionId}/endpoints`,
+          )
           .expect(403)
           .expect(/You are not allowed to read on Project/);
       });

@@ -362,7 +362,9 @@ describe('mcp-api - role-based permissions', () => {
             additionalProperties: false,
           },
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to create on Table/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to create on Table/,
+        );
       });
 
       it('reader cannot create table', async () => {
@@ -377,7 +379,9 @@ describe('mcp-api - role-based permissions', () => {
             additionalProperties: false,
           },
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to create on Table/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to create on Table/,
+        );
       });
 
       it('editor cannot remove table', async () => {
@@ -386,7 +390,9 @@ describe('mcp-api - role-based permissions', () => {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Table/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to delete on Table/,
+        );
       });
 
       it('reader cannot remove table', async () => {
@@ -395,7 +401,9 @@ describe('mcp-api - role-based permissions', () => {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Table/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to delete on Table/,
+        );
       });
     });
 
@@ -636,7 +644,9 @@ describe('mcp-api - role-based permissions', () => {
           revisionId: fixture.project.headRevisionId,
           branchName: 'editor-branch',
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to create on Branch/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to create on Branch/,
+        );
       });
 
       it('reader cannot create branch', async () => {
@@ -645,7 +655,9 @@ describe('mcp-api - role-based permissions', () => {
           revisionId: fixture.project.headRevisionId,
           branchName: 'reader-branch',
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to create on Branch/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to create on Branch/,
+        );
       });
 
       it('reader cannot revert changes', async () => {
@@ -655,7 +667,9 @@ describe('mcp-api - role-based permissions', () => {
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to revert on Revision/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to revert on Revision/,
+        );
       });
     });
 
@@ -782,7 +796,9 @@ describe('mcp-api - role-based permissions', () => {
           branchName: fixture.project.branchName,
           comment: 'Reader commit',
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to create on Revision/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to create on Revision/,
+        );
       });
     });
 
@@ -844,7 +860,9 @@ describe('mcp-api - role-based permissions', () => {
           organizationId: preparedData.project.organizationId,
         });
         expect(isSuccessResult(result)).toBe(true);
-        const org = parseToolResult<{ id: string }>(result.result as McpToolResult);
+        const org = parseToolResult<{ id: string }>(
+          result.result as McpToolResult,
+        );
         expect(org.id).toBe(preparedData.project.organizationId);
       });
 
@@ -854,7 +872,9 @@ describe('mcp-api - role-based permissions', () => {
           organizationId: preparedData.project.organizationId,
         });
         expect(isSuccessResult(result)).toBe(true);
-        const org = parseToolResult<{ id: string }>(result.result as McpToolResult);
+        const org = parseToolResult<{ id: string }>(
+          result.result as McpToolResult,
+        );
         expect(org.id).toBe(preparedData.project.organizationId);
       });
 
@@ -983,7 +1003,9 @@ describe('mcp-api - role-based permissions', () => {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Project/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to delete on Project/,
+        );
       });
 
       it('editor cannot delete project', async () => {
@@ -992,7 +1014,9 @@ describe('mcp-api - role-based permissions', () => {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Project/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to delete on Project/,
+        );
       });
 
       it('reader cannot delete project', async () => {
@@ -1001,7 +1025,9 @@ describe('mcp-api - role-based permissions', () => {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Project/);
+        expect(getErrorMessage(result)).toMatch(
+          /not allowed to delete on Project/,
+        );
       });
     });
 
