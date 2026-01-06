@@ -10,8 +10,7 @@ export const TABLE_ID_ERROR_MESSAGE =
   `start with a letter or underscore, and contain only letters (a-z, A-Z), ` +
   `digits (0-9), underscores (_), and hyphens (-).`;
 
-export const TABLE_ID_SYSTEM_PREFIX_ERROR_MESSAGE =
-  `Table ID cannot start with "${SYSTEM_TABLE_PREFIX}" prefix (reserved for system tables).`;
+export const TABLE_ID_SYSTEM_PREFIX_ERROR_MESSAGE = `Table ID cannot start with "${SYSTEM_TABLE_PREFIX}" prefix (reserved for system tables).`;
 
 export const validateTableId = (id: string): void => {
   if (

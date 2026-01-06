@@ -73,7 +73,9 @@ describe('validateTableId', () => {
   describe('invalid table IDs - unicode characters', () => {
     it('should fail for cyrillic characters', () => {
       expect(() => validateTableId('таблица')).toThrow(BadRequestException);
-      expect(() => validateTableId('users_данные')).toThrow(BadRequestException);
+      expect(() => validateTableId('users_данные')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should fail for japanese characters', () => {
@@ -113,26 +115,42 @@ describe('validateTableId', () => {
     });
 
     it('should fail for names exceeding max length (65 chars)', () => {
-      expect(() => validateTableId('a'.repeat(65))).toThrow(BadRequestException);
+      expect(() => validateTableId('a'.repeat(65))).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should fail for very long names', () => {
-      expect(() => validateTableId('a'.repeat(100))).toThrow(BadRequestException);
+      expect(() => validateTableId('a'.repeat(100))).toThrow(
+        BadRequestException,
+      );
     });
   });
 
   describe('invalid table IDs - system table prefix', () => {
     it('should fail for names starting with system table prefix', () => {
-      expect(() => validateTableId('revisium_custom')).toThrow(BadRequestException);
+      expect(() => validateTableId('revisium_custom')).toThrow(
+        BadRequestException,
+      );
       expect(() => validateTableId('revisium_')).toThrow(BadRequestException);
-      expect(() => validateTableId('revisium_test_table')).toThrow(BadRequestException);
+      expect(() => validateTableId('revisium_test_table')).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should fail for actual system table names', () => {
-      expect(() => validateTableId(SystemTables.Schema)).toThrow(BadRequestException);
-      expect(() => validateTableId(SystemTables.Migration)).toThrow(BadRequestException);
-      expect(() => validateTableId(SystemTables.SharedSchemas)).toThrow(BadRequestException);
-      expect(() => validateTableId(SystemTables.Views)).toThrow(BadRequestException);
+      expect(() => validateTableId(SystemTables.Schema)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validateTableId(SystemTables.Migration)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validateTableId(SystemTables.SharedSchemas)).toThrow(
+        BadRequestException,
+      );
+      expect(() => validateTableId(SystemTables.Views)).toThrow(
+        BadRequestException,
+      );
     });
 
     it('should pass for names containing but not starting with prefix', () => {
