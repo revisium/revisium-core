@@ -6,10 +6,10 @@ import { tableViewsSchema } from 'src/features/share/schema/table-views-schema';
 export const SYSTEM_TABLE_PREFIX = 'revisium_';
 
 export enum SystemTables {
-  Schema = `${SYSTEM_TABLE_PREFIX}schema_table`,
-  Migration = `${SYSTEM_TABLE_PREFIX}migration_table`,
-  SharedSchemas = `${SYSTEM_TABLE_PREFIX}shared_schemas_table`,
-  Views = `${SYSTEM_TABLE_PREFIX}views_table`,
+  Schema = 'revisium_schema_table',
+  Migration = 'revisium_migration_table',
+  SharedSchemas = 'revisium_shared_schemas_table',
+  Views = 'revisium_views_table',
 }
 
 export const systemTablesIds: string[] = [
