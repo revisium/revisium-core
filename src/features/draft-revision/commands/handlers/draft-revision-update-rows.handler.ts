@@ -10,6 +10,7 @@ import {
   DraftRevisionInternalService,
   DraftRevisionValidationService,
 } from 'src/features/draft-revision/services';
+import { systemTablesIds } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionUpdateRowsCommand)
@@ -35,7 +36,10 @@ export class DraftRevisionUpdateRowsHandler
     this.validationService.ensureDraftRevision(revision);
 
     const rowIds = data.rows.map((r) => r.rowId);
-    rowIds.forEach((rowId) => this.validationService.ensureValidRowId(rowId));
+    const isSystemTable = systemTablesIds.includes(data.tableId);
+    if (!isSystemTable) {
+      rowIds.forEach((rowId) => this.validationService.ensureValidRowId(rowId));
+    }
     this.ensureUniqueRowIds(rowIds);
 
     const tableResult = await this.internalService.getOrCreateDraftTable({

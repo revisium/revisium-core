@@ -12,6 +12,7 @@ import {
   DraftRevisionInternalService,
   DraftRevisionValidationService,
 } from 'src/features/draft-revision/services';
+import { systemTablesIds } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionRenameRowsCommand)
@@ -35,7 +36,9 @@ export class DraftRevisionRenameRowsHandler
       data.revisionId,
     );
     this.validationService.ensureDraftRevision(revision);
-    this.validateRenames(data.renames);
+
+    const isSystemTable = systemTablesIds.includes(data.tableId);
+    this.validateRenames(data.renames, isSystemTable);
 
     const tableResult = await this.internalService.getOrCreateDraftTable({
       revisionId: data.revisionId,
@@ -60,10 +63,15 @@ export class DraftRevisionRenameRowsHandler
     };
   }
 
-  private validateRenames(renames: DraftRevisionRenameRowItem[]): void {
+  private validateRenames(
+    renames: DraftRevisionRenameRowItem[],
+    isSystemTable: boolean,
+  ): void {
     renames.forEach((rename) => {
-      this.validationService.ensureValidRowId(rename.rowId);
-      this.validationService.ensureValidRowId(rename.nextRowId);
+      if (!isSystemTable) {
+        this.validationService.ensureValidRowId(rename.rowId);
+        this.validationService.ensureValidRowId(rename.nextRowId);
+      }
       this.validationService.ensureIdsDifferent(rename.rowId, rename.nextRowId);
     });
 

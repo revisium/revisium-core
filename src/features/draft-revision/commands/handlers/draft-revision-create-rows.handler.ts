@@ -13,6 +13,7 @@ import {
   DraftRevisionInternalService,
   DraftRevisionValidationService,
 } from 'src/features/draft-revision/services';
+import { systemTablesIds } from 'src/features/share/system-tables.consts';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
@@ -38,9 +39,13 @@ export class DraftRevisionCreateRowsHandler
       data.revisionId,
     );
     this.validationService.ensureDraftRevision(revision);
-    data.rows.forEach((row) =>
-      this.validationService.ensureValidRowId(row.rowId),
-    );
+
+    const isSystemTable = systemTablesIds.includes(data.tableId);
+    if (!isSystemTable) {
+      data.rows.forEach((row) =>
+        this.validationService.ensureValidRowId(row.rowId),
+      );
+    }
     this.ensureUniqueRowIds(data.rows.map((r) => r.rowId));
 
     const tableResult = await this.internalService.getOrCreateDraftTable({

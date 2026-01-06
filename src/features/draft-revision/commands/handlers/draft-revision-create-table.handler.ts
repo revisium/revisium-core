@@ -30,7 +30,9 @@ export class DraftRevisionCreateTableHandler
 
     const revision = await this.internalService.findRevisionOrThrow(revisionId);
     this.validationService.ensureDraftRevision(revision);
-    this.validationService.ensureValidTableId(tableId);
+    if (!system) {
+      this.validationService.ensureValidTableId(tableId);
+    }
     await this.internalService.ensureTableNotExists(revisionId, tableId);
 
     const result = await this.createTableInRevision({
