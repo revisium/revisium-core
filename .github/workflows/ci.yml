@@ -12,7 +12,7 @@ on:
     branches: [master]
 
 jobs:
-  lint-and-build:
+  setup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,15 +20,40 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
 
-      - run: npm ci
+      - name: Cache node_modules
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: npm ci
+
+  lint-and-build:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
 
       - run: npm run lint:ci
 
       - run: npm run tsc
 
   test:
+    needs: setup
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -67,15 +92,18 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
+
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
 
       - name: Create test .env
         uses: canastro/copy-file-action@ae66602ce7d214dbd2e298c1db67a81388755a0a
         with:
           source: '.env.example'
           target: '.env'
-
-      - run: npm ci
 
       - name: Run Prisma migrations
         run: npm run prisma:migrate:deploy
@@ -110,9 +138,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22.x
-          cache: 'npm'
 
-      - run: npm ci
+      - name: Restore node_modules
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ hashFiles('package-lock.json') }}
 
       - name: Download all coverage artifacts
         uses: actions/download-artifact@v4
@@ -122,9 +153,7 @@ jobs:
 
       - name: Merge coverage reports
         run: |
-          npm install -g lcov-result-merger
-          mkdir -p coverage
-          lcov-result-merger 'coverage-artifacts/*/lcov.info' 'coverage/lcov.info'
+          npx lcov-result-merger 'coverage-artifacts/*/lcov.info' 'coverage/lcov.info'
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9
