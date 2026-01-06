@@ -102,7 +102,7 @@ describe('DraftRevisionRenameRowsHandler', () => {
         BadRequestException,
       );
       await expect(runInTransaction(command)).rejects.toThrow(
-        'Row ID must be between 1 and 100 characters',
+        'Row ID must be 1 to 64 characters and contain only letters (a-z, A-Z), digits (0-9), underscores (_), and hyphens (-).',
       );
     });
 
