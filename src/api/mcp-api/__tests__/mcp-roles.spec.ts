@@ -123,6 +123,34 @@ describe('mcp-api - role-based permissions', () => {
     return sessionId;
   };
 
+  const initWithoutLogin = async (): Promise<string> => {
+    const initResponse = await request(app.getHttpServer())
+      .post('/mcp')
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json, text/event-stream')
+      .buffer(true)
+      .send({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'initialize',
+        params: {
+          protocolVersion: '2024-11-05',
+          capabilities: {},
+          clientInfo: { name: 'test', version: '1.0.0' },
+        },
+      });
+
+    const sessionId = initResponse.headers['mcp-session-id'] as string;
+
+    if (!sessionId) {
+      throw new Error(
+        `No session ID returned. Status: ${initResponse.status}, Headers: ${JSON.stringify(initResponse.headers)}, Body: ${initResponse.text}`,
+      );
+    }
+
+    return sessionId;
+  };
+
   const parseToolResult = <T>(result: McpToolResult): T => {
     const text = result.content.find((c) => c.type === 'text')?.text || '';
     return JSON.parse(text) as T;
@@ -178,34 +206,12 @@ describe('mcp-api - role-based permissions', () => {
   describe('Authentication', () => {
     let preparedData: PrepareDataReturnType;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       preparedData = await prepareData(app);
     });
 
     it('should require authentication for protected tools', async () => {
-      const initResponse = await request(app.getHttpServer())
-        .post('/mcp')
-        .set('Content-Type', 'application/json')
-        .set('Accept', 'application/json, text/event-stream')
-        .buffer(true)
-        .send({
-          jsonrpc: '2.0',
-          id: 1,
-          method: 'initialize',
-          params: {
-            protocolVersion: '2024-11-05',
-            capabilities: {},
-            clientInfo: { name: 'test', version: '1.0.0' },
-          },
-        });
-
-      const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-      if (!sessionId) {
-        throw new Error(
-          `No session ID returned. Status: ${initResponse.status}, Headers: ${JSON.stringify(initResponse.headers)}, Body: ${initResponse.text}`,
-        );
-      }
+      const sessionId = await initWithoutLogin();
 
       const result = await callMcpTool(sessionId, 'getTables', {
         revisionId: preparedData.project.draftRevisionId,
@@ -228,7 +234,7 @@ describe('mcp-api - role-based permissions', () => {
   describe('Private Project Access', () => {
     let preparedData: PrepareDataReturnType;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       preparedData = await prepareData(app);
     });
 
@@ -297,50 +303,55 @@ describe('mcp-api - role-based permissions', () => {
   });
 
   describe('Table Operations - Role-Based', () => {
-    let fixture: PrepareDataWithRolesReturnType;
+    describe('Read Operations', () => {
+      let fixture: PrepareDataWithRolesReturnType;
 
-    beforeEach(async () => {
-      fixture = await prepareDataWithRoles(app);
-    });
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
+      });
 
-    describe('createTable', () => {
-      it('owner can create table', async () => {
+      it('owner can read tables', async () => {
         const sessionId = await initAndLogin(fixture.owner);
-
-        const result = await callMcpTool(sessionId, 'createTable', {
+        const result = await callMcpTool(sessionId, 'getTables', {
           revisionId: fixture.project.draftRevisionId,
-          tableId: 'owner-table',
-          schema: {
-            type: 'object',
-            properties: { name: { type: 'string', default: '' } },
-            required: ['name'],
-            additionalProperties: false,
-          },
         });
-
         expect(isSuccessResult(result)).toBe(true);
       });
 
-      it('developer can create table', async () => {
+      it('developer can read tables', async () => {
         const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'createTable', {
+        const result = await callMcpTool(sessionId, 'getTables', {
           revisionId: fixture.project.draftRevisionId,
-          tableId: 'dev-table',
-          schema: {
-            type: 'object',
-            properties: { name: { type: 'string', default: '' } },
-            required: ['name'],
-            additionalProperties: false,
-          },
         });
-
         expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('editor can read tables', async () => {
+        const sessionId = await initAndLogin(fixture.editor);
+        const result = await callMcpTool(sessionId, 'getTables', {
+          revisionId: fixture.project.draftRevisionId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('reader can read tables', async () => {
+        const sessionId = await initAndLogin(fixture.reader);
+        const result = await callMcpTool(sessionId, 'getTables', {
+          revisionId: fixture.project.draftRevisionId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+    });
+
+    describe('Write Operations - Error Cases', () => {
+      let fixture: PrepareDataWithRolesReturnType;
+
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
       });
 
       it('editor cannot create table', async () => {
         const sessionId = await initAndLogin(fixture.editor);
-
         const result = await callMcpTool(sessionId, 'createTable', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'editor-table',
@@ -351,15 +362,11 @@ describe('mcp-api - role-based permissions', () => {
             additionalProperties: false,
           },
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to create on Table/,
-        );
+        expect(getErrorMessage(result)).toMatch(/not allowed to create on Table/);
       });
 
       it('reader cannot create table', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'createTable', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'reader-table',
@@ -370,475 +377,455 @@ describe('mcp-api - role-based permissions', () => {
             additionalProperties: false,
           },
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to create on Table/,
-        );
-      });
-    });
-
-    describe('removeTable', () => {
-      it('owner can remove table', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
-
-        const result = await callMcpTool(sessionId, 'removeTable', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can remove table', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'removeTable', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
+        expect(getErrorMessage(result)).toMatch(/not allowed to create on Table/);
       });
 
       it('editor cannot remove table', async () => {
         const sessionId = await initAndLogin(fixture.editor);
-
         const result = await callMcpTool(sessionId, 'removeTable', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to delete on Table/,
-        );
+        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Table/);
       });
 
       it('reader cannot remove table', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'removeTable', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to delete on Table/,
-        );
+        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Table/);
       });
     });
 
-    describe('getTables (read access)', () => {
-      it('owner can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+    describe('Write Operations - Success Cases', () => {
+      describe('createTable', () => {
+        let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'getTables', {
-          revisionId: fixture.project.draftRevisionId,
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
         });
-        expect(isSuccessResult(result)).toBe(true);
+
+        it('owner can create table', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'createTable', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: 'owner-table',
+            schema: {
+              type: 'object',
+              properties: { name: { type: 'string', default: '' } },
+              required: ['name'],
+              additionalProperties: false,
+            },
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+
+        it('developer can create table', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'createTable', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: 'dev-table',
+            schema: {
+              type: 'object',
+              properties: { name: { type: 'string', default: '' } },
+              required: ['name'],
+              additionalProperties: false,
+            },
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
       });
 
-      it('developer can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+      describe('removeTable', () => {
+        let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'getTables', {
-          revisionId: fixture.project.draftRevisionId,
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'getTables', {
-          revisionId: fixture.project.draftRevisionId,
+        it('owner can remove table', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'removeTable', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('reader can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
-
-        const result = await callMcpTool(sessionId, 'getTables', {
-          revisionId: fixture.project.draftRevisionId,
+        it('developer can remove table', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'removeTable', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
-
-        expect(isSuccessResult(result)).toBe(true);
       });
     });
   });
 
   describe('Row Operations - Role-Based', () => {
-    let fixture: PrepareDataWithRolesReturnType;
+    describe('Read Operations', () => {
+      let fixture: PrepareDataWithRolesReturnType;
 
-    beforeEach(async () => {
-      fixture = await prepareDataWithRoles(app);
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
+      });
+
+      it('owner can read rows', async () => {
+        const sessionId = await initAndLogin(fixture.owner);
+        const result = await callMcpTool(sessionId, 'getRows', {
+          revisionId: fixture.project.draftRevisionId,
+          tableId: fixture.project.tableId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('developer can read rows', async () => {
+        const sessionId = await initAndLogin(fixture.developer);
+        const result = await callMcpTool(sessionId, 'getRows', {
+          revisionId: fixture.project.draftRevisionId,
+          tableId: fixture.project.tableId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('editor can read rows', async () => {
+        const sessionId = await initAndLogin(fixture.editor);
+        const result = await callMcpTool(sessionId, 'getRows', {
+          revisionId: fixture.project.draftRevisionId,
+          tableId: fixture.project.tableId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('reader can read rows', async () => {
+        const sessionId = await initAndLogin(fixture.reader);
+        const result = await callMcpTool(sessionId, 'getRows', {
+          revisionId: fixture.project.draftRevisionId,
+          tableId: fixture.project.tableId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
     });
 
-    describe('createRow', () => {
-      it('owner can create row', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+    describe('Write Operations - Error Cases', () => {
+      let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'createRow', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-          rowId: 'owner-row',
-          data: { ver: 100 },
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can create row', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'createRow', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-          rowId: 'dev-row',
-          data: { ver: 100 },
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can create row', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'createRow', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-          rowId: 'editor-row',
-          data: { ver: 100 },
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
       });
 
       it('reader cannot create row', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'createRow', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'reader-row',
           data: { ver: 100 },
         });
-
         expect(getErrorMessage(result)).toMatch(/not allowed to create on Row/);
-      });
-    });
-
-    describe('removeRow', () => {
-      it('owner can remove row', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
-
-        const result = await callMcpTool(sessionId, 'removeRow', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-          rowId: fixture.project.rowId,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can remove row', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'removeRow', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-          rowId: fixture.project.rowId,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can remove row', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'removeRow', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
-          rowId: fixture.project.rowId,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
       });
 
       it('reader cannot remove row', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'removeRow', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
         });
-
         expect(getErrorMessage(result)).toMatch(/not allowed to delete on Row/);
       });
     });
 
-    describe('getRows (read access)', () => {
-      it('owner can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+    describe('Write Operations - Success Cases', () => {
+      describe('createRow', () => {
+        let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'getRows', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
+        it('owner can create row', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'createRow', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'owner-row',
+            data: { ver: 100 },
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+
+        it('developer can create row', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'createRow', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'dev-row',
+            data: { ver: 100 },
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+
+        it('editor can create row', async () => {
+          const sessionId = await initAndLogin(fixture.editor);
+          const result = await callMcpTool(sessionId, 'createRow', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'editor-row',
+            data: { ver: 100 },
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
       });
 
-      it('developer can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+      describe('removeRow', () => {
+        let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'getRows', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'getRows', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
+        it('owner can remove row', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'removeRow', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: fixture.project.rowId,
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('reader can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
-
-        const result = await callMcpTool(sessionId, 'getRows', {
-          revisionId: fixture.project.draftRevisionId,
-          tableId: fixture.project.tableId,
+        it('developer can remove row', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'removeRow', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: fixture.project.rowId,
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
+        it('editor can remove row', async () => {
+          const sessionId = await initAndLogin(fixture.editor);
+          const result = await callMcpTool(sessionId, 'removeRow', {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: fixture.project.rowId,
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
       });
     });
   });
 
   describe('Branch Operations - Role-Based', () => {
-    let fixture: PrepareDataWithRolesReturnType;
+    describe('Write Operations - Error Cases', () => {
+      let fixture: PrepareDataWithRolesReturnType;
 
-    beforeEach(async () => {
-      fixture = await prepareDataWithRoles(app);
-    });
-
-    describe('createBranch', () => {
-      it('owner can create branch', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
-
-        const result = await callMcpTool(sessionId, 'createBranch', {
-          revisionId: fixture.project.headRevisionId,
-          branchName: 'owner-branch',
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can create branch', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'createBranch', {
-          revisionId: fixture.project.headRevisionId,
-          branchName: 'dev-branch',
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
       });
 
       it('editor cannot create branch', async () => {
         const sessionId = await initAndLogin(fixture.editor);
-
         const result = await callMcpTool(sessionId, 'createBranch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'editor-branch',
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to create on Branch/,
-        );
+        expect(getErrorMessage(result)).toMatch(/not allowed to create on Branch/);
       });
 
       it('reader cannot create branch', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'createBranch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'reader-branch',
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to create on Branch/,
-        );
-      });
-    });
-
-    describe('revertChanges', () => {
-      it('owner can revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
-
-        const result = await callMcpTool(sessionId, 'revertChanges', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-          branchName: fixture.project.branchName,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'revertChanges', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-          branchName: fixture.project.branchName,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'revertChanges', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-          branchName: fixture.project.branchName,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
+        expect(getErrorMessage(result)).toMatch(/not allowed to create on Branch/);
       });
 
       it('reader cannot revert changes', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'revertChanges', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
         });
+        expect(getErrorMessage(result)).toMatch(/not allowed to revert on Revision/);
+      });
+    });
 
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to revert on Revision/,
-        );
+    describe('Write Operations - Success Cases', () => {
+      describe('createBranch', () => {
+        let fixture: PrepareDataWithRolesReturnType;
+
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
+        });
+
+        it('owner can create branch', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'createBranch', {
+            revisionId: fixture.project.headRevisionId,
+            branchName: 'owner-branch',
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+
+        it('developer can create branch', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'createBranch', {
+            revisionId: fixture.project.headRevisionId,
+            branchName: 'dev-branch',
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+      });
+
+      describe('revertChanges', () => {
+        let fixture: PrepareDataWithRolesReturnType;
+
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
+        });
+
+        it('owner can revert changes', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'revertChanges', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+
+        it('developer can revert changes', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'revertChanges', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
+
+        it('editor can revert changes', async () => {
+          const sessionId = await initAndLogin(fixture.editor);
+          const result = await callMcpTool(sessionId, 'revertChanges', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
       });
     });
   });
 
   describe('Revision Operations - Role-Based', () => {
-    let fixture: PrepareDataWithRolesReturnType;
+    describe('Read Operations', () => {
+      let fixture: PrepareDataWithRolesReturnType;
 
-    beforeEach(async () => {
-      fixture = await prepareDataWithRoles(app);
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
+      });
+
+      it('owner can read revision', async () => {
+        const sessionId = await initAndLogin(fixture.owner);
+        const result = await callMcpTool(sessionId, 'getRevision', {
+          revisionId: fixture.project.draftRevisionId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('developer can read revision', async () => {
+        const sessionId = await initAndLogin(fixture.developer);
+        const result = await callMcpTool(sessionId, 'getRevision', {
+          revisionId: fixture.project.draftRevisionId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('editor can read revision', async () => {
+        const sessionId = await initAndLogin(fixture.editor);
+        const result = await callMcpTool(sessionId, 'getRevision', {
+          revisionId: fixture.project.draftRevisionId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('reader can read revision', async () => {
+        const sessionId = await initAndLogin(fixture.reader);
+        const result = await callMcpTool(sessionId, 'getRevision', {
+          revisionId: fixture.project.draftRevisionId,
+        });
+        expect(isSuccessResult(result)).toBe(true);
+      });
     });
 
-    describe('commitRevision', () => {
-      it('owner can commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+    describe('Write Operations - Error Cases', () => {
+      let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'commitRevision', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-          branchName: fixture.project.branchName,
-          comment: 'Owner commit',
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'commitRevision', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-          branchName: fixture.project.branchName,
-          comment: 'Developer commit',
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'commitRevision', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-          branchName: fixture.project.branchName,
-          comment: 'Editor commit',
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
       });
 
       it('reader cannot commit revision', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'commitRevision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
           comment: 'Reader commit',
         });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to create on Revision/,
-        );
+        expect(getErrorMessage(result)).toMatch(/not allowed to create on Revision/);
       });
     });
 
-    describe('getRevision (read access)', () => {
-      it('owner can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+    describe('Write Operations - Success Cases', () => {
+      describe('commitRevision', () => {
+        let fixture: PrepareDataWithRolesReturnType;
 
-        const result = await callMcpTool(sessionId, 'getRevision', {
-          revisionId: fixture.project.draftRevisionId,
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('developer can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'getRevision', {
-          revisionId: fixture.project.draftRevisionId,
+        it('owner can commit revision', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'commitRevision', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+            comment: 'Owner commit',
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('editor can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'getRevision', {
-          revisionId: fixture.project.draftRevisionId,
+        it('developer can commit revision', async () => {
+          const sessionId = await initAndLogin(fixture.developer);
+          const result = await callMcpTool(sessionId, 'commitRevision', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+            comment: 'Developer commit',
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
 
-        expect(isSuccessResult(result)).toBe(true);
-      });
-
-      it('reader can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
-
-        const result = await callMcpTool(sessionId, 'getRevision', {
-          revisionId: fixture.project.draftRevisionId,
+        it('editor can commit revision', async () => {
+          const sessionId = await initAndLogin(fixture.editor);
+          const result = await callMcpTool(sessionId, 'commitRevision', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+            comment: 'Editor commit',
+          });
+          expect(isSuccessResult(result)).toBe(true);
         });
-
-        expect(isSuccessResult(result)).toBe(true);
       });
     });
   });
@@ -846,62 +833,36 @@ describe('mcp-api - role-based permissions', () => {
   describe('Organization Operations', () => {
     let preparedData: PrepareDataReturnType;
 
-    beforeEach(async () => {
+    beforeAll(async () => {
       preparedData = await prepareData(app);
     });
 
     describe('getOrganization', () => {
       it('owner can access own organization', async () => {
         const sessionId = await initAndLogin(preparedData.owner);
-
         const result = await callMcpTool(sessionId, 'getOrganization', {
           organizationId: preparedData.project.organizationId,
         });
-
         expect(isSuccessResult(result)).toBe(true);
-        const org = parseToolResult<{ id: string }>(
-          result.result as McpToolResult,
-        );
+        const org = parseToolResult<{ id: string }>(result.result as McpToolResult);
         expect(org.id).toBe(preparedData.project.organizationId);
       });
 
       it('another owner can read organization metadata (public)', async () => {
         const sessionId = await initAndLogin(preparedData.anotherOwner);
-
         const result = await callMcpTool(sessionId, 'getOrganization', {
           organizationId: preparedData.project.organizationId,
         });
-
         expect(isSuccessResult(result)).toBe(true);
-        const org = parseToolResult<{ id: string }>(
-          result.result as McpToolResult,
-        );
+        const org = parseToolResult<{ id: string }>(result.result as McpToolResult);
         expect(org.id).toBe(preparedData.project.organizationId);
       });
 
       it('requires authentication', async () => {
-        const initResponse = await request(app.getHttpServer())
-          .post('/mcp')
-          .set('Content-Type', 'application/json')
-          .set('Accept', 'application/json, text/event-stream')
-          .buffer(true)
-          .send({
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'initialize',
-            params: {
-              protocolVersion: '2024-11-05',
-              capabilities: {},
-              clientInfo: { name: 'test', version: '1.0.0' },
-            },
-          });
-
-        const sessionId = initResponse.headers['mcp-session-id'] as string;
-
+        const sessionId = await initWithoutLogin();
         const result = await callMcpTool(sessionId, 'getOrganization', {
           organizationId: preparedData.project.organizationId,
         });
-
         expect(getErrorMessage(result)).toMatch(/Not authenticated/);
       });
     });
@@ -909,11 +870,9 @@ describe('mcp-api - role-based permissions', () => {
     describe('getProjects', () => {
       it('owner can list projects in own organization', async () => {
         const sessionId = await initAndLogin(preparedData.owner);
-
         const result = await callMcpTool(sessionId, 'getProjects', {
           organizationId: preparedData.project.organizationId,
         });
-
         expect(isSuccessResult(result)).toBe(true);
         const projects = parseToolResult<{ edges: Array<{ node: unknown }> }>(
           result.result as McpToolResult,
@@ -924,11 +883,9 @@ describe('mcp-api - role-based permissions', () => {
 
       it('another owner can access organization endpoint but sees filtered results', async () => {
         const sessionId = await initAndLogin(preparedData.anotherOwner);
-
         const result = await callMcpTool(sessionId, 'getProjects', {
           organizationId: preparedData.project.organizationId,
         });
-
         expect(isSuccessResult(result)).toBe(true);
         const projects = parseToolResult<{ edges: Array<{ node: unknown }> }>(
           result.result as McpToolResult,
@@ -936,152 +893,134 @@ describe('mcp-api - role-based permissions', () => {
         expect(projects.edges).toBeDefined();
       });
 
-      it('owner sees public projects in organization', async () => {
-        await makeProjectPublic(preparedData.project.projectId);
-        const sessionId = await initAndLogin(preparedData.owner);
-
-        const result = await callMcpTool(sessionId, 'getProjects', {
-          organizationId: preparedData.project.organizationId,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
-        const projects = parseToolResult<{
-          edges: Array<{ node: { id: string } }>;
-        }>(result.result as McpToolResult);
-        expect(projects.edges.length).toBeGreaterThan(0);
-        expect(projects.edges[0].node.id).toBe(preparedData.project.projectId);
-      });
-
       it('requires authentication', async () => {
-        const initResponse = await request(app.getHttpServer())
-          .post('/mcp')
-          .set('Content-Type', 'application/json')
-          .set('Accept', 'application/json, text/event-stream')
-          .buffer(true)
-          .send({
-            jsonrpc: '2.0',
-            id: 1,
-            method: 'initialize',
-            params: {
-              protocolVersion: '2024-11-05',
-              capabilities: {},
-              clientInfo: { name: 'test', version: '1.0.0' },
-            },
-          });
-
-        const sessionId = initResponse.headers['mcp-session-id'] as string;
-
+        const sessionId = await initWithoutLogin();
         const result = await callMcpTool(sessionId, 'getProjects', {
           organizationId: preparedData.project.organizationId,
         });
-
         expect(getErrorMessage(result)).toMatch(/Not authenticated/);
       });
     });
   });
 
-  describe('Project Operations - Role-Based', () => {
-    let fixture: PrepareDataWithRolesReturnType;
+  describe('Organization Operations - Public Project', () => {
+    let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      fixture = await prepareDataWithRoles(app);
+      preparedData = await prepareData(app);
+      await makeProjectPublic(preparedData.project.projectId);
     });
 
-    describe('deleteProject', () => {
-      it('owner can delete project', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
-
-        const result = await callMcpTool(sessionId, 'deleteProject', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-        });
-
-        expect(isSuccessResult(result)).toBe(true);
+    it('owner sees public projects in organization', async () => {
+      const sessionId = await initAndLogin(preparedData.owner);
+      const result = await callMcpTool(sessionId, 'getProjects', {
+        organizationId: preparedData.project.organizationId,
       });
-
-      it('developer cannot delete project', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
-
-        const result = await callMcpTool(sessionId, 'deleteProject', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-        });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to delete on Project/,
-        );
-      });
-
-      it('editor cannot delete project', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
-
-        const result = await callMcpTool(sessionId, 'deleteProject', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-        });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to delete on Project/,
-        );
-      });
-
-      it('reader cannot delete project', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
-
-        const result = await callMcpTool(sessionId, 'deleteProject', {
-          organizationId: fixture.project.organizationId,
-          projectName: fixture.project.projectName,
-        });
-
-        expect(getErrorMessage(result)).toMatch(
-          /not allowed to delete on Project/,
-        );
-      });
+      expect(isSuccessResult(result)).toBe(true);
+      const projects = parseToolResult<{
+        edges: Array<{ node: { id: string } }>;
+      }>(result.result as McpToolResult);
+      expect(projects.edges.length).toBeGreaterThan(0);
+      expect(projects.edges[0].node.id).toBe(preparedData.project.projectId);
     });
+  });
 
-    describe('getProject (read access)', () => {
+  describe('Project Operations - Role-Based', () => {
+    describe('Read Operations', () => {
+      let fixture: PrepareDataWithRolesReturnType;
+
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
+      });
+
       it('owner can read project', async () => {
         const sessionId = await initAndLogin(fixture.owner);
-
         const result = await callMcpTool(sessionId, 'getProject', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-
         expect(isSuccessResult(result)).toBe(true);
       });
 
       it('developer can read project', async () => {
         const sessionId = await initAndLogin(fixture.developer);
-
         const result = await callMcpTool(sessionId, 'getProject', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-
         expect(isSuccessResult(result)).toBe(true);
       });
 
       it('editor can read project', async () => {
         const sessionId = await initAndLogin(fixture.editor);
-
         const result = await callMcpTool(sessionId, 'getProject', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-
         expect(isSuccessResult(result)).toBe(true);
       });
 
       it('reader can read project', async () => {
         const sessionId = await initAndLogin(fixture.reader);
-
         const result = await callMcpTool(sessionId, 'getProject', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
-
         expect(isSuccessResult(result)).toBe(true);
+      });
+    });
+
+    describe('Write Operations - Error Cases', () => {
+      let fixture: PrepareDataWithRolesReturnType;
+
+      beforeAll(async () => {
+        fixture = await prepareDataWithRoles(app);
+      });
+
+      it('developer cannot delete project', async () => {
+        const sessionId = await initAndLogin(fixture.developer);
+        const result = await callMcpTool(sessionId, 'deleteProject', {
+          organizationId: fixture.project.organizationId,
+          projectName: fixture.project.projectName,
+        });
+        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Project/);
+      });
+
+      it('editor cannot delete project', async () => {
+        const sessionId = await initAndLogin(fixture.editor);
+        const result = await callMcpTool(sessionId, 'deleteProject', {
+          organizationId: fixture.project.organizationId,
+          projectName: fixture.project.projectName,
+        });
+        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Project/);
+      });
+
+      it('reader cannot delete project', async () => {
+        const sessionId = await initAndLogin(fixture.reader);
+        const result = await callMcpTool(sessionId, 'deleteProject', {
+          organizationId: fixture.project.organizationId,
+          projectName: fixture.project.projectName,
+        });
+        expect(getErrorMessage(result)).toMatch(/not allowed to delete on Project/);
+      });
+    });
+
+    describe('Write Operations - Success Cases', () => {
+      describe('deleteProject', () => {
+        let fixture: PrepareDataWithRolesReturnType;
+
+        beforeEach(async () => {
+          fixture = await prepareDataWithRoles(app);
+        });
+
+        it('owner can delete project', async () => {
+          const sessionId = await initAndLogin(fixture.owner);
+          const result = await callMcpTool(sessionId, 'deleteProject', {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+          });
+          expect(isSuccessResult(result)).toBe(true);
+        });
       });
     });
   });
