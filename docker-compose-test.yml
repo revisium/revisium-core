@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   redis:
     container_name: integration-tests-redis
@@ -17,6 +15,8 @@ services:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
       POSTGRES_DB: tests
+    tmpfs:
+      - /var/lib/postgresql/data
 
   mailhog:
     container_name: integration-tests-mailhog
