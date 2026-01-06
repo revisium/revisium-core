@@ -139,42 +139,5 @@
   "overrides": {
     "hono": "^4.10.3",
     "valibot": "^1.2.0"
-  },
-  "jest": {
-    "modulePaths": [
-      "<rootDir>"
-    ],
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": "./",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "<rootDir>/src/**/*.(t|j)s",
-      "!<rootDir>/src/main.ts",
-      "!<rootDir>/src/__generated__/**",
-      "!<rootDir>/src/**/__tests__/**",
-      "!<rootDir>/src/**/index.ts",
-      "!<rootDir>/src/**/*.module.ts",
-      "!<rootDir>/src/infrastructure/cache"
-    ],
-    "coverageReporters": [
-      "text-summary",
-      "lcov"
-    ],
-    "testEnvironment": "node",
-    "setupFiles": [
-      "<rootDir>/jest.setup.ts"
-    ],
-    "moduleNameMapper": {
-      "^bentocache$": "<rootDir>/src/infrastructure/cache/__mocks__/bentocache.js",
-      "^bentocache/drivers/memory$": "<rootDir>/src/infrastructure/cache/__mocks__/bentocache-memory.js",
-      "^bentocache/drivers/redis$": "<rootDir>/src/infrastructure/cache/__mocks__/bentocache-redis.js"
-    }
   }
 }
