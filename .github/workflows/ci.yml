@@ -153,6 +153,7 @@ jobs:
 
       - name: Merge coverage reports
         run: |
+          mkdir -p coverage
           npx lcov-result-merger 'coverage-artifacts/*/lcov.info' 'coverage/lcov.info'
 
       - name: SonarQube Scan
