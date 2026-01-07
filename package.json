@@ -50,7 +50,7 @@
     "@aws-sdk/client-s3": "^3.816.0",
     "@aws-sdk/s3-request-presigner": "^3.816.0",
     "@casl/ability": "^6.7.3",
-    "@modelcontextprotocol/sdk": "^1.25.1",
+    "@modelcontextprotocol/sdk": "^1.25.2",
     "@nestjs/apollo": "^13.2.3",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.11",
