@@ -22,6 +22,24 @@ input AdminUserInput {
   userId: String!
 }
 
+type ApplyMigrationResultModel {
+  error: String
+  id: String!
+  status: ApplyMigrationStatus!
+}
+
+"""Status of migration application"""
+enum ApplyMigrationStatus {
+  applied
+  failed
+  skipped
+}
+
+input ApplyMigrationsInput {
+  migrations: [JSON!]!
+  revisionId: String!
+}
+
 input BooleanFilter {
   equals: Boolean
   not: Boolean
@@ -461,6 +479,7 @@ type ModifiedRowChangeModel {
 type Mutation {
   addUserToOrganization(data: AddUserToOrganizationInput!): Boolean!
   addUserToProject(data: AddUserToProjectInput!): Boolean!
+  applyMigrations(data: ApplyMigrationsInput!): [ApplyMigrationResultModel!]!
   confirmEmailCode(data: ConfirmEmailCodeInput!): LoginModel!
   createBranchByRevisionId(data: CreateBranchByRevisionIdInput!): BranchModel!
   createEndpoint(data: CreateEndpointInput!): EndpointModel!
