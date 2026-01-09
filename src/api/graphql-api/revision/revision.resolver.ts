@@ -7,15 +7,18 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
+import { Migration } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
+import { ApplyMigrationsInput } from 'src/api/graphql-api/revision/inputs/apply-migrations.input';
 import { CreateRevisionInput } from 'src/api/graphql-api/revision/inputs/create-revision.input';
 import { GetRevisionTablesInput } from 'src/api/graphql-api/revision/inputs/get-revision-tables.input';
 import { GetRevisionInput } from 'src/api/graphql-api/revision/inputs/get-revision.input';
+import { ApplyMigrationResultModel } from 'src/api/graphql-api/revision/model/apply-migration-result.model';
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
 import { RevisionsApiService } from 'src/features/revision';
 import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
@@ -99,5 +102,18 @@ export class RevisionResolver {
   @Mutation(() => RevisionModel)
   async createRevision(@Args('data') data: CreateRevisionInput) {
     return this.draftApi.apiCreateRevision(data);
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.create,
+    subject: PermissionSubject.Table,
+  })
+  @Mutation(() => [ApplyMigrationResultModel])
+  async applyMigrations(@Args('data') data: ApplyMigrationsInput) {
+    return this.draftApi.applyMigrations({
+      revisionId: data.revisionId,
+      migrations: data.migrations as Migration[],
+    });
   }
 }

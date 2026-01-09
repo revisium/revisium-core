@@ -453,6 +453,121 @@ describe('restapi - revision-by-id', () => {
     }
   });
 
+  describe('GET /revision/:revisionId/migrations', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('owner can get migrations', async () => {
+      const result = await request(app.getHttpServer())
+        .get(getMigrationsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+      expect(result[0]).toHaveProperty('id');
+      expect(result[0]).toHaveProperty('changeType');
+      expect(result[0]).toHaveProperty('tableId');
+    });
+
+    it('another owner cannot get migrations (private project)', async () => {
+      return request(app.getHttpServer())
+        .get(getMigrationsUrl())
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    it('cannot get migrations without authentication (private project)', async () => {
+      return request(app.getHttpServer())
+        .get(getMigrationsUrl())
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    function getMigrationsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/migrations`;
+    }
+  });
+
+  describe('POST /revision/:revisionId/apply-migrations', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    it('owner can apply migrations', async () => {
+      const newTableId = `new-table-${Date.now()}`;
+      const migrationId = new Date().toISOString();
+
+      const result = await request(app.getHttpServer())
+        .post(getApplyMigrationsUrl())
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send([
+          {
+            changeType: 'init',
+            id: migrationId,
+            tableId: newTableId,
+            hash: 'test-hash',
+            schema: {
+              type: 'object',
+              required: ['name'],
+              properties: {
+                name: {
+                  type: 'string',
+                  default: '',
+                },
+              },
+              additionalProperties: false,
+            },
+          },
+        ])
+        .expect(201)
+        .then((res) => res.body);
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe('applied');
+    });
+
+    it('another owner cannot apply migrations (private project)', async () => {
+      return request(app.getHttpServer())
+        .post(getApplyMigrationsUrl())
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send([
+          {
+            changeType: 'remove',
+            id: new Date().toISOString(),
+            tableId: preparedData.project.tableId,
+          },
+        ])
+        .expect(403)
+        .expect(/You are not allowed to read on Project/);
+    });
+
+    it('cannot apply migrations without authentication', async () => {
+      return request(app.getHttpServer())
+        .post(getApplyMigrationsUrl())
+        .send([
+          {
+            changeType: 'remove',
+            id: new Date().toISOString(),
+            tableId: preparedData.project.tableId,
+          },
+        ])
+        .expect(401);
+    });
+
+    function getApplyMigrationsUrl() {
+      return `/api/revision/${preparedData.project.draftRevisionId}/apply-migrations`;
+    }
+  });
+
   describe('Public Project Access Tests', () => {
     let preparedData: PrepareDataReturnType;
 
@@ -527,6 +642,79 @@ describe('restapi - revision-by-id', () => {
           branchName: 'test-branch',
         })
         .expect(/You are not allowed to create on Branch/);
+    });
+
+    it('can get migrations without authentication (public project)', async () => {
+      const result = await request(app.getHttpServer())
+        .get(`/api/revision/${preparedData.project.draftRevisionId}/migrations`)
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(Array.isArray(result)).toBe(true);
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('another owner can get migrations (public project)', async () => {
+      const result = await request(app.getHttpServer())
+        .get(`/api/revision/${preparedData.project.draftRevisionId}/migrations`)
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .expect(200)
+        .then((res) => res.body);
+
+      expect(Array.isArray(result)).toBe(true);
+    });
+
+    it('another owner cannot apply migrations (no write permission on public project)', async () => {
+      return request(app.getHttpServer())
+        .post(
+          `/api/revision/${preparedData.project.draftRevisionId}/apply-migrations`,
+        )
+        .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
+        .send([
+          {
+            changeType: 'remove',
+            id: new Date().toISOString(),
+            tableId: preparedData.project.tableId,
+          },
+        ])
+        .expect(/You are not allowed to create on Table/);
+    });
+
+    it('cannot apply migrations without authentication (public project)', async () => {
+      return request(app.getHttpServer())
+        .post(
+          `/api/revision/${preparedData.project.draftRevisionId}/apply-migrations`,
+        )
+        .send([
+          {
+            changeType: 'remove',
+            id: new Date().toISOString(),
+            tableId: preparedData.project.tableId,
+          },
+        ])
+        .expect(401);
+    });
+
+    it('owner can still apply migrations (public project)', async () => {
+      const migrationId = new Date().toISOString();
+
+      const result = await request(app.getHttpServer())
+        .post(
+          `/api/revision/${preparedData.project.draftRevisionId}/apply-migrations`,
+        )
+        .set('Authorization', `Bearer ${preparedData.owner.token}`)
+        .send([
+          {
+            changeType: 'remove',
+            id: migrationId,
+            tableId: preparedData.project.tableId,
+          },
+        ])
+        .expect(201)
+        .then((res) => res.body);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].status).toBe('applied');
     });
   });
 
