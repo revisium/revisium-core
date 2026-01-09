@@ -8,5 +8,5 @@ export class ApplyMigrationsInput {
   revisionId: string;
 
   @Field(() => [JSONResolver])
-  migrations: Prisma.JsonValue[];
+  migrations: Prisma.InputJsonValue[];
 }
