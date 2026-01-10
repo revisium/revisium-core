@@ -1,1 +1,3 @@
-export type FindBranchInProjectType = { id: string };
+import { Branch } from 'src/__generated__/client';
+
+export type FindBranchInProjectType = Branch;
