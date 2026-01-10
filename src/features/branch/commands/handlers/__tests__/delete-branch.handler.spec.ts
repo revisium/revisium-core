@@ -84,10 +84,10 @@ describe('DeleteBranchHandler', () => {
       branchName: rootBranchName,
     });
 
-    await expect(execute(command)).rejects.toThrow(BadRequestException);
-    await expect(execute(command)).rejects.toThrow(
-      'Cannot delete the root branch',
-    );
+    const promise = execute(command);
+
+    await expect(promise).rejects.toThrow(BadRequestException);
+    await expect(promise).rejects.toThrow('Cannot delete the root branch');
   });
 
   it('should not affect other branches', async () => {

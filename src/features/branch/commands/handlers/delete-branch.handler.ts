@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { EndpointType, Prisma } from 'src/__generated__/client';
+import { Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import {
@@ -25,12 +25,12 @@ export class DeleteBranchHandler
   }
 
   public async execute({ data }: DeleteBranchCommand) {
-    const endpoints: { id: string; type: EndpointType }[] =
-      await this.transactionPrisma.run(() => this.transactionHandler(data), {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
+    const endpointIds = await this.transactionPrisma.run(
+      () => this.transactionHandler(data),
+      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+    );
 
-    await this.notifyEndpoints(endpoints);
+    await this.notifyEndpoints(endpointIds);
 
     return true;
   }
@@ -54,11 +54,11 @@ export class DeleteBranchHandler
       throw new BadRequestException('Cannot delete the root branch');
     }
 
-    const endpoints = await this.getEndpoints(branch.id);
+    const endpointIds = await this.getEndpointIds(branch.id);
 
     await this.deleteBranch(branch.id);
 
-    return endpoints;
+    return endpointIds;
   }
 
   private deleteBranch(branchId: string) {
@@ -67,8 +67,8 @@ export class DeleteBranchHandler
     });
   }
 
-  private getEndpoints(branchId: string) {
-    return this.transaction.endpoint.findMany({
+  private async getEndpointIds(branchId: string): Promise<string[]> {
+    const endpoints = await this.transaction.endpoint.findMany({
       where: {
         revision: {
           branchId,
@@ -76,16 +76,15 @@ export class DeleteBranchHandler
       },
       select: {
         id: true,
-        type: true,
       },
     });
+
+    return endpoints.map((e) => e.id);
   }
 
-  private async notifyEndpoints(
-    endpoints: { id: string; type: EndpointType }[],
-  ) {
-    for (const endpoint of endpoints) {
-      await this.endpointNotification.delete(endpoint.id);
+  private async notifyEndpoints(endpointIds: string[]) {
+    for (const endpointId of endpointIds) {
+      await this.endpointNotification.delete(endpointId);
     }
   }
 }
