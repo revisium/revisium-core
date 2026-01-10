@@ -54,11 +54,38 @@ export class DeleteBranchHandler
       throw new BadRequestException('Cannot delete the root branch');
     }
 
+    const childBranchNames = await this.getChildBranchNames(branch.id);
+    if (childBranchNames.length > 0) {
+      throw new BadRequestException(
+        `Cannot delete branch: it has child branches (${childBranchNames.join(', ')}). Delete them first.`,
+      );
+    }
+
     const endpointIds = await this.getEndpointIds(branch.id);
 
     await this.deleteBranch(branch.id);
 
     return endpointIds;
+  }
+
+  private async getChildBranchNames(branchId: string): Promise<string[]> {
+    const childBranches = await this.transaction.branch.findMany({
+      where: {
+        revisions: {
+          some: {
+            isStart: true,
+            parent: {
+              branchId,
+            },
+          },
+        },
+      },
+      select: {
+        name: true,
+      },
+    });
+
+    return childBranches.map((b) => b.name);
   }
 
   private deleteBranch(branchId: string) {

@@ -147,6 +147,7 @@ export const prepareProjectWithBranches = async (
               id: childHeadRevisionId,
               isHead: true,
               isStart: true,
+              parentId: rootHeadRevisionId,
             },
             {
               id: childDraftRevisionId,
@@ -246,4 +247,47 @@ export const prepareProjectWithBranches = async (
     childHeadEndpointId,
     childDraftEndpointId,
   };
+};
+
+export const createChildBranch = async (
+  prismaService: PrismaService,
+  projectId: string,
+  parentRevisionId: string,
+  branchName: string,
+): Promise<{
+  branchId: string;
+  headRevisionId: string;
+  draftRevisionId: string;
+}> => {
+  const branchId = nanoid();
+  const headRevisionId = nanoid();
+  const draftRevisionId = nanoid();
+
+  await prismaService.branch.create({
+    data: {
+      id: branchId,
+      name: branchName,
+      isRoot: false,
+      projectId,
+      revisions: {
+        createMany: {
+          data: [
+            {
+              id: headRevisionId,
+              isHead: true,
+              isStart: true,
+              parentId: parentRevisionId,
+            },
+            {
+              id: draftRevisionId,
+              parentId: headRevisionId,
+              isDraft: true,
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  return { branchId, headRevisionId, draftRevisionId };
 };

@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import {
+  createChildBranch,
   createTestingModule,
   prepareProjectWithBranches,
 } from 'src/features/branch/commands/handlers/__tests__/utils';
@@ -134,6 +135,77 @@ describe('DeleteBranchHandler', () => {
       where: { id: childDraftRevisionId },
     });
     expect(draftRevision).toBeNull();
+  });
+
+  it('should fail to delete branch with one child branch', async () => {
+    const {
+      organizationId,
+      projectId,
+      projectName,
+      childBranchName,
+      childHeadRevisionId,
+    } = await prepareProjectWithBranches(prismaService);
+
+    const grandchildBranchName = 'grandchild-branch';
+    await createChildBranch(
+      prismaService,
+      projectId,
+      childHeadRevisionId,
+      grandchildBranchName,
+    );
+
+    const command = new DeleteBranchCommand({
+      organizationId,
+      projectName,
+      branchName: childBranchName,
+    });
+
+    const promise = execute(command);
+
+    await expect(promise).rejects.toThrow(BadRequestException);
+    await expect(promise).rejects.toThrow(
+      `Cannot delete branch: it has child branches (${grandchildBranchName}). Delete them first.`,
+    );
+  });
+
+  it('should fail to delete branch with multiple child branches', async () => {
+    const {
+      organizationId,
+      projectId,
+      projectName,
+      childBranchName,
+      childHeadRevisionId,
+    } = await prepareProjectWithBranches(prismaService);
+
+    const grandchild1 = 'grandchild-1';
+    const grandchild2 = 'grandchild-2';
+    await createChildBranch(
+      prismaService,
+      projectId,
+      childHeadRevisionId,
+      grandchild1,
+    );
+    await createChildBranch(
+      prismaService,
+      projectId,
+      childHeadRevisionId,
+      grandchild2,
+    );
+
+    const command = new DeleteBranchCommand({
+      organizationId,
+      projectName,
+      branchName: childBranchName,
+    });
+
+    const promise = execute(command);
+
+    await expect(promise).rejects.toThrow(BadRequestException);
+    await expect(promise).rejects.toThrow(
+      'Cannot delete branch: it has child branches',
+    );
+    await expect(promise).rejects.toThrow(grandchild1);
+    await expect(promise).rejects.toThrow(grandchild2);
   });
 
   let prismaService: PrismaService;
