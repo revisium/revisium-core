@@ -3,6 +3,9 @@ import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import {
   ApiCreateBranchByRevisionIdCommand,
   ApiCreateBranchByRevisionIdCommandData,
+  DeleteBranchCommand,
+  DeleteBranchCommandData,
+  DeleteBranchCommandReturnType,
 } from 'src/features/branch/commands/impl';
 import {
   GetBranchByIdQuery,
@@ -123,5 +126,12 @@ export class BranchApiService {
       GetBranchByIdQuery,
       GetBranchByIdQueryReturnType
     >(new GetBranchByIdQuery(data));
+  }
+
+  public deleteBranch(data: DeleteBranchCommandData) {
+    return this.commandBus.execute<
+      DeleteBranchCommand,
+      DeleteBranchCommandReturnType
+    >(new DeleteBranchCommand(data));
   }
 }

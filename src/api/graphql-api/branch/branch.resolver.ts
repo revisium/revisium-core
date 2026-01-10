@@ -13,11 +13,14 @@ import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-g
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { GetBranchesInput } from 'src/api/graphql-api/branch/inputs';
-import { CreateBranchByRevisionIdInput } from 'src/api/graphql-api/branch/inputs/create-branch-by-revision-id.input';
+import {
+  CreateBranchByRevisionIdInput,
+  DeleteBranchInput,
+  GetBranchesInput,
+  GetBranchInput,
+  RevertChangesInput,
+} from 'src/api/graphql-api/branch/inputs';
 import { GetBranchRevisionsInput } from 'src/api/graphql-api/branch/inputs/get-branch-revisions.input';
-import { GetBranchInput } from 'src/api/graphql-api/branch/inputs/get-branch.input';
-import { RevertChangesInput } from 'src/api/graphql-api/branch/inputs/revert-changes.input';
 import {
   BranchesConnection,
   BranchModel,
@@ -104,5 +107,15 @@ export class BranchResolver {
   @Mutation(() => BranchModel)
   revertChanges(@Args('data') data: RevertChangesInput) {
     return this.branchApiService.apiRevertChanges(data);
+  }
+
+  @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.delete,
+    subject: PermissionSubject.Branch,
+  })
+  @Mutation(() => Boolean)
+  deleteBranch(@Args('data') data: DeleteBranchInput) {
+    return this.branchApiService.deleteBranch(data);
   }
 }

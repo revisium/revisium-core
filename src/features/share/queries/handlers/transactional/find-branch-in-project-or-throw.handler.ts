@@ -24,7 +24,6 @@ export class FindBranchInProjectOrThrowHandler
           projectId: data.projectId,
         },
       },
-      select: { id: true },
     });
 
     if (!existingBranch) {

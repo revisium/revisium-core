@@ -183,6 +183,12 @@ input DateTimeFilter {
   notIn: [String!]
 }
 
+input DeleteBranchInput {
+  branchName: String!
+  organizationId: String!
+  projectName: String!
+}
+
 input DeleteEndpointInput {
   endpointId: String!
 }
@@ -489,6 +495,7 @@ type Mutation {
   createRows(data: CreateRowsInput!): CreateRowsResultModel!
   createTable(data: CreateTableInput!): CreateTableResultModel!
   createUser(data: CreateUserInput!): Boolean!
+  deleteBranch(data: DeleteBranchInput!): Boolean!
   deleteEndpoint(data: DeleteEndpointInput!): Boolean!
   deleteProject(data: DeleteProjectInput!): Boolean!
   login(data: LoginInput!): LoginModel!

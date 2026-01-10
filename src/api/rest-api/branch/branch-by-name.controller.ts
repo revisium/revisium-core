@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -293,6 +294,34 @@ export class BranchByNameController {
         branchName,
       }),
     );
+  }
+
+  @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
+  @PermissionParams({
+    action: PermissionAction.delete,
+    subject: PermissionSubject.Branch,
+  })
+  @Delete()
+  @ApiOrgProjectBranchParams()
+  @ApiOperation({
+    operationId: 'deleteBranch',
+    summary: 'Delete a non-root branch',
+  })
+  @ApiOkResponse({ type: Boolean })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Branch')
+  async deleteBranch(
+    @Param('organizationId') organizationId: string,
+    @Param('projectName') projectName: string,
+    @Param('branchName') branchName: string,
+  ): Promise<true> {
+    await this.branchApi.deleteBranch({
+      organizationId,
+      projectName,
+      branchName,
+    });
+
+    return true;
   }
 
   private resolveBranch(

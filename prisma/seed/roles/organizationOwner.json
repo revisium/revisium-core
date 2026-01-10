@@ -9,6 +9,7 @@
     "update-project",
     "delete-project",
     "create-branch",
+    "delete-branch",
     "create-revision",
     "revert-revision",
     "create-table",
