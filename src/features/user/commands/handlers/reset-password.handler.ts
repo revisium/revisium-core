@@ -32,7 +32,10 @@ export class ResetPasswordHandler
 
     await this.prisma.user.update({
       where: { id: data.userId },
-      data: { password: await this.authService.hashPassword(data.newPassword) },
+      data: {
+        password: await this.authService.hashPassword(data.newPassword),
+        isEmailConfirmed: true,
+      },
     });
 
     return true;
