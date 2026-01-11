@@ -34,7 +34,7 @@ describe('ResetPasswordHandler', () => {
     expect(result).toBe(true);
     expect(prismaService.user.update).toHaveBeenCalledWith({
       where: { id: 'userId' },
-      data: { password: 'newHashedPassword' },
+      data: { password: 'newHashedPassword', isEmailConfirmed: true },
     });
   });
 
@@ -52,7 +52,24 @@ describe('ResetPasswordHandler', () => {
     expect(result).toBe(true);
     expect(prismaService.user.update).toHaveBeenCalledWith({
       where: { id: 'userId' },
-      data: { password: 'newHashedPassword' },
+      data: { password: 'newHashedPassword', isEmailConfirmed: true },
+    });
+  });
+
+  it('should set isEmailConfirmed to true when admin resets password', async () => {
+    prismaService.user.findUnique = createMock({
+      id: 'userId',
+      isEmailConfirmed: false,
+    });
+    authService.hashPassword = createMock('newHashedPassword');
+    prismaService.user.update = createMock(true);
+    const command = createCommand();
+
+    await handler.execute(command);
+
+    expect(prismaService.user.update).toHaveBeenCalledWith({
+      where: { id: 'userId' },
+      data: { password: 'newHashedPassword', isEmailConfirmed: true },
     });
   });
 
