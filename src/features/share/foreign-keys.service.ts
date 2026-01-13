@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { Prisma, Row } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
+type CountResult = { count: string | number | bigint };
+
 // Using parameterized queries with $queryRaw for security
 // https://www.prisma.io/docs/orm/prisma-client/queries/raw-database-access/raw-queries#dynamic-table-names-in-postgresql
 
@@ -87,8 +89,7 @@ export class ForeignKeysService {
     // Build the JSON path with quoted key for safety and parameterized value
     const path = `$.**."${key}" ? (@ == $val)`;
 
-    const result: Array<{ count: string | number | bigint }> = await this
-      .transaction.$queryRaw`
+    const result: CountResult[] = await this.transaction.$queryRaw`
         SELECT count(*)
         FROM "Row"
         WHERE "versionId" IN (
@@ -169,8 +170,7 @@ export class ForeignKeysService {
       ' OR ',
     );
 
-    const result: Array<{ count: string | number | bigint }> = await this
-      .transaction.$queryRaw`
+    const result: CountResult[] = await this.transaction.$queryRaw`
         SELECT count(*)
         FROM "Row"
         WHERE "versionId" IN (
@@ -215,8 +215,7 @@ export class ForeignKeysService {
 
     const conditions = Prisma.join(allConditions, ' OR ');
 
-    const result: Array<{ count: string | number | bigint }> = await this
-      .transaction.$queryRaw`
+    const result: CountResult[] = await this.transaction.$queryRaw`
         SELECT count(*)
         FROM "Row"
         WHERE "versionId" IN (
