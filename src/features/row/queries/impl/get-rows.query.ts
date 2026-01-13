@@ -1,20 +1,7 @@
 import { Prisma } from 'src/__generated__/client';
-import {
-  JsonValueType,
-  JsonAggregation,
-  OrderByConditions,
-} from '@revisium/prisma-pg-json';
+import { OrderByConditions } from '@revisium/prisma-pg-json';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 import { RowWithContext } from 'src/features/share/types/row-with-context.types';
-
-export type JsonOrder = {
-  data: {
-    path: string;
-    direction: 'asc' | 'desc';
-    type: JsonValueType;
-    aggregation?: JsonAggregation;
-  };
-};
 
 export class GetRowsQuery {
   constructor(

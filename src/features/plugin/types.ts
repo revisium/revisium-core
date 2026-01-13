@@ -26,6 +26,11 @@ export type ComputeRowsOptions = {
   rows: Row[];
 };
 
+export type RowWithTableId = {
+  tableId: string;
+  row: Row;
+};
+
 export type AfterMigrateRowsOptions = {
   revisionId: string;
   tableId: string;

@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Prisma } from 'src/__generated__/client';
+import { Prisma, Row } from 'src/__generated__/client';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import {
   ComputeRowsOptions,
@@ -9,6 +9,7 @@ import {
   InternalAfterUpdateRowOptions,
   AfterMigrateRowsOptions,
   AfterUpdateRowOptions,
+  RowWithTableId,
 } from 'src/features/plugin/types';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
@@ -119,6 +120,35 @@ export class PluginService {
     for (const plugin of this.pluginsListService.orderedPlugins) {
       await plugin.computeRows(internalOptions);
     }
+  }
+
+  public async computeRowsFromItems(
+    revisionId: string,
+    items: RowWithTableId[],
+  ): Promise<void> {
+    const rowsByTable = this.groupRowsByTable(items);
+
+    await Promise.all(
+      Array.from(rowsByTable.entries()).map(([tableId, rows]) =>
+        this.computeRows({ revisionId, tableId, rows }),
+      ),
+    );
+  }
+
+  public groupRowsByTable(items: RowWithTableId[]): Map<string, Row[]> {
+    const rowsByTable = new Map<string, Row[]>();
+
+    for (const item of items) {
+      const rows = rowsByTable.get(item.tableId) ?? [];
+
+      if (!rows.some((r) => r.versionId === item.row.versionId)) {
+        rows.push(item.row);
+      }
+
+      rowsByTable.set(item.tableId, rows);
+    }
+
+    return rowsByTable;
   }
 
   public async afterMigrateRows(

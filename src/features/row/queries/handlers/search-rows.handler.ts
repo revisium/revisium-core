@@ -1,5 +1,4 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Row, Table } from 'src/__generated__/client';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import {
   SearchRowResult,
@@ -42,30 +41,6 @@ export class SearchRowsHandler
     });
   }
 
-  private async computeRowsForTables(
-    processedRows: Array<{ row: Row; table: Table }>,
-    revisionId: string,
-  ): Promise<void> {
-    const rowsByTable = new Map<string, Row[]>();
-
-    processedRows.forEach(({ row, table }) => {
-      if (!rowsByTable.has(table.id)) {
-        rowsByTable.set(table.id, []);
-      }
-      rowsByTable.get(table.id)?.push(row);
-    });
-
-    await Promise.all(
-      Array.from(rowsByTable.entries()).map(([tableId, tableRows]) =>
-        this.pluginService.computeRows({
-          revisionId,
-          tableId,
-          rows: tableRows,
-        }),
-      ),
-    );
-  }
-
   private async searchInRevision(
     data: SearchRowsQueryData,
     limit: number,
@@ -85,7 +60,10 @@ export class SearchRowsHandler
       return [];
     }
 
-    await this.computeRowsForTables(rows, data.revisionId);
+    await this.pluginService.computeRowsFromItems(
+      data.revisionId,
+      rows.map(({ row, table }) => ({ tableId: table.id, row })),
+    );
 
     return rows.map(({ row, table }) => ({
       matches: extractMatchesFallback(row.data, data.query),

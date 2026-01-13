@@ -334,6 +334,15 @@ input GetRowsInput {
   where: WhereInput
 }
 
+input GetSubSchemaItemsInput {
+  after: String
+  first: Int!
+  orderBy: [SubSchemaOrderByItemInput!]
+  revisionId: String!
+  schemaId: String!
+  where: SubSchemaWhereInput
+}
+
 input GetTableChangesInput {
   after: String
   compareWithRevisionId: String
@@ -523,6 +532,11 @@ type Mutation {
   updateUserProjectRole(data: UpdateUserProjectRoleInput!): Boolean!
 }
 
+enum NullsPosition {
+  first
+  last
+}
+
 input OrderBy {
   aggregation: OrderDataAggregation
   direction: SortOrder!
@@ -667,6 +681,7 @@ type Query {
   rows(data: GetRowsInput!): RowsConnection!
   searchRows(data: SearchRowsInput!): SearchResultsConnection!
   searchUsers(data: SearchUsersInput!): SearchUsersConnection!
+  subSchemaItems(data: GetSubSchemaItemsInput!): SubSchemaItemsConnection!
   table(data: GetTableInput!): TableModel
   tableChanges(data: GetTableChangesInput!): TableChangesConnection!
   tableViews(data: GetTableViewsInput!): TableViewsDataModel!
@@ -1042,6 +1057,78 @@ input StringFilter {
   not: String
   notIn: [String!]
   startsWith: String
+}
+
+input SubSchemaDataOrderByInput {
+  nulls: NullsPosition
+  order: SortOrder!
+  path: JSON!
+}
+
+type SubSchemaItemModel {
+  data: JSON!
+  fieldPath: String!
+  row: RowModel!
+  table: TableModel!
+}
+
+type SubSchemaItemModelEdge {
+  cursor: String!
+  node: SubSchemaItemModel!
+}
+
+type SubSchemaItemsConnection {
+  edges: [SubSchemaItemModelEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input SubSchemaJsonFilterInput {
+  equals: JSON
+  gt: JSON
+  gte: JSON
+  in: [JSON!]
+  lt: JSON
+  lte: JSON
+  mode: QueryMode
+  not: JSON
+  notIn: [JSON!]
+  path: JSON!
+  string_contains: String
+  string_ends_with: String
+  string_starts_with: String
+}
+
+input SubSchemaOrderByItemInput {
+  data: SubSchemaDataOrderByInput
+  fieldPath: SortOrder
+  rowId: SortOrder
+  tableId: SortOrder
+}
+
+input SubSchemaStringFilterInput {
+  contains: String
+  endsWith: String
+  equals: String
+  gt: String
+  gte: String
+  in: [String!]
+  lt: String
+  lte: String
+  mode: QueryMode
+  not: String
+  notIn: [String!]
+  startsWith: String
+}
+
+input SubSchemaWhereInput {
+  AND: [SubSchemaWhereInput!]
+  NOT: SubSchemaWhereInput
+  OR: [SubSchemaWhereInput!]
+  data: SubSchemaJsonFilterInput
+  fieldPath: SubSchemaStringFilterInput
+  rowId: SubSchemaStringFilterInput
+  tableId: SubSchemaStringFilterInput
 }
 
 type TableChangeModel {
