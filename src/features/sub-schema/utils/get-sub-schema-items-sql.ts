@@ -101,8 +101,7 @@ export function getSubSchemaItemsSql(
       t."system" as "table_system"
     FROM ${Prisma.raw(SUB_SCHEMA_CTE_NAME)} ${Prisma.raw(SUB_SCHEMA_TABLE_ALIAS)}
     INNER JOIN "Row" r ON ${Prisma.raw(SUB_SCHEMA_TABLE_ALIAS)}."rowVersionId" = r."versionId"
-    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
-    INNER JOIN "Table" t ON rt."B" = t."versionId"
+    INNER JOIN "Table" t ON ${Prisma.raw(SUB_SCHEMA_TABLE_ALIAS)}."tableVersionId" = t."versionId"
     ${whereClause}
     ${orderByClause}
     LIMIT ${take}
