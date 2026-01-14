@@ -144,30 +144,41 @@ export interface ParsedSubSchemaItem {
 export function convertRawSubSchemaItems(
   rawItems: SubSchemaRawItem[],
 ): ParsedSubSchemaItem[] {
-  return rawItems.map((rawItem) => {
-    const row: Row = {
-      versionId: rawItem.row_versionId,
-      createdId: rawItem.row_createdId,
-      id: rawItem.row_id,
-      readonly: rawItem.row_readonly,
-      createdAt: rawItem.row_createdAt,
-      updatedAt: rawItem.row_updatedAt,
-      publishedAt: rawItem.row_publishedAt,
-      data: rawItem.row_data,
-      meta: rawItem.row_meta,
-      hash: rawItem.row_hash,
-      schemaHash: rawItem.row_schemaHash,
-    };
+  const rowCache = new Map<string, Row>();
+  const tableCache = new Map<string, Table>();
 
-    const table: Table = {
-      versionId: rawItem.table_versionId,
-      createdId: rawItem.table_createdId,
-      id: rawItem.table_id,
-      readonly: rawItem.table_readonly,
-      createdAt: rawItem.table_createdAt,
-      updatedAt: rawItem.table_updatedAt,
-      system: rawItem.table_system,
-    };
+  return rawItems.map((rawItem) => {
+    let row = rowCache.get(rawItem.row_versionId);
+    if (!row) {
+      row = {
+        versionId: rawItem.row_versionId,
+        createdId: rawItem.row_createdId,
+        id: rawItem.row_id,
+        readonly: rawItem.row_readonly,
+        createdAt: rawItem.row_createdAt,
+        updatedAt: rawItem.row_updatedAt,
+        publishedAt: rawItem.row_publishedAt,
+        data: rawItem.row_data,
+        meta: rawItem.row_meta,
+        hash: rawItem.row_hash,
+        schemaHash: rawItem.row_schemaHash,
+      };
+      rowCache.set(rawItem.row_versionId, row);
+    }
+
+    let table = tableCache.get(rawItem.table_versionId);
+    if (!table) {
+      table = {
+        versionId: rawItem.table_versionId,
+        createdId: rawItem.table_createdId,
+        id: rawItem.table_id,
+        readonly: rawItem.table_readonly,
+        createdAt: rawItem.table_createdAt,
+        updatedAt: rawItem.table_updatedAt,
+        system: rawItem.table_system,
+      };
+      tableCache.set(rawItem.table_versionId, table);
+    }
 
     return {
       tableId: rawItem.tableId,

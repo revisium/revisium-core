@@ -293,6 +293,61 @@ describe('GetSubSchemaItemsHandler', () => {
       });
     });
 
+    it('should populate url for all files in same row', async () => {
+      const table = await prismaService.table.findFirst({
+        where: {
+          id: 'gallery',
+          revisions: { some: { id: testData.draftRevisionId } },
+        },
+      });
+
+      const row = await prismaService.row.findFirst({
+        where: {
+          id: 'gallery-1',
+          tables: { some: { versionId: table?.versionId } },
+        },
+      });
+
+      if (row) {
+        const currentData = row.data as Record<string, unknown>;
+        const images = currentData.images as Array<Record<string, unknown>>;
+        await prismaService.row.update({
+          where: { versionId: row.versionId },
+          data: {
+            data: {
+              ...currentData,
+              images: images.map((img, i) => ({
+                ...img,
+                status: FileStatus.uploaded,
+                hash: `hash-${i}`,
+                fileName: `image-${i}.png`,
+              })),
+            },
+          },
+        });
+      }
+
+      const result = await runQuery(
+        new GetSubSchemaItemsQuery({
+          revisionId: testData.draftRevisionId,
+          schemaId: SystemSchemaIds.File,
+          first: 100,
+        }),
+      );
+
+      const galleryItems = result.edges.filter(
+        (e) => e.node.row.id === 'gallery-1',
+      );
+      expect(galleryItems).toHaveLength(3);
+
+      for (const item of galleryItems) {
+        const data = item.node.data as Record<string, unknown>;
+        expect(data.status).toBe(FileStatus.uploaded);
+        expect(data.url).toBeDefined();
+        expect(data.url).not.toBe('');
+      }
+    });
+
     it('should return each array element as separate item', async () => {
       const result = await runQuery(
         new GetSubSchemaItemsQuery({
