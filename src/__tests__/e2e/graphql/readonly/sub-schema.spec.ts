@@ -172,6 +172,133 @@ describe('graphql - subSchemaItems (readonly)', () => {
       expect(result.subSchemaItems.totalCount).toBe(1);
     });
   });
+
+  describe('duplicate row prevention', () => {
+    it('should not return duplicates when row is connected to multiple table versions', async () => {
+      const prisma = getPrismaService();
+      const baseFixture = await prepareData(app);
+
+      const fileSchema = getObjectSchema({
+        file: getRefSchema(SystemSchemaIds.File),
+      });
+
+      const tableId = `file-table-${nanoid()}`;
+      const tableCreatedId = nanoid();
+      const headTableVersionId = nanoid();
+      const draftTableVersionId = nanoid();
+
+      await prisma.table.create({
+        data: {
+          id: tableId,
+          createdId: tableCreatedId,
+          versionId: headTableVersionId,
+          readonly: true,
+          revisions: {
+            connect: { id: baseFixture.project.headRevisionId },
+          },
+        },
+      });
+
+      await prisma.table.create({
+        data: {
+          id: tableId,
+          createdId: tableCreatedId,
+          versionId: draftTableVersionId,
+          readonly: false,
+          revisions: {
+            connect: { id: baseFixture.project.draftRevisionId },
+          },
+        },
+      });
+
+      const schemaRowVersionId = nanoid();
+      await prisma.row.create({
+        data: {
+          id: tableId,
+          versionId: schemaRowVersionId,
+          createdId: nanoid(),
+          readonly: true,
+          tables: {
+            connect: {
+              versionId: baseFixture.project.schemaTableVersionId,
+            },
+          },
+          data: fileSchema,
+          meta: [
+            {
+              patches: [{ op: 'add', path: '', value: fileSchema }],
+              hash: hash(fileSchema),
+              date: new Date(),
+            },
+          ],
+          hash: hash(fileSchema),
+          schemaHash: hash(metaSchema),
+        },
+      });
+
+      const migration: InitMigration = {
+        changeType: 'init',
+        id: new Date().toISOString(),
+        tableId,
+        hash: hash(fileSchema),
+        schema: fileSchema as InitMigration['schema'],
+      };
+
+      await prisma.row.create({
+        data: {
+          id: migration.id,
+          versionId: nanoid(),
+          createdId: nanoid(),
+          readonly: true,
+          tables: {
+            connect: {
+              versionId: baseFixture.project.migrationTableVersionId,
+            },
+          },
+          data: migration,
+          hash: hash(migration),
+          schemaHash: hash(tableMigrationsSchema),
+          publishedAt: migration.id,
+        },
+      });
+
+      const fileData = createFileData();
+      const rowId = `row-${nanoid()}`;
+      const rowVersionId = nanoid();
+
+      await prisma.row.create({
+        data: {
+          id: rowId,
+          versionId: rowVersionId,
+          createdId: nanoid(),
+          readonly: false,
+          tables: {
+            connect: [
+              { versionId: headTableVersionId },
+              { versionId: draftTableVersionId },
+            ],
+          },
+          data: { file: fileData },
+          hash: hash({ file: fileData }),
+          schemaHash: hash(fileSchema),
+        },
+      });
+
+      const result = await gqlQuery({
+        app,
+        token: baseFixture.owner.token,
+        ...getSubSchemaItemsQuery(
+          baseFixture.project.draftRevisionId,
+          FILE_SCHEMA_ID,
+        ),
+      });
+
+      expect(result.subSchemaItems.totalCount).toBe(1);
+      expect(result.subSchemaItems.edges.length).toBe(1);
+      expect(result.subSchemaItems.edges[0].node.row.id).toBe(rowId);
+      expect(result.subSchemaItems.edges[0].node.table.id).toBe(tableId);
+    });
+  });
 });
 
 async function prepareFixtureWithFiles(app: INestApplication) {
