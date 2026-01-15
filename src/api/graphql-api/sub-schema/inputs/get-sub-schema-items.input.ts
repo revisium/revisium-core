@@ -135,6 +135,9 @@ export class SubSchemaOrderByItemInput {
   rowId?: Prisma.SortOrder;
 
   @Field(() => Prisma.SortOrder, { nullable: true })
+  rowCreatedAt?: Prisma.SortOrder;
+
+  @Field(() => Prisma.SortOrder, { nullable: true })
   fieldPath?: Prisma.SortOrder;
 
   @Field(() => SubSchemaDataOrderByInput, { nullable: true })

@@ -680,6 +680,60 @@ describe('GetSubSchemaItemsHandler', () => {
     });
   });
 
+  describe('rowCreatedAt sorting', () => {
+    let testData: PrepareSubSchemaTestResult;
+
+    beforeAll(async () => {
+      testData = await prepareSubSchemaTest(prismaService);
+
+      await createTable(
+        testData.draftRevisionId,
+        'time-assets',
+        getObjectSchema({
+          file: getRefSchema(SystemSchemaIds.File),
+        }),
+      );
+
+      await createRow(testData.draftRevisionId, 'time-assets', 'row-old', {
+        file: createFileData(),
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      await createRow(testData.draftRevisionId, 'time-assets', 'row-new', {
+        file: createFileData(),
+      });
+    });
+
+    it('should sort by rowCreatedAt descending (newest first)', async () => {
+      const result = await runQuery(
+        new GetSubSchemaItemsQuery({
+          revisionId: testData.draftRevisionId,
+          schemaId: SystemSchemaIds.File,
+          first: 100,
+          orderBy: [{ rowCreatedAt: 'desc' }],
+        }),
+      );
+
+      const rowIds = result.edges.map((e) => e.node.row.id);
+      expect(rowIds).toEqual(['row-new', 'row-old']);
+    });
+
+    it('should sort by rowCreatedAt ascending (oldest first)', async () => {
+      const result = await runQuery(
+        new GetSubSchemaItemsQuery({
+          revisionId: testData.draftRevisionId,
+          schemaId: SystemSchemaIds.File,
+          first: 100,
+          orderBy: [{ rowCreatedAt: 'asc' }],
+        }),
+      );
+
+      const rowIds = result.edges.map((e) => e.node.row.id);
+      expect(rowIds).toEqual(['row-old', 'row-new']);
+    });
+  });
+
   describe('pagination', () => {
     let testData: PrepareSubSchemaTestResult;
 
