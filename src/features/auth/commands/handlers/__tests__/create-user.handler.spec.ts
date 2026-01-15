@@ -33,7 +33,7 @@ describe('CreateUserHandler', () => {
         create: createMock({ id: 'userId' }),
       },
       organization: {
-        findUnique: createMock(null),
+        findFirst: createMock(null),
       },
     };
 
@@ -374,7 +374,10 @@ describe('CreateUserHandler', () => {
 
       expect(prismaService.user.findFirst).toHaveBeenCalledWith({
         where: {
-          OR: [{ email: 'test@example.com' }, { username: 'testuser' }],
+          OR: [
+            { email: 'test@example.com' },
+            { username: { equals: 'testuser', mode: 'insensitive' } },
+          ],
         },
       });
     });
@@ -382,7 +385,7 @@ describe('CreateUserHandler', () => {
 
   describe('organization validation', () => {
     it('should throw error when organization with username already exists', async () => {
-      prismaService.organization.findUnique = createMock({ id: 'testuser' });
+      prismaService.organization.findFirst = createMock({ id: 'testuser' });
       const command = createCommand({ username: 'testuser' });
 
       await expect(handler.execute(command)).rejects.toThrow(
@@ -398,7 +401,7 @@ describe('CreateUserHandler', () => {
 
       await handler.execute(command);
 
-      expect(prismaService.organization.findUnique).not.toHaveBeenCalled();
+      expect(prismaService.organization.findFirst).not.toHaveBeenCalled();
     });
 
     it('should check organization existence by username', async () => {
@@ -406,8 +409,8 @@ describe('CreateUserHandler', () => {
 
       await handler.execute(command);
 
-      expect(prismaService.organization.findUnique).toHaveBeenCalledWith({
-        where: { id: 'newuser' },
+      expect(prismaService.organization.findFirst).toHaveBeenCalledWith({
+        where: { id: { equals: 'newuser', mode: 'insensitive' } },
         select: { id: true },
       });
     });
@@ -452,7 +455,7 @@ describe('CreateUserHandler', () => {
         'User already exists',
       );
 
-      expect(prismaService.organization.findUnique).not.toHaveBeenCalled();
+      expect(prismaService.organization.findFirst).not.toHaveBeenCalled();
     });
   });
 
