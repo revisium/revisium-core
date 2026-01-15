@@ -10,6 +10,7 @@ import {
 
 const SUB_SCHEMA_CTE_NAME = 'sub_schema_items';
 const SUB_SCHEMA_TABLE_ALIAS = 'ssi';
+const ROW_TABLE_ALIAS = 'r';
 
 export type SubSchemaRawItem = {
   tableId: string;
@@ -72,6 +73,7 @@ export function getSubSchemaItemsSql(
   const orderByClause = buildSubSchemaOrderBy({
     orderBy,
     tableAlias: SUB_SCHEMA_TABLE_ALIAS,
+    rowTableAlias: ROW_TABLE_ALIAS,
   });
 
   return Prisma.sql`

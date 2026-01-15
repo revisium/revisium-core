@@ -1102,6 +1102,7 @@ input SubSchemaJsonFilterInput {
 input SubSchemaOrderByItemInput {
   data: SubSchemaDataOrderByInput
   fieldPath: SortOrder
+  rowCreatedAt: SortOrder
   rowId: SortOrder
   tableId: SortOrder
 }
