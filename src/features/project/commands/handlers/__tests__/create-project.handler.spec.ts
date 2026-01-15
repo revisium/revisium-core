@@ -217,29 +217,29 @@ describe('CreateProjectHandler', () => {
   it('should not create a project with reserved branch name "head"', async () => {
     const { organizationId } = await prepareProject(prismaService);
 
-    await expect(
-      execute(
-        new CreateProjectCommand({
-          organizationId,
-          projectName: 'projectWithHeadBranch',
-          branchName: 'head',
-        }),
-      ),
-    ).rejects.toThrow('This branch name is reserved and cannot be used.');
+    const command = new CreateProjectCommand({
+      organizationId,
+      projectName: 'projectWithHeadBranch',
+      branchName: 'head',
+    });
+
+    await expect(execute(command)).rejects.toThrow(
+      'This branch name is reserved and cannot be used.',
+    );
   });
 
   it('should not create a project with reserved branch name "draft"', async () => {
     const { organizationId } = await prepareProject(prismaService);
 
-    await expect(
-      execute(
-        new CreateProjectCommand({
-          organizationId,
-          projectName: 'projectWithDraftBranch',
-          branchName: 'draft',
-        }),
-      ),
-    ).rejects.toThrow('This branch name is reserved and cannot be used.');
+    const command = new CreateProjectCommand({
+      organizationId,
+      projectName: 'projectWithDraftBranch',
+      branchName: 'draft',
+    });
+
+    await expect(execute(command)).rejects.toThrow(
+      'This branch name is reserved and cannot be used.',
+    );
   });
 
   let prismaService: PrismaService;

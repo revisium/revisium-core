@@ -60,7 +60,7 @@ export class CreateProjectHandler
     return context;
   }
 
-  execute(
+  async execute(
     command: CreateProjectCommand,
   ): Promise<CreateProjectCommandReturnType> {
     validateUrlLikeId(command.data.projectName);
