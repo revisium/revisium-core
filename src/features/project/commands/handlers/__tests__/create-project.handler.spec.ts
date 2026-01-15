@@ -194,6 +194,54 @@ describe('CreateProjectHandler', () => {
     );
   });
 
+  it('should not create a new project with case-insensitive duplicate name', async () => {
+    const { organizationId } = await prepareProject(prismaService);
+
+    await execute(
+      new CreateProjectCommand({
+        organizationId,
+        projectName: 'MyProject',
+      }),
+    );
+
+    await expect(
+      execute(
+        new CreateProjectCommand({
+          organizationId,
+          projectName: 'myproject',
+        }),
+      ),
+    ).rejects.toThrow('Project with name myproject already exists');
+  });
+
+  it('should not create a project with reserved branch name "head"', async () => {
+    const { organizationId } = await prepareProject(prismaService);
+
+    await expect(
+      execute(
+        new CreateProjectCommand({
+          organizationId,
+          projectName: 'projectWithHeadBranch',
+          branchName: 'head',
+        }),
+      ),
+    ).rejects.toThrow('This branch name is reserved and cannot be used.');
+  });
+
+  it('should not create a project with reserved branch name "draft"', async () => {
+    const { organizationId } = await prepareProject(prismaService);
+
+    await expect(
+      execute(
+        new CreateProjectCommand({
+          organizationId,
+          projectName: 'projectWithDraftBranch',
+          branchName: 'draft',
+        }),
+      ),
+    ).rejects.toThrow('This branch name is reserved and cannot be used.');
+  });
+
   let prismaService: PrismaService;
   let commandBus: CommandBus;
 

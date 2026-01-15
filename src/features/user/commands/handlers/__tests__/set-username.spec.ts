@@ -39,7 +39,7 @@ describe('SetUsernameHandler', () => {
 
   it('should throw an error if another user already has the same username', async () => {
     prismaService.user.findFirstOrThrow = createMock({ username: null });
-    prismaService.user.findUnique = createMock({ id: 'anotherUserId' });
+    prismaService.user.findFirst = createMock({ id: 'anotherUserId' });
     const command = createCommand();
 
     await expect(handler.execute(command)).rejects.toThrow(BadRequestException);
@@ -50,8 +50,8 @@ describe('SetUsernameHandler', () => {
 
   it('should throw an error if the same organization already exists', async () => {
     prismaService.user.findFirstOrThrow = createMock({ username: null });
-    prismaService.user.findUnique = createMock(null);
-    prismaService.organization.findUnique = createMock({
+    prismaService.user.findFirst = createMock(null);
+    prismaService.organization.findFirst = createMock({
       id: 'newUsername',
     });
     const command = createCommand();
@@ -64,8 +64,8 @@ describe('SetUsernameHandler', () => {
 
   it('should set the username if all conditions are met', async () => {
     prismaService.user.findFirstOrThrow = createMock({ username: null });
-    prismaService.user.findUnique = createMock(null);
-    prismaService.organization.findUnique = createMock(null);
+    prismaService.user.findFirst = createMock(null);
+    prismaService.organization.findFirst = createMock(null);
     prismaService.user.update = createMock(true);
     const command = createCommand();
 
@@ -114,11 +114,11 @@ describe('SetUsernameHandler', () => {
     const prismaServiceMock = {
       user: {
         findFirstOrThrow: createMock(null),
-        findUnique: createMock(null),
+        findFirst: createMock(null),
         update: createMock(true),
       },
       organization: {
-        findUnique: createMock(null),
+        findFirst: createMock(null),
       },
     };
 

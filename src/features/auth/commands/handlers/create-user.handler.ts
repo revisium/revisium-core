@@ -6,7 +6,7 @@ import {
   CreateUserCommandReturnType,
 } from 'src/features/auth/commands/impl';
 import { isValidSystemRole, UserRole } from 'src/features/auth/consts';
-import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
+import { validateUsername } from 'src/features/share/utils/validateUrlLikeId/validateUsername';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { Prisma } from 'src/__generated__/client';
@@ -23,7 +23,7 @@ export class CreateUserHandler
 
   async execute({ data }: CreateUserCommand) {
     if (data.username) {
-      validateUrlLikeId(data.username);
+      validateUsername(data.username);
     }
 
     if (!isValidSystemRole(data.roleId)) {
@@ -95,8 +95,8 @@ export class CreateUserHandler
   }
 
   private async existOrganization(organizationId: string) {
-    const result = await this.prisma.organization.findUnique({
-      where: { id: organizationId },
+    const result = await this.prisma.organization.findFirst({
+      where: { id: { equals: organizationId, mode: 'insensitive' } },
       select: {
         id: true,
       },
@@ -108,7 +108,12 @@ export class CreateUserHandler
   private getUser(data: CreateUserCommand['data']) {
     return this.prisma.user.findFirst({
       where: {
-        OR: [{ email: data.email }, { username: data.username }],
+        OR: [
+          { email: data.email },
+          data.username
+            ? { username: { equals: data.username, mode: 'insensitive' } }
+            : {},
+        ],
       },
     });
   }

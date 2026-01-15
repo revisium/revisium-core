@@ -5,6 +5,7 @@ import {
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { validateBranchName } from 'src/features/share/utils/validateUrlLikeId/validateBranchName';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -65,7 +66,7 @@ export class CreateProjectHandler
     validateUrlLikeId(command.data.projectName);
 
     if (command.data.branchName) {
-      validateUrlLikeId(command.data.branchName);
+      validateBranchName(command.data.branchName);
     }
 
     return this.transactionService.run(() => this.transactionHandler(command), {
@@ -108,7 +109,7 @@ export class CreateProjectHandler
     const existingProject = await this.transaction.project.findFirst({
       where: {
         organizationId: this.context.organizationId,
-        name: this.context.projectName,
+        name: { equals: this.context.projectName, mode: 'insensitive' },
         isDeleted: false,
       },
       select: { id: true },

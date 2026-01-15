@@ -1,7 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserRole } from 'src/features/auth/consts';
-import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
+import { validateUsername } from 'src/features/share/utils/validateUrlLikeId/validateUsername';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
@@ -23,7 +23,7 @@ export class SetUsernameHandler
       throw new BadRequestException('Username must be at least 3 characters');
     }
 
-    validateUrlLikeId(data.username);
+    validateUsername(data.username);
 
     const user = await this.getUser(data);
 
@@ -80,9 +80,9 @@ export class SetUsernameHandler
   }
 
   private async existTheSameUsername(data: SetUsernameCommand['data']) {
-    const result = await this.prisma.user.findUnique({
+    const result = await this.prisma.user.findFirst({
       where: {
-        username: data.username,
+        username: { equals: data.username, mode: 'insensitive' },
       },
       select: {
         id: true,
@@ -93,9 +93,9 @@ export class SetUsernameHandler
   }
 
   private async existTheSameOrganization(data: SetUsernameCommand['data']) {
-    const result = await this.prisma.organization.findUnique({
+    const result = await this.prisma.organization.findFirst({
       where: {
-        id: data.username,
+        id: { equals: data.username, mode: 'insensitive' },
       },
       select: {
         id: true,
