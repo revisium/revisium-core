@@ -370,6 +370,24 @@ export class SchemaResource implements McpResourceRegistrar {
         'File content is immutable - only fileName can be modified after upload',
         'See revisium://specs/file resource for detailed file upload workflow',
       ],
+      fileDataRules: [
+        'IMPORTANT: When creating rows with file fields, pass an EMPTY file object with all fields set to empty/zero values',
+        'The system will automatically generate a unique fileId and set status to "ready" for the file field',
+        'After row creation, use uploadFile tool with the generated fileId to upload actual file content',
+        'For arrays of files, pass an array of empty file objects - each will get its own fileId',
+      ],
+      emptyFileObject: {
+        extension: '',
+        fileId: '',
+        fileName: '',
+        hash: '',
+        height: 0,
+        mimeType: '',
+        size: 0,
+        status: '',
+        url: '',
+        width: 0,
+      },
       fileSchemaRef: this.fileRef,
       fileFieldExamples: {
         singleFile: {
