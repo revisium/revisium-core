@@ -372,7 +372,7 @@ export class SchemaResource implements McpResourceRegistrar {
       ],
       fileDataRules: [
         'IMPORTANT: When creating rows with file fields, pass an EMPTY file object with all fields set to empty/zero values',
-        'The system will automatically generate a unique fileId for the file field',
+        'The system will automatically generate a unique fileId and set status to "ready" for the file field',
         'After row creation, use uploadFile tool with the generated fileId to upload actual file content',
         'For arrays of files, pass an array of empty file objects - each will get its own fileId',
       ],
