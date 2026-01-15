@@ -110,9 +110,16 @@ export class CreateUserHandler
       where: {
         OR: [
           { email: data.email },
-          data.username
-            ? { username: { equals: data.username, mode: 'insensitive' } }
-            : {},
+          ...(data.username
+            ? [
+                {
+                  username: {
+                    equals: data.username,
+                    mode: 'insensitive' as const,
+                  },
+                },
+              ]
+            : []),
         ],
       },
     });
