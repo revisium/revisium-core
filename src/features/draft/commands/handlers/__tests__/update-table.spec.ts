@@ -24,6 +24,10 @@ import {
 } from 'src/features/share/views-migration.service';
 import { TableViewsData } from 'src/features/views/types';
 import objectHash from 'object-hash';
+import {
+  FormulaService,
+  FormulaValidationService,
+} from 'src/features/plugin/formula';
 
 describe('UpdateTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
@@ -269,6 +273,8 @@ describe('UpdateTableHandler', () => {
   let viewsMigrationService: ViewsMigrationService;
   let rowApiService: RowApiService;
   let tableApiService: TableApiService;
+  let formulaService: FormulaService;
+  let formulaValidationService: FormulaValidationService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -279,6 +285,10 @@ describe('UpdateTableHandler', () => {
     viewsMigrationService = result.viewsMigrationService;
     rowApiService = result.module.get<RowApiService>(RowApiService);
     tableApiService = result.module.get<TableApiService>(TableApiService);
+    formulaService = result.module.get<FormulaService>(FormulaService);
+    formulaValidationService = result.module.get<FormulaValidationService>(
+      FormulaValidationService,
+    );
   });
 
   beforeEach(() => {
@@ -525,6 +535,180 @@ describe('UpdateTableHandler', () => {
 
       expect(viewsTableRow).not.toBeNull();
       expect(viewsTableRow!.schemaHash).toBe(objectHash(tableViewsSchema));
+    });
+  });
+
+  describe('formula validation', () => {
+    beforeEach(() => {
+      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(true);
+      jest
+        .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
+        .mockReturnValue(true);
+    });
+
+    const numberFieldWithFormula = (expression: string): any => ({
+      type: JsonSchemaTypeName.Number,
+      default: 0,
+      readOnly: true,
+      'x-formula': { version: 1, expression },
+    });
+
+    it('should update table with valid formula in patch', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/doubled',
+            value: numberFieldWithFormula('ver * 2'),
+          },
+        ],
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
+    });
+
+    it('should throw error for invalid formula syntax in patch', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/computed',
+            value: numberFieldWithFormula('ver * * 2'),
+          },
+        ],
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should throw error for formula referencing non-existent field after rename', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'move',
+            from: '/properties/ver',
+            path: '/properties/version',
+          },
+          {
+            op: 'add',
+            path: '/properties/computed',
+            value: numberFieldWithFormula('ver * 2'),
+          },
+        ],
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should allow formula referencing renamed field with correct name', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'move',
+            from: '/properties/ver',
+            path: '/properties/version',
+          },
+          {
+            op: 'add',
+            path: '/properties/computed',
+            value: numberFieldWithFormula('version * 2'),
+          },
+        ],
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
+    });
+
+    it('should throw error for formula referencing deleted field', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const addFormulaCommand = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/quantity',
+            value: { type: JsonSchemaTypeName.Number, default: 0 },
+          },
+          {
+            op: 'add',
+            path: '/properties/computed',
+            value: numberFieldWithFormula('ver * quantity'),
+          },
+        ],
+      });
+      await runTransaction(addFormulaCommand);
+
+      const removeFieldCommand = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'remove',
+            path: '/properties/quantity',
+          },
+        ],
+      });
+
+      await expect(runTransaction(removeFieldCommand)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(removeFieldCommand)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should skip formula validation when formula feature is disabled', async () => {
+      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
+      jest
+        .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
+        .mockReturnValue(false);
+
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/computed',
+            value: numberFieldWithFormula('invalid * * syntax'),
+          },
+        ],
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
     });
   });
 });

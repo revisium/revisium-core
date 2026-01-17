@@ -11,6 +11,7 @@ import { CreateTableCommand } from 'src/features/draft/commands/impl/create-tabl
 import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/create-table.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { TableApiService } from 'src/features/table/table-api.service';
+import { FormulaService } from 'src/features/plugin/formula';
 
 describe('CreateTableHandler', () => {
   it('should throw an error if the tableId is shorter than 1 character', async () => {
@@ -172,6 +173,192 @@ describe('CreateTableHandler', () => {
     expect(table).not.toBeNull();
   });
 
+  describe('formula validation', () => {
+    beforeEach(() => {
+      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(true);
+    });
+
+    it('should create table with valid formula', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            price: { type: 'number', default: 0 },
+            quantity: { type: 'number', default: 0 },
+            total: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'price * quantity' },
+            },
+          },
+          additionalProperties: false,
+          required: ['price', 'quantity', 'total'],
+        },
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
+    });
+
+    it('should throw error for invalid formula syntax', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            price: { type: 'number', default: 0 },
+            total: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'price * * 2' },
+            },
+          },
+          additionalProperties: false,
+          required: ['price', 'total'],
+        },
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should throw error for formula referencing non-existent field', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            price: { type: 'number', default: 0 },
+            total: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'nonExistent * 2' },
+            },
+          },
+          additionalProperties: false,
+          required: ['price', 'total'],
+        },
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should throw error for circular dependency in formulas', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            a: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'b + 1' },
+            },
+            b: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'a + 1' },
+            },
+          },
+          additionalProperties: false,
+          required: ['a', 'b'],
+        },
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should skip formula validation when formula feature is disabled', async () => {
+      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
+
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            total: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'invalid * * syntax' },
+            },
+          },
+          additionalProperties: false,
+          required: ['total'],
+        },
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
+    });
+
+    it('should throw error for field with both x-formula and foreignKey', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            price: { type: 'number', default: 0 },
+            refId: {
+              type: 'string',
+              default: '',
+              foreignKey: tableId,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'price' },
+            },
+          },
+          additionalProperties: false,
+          required: ['price', 'refId'],
+        },
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'schema is not valid',
+      );
+    });
+  });
+
   function runTransaction(
     command: CreateTableCommand,
   ): Promise<CreateTableHandlerReturnType> {
@@ -183,6 +370,7 @@ describe('CreateTableHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
   let tableApiService: TableApiService;
+  let formulaService: FormulaService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -191,6 +379,7 @@ describe('CreateTableHandler', () => {
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
     tableApiService = result.module.get<TableApiService>(TableApiService);
+    formulaService = result.module.get<FormulaService>(FormulaService);
   });
 
   beforeEach(() => {

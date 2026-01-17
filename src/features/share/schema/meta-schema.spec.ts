@@ -554,45 +554,59 @@ describe('meta-schema', () => {
       ).toBe(false);
     });
 
-    it('should allow x-formula on number field', () => {
+    it('should allow x-formula on number field with readOnly: true', () => {
       expect(
         ajv.validate(notForeignKeyMetaSchema, {
           type: 'number',
           default: 0,
+          readOnly: true,
           'x-formula': { version: 1, expression: 'price * quantity' },
         }),
       ).toBe(true);
     });
 
-    it('should allow x-formula on boolean field', () => {
+    it('should allow x-formula on boolean field with readOnly: true', () => {
       expect(
         ajv.validate(notForeignKeyMetaSchema, {
           type: 'boolean',
           default: false,
+          readOnly: true,
           'x-formula': { version: 1, expression: 'price > 100' },
         }),
       ).toBe(true);
     });
 
-    it('should allow x-formula on string field without foreignKey', () => {
+    it('should allow x-formula on string field without foreignKey with readOnly: true', () => {
       expect(
         ajv.validate(notForeignKeyMetaSchema, {
           type: 'string',
           default: '',
+          readOnly: true,
           'x-formula': { version: 1, expression: 'concat(a, b)' },
         }),
       ).toBe(true);
     });
 
-    it('should reject x-formula on string field with foreignKey', () => {
+    it('should reject x-formula when foreignKey is present', () => {
       expect(
         ajv.validate(metaSchema, {
           type: 'string',
           default: '',
           foreignKey: 'tableId',
+          readOnly: true,
           'x-formula': { version: 1, expression: 'price' },
         }),
       ).toBe(false);
+    });
+
+    it('should allow foreignKey without x-formula', () => {
+      expect(
+        ajv.validate(metaSchema, {
+          type: 'string',
+          default: '',
+          foreignKey: 'tableId',
+        }),
+      ).toBe(true);
     });
 
     it('should reject invalid x-formula on primitive fields', () => {
@@ -600,6 +614,7 @@ describe('meta-schema', () => {
         ajv.validate(notForeignKeyMetaSchema, {
           type: 'number',
           default: 0,
+          readOnly: true,
           'x-formula': { version: 2, expression: 'price' },
         }),
       ).toBe(false);
@@ -608,12 +623,13 @@ describe('meta-schema', () => {
         ajv.validate(notForeignKeyMetaSchema, {
           type: 'number',
           default: 0,
+          readOnly: true,
           'x-formula': { expression: 'price' },
         }),
       ).toBe(false);
     });
 
-    it('should allow x-formula in nested object properties', () => {
+    it('should allow x-formula in nested object properties with readOnly: true', () => {
       expect(
         ajv.validate(notForeignKeyMetaSchema, {
           type: 'object',
@@ -624,12 +640,50 @@ describe('meta-schema', () => {
             total: {
               type: 'number',
               default: 0,
+              readOnly: true,
               'x-formula': { version: 1, expression: 'price * quantity' },
             },
           },
           required: ['price', 'quantity', 'total'],
         }),
       ).toBe(true);
+    });
+
+    it('should reject x-formula without readOnly', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'number',
+          default: 0,
+          'x-formula': { version: 1, expression: 'price * quantity' },
+        }),
+      ).toBe(false);
+
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'string',
+          default: '',
+          'x-formula': { version: 1, expression: 'concat(a, b)' },
+        }),
+      ).toBe(false);
+
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'boolean',
+          default: false,
+          'x-formula': { version: 1, expression: 'price > 100' },
+        }),
+      ).toBe(false);
+    });
+
+    it('should reject x-formula with readOnly: false', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'number',
+          default: 0,
+          readOnly: false,
+          'x-formula': { version: 1, expression: 'price * quantity' },
+        }),
+      ).toBe(false);
     });
   });
 

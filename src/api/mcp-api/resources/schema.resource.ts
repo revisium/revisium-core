@@ -1,4 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { formulaSpec } from '@revisium/formula/spec';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { SchemaObject } from 'ajv';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
@@ -89,6 +90,65 @@ export class SchemaResource implements McpResourceRegistrar {
           },
           additionalProperties: false,
           required: ['name', 'categoryId'],
+        },
+        withFormulas: {
+          type: 'object',
+          properties: {
+            firstName: {
+              type: 'string',
+              default: '',
+              description: 'First name',
+            },
+            lastName: {
+              type: 'string',
+              default: '',
+              description: 'Last name',
+            },
+            fullName: {
+              type: 'string',
+              default: '',
+              readOnly: true,
+              description: 'Computed full name',
+              'x-formula': {
+                version: 1,
+                expression: 'firstName + " " + lastName',
+              },
+            },
+            price: {
+              type: 'number',
+              default: 0,
+              description: 'Unit price',
+            },
+            quantity: {
+              type: 'number',
+              default: 0,
+              description: 'Quantity',
+            },
+            total: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              description: 'Computed total (price * quantity)',
+              'x-formula': { version: 1, expression: 'price * quantity' },
+            },
+            inStock: {
+              type: 'boolean',
+              default: false,
+              readOnly: true,
+              description: 'Computed availability',
+              'x-formula': { version: 1, expression: 'quantity > 0' },
+            },
+          },
+          additionalProperties: false,
+          required: [
+            'firstName',
+            'lastName',
+            'fullName',
+            'price',
+            'quantity',
+            'total',
+            'inStock',
+          ],
         },
         withMarkdown: {
           type: 'object',
@@ -350,7 +410,15 @@ export class SchemaResource implements McpResourceRegistrar {
         'Supported types: string, number, boolean, object, array',
         'String formats: date-time, date, time, email, regex',
         'String contentMediaType: text/plain, text/markdown, text/html, application/json',
+        'x-formula: computed field with expression (string, number, boolean types only)',
       ],
+      formulaSpec: {
+        version: formulaSpec.version,
+        description: formulaSpec.description,
+        syntax: formulaSpec.syntax,
+        schemaUsage: formulaSpec.schemaUsage,
+        examples: formulaSpec.examples,
+      },
       foreignKeyRules: [
         'IMPORTANT: Tables with foreignKey must be created AFTER the referenced table exists',
         'Create tables in dependency order: first tables without foreignKey, then tables that reference them',
