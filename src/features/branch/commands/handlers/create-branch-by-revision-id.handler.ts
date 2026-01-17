@@ -39,6 +39,8 @@ export class CreateBranchByRevisionIdHandler
       throw new BadRequestException('This revision is a draft revision');
     }
 
+    await this.ensureBranchNotExists(branch.projectId, branchName);
+
     const tableIds = tables.map(({ versionId }) => versionId);
 
     const { id: branchId } = await this.createBranch({
@@ -148,5 +150,24 @@ export class CreateBranchByRevisionIdHandler
         tables: { select: { versionId: true } },
       },
     });
+  }
+
+  private async ensureBranchNotExists(
+    projectId: string,
+    branchName: string,
+  ): Promise<void> {
+    const existingBranch = await this.transaction.branch.findFirst({
+      where: {
+        projectId,
+        name: { equals: branchName, mode: 'insensitive' },
+      },
+      select: { id: true },
+    });
+
+    if (existingBranch) {
+      throw new BadRequestException(
+        `Branch with name ${branchName} already exists`,
+      );
+    }
   }
 }

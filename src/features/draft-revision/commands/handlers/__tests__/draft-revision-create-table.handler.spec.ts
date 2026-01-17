@@ -95,6 +95,29 @@ describe('DraftRevisionCreateTableHandler', () => {
         'A table with this name already exists in the revision',
       );
     });
+
+    it('should throw an error if table already exists with different case', async () => {
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+
+      const createLowerCase = new DraftRevisionCreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'my-table',
+      });
+
+      await runInTransaction(createLowerCase);
+
+      const createUpperCase = new DraftRevisionCreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'My-Table',
+      });
+
+      await expect(runInTransaction(createUpperCase)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runInTransaction(createUpperCase)).rejects.toThrow(
+        'A table with this name already exists in the revision',
+      );
+    });
   });
 
   describe('success cases', () => {
