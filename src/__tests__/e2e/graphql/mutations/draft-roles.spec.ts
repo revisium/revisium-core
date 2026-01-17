@@ -109,11 +109,11 @@ describe('graphql - draft mutations (role-based)', () => {
       });
     });
 
-    describe('removeTable', () => {
+    describe('deleteTable', () => {
       const getRemoveTableMutation = (revisionId: string, tableId: string) => ({
         query: gql`
-          mutation removeTable($data: RemoveTableInput!) {
-            removeTable(data: $data) {
+          mutation deleteTable($data: DeleteTableInput!) {
+            deleteTable(data: $data) {
               branch {
                 id
               }
@@ -134,7 +134,7 @@ describe('graphql - draft mutations (role-based)', () => {
             fixture.project.tableId,
           ),
         });
-        expect(result.removeTable.branch).toBeDefined();
+        expect(result.deleteTable.branch).toBeDefined();
       });
 
       it('developer can remove table', async () => {
@@ -146,7 +146,7 @@ describe('graphql - draft mutations (role-based)', () => {
             fixture.project.tableId,
           ),
         });
-        expect(result.removeTable.branch).toBeDefined();
+        expect(result.deleteTable.branch).toBeDefined();
       });
 
       it('editor cannot remove table', async () => {
@@ -416,15 +416,15 @@ describe('graphql - draft mutations (role-based)', () => {
       });
     });
 
-    describe('removeRow', () => {
+    describe('deleteRow', () => {
       const getRemoveRowMutation = (
         revisionId: string,
         tableId: string,
         rowId: string,
       ) => ({
         query: gql`
-          mutation removeRow($data: RemoveRowInput!) {
-            removeRow(data: $data) {
+          mutation deleteRow($data: DeleteRowInput!) {
+            deleteRow(data: $data) {
               branch {
                 id
               }
@@ -449,7 +449,7 @@ describe('graphql - draft mutations (role-based)', () => {
             fixture.project.rowId,
           ),
         });
-        expect(result.removeRow.branch).toBeDefined();
+        expect(result.deleteRow.branch).toBeDefined();
       });
 
       it('developer can remove row', async () => {
@@ -462,7 +462,7 @@ describe('graphql - draft mutations (role-based)', () => {
             fixture.project.rowId,
           ),
         });
-        expect(result.removeRow.branch).toBeDefined();
+        expect(result.deleteRow.branch).toBeDefined();
       });
 
       it('editor can remove row', async () => {
@@ -475,7 +475,7 @@ describe('graphql - draft mutations (role-based)', () => {
             fixture.project.rowId,
           ),
         });
-        expect(result.removeRow.branch).toBeDefined();
+        expect(result.deleteRow.branch).toBeDefined();
       });
 
       it('reader cannot remove row', async () => {
@@ -494,15 +494,15 @@ describe('graphql - draft mutations (role-based)', () => {
       });
     });
 
-    describe('removeRows', () => {
-      const getRemoveRowsMutation = (
+    describe('deleteRows', () => {
+      const getDeleteRowsMutation = (
         revisionId: string,
         tableId: string,
         rowIds: string[],
       ) => ({
         query: gql`
-          mutation removeRows($data: RemoveRowsInput!) {
-            removeRows(data: $data) {
+          mutation deleteRows($data: DeleteRowsInput!) {
+            deleteRows(data: $data) {
               branch {
                 id
               }
@@ -521,39 +521,39 @@ describe('graphql - draft mutations (role-based)', () => {
         const result = await gqlQuery({
           app,
           token: fixture.owner.token,
-          ...getRemoveRowsMutation(
+          ...getDeleteRowsMutation(
             fixture.project.draftRevisionId,
             fixture.project.tableId,
             [fixture.project.rowId],
           ),
         });
-        expect(result.removeRows.branch).toBeDefined();
+        expect(result.deleteRows.branch).toBeDefined();
       });
 
       it('developer can remove rows', async () => {
         const result = await gqlQuery({
           app,
           token: fixture.developer.token,
-          ...getRemoveRowsMutation(
+          ...getDeleteRowsMutation(
             fixture.project.draftRevisionId,
             fixture.project.tableId,
             [fixture.project.rowId],
           ),
         });
-        expect(result.removeRows.branch).toBeDefined();
+        expect(result.deleteRows.branch).toBeDefined();
       });
 
       it('editor can remove rows', async () => {
         const result = await gqlQuery({
           app,
           token: fixture.editor.token,
-          ...getRemoveRowsMutation(
+          ...getDeleteRowsMutation(
             fixture.project.draftRevisionId,
             fixture.project.tableId,
             [fixture.project.rowId],
           ),
         });
-        expect(result.removeRows.branch).toBeDefined();
+        expect(result.deleteRows.branch).toBeDefined();
       });
 
       it('reader cannot remove rows', async () => {
@@ -561,7 +561,7 @@ describe('graphql - draft mutations (role-based)', () => {
           {
             app,
             token: fixture.reader.token,
-            ...getRemoveRowsMutation(
+            ...getDeleteRowsMutation(
               fixture.project.draftRevisionId,
               fixture.project.tableId,
               [fixture.project.rowId],

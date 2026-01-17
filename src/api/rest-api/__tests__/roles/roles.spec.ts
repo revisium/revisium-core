@@ -94,7 +94,7 @@ describe('restapi - role-based permissions', () => {
       });
     });
 
-    describe('DELETE /revision/:revisionId/tables/:tableId (removeTable)', () => {
+    describe('DELETE /revision/:revisionId/tables/:tableId (deleteTable)', () => {
       it('owner can remove table', async () => {
         const result = await authDelete(
           app,

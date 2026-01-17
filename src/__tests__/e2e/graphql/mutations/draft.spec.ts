@@ -104,7 +104,7 @@ describe('graphql - draft mutations', () => {
     });
   });
 
-  describe('removeTable', () => {
+  describe('deleteTable', () => {
     let fixture: PrepareDataReturnType;
 
     beforeEach(async () => {
@@ -113,8 +113,8 @@ describe('graphql - draft mutations', () => {
 
     const getMutation = (revisionId: string, tableId: string) => ({
       query: gql`
-        mutation removeTable($data: RemoveTableInput!) {
-          removeTable(data: $data) {
+        mutation deleteTable($data: DeleteTableInput!) {
+          deleteTable(data: $data) {
             branch {
               id
             }
@@ -136,8 +136,8 @@ describe('graphql - draft mutations', () => {
         ),
       });
 
-      expect(result.removeTable.branch).toBeDefined();
-      expect(result.removeTable.branch.id).toBe(fixture.project.branchId);
+      expect(result.deleteTable.branch).toBeDefined();
+      expect(result.deleteTable.branch.id).toBe(fixture.project.branchId);
     });
 
     it('cross-owner cannot remove table', async () => {
@@ -504,7 +504,7 @@ describe('graphql - draft mutations', () => {
     });
   });
 
-  describe('removeRow', () => {
+  describe('deleteRow', () => {
     let fixture: PrepareDataReturnType;
 
     beforeEach(async () => {
@@ -517,8 +517,8 @@ describe('graphql - draft mutations', () => {
       rowId: string,
     ) => ({
       query: gql`
-        mutation removeRow($data: RemoveRowInput!) {
-          removeRow(data: $data) {
+        mutation deleteRow($data: DeleteRowInput!) {
+          deleteRow(data: $data) {
             branch {
               id
             }
@@ -544,8 +544,8 @@ describe('graphql - draft mutations', () => {
         ),
       });
 
-      expect(result.removeRow.branch).toBeDefined();
-      expect(result.removeRow.table).toBeDefined();
+      expect(result.deleteRow.branch).toBeDefined();
+      expect(result.deleteRow.table).toBeDefined();
     });
 
     it('cross-owner cannot remove row', async () => {
@@ -564,7 +564,7 @@ describe('graphql - draft mutations', () => {
     });
   });
 
-  describe('removeRows', () => {
+  describe('deleteRows', () => {
     let fixture: PrepareDataReturnType;
 
     beforeEach(async () => {
@@ -577,8 +577,8 @@ describe('graphql - draft mutations', () => {
       rowIds: string[],
     ) => ({
       query: gql`
-        mutation removeRows($data: RemoveRowsInput!) {
-          removeRows(data: $data) {
+        mutation deleteRows($data: DeleteRowsInput!) {
+          deleteRows(data: $data) {
             branch {
               id
             }
@@ -605,9 +605,9 @@ describe('graphql - draft mutations', () => {
         ),
       });
 
-      expect(result.removeRows.branch).toBeDefined();
-      expect(result.removeRows.branch.id).toBe(fixture.project.branchId);
-      expect(result.removeRows.table).toBeDefined();
+      expect(result.deleteRows.branch).toBeDefined();
+      expect(result.deleteRows.branch.id).toBe(fixture.project.branchId);
+      expect(result.deleteRows.table).toBeDefined();
     });
 
     it('cross-owner cannot remove rows', async () => {
