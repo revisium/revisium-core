@@ -186,11 +186,11 @@ export class AuthTools implements McpToolRegistrar {
               'Not authenticated. ASK THE USER which authentication method they prefer:',
             options: [
               {
-                method: 'loginWithToken',
+                method: 'login_with_token',
                 description:
-                  '[Recommended] Get access token from Revisium UI and use loginWithToken',
+                  '[Recommended] Get access token from Revisium UI and use login_with_token',
                 tokenUrl,
-                usage: 'loginWithToken(accessToken)',
+                usage: 'login_with_token(accessToken)',
               },
               {
                 method: 'login',

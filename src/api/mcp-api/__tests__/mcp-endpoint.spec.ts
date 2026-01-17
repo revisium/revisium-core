@@ -124,20 +124,20 @@ describe('mcp-api - endpoint tools', () => {
       const data = parseResponse(res);
       const toolNames = data.result.tools.map((t: { name: string }) => t.name);
 
-      expect(toolNames).toContain('getProjectEndpoints');
-      expect(toolNames).toContain('getEndpointRelatives');
-      expect(toolNames).toContain('createEndpoint');
-      expect(toolNames).toContain('deleteEndpoint');
-      expect(toolNames).toContain('getGraphQLSchema');
-      expect(toolNames).toContain('getOpenAPISpec');
+      expect(toolNames).toContain('get_project_endpoints');
+      expect(toolNames).toContain('get_endpoint_relatives');
+      expect(toolNames).toContain('create_endpoint');
+      expect(toolNames).toContain('delete_endpoint');
+      expect(toolNames).toContain('get_graphql_schema');
+      expect(toolNames).toContain('get_openapi_spec');
     });
   });
 
-  describe('getProjectEndpoints', () => {
+  describe('get_project_endpoints', () => {
     it('should return pre-existing endpoints from prepareData', async () => {
       const { testData, callTool } = await setupTest();
 
-      const response = await callTool('getProjectEndpoints', {
+      const response = await callTool('get_project_endpoints', {
         organizationId: testData.project.organizationId,
         projectName: testData.project.projectName,
       });
@@ -156,7 +156,7 @@ describe('mcp-api - endpoint tools', () => {
     it('should return endpoints filtered by type', async () => {
       const { testData, callTool } = await setupTest();
 
-      const response = await callTool('getProjectEndpoints', {
+      const response = await callTool('get_project_endpoints', {
         organizationId: testData.project.organizationId,
         projectName: testData.project.projectName,
         type: 'GRAPHQL',
@@ -169,12 +169,12 @@ describe('mcp-api - endpoint tools', () => {
     });
   });
 
-  describe('createEndpoint', () => {
+  describe('create_endpoint', () => {
     it('should fail to create duplicate endpoint on same revision', async () => {
       const { testData, callTool } = await setupTest();
 
       // headRevision already has REST_API endpoint from prepareData
-      const response = await callTool('createEndpoint', {
+      const response = await callTool('create_endpoint', {
         revisionId: testData.project.headRevisionId,
         type: 'REST_API',
       });
@@ -188,7 +188,7 @@ describe('mcp-api - endpoint tools', () => {
       const { testData, callTool } = await setupTest();
 
       // headRevision has REST_API, so we can create GRAPHQL
-      const response = await callTool('createEndpoint', {
+      const response = await callTool('create_endpoint', {
         revisionId: testData.project.headRevisionId,
         type: 'GRAPHQL',
       });
@@ -201,14 +201,14 @@ describe('mcp-api - endpoint tools', () => {
     });
   });
 
-  describe('getEndpointRelatives', () => {
+  describe('get_endpoint_relatives', () => {
     it('should return endpoint with related entities', async () => {
       const { testData, callTool } = await setupTest();
 
       // Use pre-existing endpoint from prepareData
       const endpointId = testData.project.headEndpointId;
 
-      const response = await callTool('getEndpointRelatives', {
+      const response = await callTool('get_endpoint_relatives', {
         endpointId,
       });
 
@@ -222,14 +222,14 @@ describe('mcp-api - endpoint tools', () => {
     });
   });
 
-  describe('deleteEndpoint', () => {
+  describe('delete_endpoint', () => {
     it('should delete endpoint', async () => {
       const { testData, callTool } = await setupTest();
 
       // Use pre-existing endpoint from prepareData
       const endpointId = testData.project.headEndpointId;
 
-      const deleteResponse = await callTool('deleteEndpoint', {
+      const deleteResponse = await callTool('delete_endpoint', {
         endpointId,
       });
 
@@ -238,7 +238,7 @@ describe('mcp-api - endpoint tools', () => {
       expect(result.success).toBe(true);
 
       // After deleting one, should have 1 endpoint left
-      const listResponse = await callTool('getProjectEndpoints', {
+      const listResponse = await callTool('get_project_endpoints', {
         organizationId: testData.project.organizationId,
         projectName: testData.project.projectName,
       });
@@ -247,14 +247,14 @@ describe('mcp-api - endpoint tools', () => {
     });
   });
 
-  describe('getGraphQLSchema', () => {
+  describe('get_graphql_schema', () => {
     it('should return error for REST_API endpoint', async () => {
       const { testData, callTool } = await setupTest();
 
       // Use pre-existing REST_API endpoint on head revision
       const endpointId = testData.project.headEndpointId;
 
-      const response = await callTool('getGraphQLSchema', {
+      const response = await callTool('get_graphql_schema', {
         endpointId,
       });
 
@@ -269,7 +269,7 @@ describe('mcp-api - endpoint tools', () => {
       // Use pre-existing GRAPHQL endpoint on draft revision
       const endpointId = testData.project.draftEndpointId;
 
-      const response = await callTool('getGraphQLSchema', {
+      const response = await callTool('get_graphql_schema', {
         endpointId,
       });
 
@@ -280,14 +280,14 @@ describe('mcp-api - endpoint tools', () => {
     });
   });
 
-  describe('getOpenAPISpec', () => {
+  describe('get_openapi_spec', () => {
     it('should return error for GRAPHQL endpoint', async () => {
       const { testData, callTool } = await setupTest();
 
       // Use pre-existing GRAPHQL endpoint on draft revision
       const endpointId = testData.project.draftEndpointId;
 
-      const response = await callTool('getOpenAPISpec', {
+      const response = await callTool('get_openapi_spec', {
         endpointId,
       });
 
@@ -302,7 +302,7 @@ describe('mcp-api - endpoint tools', () => {
       // Use pre-existing REST_API endpoint on head revision
       const endpointId = testData.project.headEndpointId;
 
-      const response = await callTool('getOpenAPISpec', {
+      const response = await callTool('get_openapi_spec', {
         endpointId,
       });
 
