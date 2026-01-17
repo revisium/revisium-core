@@ -7,6 +7,7 @@ import {
   PrepareDataWithRolesReturnType,
   PrepareProjectUserReturnType,
 } from 'src/__tests__/utils/prepareProject';
+import { UserSystemRoles } from 'src/features/auth/consts';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -1082,6 +1083,128 @@ describe('mcp-api - role-based permissions', () => {
         });
 
         expect(isSuccessResult(result)).toBe(true);
+      });
+    });
+  });
+
+  describe('User Operations', () => {
+    let preparedData: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      preparedData = await prepareData(app);
+    });
+
+    describe('admin_get_user', () => {
+      it('system admin can get user details', async () => {
+        await prismaService.user.update({
+          where: { id: preparedData.owner.user.id },
+          data: { roleId: UserSystemRoles.systemAdmin },
+        });
+
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'admin_get_user', {
+          userId: preparedData.anotherOwner.user.id,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const user = parseToolResult<{ id: string; email: string }>(
+          result.result as McpToolResult,
+        );
+        expect(user.id).toBe(preparedData.anotherOwner.user.id);
+        expect(user.email).toBeDefined();
+      });
+
+      it('non-admin cannot get user details', async () => {
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'admin_get_user', {
+          userId: preparedData.anotherOwner.user.id,
+        });
+
+        expect(getErrorMessage(result)).toMatch(/not allowed to read on User/);
+      });
+
+      it('requires authentication', async () => {
+        const initResponse = await request(app.getHttpServer())
+          .post('/mcp')
+          .set('Content-Type', 'application/json')
+          .set('Accept', 'application/json, text/event-stream')
+          .buffer(true)
+          .send({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: {
+              protocolVersion: '2024-11-05',
+              capabilities: {},
+              clientInfo: { name: 'test', version: '1.0.0' },
+            },
+          });
+
+        const sessionId = initResponse.headers['mcp-session-id'] as string;
+
+        const result = await callMcpTool(sessionId, 'admin_get_user', {
+          userId: preparedData.owner.user.id,
+        });
+
+        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+      });
+    });
+
+    describe('search_users', () => {
+      it('authenticated user can search users', async () => {
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'search_users', {
+          search: preparedData.anotherOwner.user.username,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const users = parseToolResult<{ edges: Array<{ node: { id: string } }> }>(
+          result.result as McpToolResult,
+        );
+        expect(users.edges).toBeDefined();
+      });
+
+      it('can search without query to list users', async () => {
+        const sessionId = await initAndLogin(preparedData.owner);
+
+        const result = await callMcpTool(sessionId, 'search_users', {
+          first: 5,
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+        const users = parseToolResult<{ edges: Array<{ node: unknown }> }>(
+          result.result as McpToolResult,
+        );
+        expect(users.edges).toBeDefined();
+      });
+
+      it('requires authentication', async () => {
+        const initResponse = await request(app.getHttpServer())
+          .post('/mcp')
+          .set('Content-Type', 'application/json')
+          .set('Accept', 'application/json, text/event-stream')
+          .buffer(true)
+          .send({
+            jsonrpc: '2.0',
+            id: 1,
+            method: 'initialize',
+            params: {
+              protocolVersion: '2024-11-05',
+              capabilities: {},
+              clientInfo: { name: 'test', version: '1.0.0' },
+            },
+          });
+
+        const sessionId = initResponse.headers['mcp-session-id'] as string;
+
+        const result = await callMcpTool(sessionId, 'search_users', {
+          search: 'test',
+        });
+
+        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
       });
     });
   });
