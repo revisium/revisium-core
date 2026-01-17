@@ -15,7 +15,7 @@ export class TableTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getTables',
+      'get_tables',
       {
         description: 'Get all tables in a revision',
         inputSchema: {
@@ -51,7 +51,7 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getTable',
+      'get_table',
       {
         description: 'Get a specific table',
         inputSchema: {
@@ -82,7 +82,7 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getTableSchema',
+      'get_table_schema',
       {
         description: 'Get schema of a table',
         inputSchema: {
@@ -116,7 +116,7 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'createTable',
+      'create_table',
       {
         description:
           'Create a new table with schema. Read revisium://specs/schema resource first. IMPORTANT: If schema has foreignKey, the referenced table MUST exist first. Create tables in dependency order.',
@@ -159,7 +159,7 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'updateTable',
+      'update_table',
       {
         description:
           'Update table schema using JSON Patch. IMPORTANT: Always call getTableSchema first to understand current structure before updating.',
@@ -200,7 +200,7 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'renameTable',
+      'rename_table',
       {
         description: 'Rename a table',
         inputSchema: {
@@ -236,7 +236,7 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'removeTable',
+      'delete_table',
       {
         description: 'Remove a table',
         inputSchema: {

@@ -9,7 +9,7 @@ export class BranchTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getBranch',
+      'get_branch',
       {
         description: 'Get branch by organization, project and branch name',
         inputSchema: {
@@ -46,7 +46,7 @@ export class BranchTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getDraftRevision',
+      'get_draft_revision',
       {
         description: 'Get draft revision for a branch',
         inputSchema: {
@@ -66,7 +66,7 @@ export class BranchTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'createBranch',
+      'create_branch',
       {
         description: 'Create a new branch from a revision',
         inputSchema: {
@@ -100,7 +100,7 @@ export class BranchTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'revertChanges',
+      'revert_changes',
       {
         description: 'Revert all uncommitted changes in a branch',
         inputSchema: {

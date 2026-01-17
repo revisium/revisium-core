@@ -9,7 +9,7 @@ export class OrganizationTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getOrganization',
+      'get_organization',
       {
         description: 'Get organization by ID',
         inputSchema: {
@@ -41,7 +41,7 @@ export class OrganizationTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getProjects',
+      'get_projects',
       {
         description: 'Get all projects in an organization',
         inputSchema: {

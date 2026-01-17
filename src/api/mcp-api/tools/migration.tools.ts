@@ -14,7 +14,7 @@ export class MigrationTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getMigrations',
+      'get_migrations',
       {
         description:
           'Get all migrations from a revision. Migrations are schema change records that can be applied to other Revisium instances. Read revisium://specs/migration resource for migration format details.',
@@ -49,7 +49,7 @@ export class MigrationTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'applyMigrations',
+      'apply_migrations',
       {
         description:
           'Apply migrations to a draft revision. Use this to sync schema changes from another Revisium instance. Read revisium://specs/migration resource first.',

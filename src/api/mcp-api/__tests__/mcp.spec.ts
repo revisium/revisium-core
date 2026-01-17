@@ -128,23 +128,23 @@ describe('MCP API', () => {
 
       const toolNames = data.result.tools.map((t: { name: string }) => t.name);
       expect(toolNames).toContain('login');
-      expect(toolNames).toContain('loginWithToken');
+      expect(toolNames).toContain('login_with_token');
       expect(toolNames).toContain('me');
-      expect(toolNames).toContain('getOrganization');
-      expect(toolNames).toContain('getProjects');
-      expect(toolNames).toContain('getProject');
-      expect(toolNames).toContain('createProject');
-      expect(toolNames).toContain('getBranch');
-      expect(toolNames).toContain('getTables');
-      expect(toolNames).toContain('createTable');
-      expect(toolNames).toContain('getRows');
-      expect(toolNames).toContain('createRow');
-      expect(toolNames).toContain('createRows');
-      expect(toolNames).toContain('updateRows');
-      expect(toolNames).toContain('patchRows');
-      expect(toolNames).toContain('removeRows');
-      expect(toolNames).toContain('commitRevision');
-      expect(toolNames).toContain('uploadFile');
+      expect(toolNames).toContain('get_organization');
+      expect(toolNames).toContain('get_projects');
+      expect(toolNames).toContain('get_project');
+      expect(toolNames).toContain('create_project');
+      expect(toolNames).toContain('get_branch');
+      expect(toolNames).toContain('get_tables');
+      expect(toolNames).toContain('create_table');
+      expect(toolNames).toContain('get_rows');
+      expect(toolNames).toContain('create_row');
+      expect(toolNames).toContain('create_rows');
+      expect(toolNames).toContain('update_rows');
+      expect(toolNames).toContain('patch_rows');
+      expect(toolNames).toContain('delete_rows');
+      expect(toolNames).toContain('create_revision');
+      expect(toolNames).toContain('upload_file');
     });
   });
 
@@ -370,7 +370,7 @@ describe('MCP API', () => {
         id: 2,
         method: 'tools/call',
         params: {
-          name: 'loginWithToken',
+          name: 'login_with_token',
           arguments: { accessToken },
         },
       }).expect(200);
@@ -380,7 +380,7 @@ describe('MCP API', () => {
       expect(content.success).toBe(true);
       expect(content.user.username).toBe(fixture.owner.user.username);
 
-      // Verify me() works after loginWithToken
+      // Verify me() works after login_with_token
       const meRes = await mcpPost(app, newSessionId, {
         jsonrpc: '2.0',
         id: 3,
@@ -394,13 +394,13 @@ describe('MCP API', () => {
       expect(meContent.user.username).toBe(fixture.owner.user.username);
     });
 
-    it('should fail loginWithToken with invalid token', async () => {
+    it('should fail login_with_token with invalid token', async () => {
       const res = await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 2,
         method: 'tools/call',
         params: {
-          name: 'loginWithToken',
+          name: 'login_with_token',
           arguments: { accessToken: 'invalid-token' },
         },
       }).expect(200);
@@ -432,13 +432,13 @@ describe('MCP API', () => {
       sessionId = res.headers['mcp-session-id'];
     });
 
-    it('should fail getProjects without authentication', async () => {
+    it('should fail get_projects without authentication', async () => {
       const res = await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 2,
         method: 'tools/call',
         params: {
-          name: 'getProjects',
+          name: 'get_projects',
           arguments: { organizationId: fixture.project.organizationId },
         },
       }).expect(200);
@@ -466,7 +466,7 @@ describe('MCP API', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'getProjects',
+          name: 'get_projects',
           arguments: { organizationId: fixture.project.organizationId },
         },
       }).expect(200);
@@ -517,7 +517,7 @@ describe('MCP API', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'getBranch',
+          name: 'get_branch',
           arguments: {
             organizationId: fixture.project.organizationId,
             projectName: fixture.project.projectName,
@@ -538,7 +538,7 @@ describe('MCP API', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'getTables',
+          name: 'get_tables',
           arguments: { revisionId: fixture.project.headRevisionId },
         },
       }).expect(200);
@@ -554,7 +554,7 @@ describe('MCP API', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'getRows',
+          name: 'get_rows',
           arguments: {
             revisionId: fixture.project.headRevisionId,
             tableId: fixture.project.tableId,
@@ -573,7 +573,7 @@ describe('MCP API', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'getRevision',
+          name: 'get_revision',
           arguments: { revisionId: fixture.project.headRevisionId },
         },
       }).expect(200);
@@ -583,13 +583,13 @@ describe('MCP API', () => {
       expect(content.id).toBe(fixture.project.headRevisionId);
     });
 
-    it('should create multiple rows with createRows', async () => {
+    it('should create multiple rows with create_rows', async () => {
       const res = await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'createRows',
+          name: 'create_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,
@@ -607,13 +607,13 @@ describe('MCP API', () => {
       expect(content.rows).toHaveLength(2);
     });
 
-    it('should update multiple rows with updateRows', async () => {
+    it('should update multiple rows with update_rows', async () => {
       await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'createRows',
+          name: 'create_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,
@@ -630,7 +630,7 @@ describe('MCP API', () => {
         id: 4,
         method: 'tools/call',
         params: {
-          name: 'updateRows',
+          name: 'update_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,
@@ -648,13 +648,13 @@ describe('MCP API', () => {
       expect(content.rows).toHaveLength(2);
     });
 
-    it('should patch multiple rows with patchRows', async () => {
+    it('should patch multiple rows with patch_rows', async () => {
       await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'createRows',
+          name: 'create_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,
@@ -671,7 +671,7 @@ describe('MCP API', () => {
         id: 4,
         method: 'tools/call',
         params: {
-          name: 'patchRows',
+          name: 'patch_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,
@@ -695,13 +695,13 @@ describe('MCP API', () => {
       expect(content.rows).toHaveLength(2);
     });
 
-    it('should remove multiple rows with removeRows', async () => {
+    it('should remove multiple rows with delete_rows', async () => {
       await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'createRows',
+          name: 'create_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,
@@ -718,7 +718,7 @@ describe('MCP API', () => {
         id: 4,
         method: 'tools/call',
         params: {
-          name: 'removeRows',
+          name: 'delete_rows',
           arguments: {
             revisionId: fixture.project.draftRevisionId,
             tableId: fixture.project.tableId,

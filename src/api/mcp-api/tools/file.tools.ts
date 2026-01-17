@@ -9,7 +9,7 @@ export class FileTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'uploadFile',
+      'upload_file',
       {
         description: `Upload a file to a row's file field using base64 data.
 WORKFLOW:

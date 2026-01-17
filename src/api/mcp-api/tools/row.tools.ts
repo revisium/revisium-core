@@ -15,7 +15,7 @@ export class RowTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getRows',
+      'get_rows',
       {
         description: 'Get rows from a table',
         inputSchema: {
@@ -53,7 +53,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getRow',
+      'get_row',
       {
         description: 'Get a specific row',
         inputSchema: {
@@ -85,7 +85,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'createRow',
+      'create_row',
       {
         description:
           'Create a new row in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first. Create rows in dependency order.',
@@ -123,7 +123,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'updateRow',
+      'update_row',
       {
         description: 'Update a row (replace all data)',
         inputSchema: {
@@ -156,7 +156,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'patchRow',
+      'patch_row',
       {
         description:
           'Patch a row using JSON Patch operations. ONLY "replace" operation is supported. Path is field name WITHOUT leading slash.',
@@ -194,7 +194,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'createRows',
+      'create_rows',
       {
         description:
           'Create multiple rows in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first.',
@@ -237,7 +237,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'updateRows',
+      'update_rows',
       {
         description: 'Update multiple rows (replace all data for each row)',
         inputSchema: {
@@ -281,7 +281,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'patchRows',
+      'patch_rows',
       {
         description:
           'Patch multiple rows using JSON Patch operations. ONLY "replace" operation is supported.',
@@ -326,7 +326,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'removeRows',
+      'delete_rows',
       {
         description: 'Remove multiple rows',
         inputSchema: {
@@ -360,7 +360,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'renameRow',
+      'rename_row',
       {
         description: 'Rename a row (change row ID)',
         inputSchema: {
@@ -393,7 +393,7 @@ export class RowTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'removeRow',
+      'delete_row',
       {
         description: 'Remove a row',
         inputSchema: {

@@ -13,7 +13,7 @@ export class RevisionTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getRevision',
+      'get_revision',
       {
         description: 'Get revision details',
         inputSchema: {
@@ -43,7 +43,7 @@ export class RevisionTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'commitRevision',
+      'create_revision',
       {
         description:
           'Commit changes in a draft revision. CRITICAL: ALWAYS ask user for permission before committing. Never commit automatically - head/draft may point to different environments and committing without permission can break production.',

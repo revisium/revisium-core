@@ -162,7 +162,7 @@ describe('MCP API - File Tools', () => {
 
       const data = parseResponse(res);
       const toolNames = data.result.tools.map((t: { name: string }) => t.name);
-      expect(toolNames).toContain('uploadFile');
+      expect(toolNames).toContain('upload_file');
     });
   });
 
@@ -216,7 +216,7 @@ describe('MCP API - File Tools', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'uploadFile',
+          name: 'upload_file',
           arguments: {
             revisionId: preparedData.project.draftRevisionId,
             tableId,
@@ -254,7 +254,7 @@ describe('MCP API - File Tools', () => {
         id: 2,
         method: 'tools/call',
         params: {
-          name: 'uploadFile',
+          name: 'upload_file',
           arguments: {
             revisionId: preparedData.project.draftRevisionId,
             tableId,
@@ -302,7 +302,7 @@ describe('MCP API - File Tools', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'uploadFile',
+          name: 'upload_file',
           arguments: {
             revisionId: preparedData.project.draftRevisionId,
             tableId,
@@ -327,7 +327,7 @@ describe('MCP API - File Tools', () => {
         id: 3,
         method: 'tools/call',
         params: {
-          name: 'uploadFile',
+          name: 'upload_file',
           arguments: {
             revisionId: preparedData.project.draftRevisionId,
             tableId,

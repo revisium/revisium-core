@@ -120,7 +120,7 @@ export class EndpointTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getProjectEndpoints',
+      'get_project_endpoints',
       {
         description: 'Get all endpoints for a project',
         inputSchema: {
@@ -168,7 +168,7 @@ export class EndpointTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getEndpointRelatives',
+      'get_endpoint_relatives',
       {
         description:
           'Get endpoint with all related entities (revision, branch, project)',
@@ -202,7 +202,7 @@ export class EndpointTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'createEndpoint',
+      'create_endpoint',
       {
         description:
           'Create a new endpoint for a revision. Endpoints expose revision data via GraphQL or REST API.',
@@ -239,7 +239,7 @@ export class EndpointTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'deleteEndpoint',
+      'delete_endpoint',
       {
         description: 'Delete an endpoint',
         inputSchema: {
@@ -276,7 +276,7 @@ export class EndpointTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getGraphQLSchema',
+      'get_graphql_schema',
       {
         description:
           'Fetch GraphQL schema (introspection) from a GRAPHQL endpoint. Returns the full schema introspection result that describes all types, queries, and mutations available.',
@@ -368,7 +368,7 @@ export class EndpointTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getOpenAPISpec',
+      'get_openapi_spec',
       {
         description:
           'Fetch OpenAPI/Swagger specification from a REST_API endpoint. Returns the full OpenAPI JSON spec that describes all routes, parameters, and schemas.',

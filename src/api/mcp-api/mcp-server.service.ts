@@ -81,7 +81,7 @@ export class McpServerService implements OnModuleInit {
 
 AUTHENTICATION:
 When not authenticated, ASK THE USER which method they prefer:
-1. [Recommended] Token auth: User opens ${tokenUrl || '<PUBLIC_URL>/get-mcp-token'} to get token, then use loginWithToken(token)
+1. [Recommended] Token auth: User opens ${tokenUrl || '<PUBLIC_URL>/get-mcp-token'} to get token, then use login_with_token(token)
 2. Credentials: Ask user for username/password, then use login(username, password)
 DO NOT assume or guess credentials.
 
@@ -95,11 +95,11 @@ DATA STRUCTURE:
 
 TYPICAL WORKFLOW:
 1. me() - check auth status
-2. getProject(organizationId, projectName) - returns project with rootBranch info
-3. getBranch(organizationId, projectName, branchName) - get branch details including draftRevisionId
-4. Use draftRevisionId for: getTables, getRows, createRow, updateRow, etc.
-5. getRevisionChanges(draftRevisionId) - review pending changes before commit
-6. commitRevision() - only after user approval
+2. get_project(organizationId, projectName) - returns project with rootBranch info
+3. get_branch(organizationId, projectName, branchName) - get branch details including draftRevisionId
+4. Use draftRevisionId for: get_tables, get_rows, create_row, update_row, etc.
+5. get_revision_changes(draftRevisionId) - review pending changes before commit
+6. create_revision() - only after user approval
 
 IMPORTANT:
 - Project.rootBranch contains the default branch info
@@ -170,6 +170,7 @@ PERMISSIONS:
         this.checkPermissionByOrganizationProject.bind(this),
       checkPermissionByOrganization:
         this.checkPermissionByOrganization.bind(this),
+      checkSystemPermission: this.checkSystemPermission.bind(this),
     };
 
     this.authTools.register(this.server, auth);
@@ -207,7 +208,7 @@ PERMISSIONS:
       if (tokenUrl) {
         message += `   - User should open ${tokenUrl} to get their token\n`;
       }
-      message += '   - Then use: loginWithToken(accessToken)\n\n';
+      message += '   - Then use: login_with_token(accessToken)\n\n';
       message += '2. Login with credentials:\n';
       message += '   - Ask user for their username and password\n';
       message += '   - Then use: login(username, password)\n\n';
@@ -251,6 +252,16 @@ PERMISSIONS:
   ): Promise<void> {
     await this.authApi.checkOrganizationPermission({
       organizationId,
+      permissions,
+      userId,
+    });
+  }
+
+  private async checkSystemPermission(
+    permissions: McpPermissionCheck[],
+    userId: string,
+  ): Promise<void> {
+    await this.authApi.checkSystemPermission({
       permissions,
       userId,
     });
