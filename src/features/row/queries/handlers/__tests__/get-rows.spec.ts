@@ -768,8 +768,9 @@ describe('getRows', () => {
     queryBus = result.queryBus;
     commandBus = result.commandBus;
     formulaService = result.module.get<FormulaService>(FormulaService);
-    draftRevisionApiService =
-      result.module.get<DraftRevisionApiService>(DraftRevisionApiService);
+    draftRevisionApiService = result.module.get<DraftRevisionApiService>(
+      DraftRevisionApiService,
+    );
   });
 
   afterEach(() => {
