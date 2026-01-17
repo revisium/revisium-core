@@ -2,6 +2,7 @@ import Ajv from 'ajv/dist/2020';
 import {
   metaSchema,
   notForeignKeyMetaSchema,
+  xFormulaSchema,
 } from 'src/features/share/schema/meta-schema';
 
 describe('meta-schema', () => {
@@ -511,6 +512,125 @@ describe('meta-schema', () => {
         required: ['company'],
       }),
     ).toBe(true);
+  });
+
+  describe('x-formula', () => {
+    it('should validate x-formula schema', () => {
+      expect(
+        ajv.validate(xFormulaSchema, { version: 1, expression: 'price * 1.1' }),
+      ).toBe(true);
+
+      expect(
+        ajv.validate(xFormulaSchema, {
+          version: 1,
+          expression: 'price * quantity',
+        }),
+      ).toBe(true);
+
+      expect(
+        ajv.validate(xFormulaSchema, {
+          version: 1,
+          expression: 'price > 100',
+        }),
+      ).toBe(true);
+    });
+
+    it('should reject invalid x-formula', () => {
+      expect(ajv.validate(xFormulaSchema, {})).toBe(false);
+      expect(ajv.validate(xFormulaSchema, { version: 1 })).toBe(false);
+      expect(ajv.validate(xFormulaSchema, { expression: 'price' })).toBe(false);
+      expect(
+        ajv.validate(xFormulaSchema, { version: 2, expression: 'price' }),
+      ).toBe(false);
+      expect(ajv.validate(xFormulaSchema, { version: 1, expression: '' })).toBe(
+        false,
+      );
+      expect(
+        ajv.validate(xFormulaSchema, {
+          version: 1,
+          expression: 'price',
+          unknownField: 'test',
+        }),
+      ).toBe(false);
+    });
+
+    it('should allow x-formula on number field', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'number',
+          default: 0,
+          'x-formula': { version: 1, expression: 'price * quantity' },
+        }),
+      ).toBe(true);
+    });
+
+    it('should allow x-formula on boolean field', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'boolean',
+          default: false,
+          'x-formula': { version: 1, expression: 'price > 100' },
+        }),
+      ).toBe(true);
+    });
+
+    it('should allow x-formula on string field without foreignKey', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'string',
+          default: '',
+          'x-formula': { version: 1, expression: 'concat(a, b)' },
+        }),
+      ).toBe(true);
+    });
+
+    it('should reject x-formula on string field with foreignKey', () => {
+      expect(
+        ajv.validate(metaSchema, {
+          type: 'string',
+          default: '',
+          foreignKey: 'tableId',
+          'x-formula': { version: 1, expression: 'price' },
+        }),
+      ).toBe(false);
+    });
+
+    it('should reject invalid x-formula on primitive fields', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'number',
+          default: 0,
+          'x-formula': { version: 2, expression: 'price' },
+        }),
+      ).toBe(false);
+
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'number',
+          default: 0,
+          'x-formula': { expression: 'price' },
+        }),
+      ).toBe(false);
+    });
+
+    it('should allow x-formula in nested object properties', () => {
+      expect(
+        ajv.validate(notForeignKeyMetaSchema, {
+          type: 'object',
+          additionalProperties: false,
+          properties: {
+            price: { type: 'number', default: 0 },
+            quantity: { type: 'number', default: 1 },
+            total: {
+              type: 'number',
+              default: 0,
+              'x-formula': { version: 1, expression: 'price * quantity' },
+            },
+          },
+          required: ['price', 'quantity', 'total'],
+        }),
+      ).toBe(true);
+    });
   });
 
   function checkBaseFields(

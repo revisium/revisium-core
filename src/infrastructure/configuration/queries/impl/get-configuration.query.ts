@@ -6,5 +6,6 @@ export type GetConfigurationQueryReturnType = {
   github: { available: boolean; clientId?: string };
   plugins: {
     file: boolean;
+    formula: boolean;
   };
 };
