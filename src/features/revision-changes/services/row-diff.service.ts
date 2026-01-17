@@ -15,8 +15,8 @@ const CHANGE_TYPE_MAP: Record<FieldChangeType, RowChangeDetailType> = {
 @Injectable()
 export class RowDiffService {
   public analyzeFieldChanges(
-    fromData: unknown | null,
-    toData: unknown | null,
+    fromData: unknown,
+    toData: unknown,
   ): FieldChange[] {
     const changes = computeValueDiff(fromData, toData);
     return changes.map(this.mapToFieldChange);
