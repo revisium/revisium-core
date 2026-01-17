@@ -21,7 +21,7 @@ describe('graphql - branch mutations', () => {
     await app.close();
   });
 
-  describe('createBranchByRevisionId', () => {
+  describe('createBranch', () => {
     let fixture: PrepareDataReturnType;
 
     beforeEach(async () => {
@@ -30,10 +30,10 @@ describe('graphql - branch mutations', () => {
 
     const getMutation = (revisionId: string, branchName: string) => ({
       query: gql`
-        mutation createBranchByRevisionId(
-          $data: CreateBranchByRevisionIdInput!
+        mutation createBranch(
+          $data: CreateBranchInput!
         ) {
-          createBranchByRevisionId(data: $data) {
+          createBranch(data: $data) {
             id
             name
             isRoot
@@ -53,9 +53,9 @@ describe('graphql - branch mutations', () => {
         ...getMutation(fixture.project.headRevisionId, newBranchName),
       });
 
-      expect(result.createBranchByRevisionId).toBeDefined();
-      expect(result.createBranchByRevisionId.name).toBe(newBranchName);
-      expect(result.createBranchByRevisionId.isRoot).toBe(false);
+      expect(result.createBranch).toBeDefined();
+      expect(result.createBranch.name).toBe(newBranchName);
+      expect(result.createBranch.isRoot).toBe(false);
     });
 
     it('cross-owner cannot create branch', async () => {

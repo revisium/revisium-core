@@ -3,7 +3,7 @@ import { BranchModel } from 'src/api/graphql-api/branch/model/branch.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
 
 @ObjectType()
-export class RemoveRowsResultModel {
+export class DeleteRowResultModel {
   @Field(() => BranchModel)
   branch: BranchModel;
 

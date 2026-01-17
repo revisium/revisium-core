@@ -95,7 +95,7 @@ input ConfirmEmailCodeInput {
   code: String!
 }
 
-input CreateBranchByRevisionIdInput {
+input CreateBranchInput {
   branchName: String!
   revisionId: String!
 }
@@ -196,6 +196,39 @@ input DeleteEndpointInput {
 input DeleteProjectInput {
   organizationId: String!
   projectName: String!
+}
+
+input DeleteRowInput {
+  revisionId: String!
+  rowId: String!
+  tableId: String!
+}
+
+type DeleteRowResultModel {
+  branch: BranchModel!
+  previousVersionTableId: String
+  table: TableModel
+}
+
+input DeleteRowsInput {
+  revisionId: String!
+  rowIds: [String!]!
+  tableId: String!
+}
+
+type DeleteRowsResultModel {
+  branch: BranchModel!
+  previousVersionTableId: String
+  table: TableModel
+}
+
+input DeleteTableInput {
+  revisionId: String!
+  tableId: String!
+}
+
+type DeleteTableResultModel {
+  branch: BranchModel!
 }
 
 type EndpointModel {
@@ -496,7 +529,7 @@ type Mutation {
   addUserToProject(data: AddUserToProjectInput!): Boolean!
   applyMigrations(data: ApplyMigrationsInput!): [ApplyMigrationResultModel!]!
   confirmEmailCode(data: ConfirmEmailCodeInput!): LoginModel!
-  createBranchByRevisionId(data: CreateBranchByRevisionIdInput!): BranchModel!
+  createBranch(data: CreateBranchInput!): BranchModel!
   createEndpoint(data: CreateEndpointInput!): EndpointModel!
   createProject(data: CreateProjectInput!): ProjectModel!
   createRevision(data: CreateRevisionInput!): RevisionModel!
@@ -507,14 +540,14 @@ type Mutation {
   deleteBranch(data: DeleteBranchInput!): Boolean!
   deleteEndpoint(data: DeleteEndpointInput!): Boolean!
   deleteProject(data: DeleteProjectInput!): Boolean!
+  deleteRow(data: DeleteRowInput!): DeleteRowResultModel!
+  deleteRows(data: DeleteRowsInput!): DeleteRowsResultModel!
+  deleteTable(data: DeleteTableInput!): DeleteTableResultModel!
   login(data: LoginInput!): LoginModel!
   loginGithub(data: LoginGithubInput!): LoginModel!
   loginGoogle(data: LoginGoogleInput!): LoginModel!
   patchRow(data: PatchRowInput!): PatchRowResultModel!
   patchRows(data: PatchRowsInput!): PatchRowsResultModel!
-  removeRow(data: RemoveRowInput!): RemoveRowResultModel!
-  removeRows(data: RemoveRowsInput!): RemoveRowsResultModel!
-  removeTable(data: RemoveTableInput!): RemoveTableResultModel!
   removeUserFromOrganization(data: RemoveUserFromOrganizationInput!): Boolean!
   removeUserFromProject(data: RemoveUserFromProjectInput!): Boolean!
   renameRow(data: RenameRowInput!): RenameRowResultModel!
@@ -693,39 +726,6 @@ type Query {
 enum QueryMode {
   default
   insensitive
-}
-
-input RemoveRowInput {
-  revisionId: String!
-  rowId: String!
-  tableId: String!
-}
-
-type RemoveRowResultModel {
-  branch: BranchModel!
-  previousVersionTableId: String
-  table: TableModel
-}
-
-input RemoveRowsInput {
-  revisionId: String!
-  rowIds: [String!]!
-  tableId: String!
-}
-
-type RemoveRowsResultModel {
-  branch: BranchModel!
-  previousVersionTableId: String
-  table: TableModel
-}
-
-input RemoveTableInput {
-  revisionId: String!
-  tableId: String!
-}
-
-type RemoveTableResultModel {
-  branch: BranchModel!
 }
 
 input RemoveUserFromOrganizationInput {

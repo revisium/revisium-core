@@ -14,7 +14,7 @@ import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
 import {
-  CreateBranchByRevisionIdInput,
+  CreateBranchInput,
   DeleteBranchInput,
   GetBranchesInput,
   GetBranchInput,
@@ -93,9 +93,7 @@ export class BranchResolver {
     subject: PermissionSubject.Branch,
   })
   @Mutation(() => BranchModel)
-  async createBranchByRevisionId(
-    @Args('data') data: CreateBranchByRevisionIdInput,
-  ) {
+  async createBranch(@Args('data') data: CreateBranchInput) {
     return this.branchApiService.apiCreateBranchByRevisionId(data);
   }
 

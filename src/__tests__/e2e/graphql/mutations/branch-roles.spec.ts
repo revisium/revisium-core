@@ -21,7 +21,7 @@ describe('graphql - branch mutations (role-based)', () => {
     await app.close();
   });
 
-  describe('createBranchByRevisionId', () => {
+  describe('createBranch', () => {
     let fixture: PrepareDataWithRolesReturnType;
 
     beforeEach(async () => {
@@ -30,10 +30,10 @@ describe('graphql - branch mutations (role-based)', () => {
 
     const getMutation = (revisionId: string, branchName: string) => ({
       query: gql`
-        mutation createBranchByRevisionId(
-          $data: CreateBranchByRevisionIdInput!
+        mutation createBranch(
+          $data: CreateBranchInput!
         ) {
-          createBranchByRevisionId(data: $data) {
+          createBranch(data: $data) {
             id
             name
             isRoot
@@ -51,8 +51,8 @@ describe('graphql - branch mutations (role-based)', () => {
         token: fixture.owner.token,
         ...getMutation(fixture.project.headRevisionId, 'owner-branch'),
       });
-      expect(result.createBranchByRevisionId.name).toBe('owner-branch');
-      expect(result.createBranchByRevisionId.isRoot).toBe(false);
+      expect(result.createBranch.name).toBe('owner-branch');
+      expect(result.createBranch.isRoot).toBe(false);
     });
 
     it('developer can create branch', async () => {
@@ -61,7 +61,7 @@ describe('graphql - branch mutations (role-based)', () => {
         token: fixture.developer.token,
         ...getMutation(fixture.project.headRevisionId, 'dev-branch'),
       });
-      expect(result.createBranchByRevisionId.name).toBe('dev-branch');
+      expect(result.createBranch.name).toBe('dev-branch');
     });
 
     it('editor cannot create branch', async () => {

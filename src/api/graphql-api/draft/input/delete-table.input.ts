@@ -1,7 +1,7 @@
 import { Field, InputType } from '@nestjs/graphql';
 
 @InputType()
-export class RemoveTableInput {
+export class DeleteTableInput {
   @Field()
   revisionId: string;
 

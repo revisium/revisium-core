@@ -2,7 +2,7 @@ import { Field, InputType } from '@nestjs/graphql';
 import { ArrayMaxSize, ArrayNotEmpty, IsString } from 'class-validator';
 
 @InputType()
-export class RemoveRowsInput {
+export class DeleteRowsInput {
   @Field()
   revisionId: string;
 

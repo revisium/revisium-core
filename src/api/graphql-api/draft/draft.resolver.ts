@@ -6,7 +6,7 @@ import { PatchRowResultModel } from 'src/api/graphql-api/draft/model/patch-row-r
 import { PatchRowsResultModel } from 'src/api/graphql-api/draft/model/patch-rows-result.model';
 import { RenameRowResultModel } from 'src/api/graphql-api/draft/model/rename-row-result.model';
 import { RenameTableResultModel } from 'src/api/graphql-api/draft/model/rename-table-result.model';
-import { RemoveRowsResultModel } from 'src/api/graphql-api/draft/model/remove-rows-result.model';
+import { DeleteRowsResultModel } from 'src/api/graphql-api/draft/model/delete-rows-result.model';
 import { UpdateTableResultModel } from 'src/api/graphql-api/draft/model/update-table-result.model';
 import { GraphQLValidationExceptionFilter } from 'src/api/graphql-api/filters/graphql-validation-exception.filter';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
@@ -18,9 +18,9 @@ import {
   CreateRowInput,
   CreateRowsInput,
   CreateTableInput,
-  RemoveRowInput,
-  RemoveRowsInput,
-  RemoveTableInput,
+  DeleteRowInput,
+  DeleteRowsInput,
+  DeleteTableInput,
   RenameRowInput,
   RenameTableInput,
   UpdateRowInput,
@@ -30,8 +30,8 @@ import { UpdateTableInput } from 'src/api/graphql-api/draft/input/update-table.i
 import { CreateRowResultModel } from 'src/api/graphql-api/draft/model/create-row-result.model';
 import { CreateRowsResultModel } from 'src/api/graphql-api/draft/model/create-rows-result.model';
 import { CreateTableResultModel } from 'src/api/graphql-api/draft/model/create-table-result.model';
-import { RemoveRowResultModel } from 'src/api/graphql-api/draft/model/remove-row-result.model';
-import { RemoveTableResultModel } from 'src/api/graphql-api/draft/model/remove-table-result.model';
+import { DeleteRowResultModel } from 'src/api/graphql-api/draft/model/delete-row-result.model';
+import { DeleteTableResultModel } from 'src/api/graphql-api/draft/model/delete-table-result.model';
 import { UpdateRowResultModel } from 'src/api/graphql-api/draft/model/update-row-result.model';
 import { UpdateRowsResultModel } from 'src/api/graphql-api/draft/model/update-rows-result.model';
 
@@ -59,8 +59,8 @@ export class DraftResolver {
     action: PermissionAction.delete,
     subject: PermissionSubject.Table,
   })
-  @Mutation(() => RemoveTableResultModel)
-  async removeTable(@Args('data') data: RemoveTableInput) {
+  @Mutation(() => DeleteTableResultModel)
+  async deleteTable(@Args('data') data: DeleteTableInput) {
     return this.draftApiService.apiRemoveTable(data);
   }
 
@@ -159,8 +159,8 @@ export class DraftResolver {
     action: PermissionAction.delete,
     subject: PermissionSubject.Row,
   })
-  @Mutation(() => RemoveRowResultModel)
-  async removeRow(@Args('data') data: RemoveRowInput) {
+  @Mutation(() => DeleteRowResultModel)
+  async deleteRow(@Args('data') data: DeleteRowInput) {
     return this.draftApiService.apiRemoveRow(data);
   }
 
@@ -169,8 +169,8 @@ export class DraftResolver {
     action: PermissionAction.delete,
     subject: PermissionSubject.Row,
   })
-  @Mutation(() => RemoveRowsResultModel)
-  async removeRows(@Args('data') data: RemoveRowsInput) {
+  @Mutation(() => DeleteRowsResultModel)
+  async deleteRows(@Args('data') data: DeleteRowsInput) {
     return this.draftApiService.apiRemoveRows(data);
   }
 }
