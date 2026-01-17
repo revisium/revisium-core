@@ -48,7 +48,7 @@ export class GetRowsHandler
       findMany: async (args) => {
         const rows = await this.getRows(args, tableVersionId, mappedData);
 
-        await this.pluginService.computeRows({
+        const { formulaErrors } = await this.pluginService.computeRows({
           revisionId: data.revisionId,
           tableId: data.tableId,
           rows,
@@ -60,6 +60,7 @@ export class GetRowsHandler
             revisionId: data.revisionId,
             tableId: data.tableId,
           },
+          formulaErrors: formulaErrors?.get(row.id),
         }));
       },
       count: () => this.getRowsCount(tableVersionId, mappedData),

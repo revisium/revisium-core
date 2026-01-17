@@ -263,6 +263,13 @@ type FieldChangeModel {
   oldValue: JSON
 }
 
+type FormulaFieldErrorModel {
+  defaultUsed: Boolean!
+  error: String!
+  expression: String!
+  field: String!
+}
+
 input GetBranchInput {
   branchName: String!
   organizationId: String!
@@ -891,6 +898,7 @@ type RowModel {
   createdAt: DateTime!
   createdId: String!
   data: JSON!
+  formulaErrors: [FormulaFieldErrorModel!]
   id: String!
   publishedAt: DateTime!
   readonly: Boolean!
@@ -979,6 +987,7 @@ type SearchMatch {
 }
 
 type SearchResult {
+  formulaErrors: [FormulaFieldErrorModel!]
   matches: [SearchMatch!]!
   row: RowModel!
   table: TableModel!

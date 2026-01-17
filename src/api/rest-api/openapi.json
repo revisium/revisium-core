@@ -408,6 +408,32 @@
         "required": ["statusCode", "message", "error"],
         "type": "object"
       },
+      "FormulaFieldErrorModel": {
+        "properties": {
+          "defaultUsed": {
+            "description": "Whether a default value was used instead of the computed result",
+            "example": true,
+            "type": "boolean"
+          },
+          "error": {
+            "description": "The error message describing what went wrong",
+            "example": "Division by zero",
+            "type": "string"
+          },
+          "expression": {
+            "description": "The formula expression that failed",
+            "example": "price * quantity",
+            "type": "string"
+          },
+          "field": {
+            "description": "The field name where the formula error occurred",
+            "example": "total",
+            "type": "string"
+          }
+        },
+        "required": ["field", "expression", "error", "defaultUsed"],
+        "type": "object"
+      },
       "GetEndpointResultDto": {
         "properties": {
           "branch": {
@@ -1166,6 +1192,14 @@
               "title": "Hello World"
             },
             "type": "object"
+          },
+          "formulaErrors": {
+            "description": "Formula field errors that occurred during computation. Only present if there are errors.",
+            "items": {
+              "$ref": "#/components/schemas/FormulaFieldErrorModel"
+            },
+            "nullable": true,
+            "type": "array"
           },
           "id": {
             "description": "Current row identifier (may differ from createdId if renamed)",

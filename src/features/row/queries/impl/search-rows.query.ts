@@ -1,10 +1,12 @@
 import { Row, Table } from 'src/__generated__/client';
+import { FormulaFieldError } from 'src/features/plugin/types';
 import { IPaginatedType } from 'src/features/share/pagination.interface';
 
 export type SearchRowResult = {
   row: Row;
   table: Table;
   matches: SearchMatch[];
+  formulaErrors?: FormulaFieldError[];
 };
 
 export type SearchMatch = {

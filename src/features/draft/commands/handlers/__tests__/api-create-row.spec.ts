@@ -32,7 +32,7 @@ describe('ApiCreateRowHandler', () => {
         },
       },
     });
-    expect(result.row).toStrictEqual({
+    expect(result.row).toMatchObject({
       ...row,
       context: {
         revisionId: draftRevisionId,

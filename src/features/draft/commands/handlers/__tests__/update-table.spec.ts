@@ -28,6 +28,7 @@ import {
   FormulaService,
   FormulaValidationService,
 } from 'src/features/plugin/formula';
+import { FormulaValidationException } from 'src/features/share/exceptions';
 
 describe('UpdateTableHandler', () => {
   it('should throw an error if the revision does not exist', async () => {
@@ -540,10 +541,12 @@ describe('UpdateTableHandler', () => {
 
   describe('formula validation', () => {
     beforeEach(() => {
-      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(true);
-      jest
-        .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
-        .mockReturnValue(true);
+      Object.defineProperty(formulaService, 'isAvailable', { value: true });
+      Object.defineProperty(
+        formulaValidationService['formulaService'],
+        'isAvailable',
+        { value: true },
+      );
     });
 
     const numberFieldWithFormula = (expression: string): any => ({
@@ -588,10 +591,7 @@ describe('UpdateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
@@ -616,10 +616,7 @@ describe('UpdateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
@@ -680,18 +677,17 @@ describe('UpdateTableHandler', () => {
       });
 
       await expect(runTransaction(removeFieldCommand)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(removeFieldCommand)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
     it('should reject x-formula when formula feature is disabled', async () => {
-      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
-      jest
-        .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
-        .mockReturnValue(false);
+      Object.defineProperty(formulaService, 'isAvailable', { value: false });
+      Object.defineProperty(
+        formulaValidationService['formulaService'],
+        'isAvailable',
+        { value: false },
+      );
 
       const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
@@ -708,18 +704,17 @@ describe('UpdateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
     it('should allow update without x-formula when formula feature is disabled', async () => {
-      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
-      jest
-        .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
-        .mockReturnValue(false);
+      Object.defineProperty(formulaService, 'isAvailable', { value: false });
+      Object.defineProperty(
+        formulaValidationService['formulaService'],
+        'isAvailable',
+        { value: false },
+      );
 
       const { draftRevisionId, tableId } = await prepareProject(prismaService);
 

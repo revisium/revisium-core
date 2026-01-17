@@ -12,6 +12,7 @@ import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { TableApiService } from 'src/features/table/table-api.service';
 import { FormulaService } from 'src/features/plugin/formula';
+import { FormulaValidationException } from 'src/features/share/exceptions';
 
 describe('CreateTableHandler', () => {
   it('should throw an error if the tableId is shorter than 1 character', async () => {
@@ -175,7 +176,7 @@ describe('CreateTableHandler', () => {
 
   describe('formula validation', () => {
     beforeEach(() => {
-      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(true);
+      Object.defineProperty(formulaService, 'isAvailable', { value: true });
     });
 
     it('should create table with valid formula', async () => {
@@ -228,10 +229,7 @@ describe('CreateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
@@ -258,10 +256,7 @@ describe('CreateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
@@ -293,15 +288,12 @@ describe('CreateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
     it('should reject x-formula when formula feature is disabled', async () => {
-      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
+      Object.defineProperty(formulaService, 'isAvailable', { value: false });
 
       const { draftRevisionId } = await prepareProject(prismaService);
 
@@ -324,15 +316,12 @@ describe('CreateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(runTransaction(command)).rejects.toThrow(
-        'formula validation failed',
+        FormulaValidationException,
       );
     });
 
     it('should allow schema without x-formula when formula feature is disabled', async () => {
-      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
+      Object.defineProperty(formulaService, 'isAvailable', { value: false });
 
       const { draftRevisionId } = await prepareProject(prismaService);
 

@@ -5,20 +5,25 @@ import {
   JsonSchema as FormulaJsonSchema,
   extractSchemaFormulas,
 } from '@revisium/formula';
+import { JsonSchema } from '@revisium/schema-toolkit/types';
+import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { FormulaService } from './formula.service';
 
-type JsonSchema = {
-  type?: string;
-  properties?: Record<string, unknown>;
-  [key: string]: unknown;
-};
+type InputJsonSchema = JsonSchema | Record<string, unknown>;
 
 @Injectable()
 export class FormulaValidationService {
-  constructor(private readonly formulaService: FormulaService) {}
+  constructor(
+    private readonly formulaService: FormulaService,
+    private readonly jsonSchemaStoreService: JsonSchemaStoreService,
+  ) {}
 
-  public validateSchema(schema: JsonSchema): SchemaValidationResult {
-    const formulas = extractSchemaFormulas(schema as FormulaJsonSchema);
+  public validateSchema(schema: InputJsonSchema): SchemaValidationResult {
+    const resolvedSchema = this.jsonSchemaStoreService
+      .create(schema as JsonSchema)
+      .getPlainSchema();
+
+    const formulas = extractSchemaFormulas(resolvedSchema as FormulaJsonSchema);
 
     if (!this.formulaService.isAvailable) {
       if (formulas.length > 0) {
@@ -33,6 +38,6 @@ export class FormulaValidationService {
       return { isValid: true, errors: [] };
     }
 
-    return validateSchemaFormulas(schema as FormulaJsonSchema);
+    return validateSchemaFormulas(resolvedSchema as FormulaJsonSchema);
   }
 }

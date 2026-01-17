@@ -98,7 +98,7 @@ export class ResolveRowForeignKeysToHandler
           foreignKeyTable.versionId,
         );
 
-        await this.pluginService.computeRows({
+        const { formulaErrors } = await this.pluginService.computeRows({
           revisionId: data.revisionId,
           tableId: data.foreignKeyToTableId,
           rows,
@@ -108,8 +108,9 @@ export class ResolveRowForeignKeysToHandler
           ...row,
           context: {
             revisionId: data.revisionId,
-            tableId: data.tableId,
+            tableId: data.foreignKeyToTableId,
           },
+          formulaErrors: formulaErrors?.get(row.id),
         }));
       },
       count: () => this.getCount(foundForeignKey),

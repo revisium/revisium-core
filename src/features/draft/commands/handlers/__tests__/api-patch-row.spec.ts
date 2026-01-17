@@ -39,7 +39,7 @@ describe('ApiPatchRowHandler', () => {
         },
       },
     });
-    expect(result.row).toStrictEqual({
+    expect(result.row).toMatchObject({
       ...row,
       data: { ver: 100 },
       context: {

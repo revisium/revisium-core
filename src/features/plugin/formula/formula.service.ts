@@ -3,14 +3,10 @@ import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FormulaService {
-  private readonly enabled: boolean;
+  public readonly isAvailable: boolean;
 
   constructor(configService: ConfigService) {
-    this.enabled =
-      configService.get('FORMULA_ENABLED')?.toLowerCase() === 'true';
-  }
-
-  public get isAvailable(): boolean {
-    return this.enabled;
+    const value = configService.get('FORMULA_ENABLED');
+    this.isAvailable = value === '1' || value === 'true';
   }
 }
