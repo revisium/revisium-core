@@ -115,6 +115,14 @@ cp .env.example .env
 
 ---
 
+## Formula Support
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FORMULA_ENABLED` | `false` | Enable formula fields (`x-formula` in schema) |
+
+---
+
 ## Deprecated Variables
 
 The following variables are deprecated and will be removed in **v3.0.0**:
