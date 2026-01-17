@@ -40,6 +40,9 @@ export class JsonSchemaValidatorService {
       keyword: CustomSchemeKeywords.ForeignKey,
       type: 'string',
     });
+    this.ajv.addKeyword({
+      keyword: CustomSchemeKeywords.XFormula,
+    });
     this.ajv.addFormat('regex', {
       type: 'string',
       validate: (str: string) => {

@@ -19,6 +19,29 @@ export const xFormulaSchema: Schema = {
   required: ['version', 'expression'],
 };
 
+// When x-formula is present, readOnly must be true
+export const xFormulaRequiresReadOnly: Schema = {
+  if: {
+    properties: { 'x-formula': { type: 'object' } },
+    required: ['x-formula'],
+  },
+  then: {
+    properties: { readOnly: { const: true } },
+    required: ['readOnly'],
+  },
+};
+
+// foreignKey and x-formula are mutually exclusive
+export const foreignKeyExcludesFormula: Schema = {
+  if: {
+    properties: { foreignKey: { type: 'string' } },
+    required: ['foreignKey'],
+  },
+  then: {
+    not: { required: ['x-formula'] },
+  },
+};
+
 export const refMetaSchema: Schema = {
   type: 'object',
   properties: {
@@ -76,9 +99,11 @@ export const stringMetaSchema: Schema = {
     foreignKey: {
       type: 'string',
     },
+    'x-formula': xFormulaSchema,
   },
   additionalProperties: false,
   required: ['type', 'default'],
+  allOf: [xFormulaRequiresReadOnly, foreignKeyExcludesFormula],
 };
 
 export const noForeignKeyStringMetaSchema: Schema = {
@@ -89,6 +114,7 @@ export const noForeignKeyStringMetaSchema: Schema = {
   },
   additionalProperties: false,
   required: ['type', 'default'],
+  ...xFormulaRequiresReadOnly,
 };
 
 export const numberMetaSchema: Schema = {
@@ -108,6 +134,7 @@ export const numberMetaSchema: Schema = {
   },
   additionalProperties: false,
   required: ['type', 'default'],
+  ...xFormulaRequiresReadOnly,
 };
 
 export const booleanMetaSchema: Schema = {
@@ -127,6 +154,7 @@ export const booleanMetaSchema: Schema = {
   },
   additionalProperties: false,
   required: ['type', 'default'],
+  ...xFormulaRequiresReadOnly,
 };
 
 export const objectMetaSchema: Schema = {

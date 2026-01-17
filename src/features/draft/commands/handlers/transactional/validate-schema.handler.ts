@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ValidateSchemaCommand } from 'src/features/draft/commands/impl/transactional/validate-schema.command';
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
+import { FormulaValidationService } from 'src/features/plugin/formula';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -17,6 +18,7 @@ export class ValidateSchemaHandler
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
+    protected readonly formulaValidationService: FormulaValidationService,
   ) {}
 
   async execute({ schema }: ValidateSchemaCommand) {
@@ -29,6 +31,18 @@ export class ValidateSchemaHandler
     if (!result) {
       throw new BadRequestException('schema is not valid', {
         cause: errors,
+      });
+    }
+
+    this.validateFormulas(schema as JsonSchema);
+  }
+
+  private validateFormulas(schema: JsonSchema) {
+    const formulaResult = this.formulaValidationService.validateSchema(schema);
+
+    if (!formulaResult.isValid) {
+      throw new BadRequestException('formula validation failed', {
+        cause: formulaResult.errors,
       });
     }
   }
