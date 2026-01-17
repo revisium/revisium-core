@@ -53,8 +53,7 @@ export class RevisiumCacheModule {
               return new NoopCacheService() as any;
             }
 
-            const l1MaxSize =
-              getEnvWithDeprecation(cfg, 'CACHE_L1_MAX_SIZE') || undefined;
+            const l1MaxSize = getEnvWithDeprecation(cfg, 'CACHE_L1_MAX_SIZE');
 
             if (l1MaxSize) {
               logger.log(`L1_MAX_SIZE: ${l1MaxSize}`);
