@@ -687,7 +687,7 @@ describe('UpdateTableHandler', () => {
       );
     });
 
-    it('should skip formula validation when formula feature is disabled', async () => {
+    it('should reject x-formula when formula feature is disabled', async () => {
       jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
       jest
         .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
@@ -702,7 +702,35 @@ describe('UpdateTableHandler', () => {
           {
             op: 'add',
             path: '/properties/computed',
-            value: numberFieldWithFormula('invalid * * syntax'),
+            value: numberFieldWithFormula('ver * 2'),
+          },
+        ],
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should allow update without x-formula when formula feature is disabled', async () => {
+      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
+      jest
+        .spyOn(formulaValidationService['formulaService'], 'isAvailable', 'get')
+        .mockReturnValue(false);
+
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/newField',
+            value: { type: JsonSchemaTypeName.Number, default: 0 },
           },
         ],
       });

@@ -300,7 +300,7 @@ describe('CreateTableHandler', () => {
       );
     });
 
-    it('should skip formula validation when formula feature is disabled', async () => {
+    it('should reject x-formula when formula feature is disabled', async () => {
       jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
 
       const { draftRevisionId } = await prepareProject(prismaService);
@@ -315,11 +315,37 @@ describe('CreateTableHandler', () => {
               type: 'number',
               default: 0,
               readOnly: true,
-              'x-formula': { version: 1, expression: 'invalid * * syntax' },
+              'x-formula': { version: 1, expression: 'price * 2' },
             },
           },
           additionalProperties: false,
           required: ['total'],
+        },
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(runTransaction(command)).rejects.toThrow(
+        'formula validation failed',
+      );
+    });
+
+    it('should allow schema without x-formula when formula feature is disabled', async () => {
+      jest.spyOn(formulaService, 'isAvailable', 'get').mockReturnValue(false);
+
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      const command = new CreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: 'products',
+        schema: {
+          type: 'object',
+          properties: {
+            price: { type: 'number', default: 0 },
+          },
+          additionalProperties: false,
+          required: ['price'],
         },
       });
 
