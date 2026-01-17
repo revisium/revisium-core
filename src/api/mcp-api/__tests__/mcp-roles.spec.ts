@@ -207,7 +207,7 @@ describe('mcp-api - role-based permissions', () => {
         );
       }
 
-      const result = await callMcpTool(sessionId, 'getTables', {
+      const result = await callMcpTool(sessionId, 'get_tables', {
         revisionId: preparedData.project.draftRevisionId,
       });
 
@@ -217,7 +217,7 @@ describe('mcp-api - role-based permissions', () => {
     it('should allow login and access for owner', async () => {
       const sessionId = await initAndLogin(preparedData.owner);
 
-      const result = await callMcpTool(sessionId, 'getTables', {
+      const result = await callMcpTool(sessionId, 'get_tables', {
         revisionId: preparedData.project.draftRevisionId,
       });
 
@@ -235,7 +235,7 @@ describe('mcp-api - role-based permissions', () => {
     it('owner can access own project resources', async () => {
       const sessionId = await initAndLogin(preparedData.owner);
 
-      const result = await callMcpTool(sessionId, 'getProject', {
+      const result = await callMcpTool(sessionId, 'get_project', {
         organizationId: preparedData.project.organizationId,
         projectName: preparedData.project.projectName,
       });
@@ -250,7 +250,7 @@ describe('mcp-api - role-based permissions', () => {
     it('another owner cannot access private project', async () => {
       const sessionId = await initAndLogin(preparedData.anotherOwner);
 
-      const result = await callMcpTool(sessionId, 'getProject', {
+      const result = await callMcpTool(sessionId, 'get_project', {
         organizationId: preparedData.project.organizationId,
         projectName: preparedData.project.projectName,
       });
@@ -270,7 +270,7 @@ describe('mcp-api - role-based permissions', () => {
     it('another owner can read public project', async () => {
       const sessionId = await initAndLogin(preparedData.anotherOwner);
 
-      const result = await callMcpTool(sessionId, 'getProject', {
+      const result = await callMcpTool(sessionId, 'get_project', {
         organizationId: preparedData.project.organizationId,
         projectName: preparedData.project.projectName,
       });
@@ -281,7 +281,7 @@ describe('mcp-api - role-based permissions', () => {
     it('another owner cannot write to public project', async () => {
       const sessionId = await initAndLogin(preparedData.anotherOwner);
 
-      const result = await callMcpTool(sessionId, 'createTable', {
+      const result = await callMcpTool(sessionId, 'create_table', {
         revisionId: preparedData.project.draftRevisionId,
         tableId: 'test-table',
         schema: {
@@ -303,11 +303,11 @@ describe('mcp-api - role-based permissions', () => {
       fixture = await prepareDataWithRoles(app);
     });
 
-    describe('createTable', () => {
+    describe('create_table', () => {
       it('owner can create table', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'createTable', {
+        const result = await callMcpTool(sessionId, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'owner-table',
           schema: {
@@ -324,7 +324,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can create table', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'createTable', {
+        const result = await callMcpTool(sessionId, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'dev-table',
           schema: {
@@ -341,7 +341,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor cannot create table', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'createTable', {
+        const result = await callMcpTool(sessionId, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'editor-table',
           schema: {
@@ -360,7 +360,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot create table', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'createTable', {
+        const result = await callMcpTool(sessionId, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'reader-table',
           schema: {
@@ -377,11 +377,11 @@ describe('mcp-api - role-based permissions', () => {
       });
     });
 
-    describe('removeTable', () => {
+    describe('delete_table', () => {
       it('owner can remove table', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'removeTable', {
+        const result = await callMcpTool(sessionId, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -392,7 +392,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can remove table', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'removeTable', {
+        const result = await callMcpTool(sessionId, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -403,7 +403,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor cannot remove table', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'removeTable', {
+        const result = await callMcpTool(sessionId, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -416,7 +416,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot remove table', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'removeTable', {
+        const result = await callMcpTool(sessionId, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -431,7 +431,7 @@ describe('mcp-api - role-based permissions', () => {
       it('owner can read tables', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'getTables', {
+        const result = await callMcpTool(sessionId, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
         expect(isSuccessResult(result)).toBe(true);
@@ -440,7 +440,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can read tables', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'getTables', {
+        const result = await callMcpTool(sessionId, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -450,7 +450,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can read tables', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'getTables', {
+        const result = await callMcpTool(sessionId, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -460,7 +460,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader can read tables', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'getTables', {
+        const result = await callMcpTool(sessionId, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -476,11 +476,11 @@ describe('mcp-api - role-based permissions', () => {
       fixture = await prepareDataWithRoles(app);
     });
 
-    describe('createRow', () => {
+    describe('create_row', () => {
       it('owner can create row', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'createRow', {
+        const result = await callMcpTool(sessionId, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'owner-row',
@@ -493,7 +493,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can create row', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'createRow', {
+        const result = await callMcpTool(sessionId, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'dev-row',
@@ -506,7 +506,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can create row', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'createRow', {
+        const result = await callMcpTool(sessionId, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'editor-row',
@@ -519,7 +519,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot create row', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'createRow', {
+        const result = await callMcpTool(sessionId, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'reader-row',
@@ -530,11 +530,11 @@ describe('mcp-api - role-based permissions', () => {
       });
     });
 
-    describe('removeRow', () => {
+    describe('delete_row', () => {
       it('owner can remove row', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'removeRow', {
+        const result = await callMcpTool(sessionId, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -546,7 +546,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can remove row', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'removeRow', {
+        const result = await callMcpTool(sessionId, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -558,7 +558,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can remove row', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'removeRow', {
+        const result = await callMcpTool(sessionId, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -570,7 +570,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot remove row', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'removeRow', {
+        const result = await callMcpTool(sessionId, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -584,7 +584,7 @@ describe('mcp-api - role-based permissions', () => {
       it('owner can read rows', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'getRows', {
+        const result = await callMcpTool(sessionId, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -595,7 +595,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can read rows', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'getRows', {
+        const result = await callMcpTool(sessionId, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -606,7 +606,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can read rows', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'getRows', {
+        const result = await callMcpTool(sessionId, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -617,7 +617,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader can read rows', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'getRows', {
+        const result = await callMcpTool(sessionId, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -634,11 +634,11 @@ describe('mcp-api - role-based permissions', () => {
       fixture = await prepareDataWithRoles(app);
     });
 
-    describe('createBranch', () => {
+    describe('create_branch', () => {
       it('owner can create branch', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'createBranch', {
+        const result = await callMcpTool(sessionId, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'owner-branch',
         });
@@ -649,7 +649,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can create branch', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'createBranch', {
+        const result = await callMcpTool(sessionId, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'dev-branch',
         });
@@ -660,7 +660,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor cannot create branch', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'createBranch', {
+        const result = await callMcpTool(sessionId, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'editor-branch',
         });
@@ -673,7 +673,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot create branch', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'createBranch', {
+        const result = await callMcpTool(sessionId, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'reader-branch',
         });
@@ -684,11 +684,11 @@ describe('mcp-api - role-based permissions', () => {
       });
     });
 
-    describe('revertChanges', () => {
+    describe('revert_changes', () => {
       it('owner can revert changes', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'revertChanges', {
+        const result = await callMcpTool(sessionId, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -700,7 +700,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can revert changes', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'revertChanges', {
+        const result = await callMcpTool(sessionId, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -712,7 +712,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can revert changes', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'revertChanges', {
+        const result = await callMcpTool(sessionId, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -724,7 +724,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot revert changes', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'revertChanges', {
+        const result = await callMcpTool(sessionId, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -744,11 +744,11 @@ describe('mcp-api - role-based permissions', () => {
       fixture = await prepareDataWithRoles(app);
     });
 
-    describe('commitRevision', () => {
+    describe('create_revision', () => {
       it('owner can commit revision', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'commitRevision', {
+        const result = await callMcpTool(sessionId, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -761,7 +761,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can commit revision', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'commitRevision', {
+        const result = await callMcpTool(sessionId, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -774,7 +774,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can commit revision', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'commitRevision', {
+        const result = await callMcpTool(sessionId, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -787,7 +787,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot commit revision', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'commitRevision', {
+        const result = await callMcpTool(sessionId, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -804,7 +804,7 @@ describe('mcp-api - role-based permissions', () => {
       it('owner can read revision', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'getRevision', {
+        const result = await callMcpTool(sessionId, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -814,7 +814,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can read revision', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'getRevision', {
+        const result = await callMcpTool(sessionId, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -824,7 +824,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can read revision', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'getRevision', {
+        const result = await callMcpTool(sessionId, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -834,7 +834,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader can read revision', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'getRevision', {
+        const result = await callMcpTool(sessionId, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -850,11 +850,11 @@ describe('mcp-api - role-based permissions', () => {
       preparedData = await prepareData(app);
     });
 
-    describe('getOrganization', () => {
+    describe('get_organization', () => {
       it('owner can access own organization', async () => {
         const sessionId = await initAndLogin(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'getOrganization', {
+        const result = await callMcpTool(sessionId, 'get_organization', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -868,7 +868,7 @@ describe('mcp-api - role-based permissions', () => {
       it('another owner can read organization metadata (public)', async () => {
         const sessionId = await initAndLogin(preparedData.anotherOwner);
 
-        const result = await callMcpTool(sessionId, 'getOrganization', {
+        const result = await callMcpTool(sessionId, 'get_organization', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -898,7 +898,7 @@ describe('mcp-api - role-based permissions', () => {
 
         const sessionId = initResponse.headers['mcp-session-id'] as string;
 
-        const result = await callMcpTool(sessionId, 'getOrganization', {
+        const result = await callMcpTool(sessionId, 'get_organization', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -906,11 +906,11 @@ describe('mcp-api - role-based permissions', () => {
       });
     });
 
-    describe('getProjects', () => {
+    describe('get_projects', () => {
       it('owner can list projects in own organization', async () => {
         const sessionId = await initAndLogin(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'getProjects', {
+        const result = await callMcpTool(sessionId, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -925,7 +925,7 @@ describe('mcp-api - role-based permissions', () => {
       it('another owner can access organization endpoint but sees filtered results', async () => {
         const sessionId = await initAndLogin(preparedData.anotherOwner);
 
-        const result = await callMcpTool(sessionId, 'getProjects', {
+        const result = await callMcpTool(sessionId, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -940,7 +940,7 @@ describe('mcp-api - role-based permissions', () => {
         await makeProjectPublic(preparedData.project.projectId);
         const sessionId = await initAndLogin(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'getProjects', {
+        const result = await callMcpTool(sessionId, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -971,7 +971,7 @@ describe('mcp-api - role-based permissions', () => {
 
         const sessionId = initResponse.headers['mcp-session-id'] as string;
 
-        const result = await callMcpTool(sessionId, 'getProjects', {
+        const result = await callMcpTool(sessionId, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -987,11 +987,11 @@ describe('mcp-api - role-based permissions', () => {
       fixture = await prepareDataWithRoles(app);
     });
 
-    describe('deleteProject', () => {
+    describe('delete_project', () => {
       it('owner can delete project', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'deleteProject', {
+        const result = await callMcpTool(sessionId, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1002,7 +1002,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer cannot delete project', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'deleteProject', {
+        const result = await callMcpTool(sessionId, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1015,7 +1015,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor cannot delete project', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'deleteProject', {
+        const result = await callMcpTool(sessionId, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1028,7 +1028,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader cannot delete project', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'deleteProject', {
+        const result = await callMcpTool(sessionId, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1043,7 +1043,7 @@ describe('mcp-api - role-based permissions', () => {
       it('owner can read project', async () => {
         const sessionId = await initAndLogin(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'getProject', {
+        const result = await callMcpTool(sessionId, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1054,7 +1054,7 @@ describe('mcp-api - role-based permissions', () => {
       it('developer can read project', async () => {
         const sessionId = await initAndLogin(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'getProject', {
+        const result = await callMcpTool(sessionId, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1065,7 +1065,7 @@ describe('mcp-api - role-based permissions', () => {
       it('editor can read project', async () => {
         const sessionId = await initAndLogin(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'getProject', {
+        const result = await callMcpTool(sessionId, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1076,7 +1076,7 @@ describe('mcp-api - role-based permissions', () => {
       it('reader can read project', async () => {
         const sessionId = await initAndLogin(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'getProject', {
+        const result = await callMcpTool(sessionId, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });

@@ -170,6 +170,7 @@ PERMISSIONS:
         this.checkPermissionByOrganizationProject.bind(this),
       checkPermissionByOrganization:
         this.checkPermissionByOrganization.bind(this),
+      checkSystemPermission: this.checkSystemPermission.bind(this),
     };
 
     this.authTools.register(this.server, auth);
@@ -251,6 +252,16 @@ PERMISSIONS:
   ): Promise<void> {
     await this.authApi.checkOrganizationPermission({
       organizationId,
+      permissions,
+      userId,
+    });
+  }
+
+  private async checkSystemPermission(
+    permissions: McpPermissionCheck[],
+    userId: string,
+  ): Promise<void> {
+    await this.authApi.checkSystemPermission({
       permissions,
       userId,
     });

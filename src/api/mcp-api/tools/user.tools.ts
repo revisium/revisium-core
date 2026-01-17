@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { UserApiService } from 'src/features/user/user-api.service';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class UserTools implements McpToolRegistrar {
@@ -8,17 +9,22 @@ export class UserTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getUser',
+      'admin_get_user',
       {
-        description: 'Get user by ID',
+        description:
+          'Get user by ID (admin only). Returns all user fields including email.',
         inputSchema: {
           userId: z.string().describe('User ID'),
         },
         annotations: { readOnlyHint: true },
       },
       async ({ userId }, context) => {
-        auth.requireAuth(context);
-        const result = await this.userApi.getUser({ userId });
+        const session = auth.requireAuth(context);
+        await auth.checkSystemPermission(
+          [{ action: PermissionAction.read, subject: PermissionSubject.User }],
+          session.userId,
+        );
+        const result = await this.userApi.adminUser({ userId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -28,7 +34,7 @@ export class UserTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'searchUsers',
+      'search_users',
       {
         description: 'Search users by username or email',
         inputSchema: {

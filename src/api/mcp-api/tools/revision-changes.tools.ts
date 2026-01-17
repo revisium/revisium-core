@@ -9,7 +9,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getRevisionChanges',
+      'get_revision_changes',
       {
         description:
           'Get summary of all changes in a revision (tables and rows added/modified/removed). Use this to see what changed in draft vs head.',
@@ -53,7 +53,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getTableChanges',
+      'get_table_changes',
       {
         description:
           'Get detailed list of changed tables in a revision, including schema changes.',
@@ -98,7 +98,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'getRowChanges',
+      'get_row_changes',
       {
         description:
           'Get detailed list of changed rows in a revision, including field-level diffs.',

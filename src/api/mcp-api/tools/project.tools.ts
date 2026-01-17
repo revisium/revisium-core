@@ -13,7 +13,7 @@ export class ProjectTools implements McpToolRegistrar {
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
-      'getProject',
+      'get_project',
       {
         description:
           'Get project by organization ID and project name. Returns project info with rootBranch containing draftRevisionId and headRevisionId.',
@@ -76,7 +76,7 @@ export class ProjectTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'createProject',
+      'create_project',
       {
         description: 'Create a new project in an organization',
         inputSchema: {
@@ -129,7 +129,7 @@ export class ProjectTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'deleteProject',
+      'delete_project',
       {
         description: 'Delete a project',
         inputSchema: {

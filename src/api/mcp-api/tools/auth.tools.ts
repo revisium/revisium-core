@@ -86,7 +86,7 @@ export class AuthTools implements McpToolRegistrar {
     );
 
     server.registerTool(
-      'loginWithToken',
+      'login_with_token',
       {
         description:
           'Authenticate with Revisium API using an existing JWT access token. Useful when already logged in via UI (Google, GitHub, or password).',

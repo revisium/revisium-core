@@ -28,11 +28,17 @@ export type CheckPermissionByOrganization = (
   userId?: string,
 ) => Promise<void>;
 
+export type CheckSystemPermission = (
+  permissions: McpPermissionCheck[],
+  userId: string,
+) => Promise<void>;
+
 export interface McpAuthHelpers {
   requireAuth: (context: McpContext) => McpSession;
   checkPermissionByRevision: CheckPermissionByRevision;
   checkPermissionByOrganizationProject: CheckPermissionByOrganizationProject;
   checkPermissionByOrganization: CheckPermissionByOrganization;
+  checkSystemPermission: CheckSystemPermission;
 }
 
 export interface McpToolRegistrar {
