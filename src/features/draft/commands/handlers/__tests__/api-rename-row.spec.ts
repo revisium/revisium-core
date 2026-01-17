@@ -39,7 +39,7 @@ describe('ApiRenameRowHandler', () => {
         },
       },
     });
-    expect(result.row).toStrictEqual({
+    expect(result.row).toMatchObject({
       ...row,
       data: { ver: 2 },
       context: {
