@@ -123,7 +123,7 @@ export class DraftRevisionInternalService {
   ): Promise<boolean> {
     const table = await this.transaction.table.findFirst({
       where: {
-        id: tableId,
+        id: { equals: tableId, mode: 'insensitive' },
         revisions: {
           some: { id: revisionId },
         },
