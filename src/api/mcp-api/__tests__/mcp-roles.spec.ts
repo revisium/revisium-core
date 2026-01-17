@@ -1161,9 +1161,9 @@ describe('mcp-api - role-based permissions', () => {
         });
 
         expect(isSuccessResult(result)).toBe(true);
-        const users = parseToolResult<{ edges: Array<{ node: { id: string } }> }>(
-          result.result as McpToolResult,
-        );
+        const users = parseToolResult<{
+          edges: Array<{ node: { id: string } }>;
+        }>(result.result as McpToolResult);
         expect(users.edges).toBeDefined();
       });
 
