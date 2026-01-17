@@ -30,9 +30,7 @@ describe('graphql - branch mutations (role-based)', () => {
 
     const getMutation = (revisionId: string, branchName: string) => ({
       query: gql`
-        mutation createBranch(
-          $data: CreateBranchInput!
-        ) {
+        mutation createBranch($data: CreateBranchInput!) {
           createBranch(data: $data) {
             id
             name
