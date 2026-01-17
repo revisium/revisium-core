@@ -7,6 +7,10 @@ import { CacheService } from 'src/infrastructure/cache/services/cache.service';
 import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 import { parseBool } from 'src/utils/utils/parse-bool';
+import {
+  getEnvWithDeprecation,
+  getEnvWithDeprecationOrThrow,
+} from 'src/utils/env';
 import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { CACHE_SERVICE } from './services/cache.tokens';
 import { CACHE_EVENT_HANDLERS } from './handlers';
@@ -38,43 +42,47 @@ export class RevisiumCacheModule {
           provide: CACHE_SERVICE,
           useFactory: async (cfg: ConfigService): Promise<any> => {
             const logger = new Logger('RevisiumCacheModule');
-            const enabled = parseBool(cfg.get<string>('EXPERIMENTAL_CACHE'));
+            const enabled = parseBool(
+              getEnvWithDeprecation(cfg, 'CACHE_ENABLED'),
+            );
 
             if (!enabled) {
               logger.warn(
-                '⚠️ Cache disabled (NoopBentoCache). Set EXPERIMENTAL_CACHE=1 to enable.',
+                'Cache disabled (NoopBentoCache). Set CACHE_ENABLED=1 to enable.',
               );
               return new NoopCacheService() as any;
             }
 
             const l1MaxSize =
-              cfg.get<string>('EXPERIMENTAL_CACHE_L1_MAX_SIZE') || undefined;
+              getEnvWithDeprecation(cfg, 'CACHE_L1_MAX_SIZE') || undefined;
 
             if (l1MaxSize) {
               logger.log(`L1_MAX_SIZE: ${l1MaxSize}`);
             }
 
             const redisUrl =
-              cfg.get<string>('EXPERIMENTAL_CACHE_L2_REDIS_URL') || null;
+              getEnvWithDeprecation(cfg, 'CACHE_L2_REDIS_URL') || null;
 
             try {
               let bento: any;
 
               if (redisUrl) {
-                const redisBusHost = cfg.getOrThrow<string>(
-                  'EXPERIMENTAL_CACHE_REDIS_BUS_HOST',
+                const redisBusHost = getEnvWithDeprecationOrThrow<string>(
+                  cfg,
+                  'CACHE_BUS_HOST',
                 );
 
                 if (redisBusHost) {
-                  logger.log(`REDIS_BUS_HOST: ${redisBusHost}`);
+                  logger.log(`CACHE_BUS_HOST: ${redisBusHost}`);
                 }
 
-                const redisBusPort = cfg.getOrThrow<string>(
-                  'EXPERIMENTAL_CACHE_REDIS_BUS_PORT',
+                const redisBusPort = getEnvWithDeprecationOrThrow<string>(
+                  cfg,
+                  'CACHE_BUS_PORT',
                 );
 
                 if (redisBusPort) {
-                  logger.log(`REDIS_BUS_PORT: ${redisBusPort}`);
+                  logger.log(`CACHE_BUS_PORT: ${redisBusPort}`);
                 }
 
                 const { BentoCache, bentostore, memoryDriver } =
@@ -117,7 +125,7 @@ export class RevisiumCacheModule {
               } else {
                 const databaseUrl = cfg.getOrThrow<string>('DATABASE_URL');
                 const debug = parseBool(
-                  cfg.get<string>('EXPERIMENTAL_CACHE_DEBUG'),
+                  getEnvWithDeprecation(cfg, 'CACHE_DEBUG'),
                 );
 
                 const { BentoCache, bentostore, memoryDriver } =
