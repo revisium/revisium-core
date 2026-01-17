@@ -79,6 +79,18 @@ function formatForeignKeyRowsNotFoundMessage(
   return `Foreign key validation failed: ${details.length} references not found${contextStr}`;
 }
 
+function formatFormulaValidationMessage(details: FormulaErrorDetail[]): string {
+  if (details.length === 0) {
+    return 'Formula validation failed';
+  }
+
+  if (details.length === 1) {
+    return `Formula validation error in field "${details[0].field}": ${details[0].error}`;
+  }
+
+  return `Formula validation failed with ${details.length} errors`;
+}
+
 export interface ValidationErrorDetail {
   path: string;
   message: string;
@@ -88,6 +100,11 @@ export interface ForeignKeyErrorDetail {
   path: string;
   tableId: string;
   missingRowIds: string[];
+}
+
+export interface FormulaErrorDetail {
+  field: string;
+  error: string;
 }
 
 export interface ValidationErrorContext {
@@ -109,8 +126,15 @@ export interface ForeignKeyErrorResponse {
   details: ForeignKeyErrorDetail[];
 }
 
+export interface FormulaErrorResponse {
+  code: string;
+  message: string;
+  details: FormulaErrorDetail[];
+}
+
 export const ValidationErrorCode = {
   INVALID_DATA: 'INVALID_DATA',
+  INVALID_FORMULA: 'INVALID_FORMULA',
   FOREIGN_KEY_NOT_FOUND: 'FOREIGN_KEY_NOT_FOUND',
   TABLE_NOT_FOUND: 'TABLE_NOT_FOUND',
 } as const;
@@ -184,5 +208,22 @@ export class ForeignKeyRowsNotFoundException extends BadRequestException {
   getContext(): ValidationErrorContext | undefined {
     const response = this.getResponse() as ForeignKeyErrorResponse;
     return response.context;
+  }
+}
+
+export class FormulaValidationException extends BadRequestException {
+  constructor(details: FormulaErrorDetail[]) {
+    const response: FormulaErrorResponse = {
+      code: ValidationErrorCode.INVALID_FORMULA,
+      message: formatFormulaValidationMessage(details),
+      details,
+    };
+
+    super(response);
+  }
+
+  getDetails(): FormulaErrorDetail[] {
+    const response = this.getResponse() as FormulaErrorResponse;
+    return response.details;
   }
 }

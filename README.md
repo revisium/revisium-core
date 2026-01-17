@@ -86,6 +86,7 @@ See [ENV.md](./ENV.md) for all environment variables.
 |---------|-------------|
 | [@revisium/endpoint](https://github.com/revisium/revisium-endpoint) | Dynamic GraphQL/REST API generator |
 | [@revisium/schema-toolkit](https://github.com/revisium/schema-toolkit) | JSON Schema utilities, validation, and transformation helpers |
+| [@revisium/formula](https://github.com/revisium/formula) | Formula expression parser and evaluator for computed fields |
 | [revisium-cli](https://github.com/revisium/revisium-cli) | CLI for migrations — save and apply schema & data changes across environments |
 
 ## License

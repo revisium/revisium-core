@@ -1,5 +1,6 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 import { JSONResolver } from 'graphql-scalars';
+import { FormulaFieldErrorModel } from 'src/api/graphql-api/row/model/formula-field-error.model';
 import { RowModel } from 'src/api/graphql-api/row/model/row.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
 
@@ -25,4 +26,7 @@ export class SearchResult {
 
   @Field(() => [SearchMatch])
   matches: SearchMatch[];
+
+  @Field(() => [FormulaFieldErrorModel], { nullable: true })
+  formulaErrors?: FormulaFieldErrorModel[];
 }

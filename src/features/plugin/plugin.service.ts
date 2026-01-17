@@ -3,7 +3,9 @@ import { Prisma, Row } from 'src/__generated__/client';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import {
   ComputeRowsOptions,
+  ComputeRowsResult,
   AfterCreateRowOptions,
+  FormulaFieldError,
   InternalComputeRowsOptions,
   InternalAfterCreateRowOptions,
   InternalAfterUpdateRowOptions,
@@ -105,9 +107,11 @@ export class PluginService {
     return data;
   }
 
-  public async computeRows(options: ComputeRowsOptions): Promise<void> {
+  public async computeRows(
+    options: ComputeRowsOptions,
+  ): Promise<ComputeRowsResult> {
     if (systemTablesIds.includes(options.tableId)) {
-      return;
+      return {};
     }
 
     const { schemaStore } = await this.prepareSchemaContext(options);
@@ -117,22 +121,36 @@ export class PluginService {
       schemaStore,
     };
 
+    const allErrors = new Map<string, FormulaFieldError[]>();
+
     for (const plugin of this.pluginsListService.orderedPlugins) {
-      await plugin.computeRows(internalOptions);
+      const result = await plugin.computeRows(internalOptions);
+      if (result) {
+        this.mergeFormulaErrors(allErrors, result);
+      }
     }
+
+    return allErrors.size > 0 ? { formulaErrors: allErrors } : {};
   }
 
   public async computeRowsFromItems(
     revisionId: string,
     items: RowWithTableId[],
-  ): Promise<void> {
+  ): Promise<ComputeRowsResult> {
     const rowsByTable = this.groupRowsByTable(items);
 
-    await Promise.all(
+    const results = await Promise.all(
       Array.from(rowsByTable.entries()).map(([tableId, rows]) =>
         this.computeRows({ revisionId, tableId, rows }),
       ),
     );
+
+    const allErrors = new Map<string, FormulaFieldError[]>();
+    for (const result of results) {
+      this.mergeFormulaErrors(allErrors, result);
+    }
+
+    return allErrors.size > 0 ? { formulaErrors: allErrors } : {};
   }
 
   public groupRowsByTable(items: RowWithTableId[]): Map<string, Row[]> {
@@ -238,6 +256,19 @@ export class PluginService {
       throw new BadRequestException('data is not valid', {
         cause: errors,
       });
+    }
+  }
+
+  private mergeFormulaErrors(
+    target: Map<string, FormulaFieldError[]>,
+    result: ComputeRowsResult,
+  ): void {
+    if (!result.formulaErrors) {
+      return;
+    }
+    for (const [rowId, errors] of result.formulaErrors) {
+      const existing = target.get(rowId) ?? [];
+      target.set(rowId, [...existing, ...errors]);
     }
   }
 

@@ -37,7 +37,7 @@ export class GetRowHandler
         return null;
       }
 
-      await this.pluginService.computeRows({
+      const { formulaErrors } = await this.pluginService.computeRows({
         revisionId: data.revisionId,
         tableId: data.tableId,
         rows: [row],
@@ -49,6 +49,7 @@ export class GetRowHandler
           revisionId: data.revisionId,
           tableId: data.tableId,
         },
+        formulaErrors: formulaErrors?.get(row.id),
       };
     } catch {
       return null;

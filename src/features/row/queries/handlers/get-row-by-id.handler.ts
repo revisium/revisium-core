@@ -20,24 +20,23 @@ export class GetRowByIdHandler
       where: { versionId: data.rowVersionId },
     });
 
-    if (row) {
-      await this.pluginService.computeRows({
-        revisionId: data.revisionId,
-        tableId: data.tableId,
-        rows: [row],
-      });
-    }
-
-    if (row) {
-      return {
-        ...row,
-        context: {
-          revisionId: data.revisionId,
-          tableId: data.tableId,
-        },
-      };
-    } else {
+    if (!row) {
       return null;
     }
+
+    const { formulaErrors } = await this.pluginService.computeRows({
+      revisionId: data.revisionId,
+      tableId: data.tableId,
+      rows: [row],
+    });
+
+    return {
+      ...row,
+      context: {
+        revisionId: data.revisionId,
+        tableId: data.tableId,
+      },
+      formulaErrors: formulaErrors?.get(row.id),
+    };
   }
 }

@@ -1,4 +1,4 @@
-import { QueryBus } from '@nestjs/cqrs';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { getObjectSchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { nanoid } from 'nanoid';
@@ -12,7 +12,10 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
+import { FormulaService } from 'src/features/plugin/formula';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
+import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
+import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 import {
   GetRowsQuery,
   GetRowsQueryReturnType,
@@ -570,6 +573,177 @@ describe('getRows', () => {
     });
   });
 
+  describe('formula computation', () => {
+    beforeEach(() => {
+      Object.defineProperty(formulaService, 'isAvailable', { value: true });
+    });
+
+    it('should compute formulas for rows', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      await transactionService.run(async () =>
+        commandBus.execute(
+          new CreateTableCommand({
+            revisionId: draftRevisionId,
+            tableId: 'products',
+            schema: {
+              type: 'object',
+              properties: {
+                price: { type: 'number', default: 0 },
+                quantity: { type: 'number', default: 1 },
+                total: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: 'price * quantity' },
+                },
+              },
+              additionalProperties: false,
+              required: ['price', 'quantity', 'total'],
+            },
+          }),
+        ),
+      );
+
+      await transactionService.run(async () =>
+        draftRevisionApiService.createRows({
+          revisionId: draftRevisionId,
+          tableId: 'products',
+          rows: [
+            { rowId: 'row1', data: { price: 10, quantity: 3, total: 0 } },
+            { rowId: 'row2', data: { price: 20, quantity: 5, total: 0 } },
+          ],
+        }),
+      );
+
+      const result = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: 'products',
+          first: 10,
+        }),
+      );
+
+      expect(result.edges).toHaveLength(2);
+      const row1 = result.edges.find((e) => e.node.id === 'row1');
+      const row2 = result.edges.find((e) => e.node.id === 'row2');
+
+      expect((row1?.node.data as { total: number }).total).toBe(30);
+      expect((row2?.node.data as { total: number }).total).toBe(100);
+      expect(row1?.node.formulaErrors).toBeUndefined();
+      expect(row2?.node.formulaErrors).toBeUndefined();
+    });
+
+    it('should return formulaErrors when formula fails', async () => {
+      const { draftRevisionId } = await prepareProject(prismaService);
+
+      await transactionService.run(async () =>
+        commandBus.execute(
+          new CreateTableCommand({
+            revisionId: draftRevisionId,
+            tableId: 'products',
+            schema: {
+              type: 'object',
+              properties: {
+                price: { type: 'number', default: 0 },
+                quantity: { type: 'number', default: 1 },
+                total: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: 'price * quantity' },
+                },
+                settings: {
+                  type: 'object',
+                  properties: {
+                    display: {
+                      type: 'object',
+                      properties: {
+                        scale: { type: 'number', default: 1 },
+                      },
+                      additionalProperties: false,
+                      required: ['scale'],
+                    },
+                  },
+                  additionalProperties: false,
+                  required: [],
+                },
+                scaled: {
+                  type: 'number',
+                  default: -1,
+                  readOnly: true,
+                  'x-formula': {
+                    version: 1,
+                    expression: 'settings.display.scale',
+                  },
+                },
+              },
+              additionalProperties: false,
+              required: ['price', 'quantity', 'total', 'settings', 'scaled'],
+            },
+          }),
+        ),
+      );
+
+      await transactionService.run(async () =>
+        draftRevisionApiService.createRows({
+          revisionId: draftRevisionId,
+          tableId: 'products',
+          rows: [
+            {
+              rowId: 'row1',
+              data: {
+                price: 10,
+                quantity: 3,
+                total: 0,
+                settings: {},
+                scaled: -1,
+              },
+            },
+            {
+              rowId: 'row2',
+              data: {
+                price: 20,
+                quantity: 5,
+                total: 0,
+                settings: {},
+                scaled: -1,
+              },
+            },
+          ],
+        }),
+      );
+
+      const result = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId: 'products',
+          first: 10,
+        }),
+      );
+
+      expect(result.edges).toHaveLength(2);
+      const row1 = result.edges.find((e) => e.node.id === 'row1');
+      const row2 = result.edges.find((e) => e.node.id === 'row2');
+
+      expect((row1?.node.data as { total: number }).total).toBe(30);
+      expect((row1?.node.data as { scaled: number }).scaled).toBe(0);
+      expect(row1?.node.formulaErrors).toBeDefined();
+      expect(row1?.node.formulaErrors).toHaveLength(1);
+      expect(row1?.node.formulaErrors?.[0].field).toBe('scaled');
+
+      expect((row2?.node.data as { total: number }).total).toBe(100);
+      expect((row2?.node.data as { scaled: number }).scaled).toBe(0);
+      expect(row2?.node.formulaErrors).toBeDefined();
+      expect(row2?.node.formulaErrors).toHaveLength(1);
+      expect(row2?.node.formulaErrors?.[0].field).toBe('scaled');
+      expect(row2?.node.formulaErrors?.[0].expression).toBe(
+        'settings.display.scale',
+      );
+      expect(row2?.node.formulaErrors?.[0].defaultUsed).toBe(true);
+    });
+  });
+
   function runTransaction(
     query: GetRowsQuery,
   ): Promise<GetRowsQueryReturnType> {
@@ -578,15 +752,29 @@ describe('getRows', () => {
 
   let prismaService: PrismaService;
   let pluginListService: PluginListService;
+  let originalOrderedPlugins: unknown[];
   let transactionService: TransactionPrismaService;
   let queryBus: QueryBus;
+  let commandBus: CommandBus;
+  let formulaService: FormulaService;
+  let draftRevisionApiService: DraftRevisionApiService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
     pluginListService = result.pluginListService;
+    originalOrderedPlugins = [...pluginListService['orderedPlugins']];
     transactionService = result.transactionService;
     queryBus = result.queryBus;
+    commandBus = result.commandBus;
+    formulaService = result.module.get<FormulaService>(FormulaService);
+    draftRevisionApiService =
+      result.module.get<DraftRevisionApiService>(DraftRevisionApiService);
+  });
+
+  afterEach(() => {
+    // @ts-ignore
+    pluginListService['orderedPlugins'] = originalOrderedPlugins;
   });
 
   afterAll(async () => {

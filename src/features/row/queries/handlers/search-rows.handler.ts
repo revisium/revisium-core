@@ -60,7 +60,7 @@ export class SearchRowsHandler
       return [];
     }
 
-    await this.pluginService.computeRowsFromItems(
+    const { formulaErrors } = await this.pluginService.computeRowsFromItems(
       data.revisionId,
       rows.map(({ row, table }) => ({ tableId: table.id, row })),
     );
@@ -69,6 +69,7 @@ export class SearchRowsHandler
       matches: extractMatchesFallback(row.data, data.query),
       row,
       table,
+      formulaErrors: formulaErrors?.get(row.id),
     }));
   }
 

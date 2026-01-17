@@ -17,7 +17,8 @@ export class RowTools implements McpToolRegistrar {
     server.registerTool(
       'get_rows',
       {
-        description: 'Get rows from a table',
+        description:
+          'Get rows from a table. Each row may include formulaErrors array if formula computation failed.',
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -55,7 +56,8 @@ export class RowTools implements McpToolRegistrar {
     server.registerTool(
       'get_row',
       {
-        description: 'Get a specific row',
+        description:
+          'Get a specific row. May include formulaErrors array if formula computation failed.',
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           tableId: z.string().describe('Table ID'),

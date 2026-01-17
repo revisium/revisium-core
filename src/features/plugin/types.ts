@@ -4,6 +4,17 @@ import {
   JsonValueStore,
 } from '@revisium/schema-toolkit/model';
 
+export interface FormulaFieldError {
+  field: string;
+  expression: string;
+  error: string;
+  defaultUsed: boolean;
+}
+
+export type ComputeRowsResult = {
+  formulaErrors?: Map<string, FormulaFieldError[]>;
+};
+
 export type AfterCreateRowOptions = {
   revisionId: string;
   tableId: string;
@@ -60,7 +71,9 @@ export interface IPluginService {
   isAvailable: boolean;
   afterCreateRow(options: InternalAfterCreateRowOptions): Promise<void> | void;
   afterUpdateRow(options: InternalAfterUpdateRowOptions): Promise<void> | void;
-  computeRows(options: InternalComputeRowsOptions): Promise<void> | void;
+  computeRows(
+    options: InternalComputeRowsOptions,
+  ): Promise<ComputeRowsResult | void> | ComputeRowsResult | void;
   afterMigrateRows(
     options: InternalAfterMigrateRowsOptions,
   ): Promise<void> | void;

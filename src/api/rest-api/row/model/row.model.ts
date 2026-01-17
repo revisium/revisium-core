@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Prisma } from 'src/__generated__/client';
 import { Paginated } from 'src/api/rest-api/share/model/paginated.model';
+import { FormulaFieldErrorModel } from 'src/api/rest-api/row/model/formula-field-error.model';
 
 export class RowModel {
   @ApiProperty({
@@ -63,6 +64,14 @@ export class RowModel {
     },
   })
   data: Prisma.JsonValue;
+
+  @ApiPropertyOptional({
+    description:
+      'Formula field errors that occurred during computation. Only present if there are errors.',
+    type: [FormulaFieldErrorModel],
+    nullable: true,
+  })
+  formulaErrors?: FormulaFieldErrorModel[];
 }
 
 export class RowsConnection extends Paginated(RowModel, 'RowModel') {}

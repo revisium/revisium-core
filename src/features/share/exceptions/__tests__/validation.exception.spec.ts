@@ -2,6 +2,7 @@ import {
   DataValidationException,
   ForeignKeyRowsNotFoundException,
   ForeignKeyTableNotFoundException,
+  FormulaValidationException,
   ValidationErrorCode,
 } from '../validation.exception';
 
@@ -305,5 +306,51 @@ describe('ForeignKeyRowsNotFoundException', () => {
     const exception = new ForeignKeyRowsNotFoundException([], context);
 
     expect(exception.getContext()).toEqual(context);
+  });
+});
+
+describe('FormulaValidationException', () => {
+  describe('formatMessage', () => {
+    it('formats message with no details', () => {
+      const exception = new FormulaValidationException([]);
+      const response = exception.getResponse() as { message: string };
+
+      expect(response.message).toBe('Formula validation failed');
+    });
+
+    it('formats message with single detail', () => {
+      const exception = new FormulaValidationException([
+        { field: 'total', error: 'x-formula is not available' },
+      ]);
+      const response = exception.getResponse() as { message: string };
+
+      expect(response.message).toBe(
+        'Formula validation error in field "total": x-formula is not available',
+      );
+    });
+
+    it('formats message with multiple details', () => {
+      const exception = new FormulaValidationException([
+        { field: 'total', error: 'syntax error' },
+        { field: 'discount', error: 'undefined variable' },
+      ]);
+      const response = exception.getResponse() as { message: string };
+
+      expect(response.message).toBe('Formula validation failed with 2 errors');
+    });
+  });
+
+  it('returns correct error code', () => {
+    const exception = new FormulaValidationException([]);
+    const response = exception.getResponse() as { code: string };
+
+    expect(response.code).toBe(ValidationErrorCode.INVALID_FORMULA);
+  });
+
+  it('getDetails returns details', () => {
+    const details = [{ field: 'total', error: 'x-formula is not available' }];
+    const exception = new FormulaValidationException(details);
+
+    expect(exception.getDetails()).toEqual(details);
   });
 });
