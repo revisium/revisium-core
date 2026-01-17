@@ -4,19 +4,23 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { getEnvWithDeprecation } from 'src/utils/env';
 
 @Injectable()
 export class GitHubAuthService {
   public readonly clientId: string | undefined;
-  private readonly secretId: string | undefined;
+  private readonly clientSecret: string | undefined;
 
   constructor(private readonly configService: ConfigService) {
     this.clientId = this.configService.get<string>('OAUTH_GITHUB_CLIENT_ID');
-    this.secretId = this.configService.get<string>('OAUTH_GITHUB_SECRET_ID');
+    this.clientSecret = getEnvWithDeprecation(
+      this.configService,
+      'OAUTH_GITHUB_CLIENT_SECRET',
+    );
   }
 
   public get isAvailable(): boolean {
-    return Boolean(this.clientId && this.secretId);
+    return Boolean(this.clientId && this.clientSecret);
   }
 
   public async getEmail(code: string): Promise<string> {
@@ -38,13 +42,13 @@ export class GitHubAuthService {
       throw new InternalServerErrorException('Client ID is missing');
     }
 
-    if (!this.secretId) {
-      throw new InternalServerErrorException('Secret ID is missing');
+    if (!this.clientSecret) {
+      throw new InternalServerErrorException('Client Secret is missing');
     }
 
     const params = new URLSearchParams({
       client_id: this.clientId,
-      client_secret: this.secretId,
+      client_secret: this.clientSecret,
       code,
     });
 

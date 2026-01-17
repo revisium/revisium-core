@@ -1,22 +1,26 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { getEnvWithDeprecation } from 'src/utils/env';
 
 @Injectable()
 export class GoogleOauthService {
   public readonly clientId: string | undefined;
-  private readonly secretId: string | undefined;
+  private readonly clientSecret: string | undefined;
 
   constructor(
     private readonly configService: ConfigService,
     private readonly jwtService: JwtService,
   ) {
     this.clientId = this.configService.get<string>('OAUTH_GOOGLE_CLIENT_ID');
-    this.secretId = this.configService.get<string>('OAUTH_GOOGLE_SECRET_ID');
+    this.clientSecret = getEnvWithDeprecation(
+      this.configService,
+      'OAUTH_GOOGLE_CLIENT_SECRET',
+    );
   }
 
   public get isAvailable(): boolean {
-    return Boolean(this.clientId && this.secretId);
+    return Boolean(this.clientId && this.clientSecret);
   }
 
   async getInfo(
@@ -27,14 +31,14 @@ export class GoogleOauthService {
       throw new InternalServerErrorException('Client ID is missing');
     }
 
-    if (!this.secretId) {
-      throw new InternalServerErrorException('Secret ID is missing');
+    if (!this.clientSecret) {
+      throw new InternalServerErrorException('Client Secret is missing');
     }
 
     const params = new URLSearchParams({
       code: authCode,
       client_id: this.clientId,
-      client_secret: this.secretId,
+      client_secret: this.clientSecret,
       redirect_uri: redirectUrl,
       grant_type: 'authorization_code',
     });
