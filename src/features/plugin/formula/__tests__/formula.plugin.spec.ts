@@ -899,6 +899,59 @@ describe('FormulaPlugin', () => {
       expect(result.formulaErrors).toBeUndefined();
       expect(rows[0]?.data).toMatchObject({ items: [] });
     });
+
+    it('should compute formula in array with custom name', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          products: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                price: { type: 'number', default: 0 },
+                quantity: { type: 'number', default: 0 },
+                total: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: 'price * quantity' },
+                },
+              },
+              additionalProperties: false,
+              required: ['price', 'quantity', 'total'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['products'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          products: [
+            { price: 10, quantity: 2, total: 0 },
+            { price: 25, quantity: 4, total: 0 },
+          ],
+        }),
+      ];
+
+      const result = plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      expect(result.formulaErrors).toBeUndefined();
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const products = data.products as Array<Record<string, unknown>>;
+
+      expect(products[0]?.total).toBe(20);
+      expect(products[1]?.total).toBe(100);
+    });
   });
 
   describe('fields named like functions', () => {

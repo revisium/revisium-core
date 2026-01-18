@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import {
-  createJsonValueStore,
   getJsonValueStoreByPath,
   prepareFormulas,
   evaluateFormulas,
@@ -46,7 +45,9 @@ export class FormulaPlugin implements IPluginService {
 
     for (const row of options.rows) {
       const data = row.data as Record<string, unknown>;
-      const { errors } = evaluateFormulas(formulas, data, { useDefaults: true });
+      const { errors } = evaluateFormulas(formulas, data, {
+        useDefaults: true,
+      });
 
       if (errors.length > 0) {
         allErrors.set(row.id, errors);
@@ -127,7 +128,7 @@ export class FormulaPlugin implements IPluginService {
         continue;
       }
 
-      const arrayItemValues = values[`items[${i}]`] as
+      const arrayItemValues = values[`${formula.arrayPath}[${i}]`] as
         | Record<string, unknown>
         | undefined;
       if (!arrayItemValues) {
@@ -145,10 +146,7 @@ export class FormulaPlugin implements IPluginService {
     }
   }
 
-  private getNestedValue(
-    obj: Record<string, unknown>,
-    path: string,
-  ): unknown {
+  private getNestedValue(obj: Record<string, unknown>, path: string): unknown {
     const segments = path.split('.');
     let current: unknown = obj;
 
