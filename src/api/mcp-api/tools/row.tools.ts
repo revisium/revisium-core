@@ -63,28 +63,44 @@ RESPONSE may include:
             ),
           orderBy: z
             .array(
-              z.object({
-                field: z
-                  .enum(['createdAt', 'updatedAt', 'publishedAt', 'id', 'data'])
-                  .describe(
-                    'Field to sort by. Use "data" for sorting by row data fields.',
-                  ),
-                direction: z.enum(['asc', 'desc']).describe('Sort direction'),
-                path: z
-                  .string()
-                  .optional()
-                  .describe(
-                    'Path to data field. Required when field is "data".',
-                  ),
-                type: z
-                  .enum(['text', 'int', 'float', 'boolean', 'timestamp'])
-                  .optional()
-                  .describe('Data type. Required when field is "data".'),
-                aggregation: z
-                  .enum(['min', 'max', 'avg', 'first', 'last'])
-                  .optional()
-                  .describe('Aggregation for arrays.'),
-              }),
+              z
+                .object({
+                  field: z
+                    .enum([
+                      'createdAt',
+                      'updatedAt',
+                      'publishedAt',
+                      'id',
+                      'data',
+                    ])
+                    .describe(
+                      'Field to sort by. Use "data" for sorting by row data fields.',
+                    ),
+                  direction: z.enum(['asc', 'desc']).describe('Sort direction'),
+                  path: z
+                    .string()
+                    .optional()
+                    .describe(
+                      'Path to data field. Required when field is "data".',
+                    ),
+                  type: z
+                    .enum(['text', 'int', 'float', 'boolean', 'timestamp'])
+                    .optional()
+                    .describe('Data type. Required when field is "data".'),
+                  aggregation: z
+                    .enum(['min', 'max', 'avg', 'first', 'last'])
+                    .optional()
+                    .describe('Aggregation for arrays.'),
+                })
+                .refine(
+                  (item) =>
+                    item.field !== 'data' ||
+                    (item.path !== undefined && item.type !== undefined),
+                  {
+                    message:
+                      'When field is "data", both "path" and "type" are required',
+                  },
+                ),
             )
             .optional()
             .describe(
