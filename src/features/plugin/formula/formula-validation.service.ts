@@ -1,10 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import {
   validateSchemaFormulas,
-  SchemaValidationResult,
-  JsonSchema as FormulaJsonSchema,
   extractSchemaFormulas,
-} from '@revisium/formula';
+  type SchemaValidationResult,
+} from '@revisium/schema-toolkit/lib';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { FormulaService } from './formula.service';
@@ -23,7 +22,9 @@ export class FormulaValidationService {
       .create(schema as JsonSchema)
       .getPlainSchema();
 
-    const formulas = extractSchemaFormulas(resolvedSchema as FormulaJsonSchema);
+    const formulas = extractSchemaFormulas(
+      resolvedSchema as Record<string, unknown>,
+    );
 
     if (!this.formulaService.isAvailable) {
       if (formulas.length > 0) {
@@ -38,6 +39,6 @@ export class FormulaValidationService {
       return { isValid: true, errors: [] };
     }
 
-    return validateSchemaFormulas(resolvedSchema as FormulaJsonSchema);
+    return validateSchemaFormulas(resolvedSchema as Record<string, unknown>);
   }
 }
