@@ -3,7 +3,7 @@ import {
   validateSchemaFormulas,
   extractSchemaFormulas,
   type SchemaValidationResult,
-} from '@revisium/schema-toolkit/lib';
+} from '@revisium/schema-toolkit/formula';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { FormulaService } from './formula.service';
