@@ -6,6 +6,7 @@ import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 
 export class RowTools implements McpToolRegistrar {
   constructor(
@@ -17,17 +18,85 @@ export class RowTools implements McpToolRegistrar {
     server.registerTool(
       'get_rows',
       {
-        description:
-          'Get rows from a table. Each row may include formulaErrors array if formula computation failed.',
+        description: `Get rows from a table. Each row may include formulaErrors array if formula computation failed.
+
+FILTERING with "where" parameter:
+- where: Filter conditions using path-based syntax for the "data" field
+  - path: Field path (e.g., "name", "stats.damage", "items[0].price", "items[*].quantity")
+  - Operators: eq, ne, gt, gte, lt, lte, contains, startswith, endswith, isnull, includes
+  - Example: { "where": { "data": { "path": "price", "gte": 100 } } }
+  - Computed (formula) fields can be used in where just like regular fields
+
+SORTING with "orderBy" parameter:
+- orderBy: Array of sort conditions
+  - field: "createdAt", "updatedAt", "publishedAt", "id", or "data" (for sorting by data fields)
+  - direction: "asc" or "desc"
+  - path: Required when field is "data" - the path to the data field (e.g., "price", "stats.damage")
+  - type: Required when field is "data" - "text", "int", "float", "boolean", or "timestamp"
+  - aggregation: Optional for arrays - "min", "max", "avg", "first", "last"
+
+  Examples:
+  - Sort by createdAt: [{ "field": "createdAt", "direction": "desc" }]
+  - Sort by data field: [{ "field": "data", "path": "price", "type": "int", "direction": "asc" }]
+  - Sort by nested field: [{ "field": "data", "path": "stats.damage", "type": "int", "direction": "desc" }]
+
+PATH SYNTAX for nested/array fields:
+- "name" - top-level field
+- "stats.strength" - nested object field
+- "inventory[0].itemId" - array element by index
+- "inventory[*].price" - all array elements (wildcard)
+
+RESPONSE may include:
+- formulaErrors: Array of formula computation errors if any formula failed
+  - fieldPath: Path to the field that failed
+  - error: Error message describing the failure`,
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           tableId: z.string().describe('Table ID'),
           first: z.number().optional().describe('Number of items'),
           after: z.string().optional().describe('Cursor'),
+          where: z
+            .record(z.string(), z.unknown())
+            .optional()
+            .describe(
+              'Filter conditions. Example: { "data": { "path": "price", "gte": 100 } }',
+            ),
+          orderBy: z
+            .array(
+              z.object({
+                field: z
+                  .enum(['createdAt', 'updatedAt', 'publishedAt', 'id', 'data'])
+                  .describe(
+                    'Field to sort by. Use "data" for sorting by row data fields.',
+                  ),
+                direction: z.enum(['asc', 'desc']).describe('Sort direction'),
+                path: z
+                  .string()
+                  .optional()
+                  .describe(
+                    'Path to data field. Required when field is "data".',
+                  ),
+                type: z
+                  .enum(['text', 'int', 'float', 'boolean', 'timestamp'])
+                  .optional()
+                  .describe('Data type. Required when field is "data".'),
+                aggregation: z
+                  .enum(['min', 'max', 'avg', 'first', 'last'])
+                  .optional()
+                  .describe('Aggregation for arrays.'),
+              }),
+            )
+            .optional()
+            .describe(
+              'Sort conditions. Example: [{ "field": "data", "path": "price", "type": "int", "direction": "asc" }]',
+            ),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId, first, after }, context) => {
+      async (
+        { revisionId, tableId, first, after, where, orderBy },
+        context,
+      ) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
           revisionId,
@@ -39,11 +108,14 @@ export class RowTools implements McpToolRegistrar {
           ],
           session.userId,
         );
+        const prismaOrderBy = mapToPrismaOrderBy(orderBy);
         const result = await this.rowApi.getRows({
           revisionId,
           tableId,
           first: first ?? 50,
           after,
+          where,
+          orderBy: prismaOrderBy,
         });
         return {
           content: [
@@ -56,8 +128,12 @@ export class RowTools implements McpToolRegistrar {
     server.registerTool(
       'get_row',
       {
-        description:
-          'Get a specific row. May include formulaErrors array if formula computation failed.',
+        description: `Get a specific row. May include formulaErrors array if formula computation failed.
+
+RESPONSE may include:
+- formulaErrors: Array of formula computation errors if any formula failed
+  - fieldPath: Path to the field that failed (e.g., "total" or "items[0].subtotal")
+  - error: Error message describing the failure`,
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -89,8 +165,17 @@ export class RowTools implements McpToolRegistrar {
     server.registerTool(
       'create_row',
       {
-        description:
-          'Create a new row in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first. Create rows in dependency order.',
+        description: `Create a new row in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first. Create rows in dependency order.
+
+IMPORTANT for tables with computed fields (x-formula):
+- Computed fields are marked as readOnly in schema
+- When creating rows, you MUST still include computed fields in data with their default value
+- The server will overwrite with the computed result
+- Example: If schema has "total" with x-formula and default: 0, pass "total": 0 in row data
+
+Example:
+- Schema: { "price": {...}, "quantity": {...}, "total": { "type": "number", "default": 0, "readOnly": true, "x-formula": {...} } }
+- Row data: { "price": 100, "quantity": 5, "total": 0 }  // total will be computed as 500`,
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -98,7 +183,7 @@ export class RowTools implements McpToolRegistrar {
           data: z
             .record(z.string(), z.unknown())
             .describe(
-              'Row data matching table schema. For foreignKey fields, use valid rowId from referenced table or empty string.',
+              'Row data matching table schema. For foreignKey fields, use valid rowId from referenced table or empty string. For computed (x-formula) fields, include with default value.',
             ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
@@ -198,8 +283,13 @@ export class RowTools implements McpToolRegistrar {
     server.registerTool(
       'create_rows',
       {
-        description:
-          'Create multiple rows in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first.',
+        description: `Create multiple rows in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first.
+
+IMPORTANT for tables with computed fields (x-formula):
+- Computed fields are marked as readOnly in schema
+- When creating rows, you MUST still include computed fields in data with their default value
+- The server will overwrite with the computed result
+- Example: If schema has "total" with x-formula and default: 0, pass "total": 0 in each row's data`,
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -207,7 +297,11 @@ export class RowTools implements McpToolRegistrar {
             .array(
               z.object({
                 rowId: z.string().describe('Row ID (URL-friendly)'),
-                data: z.record(z.string(), z.unknown()).describe('Row data'),
+                data: z
+                  .record(z.string(), z.unknown())
+                  .describe(
+                    'Row data matching table schema. For computed (x-formula) fields, include with default value.',
+                  ),
               }),
             )
             .max(1000)

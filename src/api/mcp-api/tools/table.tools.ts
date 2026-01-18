@@ -118,8 +118,51 @@ export class TableTools implements McpToolRegistrar {
     server.registerTool(
       'create_table',
       {
-        description:
-          'Create a new table with schema. Read revisium://specs/schema resource first. IMPORTANT: If schema has foreignKey, the referenced table MUST exist first. Create tables in dependency order.',
+        description: `Create a new table with schema. Read revisium://specs/schema resource first. IMPORTANT: If schema has foreignKey, the referenced table MUST exist first. Create tables in dependency order.
+
+SCHEMA REQUIREMENTS for computed fields (x-formula):
+1. Field must have "readOnly": true
+2. Field must have a "default" value (e.g., 0 for numbers, "" for strings)
+3. Field MUST be included in the "required" array
+4. When using in nested objects or array items, the nested "required" array must include the computed field
+
+Example of correct schema with formula:
+{
+  "type": "object",
+  "properties": {
+    "price": { "type": "number", "default": 0 },
+    "quantity": { "type": "number", "default": 0 },
+    "total": {
+      "type": "number",
+      "default": 0,
+      "readOnly": true,
+      "x-formula": { "version": 1, "expression": "price * quantity" }
+    }
+  },
+  "additionalProperties": false,
+  "required": ["price", "quantity", "total"]  // <-- total MUST be here
+}
+
+ARRAY FIELD schema notes:
+- Arrays need "default": [] at array level for the field to be optional
+- Array items define their own defaults
+- Don't add "default" inside "items" object itself - defaults go on individual item properties
+
+Correct array example:
+{
+  "values": {
+    "type": "array",
+    "default": [],
+    "items": {
+      "type": "object",
+      "properties": {
+        "price": { "type": "number", "default": 0 }
+      },
+      "additionalProperties": false,
+      "required": ["price"]
+    }
+  }
+}`,
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z
@@ -128,7 +171,7 @@ export class TableTools implements McpToolRegistrar {
           schema: z
             .record(z.string(), z.unknown())
             .describe(
-              'JSON Schema for the table. Must have type:object, properties with defaults, additionalProperties:false, required array. See schema-specification resource for examples.',
+              'JSON Schema for the table. Must have type:object, properties with defaults, additionalProperties:false, required array. Computed fields MUST be in required array. See schema-specification resource for examples.',
             ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
