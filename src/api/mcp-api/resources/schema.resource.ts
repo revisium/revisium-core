@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { formulaSpec } from '@revisium/formula/spec';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
+import { formulaSpec } from '@revisium/schema-toolkit/lib';
 import { SchemaObject } from 'ajv';
 import { FormulaService } from 'src/features/plugin/formula';
 import { metaSchema } from 'src/features/share/schema/meta-schema';

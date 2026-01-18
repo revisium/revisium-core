@@ -34,9 +34,9 @@ export class PluginListService {
       rowCreatedAtPlugin,
       rowPublishedAtPlugin,
       rowUpdatedAtPlugin,
+      formulaPlugin,
       rowHashPlugin,
       rowSchemaHashPlugin,
-      formulaPlugin,
       filePlugin,
     );
   }
