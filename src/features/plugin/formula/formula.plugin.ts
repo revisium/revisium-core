@@ -8,7 +8,6 @@ import {
 import {
   JsonValueStore,
   JsonSchemaStore,
-  JsonArrayValueStore,
 } from '@revisium/schema-toolkit/model';
 import { JsonValue, JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 import {
@@ -120,7 +119,7 @@ export class FormulaPlugin implements IPluginService {
       return;
     }
 
-    const items = (arrayStore as JsonArrayValueStore).value;
+    const items = arrayStore.value;
 
     for (let i = 0; i < items.length; i++) {
       const itemStore = items[i];
