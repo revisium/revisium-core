@@ -1276,4 +1276,453 @@ describe('FormulaPlugin', () => {
       expect(items[0]?.total).toBeCloseTo(115);
     });
   });
+
+  describe('array context tokens', () => {
+    it('should compute #index in array items', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                name: { type: 'string', default: '' },
+                position: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#index + 1' },
+                },
+              },
+              additionalProperties: false,
+              required: ['name', 'position'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { name: 'First', position: 0 },
+            { name: 'Second', position: 0 },
+            { name: 'Third', position: 0 },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.position).toBe(1);
+      expect(items[1]?.position).toBe(2);
+      expect(items[2]?.position).toBe(3);
+    });
+
+    it('should compute #length in array items', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                total: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#length' },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'total'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { value: 10, total: 0 },
+            { value: 20, total: 0 },
+            { value: 30, total: 0 },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.total).toBe(3);
+      expect(items[1]?.total).toBe(3);
+      expect(items[2]?.total).toBe(3);
+    });
+
+    it('should compute #first and #last in array items', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                isFirst: {
+                  type: 'boolean',
+                  default: false,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#first' },
+                },
+                isLast: {
+                  type: 'boolean',
+                  default: false,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#last' },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'isFirst', 'isLast'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { value: 1, isFirst: false, isLast: false },
+            { value: 2, isFirst: false, isLast: false },
+            { value: 3, isFirst: false, isLast: false },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.isFirst).toBe(true);
+      expect(items[0]?.isLast).toBe(false);
+      expect(items[1]?.isFirst).toBe(false);
+      expect(items[1]?.isLast).toBe(false);
+      expect(items[2]?.isFirst).toBe(false);
+      expect(items[2]?.isLast).toBe(true);
+    });
+
+    it('should compute @prev neighbor reference', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                prevValue: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': {
+                    version: 1,
+                    expression: 'if(isnull(@prev), 0, @prev.value)',
+                  },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'prevValue'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { value: 10, prevValue: 0 },
+            { value: 20, prevValue: 0 },
+            { value: 30, prevValue: 0 },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.prevValue).toBe(0);
+      expect(items[1]?.prevValue).toBe(10);
+      expect(items[2]?.prevValue).toBe(20);
+    });
+
+    it('should compute @next neighbor reference', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                nextValue: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': {
+                    version: 1,
+                    expression: 'if(isnull(@next), 0, @next.value)',
+                  },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'nextValue'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { value: 10, nextValue: 0 },
+            { value: 20, nextValue: 0 },
+            { value: 30, nextValue: 0 },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.nextValue).toBe(20);
+      expect(items[1]?.nextValue).toBe(30);
+      expect(items[2]?.nextValue).toBe(0);
+    });
+
+    it('should compute difference from previous using @prev', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                diffFromPrev: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': {
+                    version: 1,
+                    expression: 'value - if(isnull(@prev), 0, @prev.value)',
+                  },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'diffFromPrev'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { value: 10, diffFromPrev: 0 },
+            { value: 25, diffFromPrev: 0 },
+            { value: 35, diffFromPrev: 0 },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.diffFromPrev).toBe(10);
+      expect(items[1]?.diffFromPrev).toBe(15);
+      expect(items[2]?.diffFromPrev).toBe(10);
+    });
+
+    it('should compute array weight using #index and #length', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                weight: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': {
+                    version: 1,
+                    expression: '(#length - #index) / #length',
+                  },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'weight'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [
+            { value: 1, weight: 0 },
+            { value: 2, weight: 0 },
+            { value: 3, weight: 0 },
+            { value: 4, weight: 0 },
+          ],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.weight).toBe(1);
+      expect(items[1]?.weight).toBe(0.75);
+      expect(items[2]?.weight).toBe(0.5);
+      expect(items[3]?.weight).toBe(0.25);
+    });
+
+    it('should handle single item array', () => {
+      const schema: JsonSchema = {
+        type: 'object',
+        properties: {
+          items: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                value: { type: 'number', default: 0 },
+                index: {
+                  type: 'number',
+                  default: 0,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#index' },
+                },
+                isFirst: {
+                  type: 'boolean',
+                  default: false,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#first' },
+                },
+                isLast: {
+                  type: 'boolean',
+                  default: false,
+                  readOnly: true,
+                  'x-formula': { version: 1, expression: '#last' },
+                },
+              },
+              additionalProperties: false,
+              required: ['value', 'index', 'isFirst', 'isLast'],
+            },
+          },
+        },
+        additionalProperties: false,
+        required: ['items'],
+      } as JsonSchema;
+
+      const schemaStore = jsonSchemaStoreService.create(schema);
+      const rows = [
+        createRow('row1', {
+          items: [{ value: 42, index: 0, isFirst: false, isLast: false }],
+        }),
+      ];
+
+      plugin.computeRows({
+        revisionId: 'rev1',
+        tableId: 'table1',
+        rows,
+        schemaStore,
+      });
+
+      const data = rows[0]?.data as Record<string, unknown>;
+      const items = data.items as Array<Record<string, unknown>>;
+
+      expect(items[0]?.index).toBe(0);
+      expect(items[0]?.isFirst).toBe(true);
+      expect(items[0]?.isLast).toBe(true);
+    });
+  });
 });
