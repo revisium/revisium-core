@@ -70,7 +70,7 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@revisium/prisma-pg-json": "^1.4.0",
-    "@revisium/schema-toolkit": "^0.14.2",
+    "@revisium/schema-toolkit": "^0.14.3",
     "ajv": "^8.17.1",
     "bcrypt": "^6.0.0",
     "bentocache": "^1.6.0",
