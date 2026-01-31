@@ -769,7 +769,7 @@ describe('UpdateTableHandler', () => {
       });
 
       await expect(runTransaction(command)).rejects.toThrow(
-        /Foreign key.*not found|reference|empty/i,
+        /Foreign key error.*not found in table/i,
       );
     });
 
