@@ -204,11 +204,7 @@ export class ValidateDataHandler
     const stringNode = node;
     const foreignKey = stringNode.foreignKey;
 
-    if (
-      !foreignKey ||
-      typeof stringNode.value !== 'string' ||
-      stringNode.value === ''
-    ) {
+    if (!foreignKey || typeof stringNode.value !== 'string') {
       return null;
     }
 
