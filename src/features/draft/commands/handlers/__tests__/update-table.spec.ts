@@ -1,6 +1,11 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
+import {
+  prepareBranch,
+  prepareProject,
+  prepareRow,
+  prepareTableWithSchema,
+} from 'src/__tests__/utils/prepareProject';
 import { getArraySchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { tableViewsSchema } from 'src/features/share/schema/table-views-schema';
@@ -10,7 +15,10 @@ import {
 } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
+import {
+  createTestingModule,
+  testSchema,
+} from 'src/features/draft/commands/handlers/__tests__/utils';
 import { UpdateTableCommand } from 'src/features/draft/commands/impl/update-table.command';
 import { UpdateTableViewsCommand } from 'src/features/views/commands/impl';
 import { UpdateTableHandlerReturnType } from 'src/features/draft/commands/types/update-table.handler.types';
@@ -726,6 +734,153 @@ describe('UpdateTableHandler', () => {
             op: 'add',
             path: '/properties/newField',
             value: { type: JsonSchemaTypeName.Number, default: 0 },
+          },
+        ],
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
+    });
+  });
+
+  describe('foreign key validation on schema migration', () => {
+    it('should throw error when adding FK field to table with existing rows', async () => {
+      const { draftRevisionId, tableId, linkedTable } = await prepareProject(
+        prismaService,
+        {
+          createLinkedTable: true,
+        },
+      );
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/linkedRow',
+            value: {
+              type: JsonSchemaTypeName.String,
+              default: '',
+              foreignKey: linkedTable!.tableId,
+            },
+          },
+        ],
+      });
+
+      await expect(runTransaction(command)).rejects.toThrow(
+        /Foreign key.*not found|reference|empty/i,
+      );
+    });
+
+    it('should allow adding FK field to empty table', async () => {
+      const branchData = await prepareBranch(prismaService);
+      const { headRevisionId, draftRevisionId, schemaTableVersionId, migrationTableVersionId } = branchData;
+
+      const linkedTableResult = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: testSchema,
+      });
+
+      const emptyTableResult = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: {
+          type: JsonSchemaTypeName.Object,
+          required: ['name'],
+          properties: {
+            name: { type: JsonSchemaTypeName.String, default: '' },
+          },
+          additionalProperties: false,
+        },
+      });
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: emptyTableResult.tableId,
+        patches: [
+          {
+            op: 'add',
+            path: '/properties/ref',
+            value: {
+              type: JsonSchemaTypeName.String,
+              default: '',
+              foreignKey: linkedTableResult.tableId,
+            },
+          },
+        ],
+      });
+
+      const result = await runTransaction(command);
+      expect(result.tableVersionId).toBeTruthy();
+    });
+
+    it('should allow adding FK field when all existing rows have valid references', async () => {
+      const branchData = await prepareBranch(prismaService);
+      const { headRevisionId, draftRevisionId, schemaTableVersionId, migrationTableVersionId } = branchData;
+
+      const referencedTableResult = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: testSchema,
+      });
+
+      const targetRowResult = await prepareRow({
+        prismaService,
+        headTableVersionId: referencedTableResult.headTableVersionId,
+        draftTableVersionId: referencedTableResult.draftTableVersionId,
+        data: { ver: 1 },
+        dataDraft: { ver: 1 },
+        schema: testSchema,
+      });
+
+      const sourceTableResult = await prepareTableWithSchema({
+        prismaService,
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+        schema: {
+          type: JsonSchemaTypeName.Object,
+          required: ['refValue'],
+          properties: {
+            refValue: { type: JsonSchemaTypeName.String, default: '' },
+          },
+          additionalProperties: false,
+        },
+      });
+
+      await prepareRow({
+        prismaService,
+        headTableVersionId: sourceTableResult.headTableVersionId,
+        draftTableVersionId: sourceTableResult.draftTableVersionId,
+        data: { refValue: targetRowResult.rowId },
+        dataDraft: { refValue: targetRowResult.rowId },
+        schema: sourceTableResult.schema,
+      });
+
+      const command = new UpdateTableCommand({
+        revisionId: draftRevisionId,
+        tableId: sourceTableResult.tableId,
+        patches: [
+          {
+            op: 'replace',
+            path: '/properties/refValue',
+            value: {
+              type: JsonSchemaTypeName.String,
+              default: '',
+              foreignKey: referencedTableResult.tableId,
+            },
           },
         ],
       });

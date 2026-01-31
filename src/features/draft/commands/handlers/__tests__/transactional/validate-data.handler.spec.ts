@@ -309,7 +309,7 @@ describe('ValidateDataHandler', () => {
       expect(result.schemaHash).toBeDefined();
     });
 
-    it('should skip validation for empty foreign key value', async () => {
+    it('should throw error for empty foreign key value', async () => {
       const ids = await prepareProject(prismaService);
       const {
         draftRevisionId,
@@ -336,8 +336,28 @@ describe('ValidateDataHandler', () => {
         rows: [{ rowId: 'test-row', data: { relatedRow: '' } }],
       });
 
-      const result = await runTransaction(command, draftRevisionId);
-      expect(result.schemaHash).toBeDefined();
+      try {
+        await runTransaction(command, draftRevisionId);
+        fail('Expected ForeignKeyRowsNotFoundException to be thrown');
+      } catch (error) {
+        expect(error).toBeInstanceOf(ForeignKeyRowsNotFoundException);
+        const response = (
+          error as ForeignKeyRowsNotFoundException
+        ).getResponse() as {
+          code: string;
+          details: Array<{
+            path: string;
+            tableId: string;
+            missingRowIds: string[];
+          }>;
+        };
+
+        expect(response.code).toBe(ValidationErrorCode.FOREIGN_KEY_NOT_FOUND);
+        expect(response.details).toHaveLength(1);
+        expect(response.details[0].path).toBe('/relatedRow');
+        expect(response.details[0].tableId).toBe(tableId);
+        expect(response.details[0].missingRowIds).toContain('');
+      }
     });
   });
 

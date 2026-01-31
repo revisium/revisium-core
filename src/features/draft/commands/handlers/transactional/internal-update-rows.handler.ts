@@ -7,6 +7,7 @@ import {
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
+import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 
 @CommandHandler(InternalUpdateRowsCommand)
 export class InternalUpdateRowsHandler extends DraftHandler<
@@ -17,6 +18,7 @@ export class InternalUpdateRowsHandler extends DraftHandler<
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
     protected readonly draftRevisionApi: DraftRevisionApiService,
+    protected readonly draftTransactionalCommands: DraftTransactionalCommands,
   ) {
     super(transactionService, draftContext);
   }
@@ -25,6 +27,13 @@ export class InternalUpdateRowsHandler extends DraftHandler<
     data: input,
   }: InternalUpdateRowsCommand): Promise<InternalUpdateRowsCommandReturnType> {
     const { revisionId, tableId, rows, schemaHash } = input;
+
+    await this.draftTransactionalCommands.validateData({
+      revisionId,
+      tableId,
+      tableSchema: input.tableSchema,
+      rows,
+    });
 
     const result = await this.draftRevisionApi.updateRows({
       revisionId,
