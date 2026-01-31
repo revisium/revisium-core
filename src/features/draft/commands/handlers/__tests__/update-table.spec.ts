@@ -775,7 +775,12 @@ describe('UpdateTableHandler', () => {
 
     it('should allow adding FK field to empty table', async () => {
       const branchData = await prepareBranch(prismaService);
-      const { headRevisionId, draftRevisionId, schemaTableVersionId, migrationTableVersionId } = branchData;
+      const {
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+      } = branchData;
 
       const linkedTableResult = await prepareTableWithSchema({
         prismaService,
@@ -824,7 +829,12 @@ describe('UpdateTableHandler', () => {
 
     it('should allow adding FK field when all existing rows have valid references', async () => {
       const branchData = await prepareBranch(prismaService);
-      const { headRevisionId, draftRevisionId, schemaTableVersionId, migrationTableVersionId } = branchData;
+      const {
+        headRevisionId,
+        draftRevisionId,
+        schemaTableVersionId,
+        migrationTableVersionId,
+      } = branchData;
 
       const referencedTableResult = await prepareTableWithSchema({
         prismaService,
