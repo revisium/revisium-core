@@ -10,6 +10,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { TransformOptionalBoolean } from 'src/api/rest-api/share/decorators';
 import { ChangeType } from 'src/features/revision-changes/types';
 
 export class GetRowChangesDto {
@@ -56,12 +57,7 @@ export class GetRowChangesDto {
 
   @ApiProperty({ required: false, default: false })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === undefined) {
-      return undefined;
-    }
-    return value === 'true' || value === true;
-  })
+  @TransformOptionalBoolean()
   @IsBoolean()
   includeSystem?: boolean;
 }

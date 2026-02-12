@@ -10,6 +10,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { TransformOptionalBoolean } from 'src/api/rest-api/share/decorators';
 import { ChangeType } from 'src/features/revision-changes/types';
 
 export class GetTableChangesDto {
@@ -51,23 +52,13 @@ export class GetTableChangesDto {
 
   @ApiProperty({ required: false })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === undefined) {
-      return undefined;
-    }
-    return value === 'true' || value === true;
-  })
+  @TransformOptionalBoolean()
   @IsBoolean()
   withSchemaMigrations?: boolean;
 
   @ApiProperty({ required: false, default: false })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === undefined) {
-      return undefined;
-    }
-    return value === 'true' || value === true;
-  })
+  @TransformOptionalBoolean()
   @IsBoolean()
   includeSystem?: boolean;
 }

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { TransformOptionalBoolean } from 'src/api/rest-api/share/decorators';
 
 export class GetRevisionChangesDto {
   @ApiProperty({ required: false })
@@ -10,12 +10,7 @@ export class GetRevisionChangesDto {
 
   @ApiProperty({ required: false, default: false })
   @IsOptional()
-  @Transform(({ value }) => {
-    if (value === undefined) {
-      return undefined;
-    }
-    return value === 'true' || value === true;
-  })
+  @TransformOptionalBoolean()
   @IsBoolean()
   includeSystem?: boolean;
 }
