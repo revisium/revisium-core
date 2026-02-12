@@ -184,6 +184,7 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             tags: {
               type: 'array',
+              default: [],
               description: 'List of tags for categorization',
               items: { type: 'string', default: '' },
             },
@@ -253,6 +254,7 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             photos: {
               type: 'array',
+              default: [],
               items: { $ref: this.fileRef },
               description:
                 'Gallery photos (add items to upload multiple files)',
@@ -287,6 +289,7 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             gallery: {
               type: 'array',
+              default: [],
               items: { $ref: this.fileRef },
               description: 'Additional product images',
             },
@@ -333,6 +336,7 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             attachments: {
               type: 'array',
+              default: [],
               items: { $ref: this.fileRef },
               description: 'Downloadable files (PDFs, docs, etc.)',
             },
@@ -385,6 +389,7 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             portfolio: {
               type: 'array',
+              default: [],
               items: { $ref: this.fileRef },
               description: 'Portfolio samples and work examples',
             },
@@ -419,23 +424,57 @@ export class SchemaResource implements McpResourceRegistrar {
         formulaAvailable
           ? 'x-formula: computed field with expression (string, number, boolean types only)'
           : 'x-formula: NOT AVAILABLE on this server',
+        'Default value rules: string → default: "", number → default: 0, boolean → default: false, array → default: []',
+        'Do NOT add "default" to object types, $ref (File) fields, or "items" when items is an object',
+      ],
+      commonMistakes: [
+        'Do NOT add "default" to object types — objects never have default',
+        'Do NOT add "default" to $ref fields (File) — only $ref and description allowed',
+        'Do NOT add "default" to "items" when items is type: object — defaults go on individual properties inside',
+        'DO add "default": [] to every array field',
+        'DO add "default" to every primitive field (string, number, boolean)',
+        'foreignKey value CANNOT be empty string — it must be a valid rowId from referenced table',
+        'When adding a foreignKey field to a table that already has rows, existing rows must have valid FK references — adding a new required FK field to a table with data will fail unless the array is empty',
       ],
       ...(formulaAvailable && {
         formulaSpec: {
           version: formulaSpec.version,
           description: formulaSpec.description,
           syntax: formulaSpec.syntax,
+          functions: formulaSpec.functions,
+          features: formulaSpec.features,
           schemaUsage: formulaSpec.schemaUsage,
           examples: formulaSpec.examples,
         },
+        formulaLimitations: [
+          'Formulas can ONLY reference fields within the SAME ROW — no cross-row or cross-table references',
+          'Formula field types: string, number, boolean only — NOT object, array, or $ref',
+          'CANNOT combine foreignKey and x-formula on the same field',
+          'Circular dependencies are rejected (a → b → a)',
+        ],
       }),
       foreignKeyRules: [
         'IMPORTANT: Tables with foreignKey must be created AFTER the referenced table exists',
         'Create tables in dependency order: first tables without foreignKey, then tables that reference them',
         'IMPORTANT: Self-references (foreignKey pointing to the same table) are NOT supported',
         'When creating rows with foreignKey fields, the referenced row must already exist',
-        'foreignKey value must be a valid rowId from the referenced table, or empty string',
+        'foreignKey value MUST be a valid rowId from the referenced table. Empty string is NOT allowed — it will fail validation',
         'Example order: 1) create "categories" table, 2) create "products" table with foreignKey to categories',
+      ],
+      foreignKeyLocations: [
+        'Root-level string field: { "categoryId": { "type": "string", "default": "", "foreignKey": "categories" } }',
+        'Inside nested object: { "metadata": { "type": "object", "properties": { "authorId": { "type": "string", "default": "", "foreignKey": "authors" } } } }',
+        'Inside array items (object): { "items": { "type": "array", "default": [], "items": { "type": "object", "properties": { "productId": { "type": "string", "default": "", "foreignKey": "products" } } } } }',
+        'NOT inside array of primitives: { "items": { "type": "string" } } — string array items cannot have foreignKey',
+        'CANNOT be combined with x-formula on the same field',
+      ],
+      foreignKeyUpdateRules: [
+        'Adding a foreignKey field to a table with existing rows will fail — existing rows have empty default value which is not a valid FK reference',
+        'Safe to add foreignKey field to an EMPTY table (no rows)',
+        'Adding an ARRAY field with foreignKey in items is safe even with existing rows — default: [] means no items to validate',
+        'Removing a foreignKey field is safe — no referential integrity to check',
+        'Cannot delete a table that is referenced by foreignKey from another table',
+        'Renaming a table automatically updates all foreignKey references in other tables',
       ],
       fileFieldRules: [
         `Use $ref: "${this.fileRef}" to define a file field`,

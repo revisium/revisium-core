@@ -199,7 +199,7 @@ Example:
           data: z
             .record(z.string(), z.unknown())
             .describe(
-              'Row data matching table schema. For foreignKey fields, use valid rowId from referenced table or empty string. For computed (x-formula) fields, include with default value.',
+              'Row data matching table schema. For foreignKey fields, use a valid rowId from the referenced table. Empty string is NOT valid and will cause an error. For computed (x-formula) fields, include with default value.',
             ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
