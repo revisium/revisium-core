@@ -10,6 +10,7 @@ import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
 import { JwtSecretService } from 'src/features/auth/jwt-secret.service';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { JwtStrategy } from 'src/features/auth/strategy/jwt.strategy';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { EmailModule } from 'src/infrastructure/email/email.module';
@@ -33,6 +34,7 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     GoogleOauthService,
     GitHubAuthService,
     CaslAbilityFactory,
+    NoAuthService,
     ...AUTH_COMMANDS,
   ],
   exports: [
@@ -41,6 +43,7 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     GitHubAuthService,
     AuthApiService,
     JwtSecretService,
+    NoAuthService,
   ],
 })
 export class AuthModule {}

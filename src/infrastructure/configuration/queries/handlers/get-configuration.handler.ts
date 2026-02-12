@@ -1,6 +1,7 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { FormulaService } from 'src/features/plugin/formula';
 import {
@@ -18,6 +19,7 @@ export class GetConfigurationHandler
     private readonly emailService: EmailService,
     private readonly googleOauthService: GoogleOauthService,
     private readonly githubOauthService: GitHubAuthService,
+    private readonly noAuthService: NoAuthService,
     private readonly filePlugin: FilePlugin,
     private readonly formulaService: FormulaService,
   ) {}
@@ -25,6 +27,7 @@ export class GetConfigurationHandler
   public async execute(): Promise<GetConfigurationQueryReturnType> {
     return {
       availableEmailSignUp: this.isAvailableEmailSignUp,
+      noAuth: this.noAuthService.enabled,
       google: {
         available: this.googleOauthService.isAvailable,
         clientId: this.googleOauthService.clientId,

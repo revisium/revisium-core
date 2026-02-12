@@ -4,6 +4,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
 import { LoginHandler } from 'src/features/auth/commands/handlers/login.handler';
 import { LoginCommand } from 'src/features/auth/commands/impl';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
 
 describe('LoginHandler', () => {
   it('should throw an error if user does not exist', async () => {
@@ -118,6 +119,7 @@ describe('LoginHandler', () => {
         LoginHandler,
         { provide: PrismaService, useValue: prismaServiceMock },
         { provide: AuthService, useValue: authServiceMock },
+        { provide: NoAuthService, useValue: { enabled: false } },
       ],
     }).compile();
 

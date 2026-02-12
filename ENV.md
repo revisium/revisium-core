@@ -35,6 +35,7 @@ cp .env.example .env
 | `JWT_SECRET` | - | JWT signing key (required for production) |
 | `ADMIN_PASSWORD` | `admin` | Default admin user password (used during seeding) |
 | `ENDPOINT_PASSWORD` | `endpoint` | Default endpoint user password (used during seeding) |
+| `REVISIUM_NO_AUTH` | `false` | Disable authentication; all requests authorized as admin (standalone only) |
 
 ---
 

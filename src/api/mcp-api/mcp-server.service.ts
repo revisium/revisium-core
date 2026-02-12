@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
@@ -64,6 +65,7 @@ export class McpServerService {
   constructor(
     private readonly configService: ConfigService,
     private readonly mcpSession: McpSessionService,
+    private readonly noAuth: NoAuthService,
     private readonly authApi: AuthApiService,
     private readonly organizationApi: OrganizationApiService,
     private readonly projectApi: ProjectApiService,
@@ -80,13 +82,18 @@ export class McpServerService {
     const publicUrl = this.configService.get<string>('PUBLIC_URL');
     const tokenUrl = publicUrl ? `${publicUrl}/get-mcp-token` : null;
 
-    this.instructions = `Revisium is a headless CMS with Git-like version control.
-
-AUTHENTICATION:
+    const authSection = this.noAuth.enabled
+      ? `AUTHENTICATION:
+No authentication required. All tools are available immediately without calling login() or login_with_token().`
+      : `AUTHENTICATION:
 When not authenticated, ASK THE USER which method they prefer:
 1. [Recommended] Token auth: User opens ${tokenUrl || '<PUBLIC_URL>/get-mcp-token'} to get token, then use login_with_token(token)
 2. Credentials: Ask user for username/password, then use login(username, password)
-DO NOT assume or guess credentials.
+DO NOT assume or guess credentials.`;
+
+    this.instructions = `Revisium is a headless CMS with Git-like version control.
+
+${authSection}
 
 DATA STRUCTURE:
 - Organization: contains projects (organizationId is usually the owner's username)
@@ -198,6 +205,16 @@ PERMISSIONS:
   }
 
   private requireAuth(context: McpContext): McpSession {
+    if (this.noAuth.enabled) {
+      const admin = this.noAuth.adminUser;
+      return {
+        userId: admin.userId,
+        username: admin.userId,
+        email: admin.email,
+        roleId: 'systemAdmin',
+      };
+    }
+
     const session = this.getSessionFromContext(context);
     if (!session) {
       const publicUrl = this.configService.get<string>('PUBLIC_URL');

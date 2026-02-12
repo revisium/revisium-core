@@ -20,6 +20,9 @@ export class ConfigurationResponse {
   @ApiProperty({ type: Boolean })
   availableEmailSignUp: boolean;
 
+  @ApiProperty({ type: Boolean })
+  noAuth: boolean;
+
   @ApiProperty({ type: GoogleOauth })
   google: GoogleOauth;
 
