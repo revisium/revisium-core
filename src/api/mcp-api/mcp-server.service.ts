@@ -206,10 +206,11 @@ PERMISSIONS:
 
   private requireAuth(context: McpContext): McpSession {
     if (this.noAuth.enabled) {
+      const admin = this.noAuth.adminUser;
       return {
-        userId: 'admin',
-        username: 'admin',
-        email: '',
+        userId: admin.userId,
+        username: admin.userId,
+        email: admin.email,
         roleId: 'systemAdmin',
       };
     }

@@ -20,11 +20,12 @@ export class LoginHandler
 
   async execute({ data }: LoginCommand): Promise<LoginCommandReturnType> {
     if (this.noAuth.enabled) {
+      const admin = this.noAuth.adminUser;
       return {
         accessToken: this.authService.login({
-          username: 'admin',
-          email: '',
-          sub: 'admin',
+          username: admin.userId,
+          email: admin.email,
+          sub: admin.userId,
         }),
       };
     }

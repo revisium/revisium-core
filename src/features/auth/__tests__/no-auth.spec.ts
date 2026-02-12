@@ -137,7 +137,13 @@ describe('LoginHandler with NO_AUTH enabled', () => {
           useValue: { user: { findFirst: jest.fn() } },
         },
         { provide: AuthService, useValue: authService },
-        { provide: NoAuthService, useValue: { enabled: true } },
+        {
+          provide: NoAuthService,
+          useValue: {
+            enabled: true,
+            adminUser: { userId: 'admin', email: '' },
+          },
+        },
       ],
     }).compile();
 
@@ -171,7 +177,13 @@ describe('LoginHandler with NO_AUTH enabled', () => {
           provide: AuthService,
           useValue: { login: jest.fn().mockReturnValue('token') },
         },
-        { provide: NoAuthService, useValue: { enabled: true } },
+        {
+          provide: NoAuthService,
+          useValue: {
+            enabled: true,
+            adminUser: { userId: 'admin', email: '' },
+          },
+        },
       ],
     }).compile();
 
