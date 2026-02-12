@@ -408,6 +408,30 @@
         "required": ["statusCode", "message", "error"],
         "type": "object"
       },
+      "FieldChangeResponse": {
+        "properties": {
+          "changeType": {
+            "type": "string"
+          },
+          "fieldPath": {
+            "type": "string"
+          },
+          "movedFrom": {
+            "nullable": true,
+            "type": "string"
+          },
+          "newValue": {
+            "nullable": true,
+            "type": "object"
+          },
+          "oldValue": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": ["fieldPath", "changeType"],
+        "type": "object"
+      },
       "FormulaFieldErrorModel": {
         "properties": {
           "defaultUsed": {
@@ -509,6 +533,21 @@
           }
         },
         "required": ["available"],
+        "type": "object"
+      },
+      "HistoryPatchResponse": {
+        "properties": {
+          "hash": {
+            "type": "string"
+          },
+          "patches": {
+            "items": {
+              "$ref": "#/components/schemas/JsonPatchOperationResponse"
+            },
+            "type": "array"
+          }
+        },
+        "required": ["hash", "patches"],
         "type": "object"
       },
       "Id": {
@@ -667,6 +706,26 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "JsonPatchOperationResponse": {
+        "properties": {
+          "from": {
+            "nullable": true,
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "value": {
+            "nullable": true,
+            "type": "object"
+          }
+        },
+        "required": ["op", "path"],
         "type": "object"
       },
       "LoginDto": {
@@ -1094,6 +1153,55 @@
         "required": ["previousVersionTableId"],
         "type": "object"
       },
+      "RevisionChangeSummaryResponse": {
+        "properties": {
+          "added": {
+            "type": "number"
+          },
+          "modified": {
+            "type": "number"
+          },
+          "removed": {
+            "type": "number"
+          },
+          "renamed": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        },
+        "required": ["total", "added", "modified", "removed", "renamed"],
+        "type": "object"
+      },
+      "RevisionChangesResponse": {
+        "properties": {
+          "parentRevisionId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "revisionId": {
+            "type": "string"
+          },
+          "rowsSummary": {
+            "$ref": "#/components/schemas/RevisionChangeSummaryResponse"
+          },
+          "tablesSummary": {
+            "$ref": "#/components/schemas/RevisionChangeSummaryResponse"
+          },
+          "totalChanges": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "revisionId",
+          "parentRevisionId",
+          "totalChanges",
+          "tablesSummary",
+          "rowsSummary"
+        ],
+        "type": "object"
+      },
       "RevisionModel": {
         "properties": {
           "createdAt": {
@@ -1168,6 +1276,183 @@
           }
         },
         "required": ["id", "name"],
+        "type": "object"
+      },
+      "RowChangeResponse": {
+        "properties": {
+          "changeType": {
+            "type": "string"
+          },
+          "fieldChanges": {
+            "items": {
+              "$ref": "#/components/schemas/FieldChangeResponse"
+            },
+            "type": "array"
+          },
+          "fromRow": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RowChangeRowResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "fromTable": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RowChangeTableResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "row": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RowChangeRowResponse"
+              }
+            ],
+            "nullable": true
+          },
+          "table": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RowChangeTableResponse"
+              }
+            ],
+            "nullable": true
+          }
+        },
+        "required": ["changeType", "fieldChanges"],
+        "type": "object"
+      },
+      "RowChangeResponseEdgeType": {
+        "properties": {
+          "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/RowChangeResponse"
+          }
+        },
+        "required": ["cursor", "node"],
+        "type": "object"
+      },
+      "RowChangeRowResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdId": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object"
+          },
+          "hash": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "meta": {
+            "type": "object"
+          },
+          "publishedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "schemaHash": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdId",
+          "versionId",
+          "data",
+          "hash",
+          "schemaHash",
+          "readonly",
+          "meta",
+          "createdAt",
+          "updatedAt",
+          "publishedAt"
+        ],
+        "type": "object"
+      },
+      "RowChangeTableResponse": {
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "createdId": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "readonly": {
+            "type": "boolean"
+          },
+          "system": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "versionId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "createdId",
+          "versionId",
+          "readonly",
+          "system",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "RowChangesConnection": {
+        "properties": {
+          "edges": {
+            "description": "List of items with cursors",
+            "items": {
+              "$ref": "#/components/schemas/RowChangeResponseEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
+          },
+          "totalCount": {
+            "description": "Total number of items available",
+            "type": "number"
+          }
+        },
+        "required": ["edges", "totalCount", "pageInfo"],
         "type": "object"
       },
       "RowModel": {
@@ -1394,6 +1679,44 @@
         "required": ["edges", "totalCount", "pageInfo"],
         "type": "object"
       },
+      "SchemaMigrationDetailResponse": {
+        "properties": {
+          "historyPatches": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryPatchResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          },
+          "initialSchema": {
+            "nullable": true,
+            "type": "object"
+          },
+          "migrationId": {
+            "type": "string"
+          },
+          "migrationType": {
+            "type": "string"
+          },
+          "newTableId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "oldTableId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "patches": {
+            "items": {
+              "$ref": "#/components/schemas/JsonPatchOperationResponse"
+            },
+            "nullable": true,
+            "type": "array"
+          }
+        },
+        "required": ["migrationType", "migrationId"],
+        "type": "object"
+      },
       "StringFilterDto": {
         "properties": {
           "contains": {
@@ -1451,6 +1774,113 @@
           }
         },
         "required": ["success"],
+        "type": "object"
+      },
+      "TableChangeResponse": {
+        "properties": {
+          "addedRowsCount": {
+            "type": "number"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "fromVersionId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "modifiedRowsCount": {
+            "type": "number"
+          },
+          "newTableId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "oldTableId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "removedRowsCount": {
+            "type": "number"
+          },
+          "renamedRowsCount": {
+            "type": "number"
+          },
+          "rowChangesCount": {
+            "type": "number"
+          },
+          "schemaMigrations": {
+            "items": {
+              "$ref": "#/components/schemas/SchemaMigrationDetailResponse"
+            },
+            "type": "array"
+          },
+          "tableCreatedId": {
+            "type": "string"
+          },
+          "tableId": {
+            "type": "string"
+          },
+          "toVersionId": {
+            "nullable": true,
+            "type": "string"
+          },
+          "viewsChanges": {
+            "$ref": "#/components/schemas/ViewsChangeDetailResponse"
+          }
+        },
+        "required": [
+          "tableId",
+          "tableCreatedId",
+          "fromVersionId",
+          "toVersionId",
+          "changeType",
+          "schemaMigrations",
+          "viewsChanges",
+          "rowChangesCount",
+          "addedRowsCount",
+          "modifiedRowsCount",
+          "removedRowsCount",
+          "renamedRowsCount"
+        ],
+        "type": "object"
+      },
+      "TableChangeResponseEdgeType": {
+        "properties": {
+          "cursor": {
+            "description": "Cursor for this specific item",
+            "example": "eyJpZCI6IjEyMyJ9",
+            "type": "string"
+          },
+          "node": {
+            "$ref": "#/components/schemas/TableChangeResponse"
+          }
+        },
+        "required": ["cursor", "node"],
+        "type": "object"
+      },
+      "TableChangesConnection": {
+        "properties": {
+          "edges": {
+            "description": "List of items with cursors",
+            "items": {
+              "$ref": "#/components/schemas/TableChangeResponseEdgeType"
+            },
+            "type": "array"
+          },
+          "pageInfo": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PageInfo"
+              }
+            ],
+            "description": "Pagination metadata"
+          },
+          "totalCount": {
+            "description": "Total number of items available",
+            "type": "number"
+          }
+        },
+        "required": ["edges", "totalCount", "pageInfo"],
         "type": "object"
       },
       "TableModel": {
@@ -1837,6 +2267,59 @@
           }
         },
         "required": ["cursor", "node"],
+        "type": "object"
+      },
+      "ViewChangeResponse": {
+        "properties": {
+          "changeType": {
+            "type": "string"
+          },
+          "oldViewName": {
+            "nullable": true,
+            "type": "string"
+          },
+          "viewId": {
+            "type": "string"
+          },
+          "viewName": {
+            "type": "string"
+          }
+        },
+        "required": ["viewId", "viewName", "changeType"],
+        "type": "object"
+      },
+      "ViewsChangeDetailResponse": {
+        "properties": {
+          "addedCount": {
+            "type": "number"
+          },
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/ViewChangeResponse"
+            },
+            "type": "array"
+          },
+          "hasChanges": {
+            "type": "boolean"
+          },
+          "modifiedCount": {
+            "type": "number"
+          },
+          "removedCount": {
+            "type": "number"
+          },
+          "renamedCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "hasChanges",
+          "changes",
+          "addedCount",
+          "modifiedCount",
+          "removedCount",
+          "renamedCount"
+        ],
         "type": "object"
       }
     },
@@ -4553,6 +5036,98 @@
         "tags": ["Revision"]
       }
     },
+    "/api/revision/{revisionId}/changes": {
+      "get": {
+        "operationId": "revisionChanges",
+        "parameters": [
+          {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compareWithRevisionId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeSystem",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevisionChangesResponse"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Get revision changes summary",
+        "tags": ["Revision"]
+      }
+    },
     "/api/revision/{revisionId}/child-branches": {
       "get": {
         "operationId": "childBranches",
@@ -5113,6 +5688,292 @@
           }
         ],
         "summary": "Get parent revision",
+        "tags": ["Revision"]
+      }
+    },
+    "/api/revision/{revisionId}/row-changes": {
+      "get": {
+        "operationId": "rowChanges",
+        "parameters": [
+          {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compareWithRevisionId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tableId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "changeTypes",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "ADDED",
+                  "MODIFIED",
+                  "REMOVED",
+                  "RENAMED",
+                  "RENAMED_AND_MODIFIED"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeSystem",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RowChangesConnection"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Get paginated row changes for a revision",
+        "tags": ["Revision"]
+      }
+    },
+    "/api/revision/{revisionId}/table-changes": {
+      "get": {
+        "operationId": "tableChanges",
+        "parameters": [
+          {
+            "description": "Revision identifier (any revision: draft, head, or historical)",
+            "in": "path",
+            "name": "revisionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "first",
+            "required": true,
+            "schema": {
+              "default": 100,
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "compareWithRevisionId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "changeTypes",
+            "required": false,
+            "schema": {
+              "items": {
+                "enum": [
+                  "ADDED",
+                  "MODIFIED",
+                  "REMOVED",
+                  "RENAMED",
+                  "RENAMED_AND_MODIFIED"
+                ],
+                "type": "string"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "withSchemaMigrations",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "includeSystem",
+            "required": false,
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableChangesConnection"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Invalid request data or validation failed"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Authentication required. Provide a valid JWT token."
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Insufficient permissions for this operation"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            },
+            "description": "Revision not found"
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Get paginated table changes for a revision",
         "tags": ["Revision"]
       }
     },
