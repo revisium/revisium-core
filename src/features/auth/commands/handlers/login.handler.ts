@@ -5,6 +5,7 @@ import {
   LoginCommand,
   LoginCommandReturnType,
 } from 'src/features/auth/commands/impl';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(LoginCommand)
@@ -14,9 +15,20 @@ export class LoginHandler
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
+    private readonly noAuth: NoAuthService,
   ) {}
 
   async execute({ data }: LoginCommand): Promise<LoginCommandReturnType> {
+    if (this.noAuth.enabled) {
+      return {
+        accessToken: this.authService.login({
+          username: 'admin',
+          email: '',
+          sub: 'admin',
+        }),
+      };
+    }
+
     const user = await this.getUser(data.emailOrUsername);
 
     if (!user) {

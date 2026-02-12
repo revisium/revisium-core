@@ -163,9 +163,12 @@
           },
           "google": {
             "$ref": "#/components/schemas/GoogleOauth"
+          },
+          "noAuth": {
+            "type": "boolean"
           }
         },
-        "required": ["availableEmailSignUp", "google", "github"],
+        "required": ["availableEmailSignUp", "noAuth", "google", "github"],
         "type": "object"
       },
       "CreateBranchByRevisionDto": {

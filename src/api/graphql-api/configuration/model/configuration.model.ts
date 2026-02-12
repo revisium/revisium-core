@@ -32,6 +32,9 @@ export class ConfigurationModel {
   @Field(() => Boolean)
   availableEmailSignUp: boolean;
 
+  @Field(() => Boolean)
+  noAuth: boolean;
+
   @Field(() => GoogleOauth)
   google: GoogleOauth;
 

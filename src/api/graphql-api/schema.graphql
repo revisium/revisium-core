@@ -88,6 +88,7 @@ type ConfigurationModel {
   availableEmailSignUp: Boolean!
   github: GithubOauth!
   google: GoogleOauth!
+  noAuth: Boolean!
   plugins: PluginsModel!
 }
 
