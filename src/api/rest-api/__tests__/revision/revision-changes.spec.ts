@@ -137,12 +137,11 @@ describe('restapi - revision-changes', () => {
         .expect(200)
         .then((res) => res.body);
 
-      if (result.edges.length > 0) {
-        const tableChange = result.edges[0].node;
-        expect(tableChange.tableId).toBeDefined();
-        expect(tableChange.changeType).toBeDefined();
-        expect(tableChange.rowChangesCount).toBeDefined();
-      }
+      expect(result.edges.length).toBeGreaterThan(0);
+      const tableChange = result.edges[0].node;
+      expect(tableChange.tableId).toBeDefined();
+      expect(tableChange.changeType).toBeDefined();
+      expect(tableChange.rowChangesCount).toBeDefined();
     });
 
     function getTableChangesUrl() {
@@ -195,11 +194,10 @@ describe('restapi - revision-changes', () => {
         .expect(200)
         .then((res) => res.body);
 
-      if (result.edges.length > 0) {
-        const rowChange = result.edges[0].node;
-        expect(rowChange.changeType).toBeDefined();
-        expect(rowChange.fieldChanges).toBeDefined();
-      }
+      expect(result.edges.length).toBeGreaterThan(0);
+      const rowChange = result.edges[0].node;
+      expect(rowChange.changeType).toBeDefined();
+      expect(rowChange.fieldChanges).toBeDefined();
     });
 
     it('supports tableId filter', async () => {

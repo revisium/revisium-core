@@ -30,7 +30,9 @@ export class GetTableChangesDto {
 
   @ApiProperty({ required: false, enum: ChangeType, isArray: true })
   @IsOptional()
-  @Transform(({ value }) => (Array.isArray(value) ? value : [value]))
+  @Transform(({ value }) =>
+    value === undefined ? undefined : Array.isArray(value) ? value : [value],
+  )
   @IsArray()
   @IsEnum(ChangeType, { each: true })
   changeTypes?: ChangeType[];
