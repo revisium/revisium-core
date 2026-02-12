@@ -162,7 +162,21 @@ Correct array example:
       "required": ["price"]
     }
   }
-}`,
+}
+
+DEFAULT VALUE RULES:
+- string: "default": "" (REQUIRED)
+- number: "default": 0 (REQUIRED)
+- boolean: "default": false (REQUIRED)
+- array: "default": [] (REQUIRED)
+- object: NO default (not allowed, will cause validation error)
+- $ref (File): NO default (not allowed, only $ref and description)
+
+FOREIGN KEY RULES:
+- foreignKey can be on any string field: root level, inside nested objects, inside array items
+- foreignKey value MUST be a valid rowId — empty string is NOT allowed
+- foreignKey and x-formula CANNOT coexist on the same field
+- Self-references (foreignKey pointing to same table) are NOT supported`,
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z
