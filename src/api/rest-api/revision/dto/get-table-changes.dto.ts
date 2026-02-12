@@ -1,0 +1,64 @@
+import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import {
+  IsArray,
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
+import { TransformOptionalBoolean } from 'src/api/rest-api/share/decorators';
+import { ChangeType } from 'src/features/revision-changes/types';
+
+export class GetTableChangesDto {
+  @ApiProperty({ default: 100 })
+  @Transform(({ value }) =>
+    value === undefined ? 100 : Number.parseInt(value, 10),
+  )
+  @IsInt()
+  @Min(0)
+  @Max(1000)
+  first: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  after?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  compareWithRevisionId?: string;
+
+  @ApiProperty({ required: false, enum: ChangeType, isArray: true })
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    return Array.isArray(value) ? value : [value];
+  })
+  @IsArray()
+  @IsEnum(ChangeType, { each: true })
+  changeTypes?: ChangeType[];
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @TransformOptionalBoolean()
+  @IsBoolean()
+  withSchemaMigrations?: boolean;
+
+  @ApiProperty({ required: false, default: false })
+  @IsOptional()
+  @TransformOptionalBoolean()
+  @IsBoolean()
+  includeSystem?: boolean;
+}

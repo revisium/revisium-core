@@ -1,13 +1,16 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Prisma } from 'src/__generated__/client';
 import { Transform } from 'class-transformer';
-import { IsEnum, IsInt, Min, IsOptional } from 'class-validator';
+import { IsEnum, IsInt, Max, Min, IsOptional } from 'class-validator';
 
 export class GetBranchRevisionsDto {
   @ApiProperty({ default: 100 })
-  @Transform(({ value }) => Number.parseInt(value, 10))
+  @Transform(({ value }) =>
+    value === undefined ? 100 : Number.parseInt(value, 10),
+  )
   @IsInt()
   @Min(0)
+  @Max(1000)
   first: number;
 
   @ApiProperty({ required: false })

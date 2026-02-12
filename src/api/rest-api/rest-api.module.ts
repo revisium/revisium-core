@@ -5,6 +5,7 @@ import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
 import { ProjectModule } from 'src/features/project/project.module';
+import { RevisionChangesModule } from 'src/features/revision-changes/revision-changes.module';
 import { RevisionModule } from 'src/features/revision/revision.module';
 import { RowModule } from 'src/features/row/row.module';
 import { TableModule } from 'src/features/table/table.module';
@@ -31,6 +32,7 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
     EndpointModule,
     OrganizationModule,
     ProjectModule,
+    RevisionChangesModule,
     RevisionModule,
     DraftModule,
     RowModule,

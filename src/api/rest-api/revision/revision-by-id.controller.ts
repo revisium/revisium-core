@@ -31,6 +31,7 @@ import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
+import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
@@ -39,7 +40,10 @@ import { BranchModel } from 'src/api/rest-api/branch/model';
 import { EndpointModel } from 'src/api/rest-api/endpoint/model';
 import {
   CreateTableDto,
+  GetRevisionChangesDto,
   GetRevisionTablesDto,
+  GetRowChangesDto,
+  GetTableChangesDto,
 } from 'src/api/rest-api/revision/dto';
 import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint.dto';
 import {
@@ -49,7 +53,10 @@ import {
   MigrationDto,
   RemoveMigrationDto,
   RenameMigrationDto,
+  RevisionChangesResponse,
   RevisionModel,
+  RowChangesConnection,
+  TableChangesConnection,
   UpdateMigrationDto,
 } from 'src/api/rest-api/revision/model';
 import { ChildBranchResponse } from 'src/api/rest-api/revision/model/child-branches.response';
@@ -80,6 +87,7 @@ import { TablesConnection } from 'src/api/rest-api/table/model/table.model';
 export class RevisionByIdController {
   constructor(
     private readonly revisionApi: RevisionsApiService,
+    private readonly revisionChangesApi: RevisionChangesApiService,
     private readonly draftApi: DraftApiService,
     private readonly branchApi: BranchApiService,
     private readonly endpointApi: EndpointApiService,
@@ -205,6 +213,107 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
   ): Promise<Migration[]> {
     return this.revisionApi.migrations({ revisionId });
+  }
+
+  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
+  @Get('changes')
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'revisionChanges',
+    summary: 'Get revision changes summary',
+  })
+  @ApiOkResponse({ type: RevisionChangesResponse })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
+  async getRevisionChanges(
+    @Param('revisionId') revisionId: string,
+    @Query() data: GetRevisionChangesDto,
+  ): Promise<RevisionChangesResponse> {
+    return this.revisionChangesApi.revisionChanges({
+      revisionId,
+      compareWithRevisionId: data.compareWithRevisionId,
+      includeSystem: data.includeSystem,
+    });
+  }
+
+  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
+  @Get('table-changes')
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'tableChanges',
+    summary: 'Get paginated table changes for a revision',
+  })
+  @ApiOkResponse({ type: TableChangesConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
+  async getTableChanges(
+    @Param('revisionId') revisionId: string,
+    @Query() data: GetTableChangesDto,
+  ) {
+    return this.revisionChangesApi.tableChanges({
+      revisionId,
+      first: data.first,
+      after: data.after,
+      compareWithRevisionId: data.compareWithRevisionId,
+      filters: this.buildTableChangesFilters(data),
+    });
+  }
+
+  @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
+  @Get('row-changes')
+  @ApiRevisionIdParam()
+  @ApiOperation({
+    operationId: 'rowChanges',
+    summary: 'Get paginated row changes for a revision',
+  })
+  @ApiOkResponse({ type: RowChangesConnection })
+  @ApiCommonErrors()
+  @ApiNotFoundError('Revision')
+  async getRowChanges(
+    @Param('revisionId') revisionId: string,
+    @Query() data: GetRowChangesDto,
+  ) {
+    return this.revisionChangesApi.rowChanges({
+      revisionId,
+      first: data.first,
+      after: data.after,
+      compareWithRevisionId: data.compareWithRevisionId,
+      filters: this.buildRowChangesFilters(data),
+    });
+  }
+
+  private buildTableChangesFilters(data: GetTableChangesDto) {
+    if (
+      !data.changeTypes &&
+      !data.search &&
+      data.withSchemaMigrations === undefined &&
+      data.includeSystem === undefined
+    ) {
+      return undefined;
+    }
+    return {
+      changeTypes: data.changeTypes,
+      search: data.search,
+      withSchemaMigrations: data.withSchemaMigrations,
+      includeSystem: data.includeSystem,
+    };
+  }
+
+  private buildRowChangesFilters(data: GetRowChangesDto) {
+    if (
+      !data.tableId &&
+      !data.changeTypes &&
+      !data.search &&
+      data.includeSystem === undefined
+    ) {
+      return undefined;
+    }
+    return {
+      tableId: data.tableId,
+      changeTypes: data.changeTypes,
+      search: data.search,
+      includeSystem: data.includeSystem,
+    };
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPProjectGuard)
