@@ -50,7 +50,8 @@ export class McpController {
         }
       };
 
-      await this.mcpServer.getServer().connect(transport);
+      const server = this.mcpServer.createServer();
+      await server.connect(transport);
     } else {
       res.status(HttpStatus.BAD_REQUEST).json({
         jsonrpc: '2.0',
