@@ -7,15 +7,19 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
 import { ChangeType } from 'src/features/revision-changes/types';
 
 export class GetTableChangesDto {
   @ApiProperty({ default: 100 })
-  @Transform(({ value }) => Number.parseInt(value, 10))
+  @Transform(({ value }) =>
+    value === undefined ? 100 : Number.parseInt(value, 10),
+  )
   @IsInt()
   @Min(0)
+  @Max(1000)
   first: number;
 
   @ApiProperty({ required: false })
