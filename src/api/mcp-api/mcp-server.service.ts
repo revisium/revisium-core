@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
@@ -39,8 +39,9 @@ import {
 } from './tools';
 
 @Injectable()
-export class McpServerService implements OnModuleInit {
-  private readonly server: McpServer;
+export class McpServerService {
+  private readonly instructions: string;
+  private readonly auth: McpAuthHelpers;
 
   private readonly schemaResource: SchemaResource;
   private readonly queryResource: QueryResource;
@@ -79,7 +80,7 @@ export class McpServerService implements OnModuleInit {
     const publicUrl = this.configService.get<string>('PUBLIC_URL');
     const tokenUrl = publicUrl ? `${publicUrl}/get-mcp-token` : null;
 
-    const instructions = `Revisium is a headless CMS with Git-like version control.
+    this.instructions = `Revisium is a headless CMS with Git-like version control.
 
 AUTHENTICATION:
 When not authenticated, ASK THE USER which method they prefer:
@@ -121,16 +122,6 @@ PERMISSIONS:
 - Create/update operations need confirmation with change summary
 - Delete/remove/revert are destructive - need explicit user approval`;
 
-    this.server = new McpServer(
-      {
-        name: 'revisium',
-        version: '1.0.0',
-      },
-      {
-        instructions,
-      },
-    );
-
     this.schemaResource = new SchemaResource(this.formulaService);
     this.queryResource = new QueryResource();
     this.migrationResource = new MigrationResource();
@@ -157,15 +148,8 @@ PERMISSIONS:
       this.configService.get<string>('ENDPOINT_SERVICE_URL'),
     );
     this.fileTools = new FileTools(this.draftApi);
-  }
 
-  onModuleInit() {
-    this.schemaResource.register(this.server);
-    this.queryResource.register(this.server);
-    this.migrationResource.register(this.server);
-    this.fileResource.register(this.server);
-
-    const auth: McpAuthHelpers = {
+    this.auth = {
       requireAuth: this.requireAuth.bind(this),
       checkPermissionByRevision: this.checkPermissionByRevision.bind(this),
       checkPermissionByOrganizationProject:
@@ -174,23 +158,38 @@ PERMISSIONS:
         this.checkPermissionByOrganization.bind(this),
       checkSystemPermission: this.checkSystemPermission.bind(this),
     };
-
-    this.authTools.register(this.server, auth);
-    this.organizationTools.register(this.server, auth);
-    this.projectTools.register(this.server, auth);
-    this.branchTools.register(this.server, auth);
-    this.tableTools.register(this.server, auth);
-    this.rowTools.register(this.server, auth);
-    this.revisionTools.register(this.server, auth);
-    this.revisionChangesTools.register(this.server, auth);
-    this.migrationTools.register(this.server, auth);
-    this.userTools.register(this.server, auth);
-    this.endpointTools.register(this.server, auth);
-    this.fileTools.register(this.server, auth);
   }
 
-  public getServer(): McpServer {
-    return this.server;
+  public createServer(): McpServer {
+    const server = new McpServer(
+      {
+        name: 'revisium',
+        version: '1.0.0',
+      },
+      {
+        instructions: this.instructions,
+      },
+    );
+
+    this.schemaResource.register(server);
+    this.queryResource.register(server);
+    this.migrationResource.register(server);
+    this.fileResource.register(server);
+
+    this.authTools.register(server, this.auth);
+    this.organizationTools.register(server, this.auth);
+    this.projectTools.register(server, this.auth);
+    this.branchTools.register(server, this.auth);
+    this.tableTools.register(server, this.auth);
+    this.rowTools.register(server, this.auth);
+    this.revisionTools.register(server, this.auth);
+    this.revisionChangesTools.register(server, this.auth);
+    this.migrationTools.register(server, this.auth);
+    this.userTools.register(server, this.auth);
+    this.endpointTools.register(server, this.auth);
+    this.fileTools.register(server, this.auth);
+
+    return server;
   }
 
   private getSessionFromContext(context: McpContext): McpSession | null {

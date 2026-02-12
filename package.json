@@ -45,12 +45,12 @@
     "version:patch": "npm version patch --no-git-tag-version"
   },
   "dependencies": {
-    "@apollo/server": "^5.1.0",
+    "@apollo/server": "^5.4.0",
     "@as-integrations/express5": "^1.1.2",
     "@aws-sdk/client-s3": "^3.816.0",
     "@aws-sdk/s3-request-presigner": "^3.816.0",
-    "@casl/ability": "^6.7.3",
-    "@modelcontextprotocol/sdk": "^1.25.2",
+    "@casl/ability": "^6.7.5",
+    "@modelcontextprotocol/sdk": "^1.25.3",
     "@nestjs/apollo": "^13.2.3",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.11",
