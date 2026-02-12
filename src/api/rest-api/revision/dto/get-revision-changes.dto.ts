@@ -10,7 +10,12 @@ export class GetRevisionChangesDto {
 
   @ApiProperty({ required: false, default: false })
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    return value === 'true' || value === true;
+  })
   @IsBoolean()
   includeSystem?: boolean;
 }

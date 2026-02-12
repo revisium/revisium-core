@@ -39,9 +39,12 @@ export class GetRowChangesDto {
 
   @ApiProperty({ required: false, enum: ChangeType, isArray: true })
   @IsOptional()
-  @Transform(({ value }) =>
-    value === undefined ? undefined : Array.isArray(value) ? value : [value],
-  )
+  @Transform(({ value }) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    return Array.isArray(value) ? value : [value];
+  })
   @IsArray()
   @IsEnum(ChangeType, { each: true })
   changeTypes?: ChangeType[];
@@ -53,7 +56,12 @@ export class GetRowChangesDto {
 
   @ApiProperty({ required: false, default: false })
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
+  @Transform(({ value }) => {
+    if (value === undefined) {
+      return undefined;
+    }
+    return value === 'true' || value === true;
+  })
   @IsBoolean()
   includeSystem?: boolean;
 }
