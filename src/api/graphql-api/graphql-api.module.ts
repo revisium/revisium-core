@@ -1,5 +1,4 @@
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
@@ -46,34 +45,18 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
 @Module({
   imports: [
     MetricsModule,
-    GraphQLModule.forRootAsync<ApolloDriverConfig>({
+    GraphQLModule.forRootAsync<YogaDriverConfig>({
       imports: [MetricsModule],
-      driver: ApolloDriver,
+      driver: YogaDriver,
       inject: [GraphqlMetricsPlugin],
       useFactory: (graphqlMetricsPlugin: GraphqlMetricsPlugin) => ({
-        context: ({ res }: { res: any }) => ({ res }),
         path: '/graphql',
-        playground: false,
         autoSchemaFile: true,
         sortSchema: true,
         introspection: true,
         resolvers: { DateTime: DateTimeResolver, JSON: JSONResolver },
-        formatError: (error) => {
-          if (error.extensions?.stacktrace) {
-            return {
-              ...error,
-              extensions: {
-                ...error.extensions,
-                stacktrace: [],
-              },
-            };
-          }
-          return error;
-        },
-        plugins: [
-          ApolloServerPluginLandingPageLocalDefault(),
-          graphqlMetricsPlugin,
-        ],
+        maskedErrors: false,
+        plugins: [graphqlMetricsPlugin.createPlugin()],
       }),
     }),
     AuthModule,
