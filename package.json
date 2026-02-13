@@ -131,6 +131,10 @@
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.52.0"
   },
+  "overrides": {
+    "lodash": "^4.17.23",
+    "hono": "^4.11.7"
+  },
   "jest": {
     "modulePaths": [
       "<rootDir>"
