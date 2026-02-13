@@ -84,9 +84,8 @@ describe('restapi - table-by-id', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+      expect(result).toHaveProperty('count');
+      expect(typeof result.count).toBe('number');
     });
 
     it('another owner cannot get row count (private project)', async () => {
@@ -393,9 +392,8 @@ describe('restapi - table-by-id', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+      expect(result).toHaveProperty('count');
+      expect(typeof result.count).toBe('number');
     });
 
     it('another owner cannot get foreign keys by count (private project)', async () => {
@@ -469,9 +467,8 @@ describe('restapi - table-by-id', () => {
         .expect(200)
         .then((res) => res.body);
 
-      expect(typeof result === 'number' || typeof result === 'object').toBe(
-        true,
-      );
+      expect(result).toHaveProperty('count');
+      expect(typeof result.count).toBe('number');
     });
 
     it('another owner cannot get foreign keys to count (private project)', async () => {

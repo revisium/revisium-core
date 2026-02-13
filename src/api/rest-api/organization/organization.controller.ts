@@ -43,6 +43,7 @@ import {
   UsersOrganizationConnection,
 } from 'src/api/rest-api/organization/model';
 import { ProjectModel } from 'src/api/rest-api/project/model';
+import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import { transformFromPaginatedPrismaToUserOrganizationModel } from 'src/api/rest-api/share/utils/transformFromPrismaToUserOrganizationModel';
 
 @UseInterceptors(RestMetricsInterceptor)
@@ -152,17 +153,19 @@ export class OrganizationController {
     operationId: 'addUserToOrganization',
     summary: 'Add a user to the organization',
   })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Organization')
-  addUserToOrganization(
+  async addUserToOrganization(
     @Param('organizationId') organizationId: string,
     @Body() data: AddUserToOrganizationDto,
-  ) {
-    return this.organizationApiService.addUserToOrganization({
+  ): Promise<SuccessModelDto> {
+    await this.organizationApiService.addUserToOrganization({
       ...data,
       organizationId,
     });
+
+    return { success: true };
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPOrganizationGuard)
@@ -176,16 +179,18 @@ export class OrganizationController {
     operationId: 'removeUserFromOrganization',
     summary: 'Remove a user from the organization',
   })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Organization')
-  removeUserFromOrganization(
+  async removeUserFromOrganization(
     @Param('organizationId') organizationId: string,
     @Body() data: RemoveUserFromOrganizationDto,
-  ) {
-    return this.organizationApiService.removeUserFromOrganization({
+  ): Promise<SuccessModelDto> {
+    await this.organizationApiService.removeUserFromOrganization({
       ...data,
       organizationId,
     });
+
+    return { success: true };
   }
 }

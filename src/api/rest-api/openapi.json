@@ -171,6 +171,16 @@
         "required": ["availableEmailSignUp", "noAuth", "google", "github"],
         "type": "object"
       },
+      "CountModelDto": {
+        "properties": {
+          "count": {
+            "example": 42,
+            "type": "number"
+          }
+        },
+        "required": ["count"],
+        "type": "object"
+      },
       "CreateBranchByRevisionDto": {
         "properties": {
           "branchName": {
@@ -2426,7 +2436,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -2491,7 +2501,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -2576,7 +2586,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -3287,7 +3297,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -4630,7 +4640,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -4803,7 +4813,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "boolean"
+                  "$ref": "#/components/schemas/SuccessModelDto"
                 }
               }
             },
@@ -6441,7 +6451,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "number"
+                  "$ref": "#/components/schemas/CountModelDto"
                 }
               }
             },
@@ -6525,7 +6535,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "number"
+                  "$ref": "#/components/schemas/CountModelDto"
                 }
               }
             },
@@ -6609,7 +6619,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "number"
+                  "$ref": "#/components/schemas/CountModelDto"
                 }
               }
             },
@@ -7852,7 +7862,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "number"
+                  "$ref": "#/components/schemas/CountModelDto"
                 }
               }
             },
@@ -7945,7 +7955,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "number"
+                  "$ref": "#/components/schemas/CountModelDto"
                 }
               }
             },

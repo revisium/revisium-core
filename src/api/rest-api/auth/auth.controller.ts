@@ -25,6 +25,7 @@ import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-met
 import { CreateUserDto, LoginDto } from 'src/api/rest-api/auth/dto';
 import { UpdatePasswordDto } from 'src/api/rest-api/auth/dto/update-password.dto';
 import { LoginResponse } from 'src/api/rest-api/auth/model';
+import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('Auth')
@@ -57,12 +58,12 @@ export class AuthController {
     operationId: 'createUser',
     summary: 'Create a new user (admin only)',
   })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
-  async createUser(@Body() data: CreateUserDto): Promise<boolean> {
+  async createUser(@Body() data: CreateUserDto): Promise<SuccessModelDto> {
     await this.authApiService.createUser({ ...data, isEmailConfirmed: true });
 
-    return true;
+    return { success: true };
   }
 
   @UseGuards(HttpJwtAuthGuard)
@@ -71,18 +72,20 @@ export class AuthController {
     operationId: 'updatePassword',
     summary: 'Update your password',
   })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
-  updatePassword(
+  async updatePassword(
     @Body() data: UpdatePasswordDto,
     @Request()
     req: {
       user: IAuthUser;
     },
-  ) {
-    return this.userApiService.updatePassword({
+  ): Promise<SuccessModelDto> {
+    await this.userApiService.updatePassword({
       ...data,
       userId: req.user.userId,
     });
+
+    return { success: true };
   }
 }

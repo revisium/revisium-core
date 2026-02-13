@@ -38,6 +38,7 @@ import {
   BranchModel,
   ParentBranchResponse,
 } from 'src/api/rest-api/branch/model';
+import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import {
   RevisionModel,
   RevisionsConnection,
@@ -307,21 +308,21 @@ export class BranchByNameController {
     operationId: 'deleteBranch',
     summary: 'Delete a non-root branch',
   })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Branch')
   async deleteBranch(
     @Param('organizationId') organizationId: string,
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
-  ): Promise<true> {
+  ): Promise<SuccessModelDto> {
     await this.branchApi.deleteBranch({
       organizationId,
       projectName,
       branchName,
     });
 
-    return true;
+    return { success: true };
   }
 
   private resolveBranch(

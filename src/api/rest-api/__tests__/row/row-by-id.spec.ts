@@ -95,9 +95,9 @@ describe('restapi - row-by-id', () => {
         .get(getCountForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200)
-        .then((res) => res.text);
+        .then((res) => res.body);
 
-      expect(result).toBe('0');
+      expect(result).toEqual({ count: 0 });
     });
 
     it('another owner cannot get foreign keys by count (private project)', async () => {
@@ -168,9 +168,9 @@ describe('restapi - row-by-id', () => {
         .get(getCountForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200)
-        .then((res) => res.text);
+        .then((res) => res.body);
 
-      expect(result).toBe('0');
+      expect(result).toEqual({ count: 0 });
     });
 
     it('another owner cannot get foreign keys to count (private project)', async () => {
