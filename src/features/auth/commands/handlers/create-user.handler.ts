@@ -12,9 +12,10 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { Prisma } from 'src/__generated__/client';
 
 @CommandHandler(CreateUserCommand)
-export class CreateUserHandler
-  implements ICommandHandler<CreateUserCommand, CreateUserCommandReturnType>
-{
+export class CreateUserHandler implements ICommandHandler<
+  CreateUserCommand,
+  CreateUserCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly idService: IdService,

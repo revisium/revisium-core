@@ -6,9 +6,10 @@ import { GetTablesQuery } from 'src/features/table/queries/impl/get-tables.query
 import { GetTablesReturnType } from 'src/features/table/queries/types';
 
 @QueryHandler(GetTablesQuery)
-export class GetTablesHandler
-  implements IQueryHandler<GetTablesQuery, GetTablesReturnType>
-{
+export class GetTablesHandler implements IQueryHandler<
+  GetTablesQuery,
+  GetTablesReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute({ data }: GetTablesQuery): Promise<GetTablesReturnType> {

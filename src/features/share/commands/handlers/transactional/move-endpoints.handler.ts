@@ -4,9 +4,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { MoveEndpointsCommand } from 'src/features/share/commands/impl';
 
 @CommandHandler(MoveEndpointsCommand)
-export class MoveEndpointsHandler
-  implements ICommandHandler<MoveEndpointsCommand>
-{
+export class MoveEndpointsHandler implements ICommandHandler<MoveEndpointsCommand> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {

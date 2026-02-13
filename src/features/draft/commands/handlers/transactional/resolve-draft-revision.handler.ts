@@ -9,9 +9,7 @@ import { ResolveDraftRevisionCommand } from 'src/features/draft/commands/impl/tr
 import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 
 @CommandHandler(ResolveDraftRevisionCommand)
-export class ResolveDraftRevisionHandler
-  implements ICommandHandler<ResolveDraftRevisionCommand>
-{
+export class ResolveDraftRevisionHandler implements ICommandHandler<ResolveDraftRevisionCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly revisionRequestDto: DraftRevisionRequestDto,

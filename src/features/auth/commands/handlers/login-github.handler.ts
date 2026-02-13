@@ -12,9 +12,10 @@ import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(LoginGithubCommand)
-export class LoginGithubHandler
-  implements ICommandHandler<LoginGithubCommand, LoginGithubCommandReturnType>
-{
+export class LoginGithubHandler implements ICommandHandler<
+  LoginGithubCommand,
+  LoginGithubCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly prisma: PrismaService,

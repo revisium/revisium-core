@@ -6,9 +6,7 @@ import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionGetOrCreateDraftTableCommand)
-export class DraftRevisionGetOrCreateDraftTableHandler
-  implements ICommandHandler<DraftRevisionGetOrCreateDraftTableCommand>
-{
+export class DraftRevisionGetOrCreateDraftTableHandler implements ICommandHandler<DraftRevisionGetOrCreateDraftTableCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly idService: IdService,

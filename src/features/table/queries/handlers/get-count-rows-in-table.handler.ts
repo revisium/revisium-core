@@ -3,9 +3,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { GetCountRowsInTableQuery } from 'src/features/table/queries/impl';
 
 @QueryHandler(GetCountRowsInTableQuery)
-export class GetCountRowsInTableHandler
-  implements IQueryHandler<GetCountRowsInTableQuery>
-{
+export class GetCountRowsInTableHandler implements IQueryHandler<GetCountRowsInTableQuery> {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute({ data }: GetCountRowsInTableQuery): Promise<number> {

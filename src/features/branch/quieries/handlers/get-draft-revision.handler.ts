@@ -4,9 +4,7 @@ import { GetDraftRevisionTypes } from 'src/features/branch/quieries/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetDraftRevisionQuery)
-export class GetDraftRevisionHandler
-  implements IQueryHandler<GetDraftRevisionQuery>
-{
+export class GetDraftRevisionHandler implements IQueryHandler<GetDraftRevisionQuery> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

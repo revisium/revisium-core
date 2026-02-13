@@ -12,13 +12,10 @@ import { ResolveTableForeignKeysToQuery } from 'src/features/table/queries/impl'
 import { ResolveTableForeignKeysToReturnType } from 'src/features/table/queries/types';
 
 @QueryHandler(ResolveTableForeignKeysToQuery)
-export class ResolveTableForeignKeysToHandler
-  implements
-    IQueryHandler<
-      ResolveTableForeignKeysToQuery,
-      ResolveTableForeignKeysToReturnType
-    >
-{
+export class ResolveTableForeignKeysToHandler implements IQueryHandler<
+  ResolveTableForeignKeysToQuery,
+  ResolveTableForeignKeysToReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

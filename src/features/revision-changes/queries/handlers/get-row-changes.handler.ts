@@ -20,9 +20,10 @@ import { PluginService } from 'src/features/plugin/plugin.service';
 import { ChangeType } from '../../types/enums';
 
 @QueryHandler(GetRowChangesQuery)
-export class GetRowChangesHandler
-  implements IQueryHandler<GetRowChangesQuery, GetRowChangesQueryReturnType>
-{
+export class GetRowChangesHandler implements IQueryHandler<
+  GetRowChangesQuery,
+  GetRowChangesQueryReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly rowDiffService: RowDiffService,

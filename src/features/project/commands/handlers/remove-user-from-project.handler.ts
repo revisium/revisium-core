@@ -7,13 +7,10 @@ import {
 } from 'src/features/project/commands/impl';
 
 @CommandHandler(RemoveUserFromProjectCommand)
-export class RemoveUserFromProjectHandler
-  implements
-    ICommandHandler<
-      RemoveUserFromProjectCommand,
-      RemoveUserFromProjectCommandReturnType
-    >
-{
+export class RemoveUserFromProjectHandler implements ICommandHandler<
+  RemoveUserFromProjectCommand,
+  RemoveUserFromProjectCommandReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: RemoveUserFromProjectCommand) {

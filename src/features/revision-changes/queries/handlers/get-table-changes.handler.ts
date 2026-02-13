@@ -14,9 +14,10 @@ import { createEmptyPaginatedResponse } from '../../utils/empty-responses';
 import { TableChangeMapper } from '../../mappers/table-change.mapper';
 
 @QueryHandler(GetTableChangesQuery)
-export class GetTableChangesHandler
-  implements IQueryHandler<GetTableChangesQuery, GetTableChangesQueryReturnType>
-{
+export class GetTableChangesHandler implements IQueryHandler<
+  GetTableChangesQuery,
+  GetTableChangesQueryReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly diffService: DiffService,

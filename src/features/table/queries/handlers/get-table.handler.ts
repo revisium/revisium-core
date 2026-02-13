@@ -6,9 +6,10 @@ import { GetTableQuery } from 'src/features/table/queries/impl/get-table.query';
 import { GetTableReturnType } from 'src/features/table/queries/types';
 
 @QueryHandler(GetTableQuery)
-export class GetTableHandler
-  implements IQueryHandler<GetTableQuery, GetTableReturnType>
-{
+export class GetTableHandler implements IQueryHandler<
+  GetTableQuery,
+  GetTableReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

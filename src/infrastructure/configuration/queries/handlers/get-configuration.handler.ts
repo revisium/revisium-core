@@ -11,10 +11,10 @@ import {
 import { EmailService } from 'src/infrastructure/email/email.service';
 
 @QueryHandler(GetConfigurationQuery)
-export class GetConfigurationHandler
-  implements
-    IQueryHandler<GetConfigurationQuery, GetConfigurationQueryReturnType>
-{
+export class GetConfigurationHandler implements IQueryHandler<
+  GetConfigurationQuery,
+  GetConfigurationQueryReturnType
+> {
   constructor(
     private readonly emailService: EmailService,
     private readonly googleOauthService: GoogleOauthService,

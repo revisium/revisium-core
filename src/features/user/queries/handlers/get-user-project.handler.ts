@@ -6,9 +6,10 @@ import {
 } from 'src/features/user/queries/impl/get-user-project.query';
 
 @QueryHandler(GetUserProjectQuery)
-export class GetUserProjectHandler
-  implements IQueryHandler<GetUserProjectQuery, GetUserProjectQueryReturnType>
-{
+export class GetUserProjectHandler implements IQueryHandler<
+  GetUserProjectQuery,
+  GetUserProjectQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetUserProjectQuery) {

@@ -5,9 +5,7 @@ import { FindRowInTableOrThrowQuery } from 'src/features/share/queries/impl/tran
 import { FindRowInTableType } from 'src/features/share/queries/types';
 
 @QueryHandler(FindRowInTableOrThrowQuery)
-export class FindRowInTableOrThrowHandler
-  implements IQueryHandler<FindRowInTableOrThrowQuery>
-{
+export class FindRowInTableOrThrowHandler implements IQueryHandler<FindRowInTableOrThrowQuery> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {

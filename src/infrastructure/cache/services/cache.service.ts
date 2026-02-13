@@ -14,8 +14,20 @@ export class CacheService {
     private readonly bento: BentoCache<{ cache: BentoStore }>,
   ) {}
 
-  public getOrSet<T>(options: GetOrSetOptions<T>) {
-    return this.bento.getOrSet(options);
+  public async getOrSet<T>(options: GetOrSetOptions<T>) {
+    try {
+      return await this.bento.getOrSet(options);
+    } catch (error: unknown) {
+      const cause = (error as { cause?: unknown })?.cause;
+      if (
+        error instanceof Error &&
+        cause instanceof Error &&
+        error.message === 'Factory has thrown an error'
+      ) {
+        throw cause;
+      }
+      throw error;
+    }
   }
 
   public deleteByTag(options: DeleteByTagOptions) {

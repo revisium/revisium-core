@@ -3,9 +3,7 @@ import { ResolveBranchByRevisionQuery } from 'src/features/revision/queries/impl
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(ResolveBranchByRevisionQuery)
-export class ResolveBranchByRevisionHandler
-  implements IQueryHandler<ResolveBranchByRevisionQuery>
-{
+export class ResolveBranchByRevisionHandler implements IQueryHandler<ResolveBranchByRevisionQuery> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

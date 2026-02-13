@@ -16,9 +16,7 @@ import { systemTablesIds } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionRenameRowsCommand)
-export class DraftRevisionRenameRowsHandler
-  implements ICommandHandler<DraftRevisionRenameRowsCommand>
-{
+export class DraftRevisionRenameRowsHandler implements ICommandHandler<DraftRevisionRenameRowsCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly internalService: DraftRevisionInternalService,

@@ -7,9 +7,10 @@ import {
 } from 'src/features/row/queries/impl/get-row.query';
 
 @QueryHandler(GetRowQuery)
-export class GetRowHandler
-  implements IQueryHandler<GetRowQuery, GetRowQueryReturnType>
-{
+export class GetRowHandler implements IQueryHandler<
+  GetRowQuery,
+  GetRowQueryReturnType
+> {
   constructor(
     private readonly prismaService: TransactionPrismaService,
     private readonly pluginService: PluginService,

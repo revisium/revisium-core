@@ -4,9 +4,10 @@ import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 @QueryHandler(GetTableByIdQuery)
-export class GetTableByIdHandler
-  implements IQueryHandler<GetTableByIdQuery, GetTableByIdReturnType>
-{
+export class GetTableByIdHandler implements IQueryHandler<
+  GetTableByIdQuery,
+  GetTableByIdReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
   public async execute({ data }: GetTableByIdQuery) {
     const table = await this.prisma.table.findUnique({

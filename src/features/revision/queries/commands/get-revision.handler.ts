@@ -6,9 +6,10 @@ import {
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetRevisionQuery)
-export class GetRevisionHandler
-  implements IQueryHandler<GetRevisionQuery, GetRevisionQueryReturnType>
-{
+export class GetRevisionHandler implements IQueryHandler<
+  GetRevisionQuery,
+  GetRevisionQueryReturnType
+> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

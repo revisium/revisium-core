@@ -14,10 +14,10 @@ import { ShareCommands } from 'src/features/share/share.commands';
 import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-id.query';
 
 @CommandHandler(ApiCreateTableCommand)
-export class ApiCreateTableHandler
-  implements
-    ICommandHandler<ApiCreateTableCommand, ApiCreateTableHandlerReturnType>
-{
+export class ApiCreateTableHandler implements ICommandHandler<
+  ApiCreateTableCommand,
+  ApiCreateTableHandlerReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

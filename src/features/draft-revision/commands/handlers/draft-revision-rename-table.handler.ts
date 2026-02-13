@@ -8,9 +8,7 @@ import {
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionRenameTableCommand)
-export class DraftRevisionRenameTableHandler
-  implements ICommandHandler<DraftRevisionRenameTableCommand>
-{
+export class DraftRevisionRenameTableHandler implements ICommandHandler<DraftRevisionRenameTableCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly validationService: DraftRevisionValidationService,

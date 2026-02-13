@@ -13,10 +13,10 @@ import { Migration } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(ApplyMigrationsCommand)
-export class ApplyMigrationsHandler
-  implements
-    ICommandHandler<ApplyMigrationsCommand, ApplyMigrationCommandReturnType>
-{
+export class ApplyMigrationsHandler implements ICommandHandler<
+  ApplyMigrationsCommand,
+  ApplyMigrationCommandReturnType
+> {
   private readonly logger = new Logger(ApplyMigrationsHandler.name);
 
   constructor(

@@ -12,9 +12,10 @@ import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(LoginGoogleCommand)
-export class LoginGoogleHandler
-  implements ICommandHandler<LoginGoogleCommand, LoginGoogleCommandReturnType>
-{
+export class LoginGoogleHandler implements ICommandHandler<
+  LoginGoogleCommand,
+  LoginGoogleCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly prisma: PrismaService,

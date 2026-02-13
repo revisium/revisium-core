@@ -34,10 +34,10 @@ export type CreateProjectHandlerContext = {
 };
 
 @CommandHandler(CreateProjectCommand)
-export class CreateProjectHandler
-  implements
-    ICommandHandler<CreateProjectCommand, CreateProjectCommandReturnType>
-{
+export class CreateProjectHandler implements ICommandHandler<
+  CreateProjectCommand,
+  CreateProjectCommandReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly idService: IdService,

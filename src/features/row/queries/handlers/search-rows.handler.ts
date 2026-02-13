@@ -17,9 +17,10 @@ import { getOffsetPagination } from 'src/features/share/commands/utils/getOffset
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(SearchRowsQuery)
-export class SearchRowsHandler
-  implements IQueryHandler<SearchRowsQuery, SearchRowsResponse>
-{
+export class SearchRowsHandler implements IQueryHandler<
+  SearchRowsQuery,
+  SearchRowsResponse
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly pluginService: PluginService,

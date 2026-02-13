@@ -8,10 +8,10 @@ import {
 } from 'src/features/auth/commands/impl';
 
 @CommandHandler(ConfirmEmailCodeCommand)
-export class ConfirmEmailCodeHandler
-  implements
-    ICommandHandler<ConfirmEmailCodeCommand, ConfirmEmailCodeCommandReturnType>
-{
+export class ConfirmEmailCodeHandler implements ICommandHandler<
+  ConfirmEmailCodeCommand,
+  ConfirmEmailCodeCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,

@@ -9,9 +9,10 @@ import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(LoginCommand)
-export class LoginHandler
-  implements ICommandHandler<LoginCommand, LoginCommandReturnType>
-{
+export class LoginHandler implements ICommandHandler<
+  LoginCommand,
+  LoginCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,

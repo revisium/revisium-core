@@ -5,9 +5,7 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionRecomputeHasChangesCommand)
-export class DraftRevisionRecomputeHasChangesHandler
-  implements ICommandHandler<DraftRevisionRecomputeHasChangesCommand>
-{
+export class DraftRevisionRecomputeHasChangesHandler implements ICommandHandler<DraftRevisionRecomputeHasChangesCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly diffService: DiffService,

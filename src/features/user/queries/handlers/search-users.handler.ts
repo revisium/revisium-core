@@ -8,9 +8,10 @@ import {
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 
 @QueryHandler(SearchUsersQuery)
-export class SearchUsersHandler
-  implements IQueryHandler<SearchUsersQuery, SearchUsersQueryReturnType>
-{
+export class SearchUsersHandler implements IQueryHandler<
+  SearchUsersQuery,
+  SearchUsersQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: SearchUsersQuery) {

@@ -10,13 +10,10 @@ import { CreateRevisionHandlerReturnType } from 'src/features/draft/commands/typ
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 @CommandHandler(ApiCreateRevisionCommand)
-export class ApiCreateRevisionHandler
-  implements
-    ICommandHandler<
-      ApiCreateRevisionCommand,
-      ApiCreateRevisionCommandReturnType
-    >
-{
+export class ApiCreateRevisionHandler implements ICommandHandler<
+  ApiCreateRevisionCommand,
+  ApiCreateRevisionCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly transactionService: TransactionPrismaService,

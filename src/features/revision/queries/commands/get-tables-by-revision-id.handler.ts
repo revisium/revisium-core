@@ -6,10 +6,10 @@ import { getOffsetPagination } from 'src/features/share/commands/utils/getOffset
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetTablesByRevisionIdQuery)
-export class GetTablesByRevisionIdHandler
-  implements
-    IQueryHandler<GetTablesByRevisionIdQuery, GetRevisionTablesReturnType>
-{
+export class GetTablesByRevisionIdHandler implements IQueryHandler<
+  GetTablesByRevisionIdQuery,
+  GetRevisionTablesReturnType
+> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

@@ -8,10 +8,10 @@ import {
 } from 'src/features/user/commands/impl';
 
 @CommandHandler(UpdatePasswordCommand)
-export class UpdatePasswordHandler
-  implements
-    ICommandHandler<UpdatePasswordCommand, UpdatePasswordCommandReturnType>
-{
+export class UpdatePasswordHandler implements ICommandHandler<
+  UpdatePasswordCommand,
+  UpdatePasswordCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,

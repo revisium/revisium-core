@@ -6,9 +6,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { getRevisionCursorPagination } from 'src/features/share/commands/utils/getRevisionCursorPagination';
 
 @QueryHandler(GetRevisionsByBranchIdQuery)
-export class GetRevisionsByBranchIdHandler
-  implements IQueryHandler<GetRevisionsByBranchIdQuery>
-{
+export class GetRevisionsByBranchIdHandler implements IQueryHandler<GetRevisionsByBranchIdQuery> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

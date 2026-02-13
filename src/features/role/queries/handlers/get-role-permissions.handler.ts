@@ -6,10 +6,10 @@ import {
 } from 'src/features/role/queries/impl/get-role-permissions.query';
 
 @QueryHandler(GetRolePermissionsQuery)
-export class GetRolePermissionsHandler
-  implements
-    IQueryHandler<GetRolePermissionsQuery, GetRolePermissionsQueryReturnType>
-{
+export class GetRolePermissionsHandler implements IQueryHandler<
+  GetRolePermissionsQuery,
+  GetRolePermissionsQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetRolePermissionsQuery) {

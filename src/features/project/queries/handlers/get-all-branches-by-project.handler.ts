@@ -5,9 +5,7 @@ import { GetAllBranchesByProjectQuery } from 'src/features/project/queries/impl'
 import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 
 @QueryHandler(GetAllBranchesByProjectQuery)
-export class GetAllBranchesByProjectHandler
-  implements IQueryHandler<GetAllBranchesByProjectQuery>
-{
+export class GetAllBranchesByProjectHandler implements IQueryHandler<GetAllBranchesByProjectQuery> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetAllBranchesByProjectQuery) {

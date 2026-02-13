@@ -14,10 +14,10 @@ import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 @CommandHandler(ApiUpdateTableCommand)
-export class ApiUpdateTableHandler
-  implements
-    ICommandHandler<ApiUpdateTableCommand, ApiUpdateTableHandlerReturnType>
-{
+export class ApiUpdateTableHandler implements ICommandHandler<
+  ApiUpdateTableCommand,
+  ApiUpdateTableHandlerReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

@@ -18,10 +18,10 @@ import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 @CommandHandler(ApiRenameTableCommand)
-export class ApiRenameTableHandler
-  implements
-    ICommandHandler<ApiRenameTableCommand, ApiRenameTableCommandReturnType>
-{
+export class ApiRenameTableHandler implements ICommandHandler<
+  ApiRenameTableCommand,
+  ApiRenameTableCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

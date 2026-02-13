@@ -1,58 +1,56 @@
-import {
-  ApolloServerPlugin,
-  BaseContext,
-  GraphQLRequestListener,
-} from '@apollo/server';
 import { Injectable } from '@nestjs/common';
+import { Plugin } from 'graphql-yoga';
 import * as process from 'node:process';
 import { GraphqlMetricsService } from 'src/infrastructure/metrics/graphql/graphql-metrics.service';
 import { getDurationInSeconds } from 'src/infrastructure/metrics/utils';
 
 @Injectable()
-export class GraphqlMetricsPlugin implements ApolloServerPlugin {
+export class GraphqlMetricsPlugin {
   constructor(private readonly graphqlMetrics: GraphqlMetricsService) {}
 
-  async requestDidStart(): Promise<GraphQLRequestListener<BaseContext>> {
-    const startAt = process.hrtime();
-
+  createPlugin(): Plugin {
     return {
-      didResolveOperation: async (requestContext) => {
-        this.graphqlMetrics.didResolveOperation(getLabels(requestContext));
-      },
+      onExecute: ({ args }) => {
+        const startAt = process.hrtime();
+        const labels = getLabels(args);
 
-      willSendResponse: async (requestContext) => {
-        this.graphqlMetrics.requestDurationSeconds(
-          {
-            ...getLabels(requestContext),
-            result: 'true',
+        this.graphqlMetrics.didResolveOperation(labels);
+
+        return {
+          onExecuteDone: ({ result }) => {
+            const hasErrors =
+              !Array.isArray(result) &&
+              'errors' in result &&
+              result.errors?.length;
+
+            if (hasErrors) {
+              this.graphqlMetrics.didEncounterErrors(labels);
+            }
+
+            this.graphqlMetrics.requestDurationSeconds(
+              {
+                ...labels,
+                result: hasErrors ? 'false' : 'true',
+              },
+              getDurationInSeconds(startAt),
+            );
           },
-          getDurationInSeconds(startAt),
-        );
-      },
-
-      didEncounterErrors: async (requestContext) => {
-        const labels = getLabels(requestContext);
-
-        this.graphqlMetrics.didEncounterErrors(labels);
-
-        this.graphqlMetrics.requestDurationSeconds(
-          {
-            ...labels,
-            result: 'false',
-          },
-          getDurationInSeconds(startAt),
-        );
+        };
       },
     };
   }
 }
 
-function getLabels(context: {
-  request: { operationName?: string };
-  operation?: { operation: string };
+function getLabels(args: {
+  operationName?: string | null;
+  document: {
+    definitions: ReadonlyArray<{ kind: string; operation?: string }>;
+  };
 }) {
+  const firstDef = args.document.definitions[0];
   return {
-    operationName: context.request.operationName,
-    operation: context.operation?.operation,
+    operationName: args.operationName ?? undefined,
+    operation:
+      firstDef?.kind === 'OperationDefinition' ? firstDef.operation : undefined,
   };
 }

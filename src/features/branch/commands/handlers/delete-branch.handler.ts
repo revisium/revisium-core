@@ -11,9 +11,10 @@ import {
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @CommandHandler(DeleteBranchCommand)
-export class DeleteBranchHandler
-  implements ICommandHandler<DeleteBranchCommand, DeleteBranchCommandReturnType>
-{
+export class DeleteBranchHandler implements ICommandHandler<
+  DeleteBranchCommand,
+  DeleteBranchCommandReturnType
+> {
   constructor(
     private readonly transactionPrisma: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

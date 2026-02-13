@@ -31,7 +31,21 @@ export class GraphQLValidationExceptionFilter implements GqlExceptionFilter {
       });
     }
 
-    throw exception;
+    throw new GraphQLError(this.extractMessage(response, exception));
+  }
+
+  private extractMessage(
+    response: StructuredErrorResponse | { message?: string | string[] },
+    exception: BadRequestException,
+  ): string {
+    const msg = (response as { message?: string | string[] })?.message;
+    if (Array.isArray(msg)) {
+      return msg.join(', ');
+    }
+    if (typeof msg === 'string') {
+      return msg;
+    }
+    return exception.message;
   }
 
   private isStructuredValidationError(
@@ -39,9 +53,9 @@ export class GraphQLValidationExceptionFilter implements GqlExceptionFilter {
   ): boolean {
     return Boolean(
       response?.code &&
-        Object.values(ValidationErrorCode).includes(
-          response.code as (typeof ValidationErrorCode)[keyof typeof ValidationErrorCode],
-        ),
+      Object.values(ValidationErrorCode).includes(
+        response.code as (typeof ValidationErrorCode)[keyof typeof ValidationErrorCode],
+      ),
     );
   }
 }

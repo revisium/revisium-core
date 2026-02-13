@@ -20,9 +20,10 @@ import { getOffsetPagination } from 'src/features/share/commands/utils/getOffset
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetRowsQuery)
-export class GetRowsHandler
-  implements IQueryHandler<GetRowsQuery, GetRowsQueryReturnType>
-{
+export class GetRowsHandler implements IQueryHandler<
+  GetRowsQuery,
+  GetRowsQueryReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

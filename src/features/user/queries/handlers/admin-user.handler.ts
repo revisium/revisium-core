@@ -7,9 +7,10 @@ import {
 } from 'src/features/user/queries/impl/admin-user.query';
 
 @QueryHandler(AdminUserQuery)
-export class AdminUserHandler
-  implements IQueryHandler<AdminUserQuery, AdminUserQueryReturnType>
-{
+export class AdminUserHandler implements IQueryHandler<
+  AdminUserQuery,
+  AdminUserQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({

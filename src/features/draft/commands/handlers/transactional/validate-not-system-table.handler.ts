@@ -5,9 +5,7 @@ import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/dr
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @CommandHandler(ValidateNotSystemTableCommand)
-export class ValidateNotSystemTableHandler
-  implements ICommandHandler<ValidateNotSystemTableCommand>
-{
+export class ValidateNotSystemTableHandler implements ICommandHandler<ValidateNotSystemTableCommand> {
   constructor(
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly revisionRequestDto: DraftRevisionRequestDto,

@@ -10,9 +10,10 @@ import {
 } from 'src/features/auth/commands/impl';
 
 @CommandHandler(SignUpCommand)
-export class SignUpHandler
-  implements ICommandHandler<SignUpCommand, SignUpCommandReturnType>
-{
+export class SignUpHandler implements ICommandHandler<
+  SignUpCommand,
+  SignUpCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly authService: AuthService,

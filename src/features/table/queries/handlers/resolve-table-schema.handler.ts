@@ -6,9 +6,7 @@ import { findSchemaForSystemTables } from 'src/features/share/system-tables.cons
 import { ResolveTableSchemaQuery } from 'src/features/table/queries/impl';
 
 @QueryHandler(ResolveTableSchemaQuery)
-export class ResolveTableSchemaHandler
-  implements IQueryHandler<ResolveTableSchemaQuery>
-{
+export class ResolveTableSchemaHandler implements IQueryHandler<ResolveTableSchemaQuery> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

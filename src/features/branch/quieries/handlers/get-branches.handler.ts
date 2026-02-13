@@ -10,9 +10,10 @@ import { getOffsetPagination } from 'src/features/share/commands/utils/getOffset
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetBranchesQuery)
-export class GetBranchesHandler
-  implements IQueryHandler<GetBranchesQuery, GetBranchesQueryReturnType>
-{
+export class GetBranchesHandler implements IQueryHandler<
+  GetBranchesQuery,
+  GetBranchesQueryReturnType
+> {
   constructor(
     private readonly transactionPrisma: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

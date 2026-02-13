@@ -10,10 +10,10 @@ import {
 type WhereData = { userId: string };
 
 @QueryHandler(GetProjectsByUserIdQuery)
-export class GetProjectsByUserIdHandler
-  implements
-    IQueryHandler<GetProjectsByUserIdQuery, GetProjectsByUserIdQueryReturnType>
-{
+export class GetProjectsByUserIdHandler implements IQueryHandler<
+  GetProjectsByUserIdQuery,
+  GetProjectsByUserIdQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetProjectsByUserIdQuery) {

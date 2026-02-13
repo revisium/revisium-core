@@ -4,9 +4,7 @@ import { GetEndpointsByRevisionId } from 'src/features/revision/queries/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetEndpointsByRevisionIdQuery)
-export class GetEndpointsByRevisionIdHandler
-  implements IQueryHandler<GetEndpointsByRevisionIdQuery>
-{
+export class GetEndpointsByRevisionIdHandler implements IQueryHandler<GetEndpointsByRevisionIdQuery> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

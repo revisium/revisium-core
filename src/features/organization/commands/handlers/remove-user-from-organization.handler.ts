@@ -8,13 +8,10 @@ import {
 } from 'src/features/organization/commands/impl';
 
 @CommandHandler(RemoveUserFromOrganizationCommand)
-export class RemoveUserFromOrganizationHandler
-  implements
-    ICommandHandler<
-      RemoveUserFromOrganizationCommand,
-      RemoveUserFromOrganizationCommandReturnType
-    >
-{
+export class RemoveUserFromOrganizationHandler implements ICommandHandler<
+  RemoveUserFromOrganizationCommand,
+  RemoveUserFromOrganizationCommandReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: RemoveUserFromOrganizationCommand) {
