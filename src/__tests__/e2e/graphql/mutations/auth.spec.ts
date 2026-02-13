@@ -58,7 +58,7 @@ describe('graphql - auth mutations', () => {
           app,
           ...getMutation(fixture.owner.user.username!, 'wrong-password'),
         },
-        /Unauthorized/,
+        /Invalid password/,
       );
     });
 
@@ -68,7 +68,7 @@ describe('graphql - auth mutations', () => {
           app,
           ...getMutation('non-existent-user', 'password'),
         },
-        /Unauthorized/,
+        /User does not exist/,
       );
     });
   });
