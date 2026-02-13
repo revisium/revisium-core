@@ -9,10 +9,10 @@ import {
 } from 'src/features/project/commands/impl';
 
 @CommandHandler(AddUserToProjectCommand)
-export class AddUserToProjectHandler
-  implements
-    ICommandHandler<AddUserToProjectCommand, AddUserToProjectCommandReturnType>
-{
+export class AddUserToProjectHandler implements ICommandHandler<
+  AddUserToProjectCommand,
+  AddUserToProjectCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly idService: IdService,

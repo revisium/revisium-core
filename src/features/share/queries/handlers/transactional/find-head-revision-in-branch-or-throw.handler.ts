@@ -5,9 +5,7 @@ import { FindHeadRevisionInBranchOrThrowQuery } from 'src/features/share/queries
 import { FindHeadRevisionInBranchType } from 'src/features/share/queries/types';
 
 @QueryHandler(FindHeadRevisionInBranchOrThrowQuery)
-export class FindHeadRevisionInBranchOrThrowHandler
-  implements IQueryHandler<FindHeadRevisionInBranchOrThrowQuery>
-{
+export class FindHeadRevisionInBranchOrThrowHandler implements IQueryHandler<FindHeadRevisionInBranchOrThrowQuery> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {

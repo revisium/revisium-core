@@ -8,9 +8,10 @@ import { getOffsetPagination } from 'src/features/share/commands/utils/getOffset
 import { Prisma } from 'src/__generated__/client';
 
 @QueryHandler(GetUsersProjectQuery)
-export class GetUsersProjectHandler
-  implements IQueryHandler<GetUsersProjectQuery, GetUsersProjectQueryReturnType>
-{
+export class GetUsersProjectHandler implements IQueryHandler<
+  GetUsersProjectQuery,
+  GetUsersProjectQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetUsersProjectQuery) {

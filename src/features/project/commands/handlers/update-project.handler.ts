@@ -5,9 +5,10 @@ import { UpdateProjectCommand } from 'src/features/project/commands/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @CommandHandler(UpdateProjectCommand)
-export class UpdateProjectHandler
-  implements ICommandHandler<UpdateProjectCommand, boolean>
-{
+export class UpdateProjectHandler implements ICommandHandler<
+  UpdateProjectCommand,
+  boolean
+> {
   constructor(
     private readonly transactionPrisma: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

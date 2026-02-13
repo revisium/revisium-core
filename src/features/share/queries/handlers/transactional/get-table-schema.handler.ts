@@ -14,9 +14,10 @@ import {
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(GetTableSchemaQuery)
-export class GetTableSchemaHandler
-  implements IQueryHandler<GetTableSchemaQuery, GetTableSchemaQueryReturnType>
-{
+export class GetTableSchemaHandler implements IQueryHandler<
+  GetTableSchemaQuery,
+  GetTableSchemaQueryReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly prismaService: PrismaService,

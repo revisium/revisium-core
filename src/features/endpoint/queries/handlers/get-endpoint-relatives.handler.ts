@@ -7,13 +7,10 @@ import {
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @QueryHandler(GetEndpointRelativesQuery)
-export class GetEndpointRelativesHandler
-  implements
-    IQueryHandler<
-      GetEndpointRelativesQuery,
-      GetEndpointRelativesQueryReturnType
-    >
-{
+export class GetEndpointRelativesHandler implements IQueryHandler<
+  GetEndpointRelativesQuery,
+  GetEndpointRelativesQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetEndpointRelativesQuery) {

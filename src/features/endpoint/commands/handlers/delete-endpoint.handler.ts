@@ -4,9 +4,7 @@ import { DeleteEndpointCommand } from 'src/features/endpoint/commands/impl/delet
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 @CommandHandler(DeleteEndpointCommand)
-export class DeleteEndpointHandler
-  implements ICommandHandler<DeleteEndpointCommand>
-{
+export class DeleteEndpointHandler implements ICommandHandler<DeleteEndpointCommand> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly endpointNotification: EndpointNotificationService,

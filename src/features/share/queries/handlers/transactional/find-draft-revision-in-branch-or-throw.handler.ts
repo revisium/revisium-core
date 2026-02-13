@@ -5,9 +5,7 @@ import { FindDraftRevisionInBranchOrThrowQuery } from 'src/features/share/querie
 import { FindDraftRevisionInBranchType } from 'src/features/share/queries/types';
 
 @QueryHandler(FindDraftRevisionInBranchOrThrowQuery)
-export class FindDraftRevisionInBranchOrThrowHandler
-  implements IQueryHandler<FindDraftRevisionInBranchOrThrowQuery>
-{
+export class FindDraftRevisionInBranchOrThrowHandler implements IQueryHandler<FindDraftRevisionInBranchOrThrowQuery> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {

@@ -5,9 +5,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetTouchedByBranchIdQuery)
-export class GetTouchedByBranchIdHandler
-  implements IQueryHandler<GetTouchedByBranchIdQuery>
-{
+export class GetTouchedByBranchIdHandler implements IQueryHandler<GetTouchedByBranchIdQuery> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionQueries: ShareTransactionalQueries,

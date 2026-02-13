@@ -12,10 +12,10 @@ import {
 import { GetProjectByIdQuery } from 'src/features/project/queries/impl';
 
 @CommandHandler(ApiCreateProjectCommand)
-export class ApiCreateProjectHandler
-  implements
-    ICommandHandler<ApiCreateProjectCommand, ApiCreateProjectCommandReturnType>
-{
+export class ApiCreateProjectHandler implements ICommandHandler<
+  ApiCreateProjectCommand,
+  ApiCreateProjectCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

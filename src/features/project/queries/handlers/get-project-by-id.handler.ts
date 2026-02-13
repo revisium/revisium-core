@@ -7,9 +7,10 @@ import {
 } from 'src/features/project/queries/impl';
 
 @QueryHandler(GetProjectByIdQuery)
-export class GetProjectByIdHandler
-  implements IQueryHandler<GetProjectByIdQuery, GetProjectByIdQueryReturnType>
-{
+export class GetProjectByIdHandler implements IQueryHandler<
+  GetProjectByIdQuery,
+  GetProjectByIdQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetProjectByIdQuery) {

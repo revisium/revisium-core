@@ -10,13 +10,10 @@ import { getUserRole } from 'src/features/auth/utils';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(CheckSystemPermissionCommand)
-export class CheckSystemPermissionHandler
-  implements
-    ICommandHandler<
-      CheckSystemPermissionCommand,
-      CheckSystemPermissionCommandReturnType
-    >
-{
+export class CheckSystemPermissionHandler implements ICommandHandler<
+  CheckSystemPermissionCommand,
+  CheckSystemPermissionCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly casl: CaslAbilityFactory,

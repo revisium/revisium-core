@@ -40,9 +40,10 @@ interface RowData {
 }
 
 @CommandHandler(ValidateDataCommand)
-export class ValidateDataHandler
-  implements ICommandHandler<ValidateDataCommand, ValidateDataCommandReturnType>
-{
+export class ValidateDataHandler implements ICommandHandler<
+  ValidateDataCommand,
+  ValidateDataCommandReturnType
+> {
   constructor(
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly jsonSchemaValidator: JsonSchemaValidatorService,

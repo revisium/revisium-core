@@ -8,13 +8,10 @@ import {
 } from 'src/features/project/commands/impl';
 
 @CommandHandler(UpdateUserProjectRoleCommand)
-export class UpdateUserProjectRoleHandler
-  implements
-    ICommandHandler<
-      UpdateUserProjectRoleCommand,
-      UpdateUserProjectRoleCommandReturnType
-    >
-{
+export class UpdateUserProjectRoleHandler implements ICommandHandler<
+  UpdateUserProjectRoleCommand,
+  UpdateUserProjectRoleCommandReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: UpdateUserProjectRoleCommand) {

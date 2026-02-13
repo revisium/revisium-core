@@ -24,9 +24,8 @@ async function loadBentoCacheCore() {
 }
 
 async function loadBentoCacheRedis() {
-  const { redisBusDriver, redisDriver } = await import(
-    'bentocache/drivers/redis'
-  );
+  const { redisBusDriver, redisDriver } =
+    await import('bentocache/drivers/redis');
   return { redisBusDriver, redisDriver };
 }
 

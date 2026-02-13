@@ -6,9 +6,10 @@ import {
 } from 'src/features/organization/queries/impl/get-organization.query';
 
 @QueryHandler(GetOrganizationQuery)
-export class GetOrganizationHandler
-  implements IQueryHandler<GetOrganizationQuery, GetOrganizationQueryReturnType>
-{
+export class GetOrganizationHandler implements IQueryHandler<
+  GetOrganizationQuery,
+  GetOrganizationQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetOrganizationQuery) {

@@ -7,9 +7,10 @@ import {
 } from 'src/features/row/queries/impl/get-row-by-id.query';
 
 @QueryHandler(GetRowByIdQuery)
-export class GetRowByIdHandler
-  implements IQueryHandler<GetRowByIdQuery, GetRowByIdQueryReturnType>
-{
+export class GetRowByIdHandler implements IQueryHandler<
+  GetRowByIdQuery,
+  GetRowByIdQueryReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly pluginService: PluginService,

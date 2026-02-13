@@ -11,9 +11,7 @@ import {
 import { GetCreatedEndpointQuery } from 'src/features/endpoint/queries/impl';
 
 @CommandHandler(ApiCreateEndpointCommand)
-export class ApiCreateEndpointHandler
-  implements ICommandHandler<ApiCreateEndpointCommand>
-{
+export class ApiCreateEndpointHandler implements ICommandHandler<ApiCreateEndpointCommand> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

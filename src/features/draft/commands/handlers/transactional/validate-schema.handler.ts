@@ -11,9 +11,7 @@ import { getForeignKeysFromSchema } from '@revisium/schema-toolkit/lib';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 
 @CommandHandler(ValidateSchemaCommand)
-export class ValidateSchemaHandler
-  implements ICommandHandler<ValidateSchemaCommand>
-{
+export class ValidateSchemaHandler implements ICommandHandler<ValidateSchemaCommand> {
   constructor(
     protected readonly revisionRequestDto: DraftRevisionRequestDto,
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,

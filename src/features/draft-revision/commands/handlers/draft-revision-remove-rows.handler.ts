@@ -19,9 +19,7 @@ interface RowWithReadonly {
 }
 
 @CommandHandler(DraftRevisionRemoveRowsCommand)
-export class DraftRevisionRemoveRowsHandler
-  implements ICommandHandler<DraftRevisionRemoveRowsCommand>
-{
+export class DraftRevisionRemoveRowsHandler implements ICommandHandler<DraftRevisionRemoveRowsCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly internalService: DraftRevisionInternalService,

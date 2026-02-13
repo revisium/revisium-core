@@ -6,10 +6,10 @@ import {
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @QueryHandler(GetUserOrganizationQuery)
-export class GetUserOrganizationHandler
-  implements
-    IQueryHandler<GetUserOrganizationQuery, GetUserOrganizationQueryReturnType>
-{
+export class GetUserOrganizationHandler implements IQueryHandler<
+  GetUserOrganizationQuery,
+  GetUserOrganizationQueryReturnType
+> {
   constructor(private readonly prisma: PrismaService) {}
 
   public async execute({ data }: GetUserOrganizationQuery) {

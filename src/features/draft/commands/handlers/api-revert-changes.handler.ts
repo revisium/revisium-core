@@ -15,10 +15,10 @@ import { RevertChangesHandlerReturnType } from 'src/features/draft/commands/type
 import { ShareCommands } from 'src/features/share/share.commands';
 
 @CommandHandler(ApiRevertChangesCommand)
-export class ApiRevertChangesHandler
-  implements
-    ICommandHandler<ApiRevertChangesCommand, ApiRevertChangesCommandReturnType>
-{
+export class ApiRevertChangesHandler implements ICommandHandler<
+  ApiRevertChangesCommand,
+  ApiRevertChangesCommandReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

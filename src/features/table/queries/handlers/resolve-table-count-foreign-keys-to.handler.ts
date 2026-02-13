@@ -8,9 +8,7 @@ import { getForeignKeysFromSchema } from '@revisium/schema-toolkit/lib';
 import { ResolveTableCountForeignKeysToQuery } from 'src/features/table/queries/impl';
 
 @QueryHandler(ResolveTableCountForeignKeysToQuery)
-export class ResolveTableCountForeignKeysToHandler
-  implements IQueryHandler<ResolveTableCountForeignKeysToQuery>
-{
+export class ResolveTableCountForeignKeysToHandler implements IQueryHandler<ResolveTableCountForeignKeysToQuery> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

@@ -8,9 +8,7 @@ import {
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionRevertCommand)
-export class DraftRevisionRevertHandler
-  implements ICommandHandler<DraftRevisionRevertCommand>
-{
+export class DraftRevisionRevertHandler implements ICommandHandler<DraftRevisionRevertCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly validationService: DraftRevisionValidationService,

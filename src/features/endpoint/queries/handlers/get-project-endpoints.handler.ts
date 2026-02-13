@@ -19,9 +19,7 @@ type EndpointResult = {
 };
 
 @QueryHandler(GetProjectEndpointsQuery)
-export class GetProjectEndpointsHandler
-  implements IQueryHandler<GetProjectEndpointsQuery>
-{
+export class GetProjectEndpointsHandler implements IQueryHandler<GetProjectEndpointsQuery> {
   constructor(private readonly prisma: PrismaService) {}
 
   async execute({

@@ -16,9 +16,9 @@ import {
 import { IOptionalAuthUser } from 'src/features/auth/types';
 
 @Injectable()
-export abstract class BasePermissionGuard<T = Record<string, never>>
-  implements CanActivate
-{
+export abstract class BasePermissionGuard<
+  T = Record<string, never>,
+> implements CanActivate {
   constructor(
     protected reflector: Reflector,
     protected authApi: AuthApiService,

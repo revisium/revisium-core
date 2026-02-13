@@ -4,9 +4,7 @@ import { FindRowsInTableQuery } from 'src/features/share/queries/impl/transactio
 import { FindRowsInTableType } from 'src/features/share/queries/types';
 
 @QueryHandler(FindRowsInTableQuery)
-export class FindRowsInTableHandler
-  implements IQueryHandler<FindRowsInTableQuery>
-{
+export class FindRowsInTableHandler implements IQueryHandler<FindRowsInTableQuery> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {

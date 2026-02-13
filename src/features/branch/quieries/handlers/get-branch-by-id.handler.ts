@@ -4,9 +4,10 @@ import { GetBranchByIdReturnType } from 'src/features/branch/quieries/types/get-
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetBranchByIdQuery)
-export class GetBranchByIdHandler
-  implements IQueryHandler<GetBranchByIdQuery, GetBranchByIdReturnType>
-{
+export class GetBranchByIdHandler implements IQueryHandler<
+  GetBranchByIdQuery,
+  GetBranchByIdReturnType
+> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

@@ -39,9 +39,9 @@ export class GraphQLValidationExceptionFilter implements GqlExceptionFilter {
   ): boolean {
     return Boolean(
       response?.code &&
-        Object.values(ValidationErrorCode).includes(
-          response.code as (typeof ValidationErrorCode)[keyof typeof ValidationErrorCode],
-        ),
+      Object.values(ValidationErrorCode).includes(
+        response.code as (typeof ValidationErrorCode)[keyof typeof ValidationErrorCode],
+      ),
     );
   }
 }

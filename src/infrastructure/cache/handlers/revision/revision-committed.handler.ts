@@ -4,9 +4,7 @@ import { RevisionCacheService } from 'src/infrastructure/cache/services/revision
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 
 @EventsHandler(RevisionCommittedEvent)
-export class RevisionCommittedEventHandler
-  implements IEventHandler<RevisionCommittedEvent>
-{
+export class RevisionCommittedEventHandler implements IEventHandler<RevisionCommittedEvent> {
   constructor(
     private readonly revisionCache: RevisionCacheService,
     private readonly rowCache: RowCacheService,

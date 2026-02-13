@@ -10,9 +10,10 @@ import {
 } from 'src/features/user/commands/impl';
 
 @CommandHandler(SetUsernameCommand)
-export class SetUsernameHandler
-  implements ICommandHandler<SetUsernameCommand, SetUsernameCommandReturnType>
-{
+export class SetUsernameHandler implements ICommandHandler<
+  SetUsernameCommand,
+  SetUsernameCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly idService: IdService,

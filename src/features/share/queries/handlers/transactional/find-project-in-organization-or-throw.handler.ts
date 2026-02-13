@@ -5,9 +5,7 @@ import { FindProjectInOrganizationOrThrowQuery } from 'src/features/share/querie
 import { FindProjectInOrganizationType } from 'src/features/share/queries/types';
 
 @QueryHandler(FindProjectInOrganizationOrThrowQuery)
-export class FindProjectInOrganizationOrThrowHandler
-  implements IQueryHandler<FindProjectInOrganizationOrThrowQuery>
-{
+export class FindProjectInOrganizationOrThrowHandler implements IQueryHandler<FindProjectInOrganizationOrThrowQuery> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get transaction() {

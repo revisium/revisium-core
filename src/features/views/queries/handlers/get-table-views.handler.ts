@@ -13,9 +13,10 @@ import {
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetTableViewsQuery)
-export class GetTableViewsHandler
-  implements IQueryHandler<GetTableViewsQuery, GetTableViewsQueryReturnType>
-{
+export class GetTableViewsHandler implements IQueryHandler<
+  GetTableViewsQuery,
+  GetTableViewsQueryReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

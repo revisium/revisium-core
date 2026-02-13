@@ -37,10 +37,10 @@ const EMPTY_RESULT: GetSubSchemaItemsQueryReturnType = {
 };
 
 @QueryHandler(GetSubSchemaItemsQuery)
-export class GetSubSchemaItemsHandler
-  implements
-    IQueryHandler<GetSubSchemaItemsQuery, GetSubSchemaItemsQueryReturnType>
-{
+export class GetSubSchemaItemsHandler implements IQueryHandler<
+  GetSubSchemaItemsQuery,
+  GetSubSchemaItemsQueryReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

@@ -17,13 +17,10 @@ import {
 import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
 
 @QueryHandler(ResolveRowForeignKeysByQuery)
-export class ResolveRowForeignKeysByHandler
-  implements
-    IQueryHandler<
-      ResolveRowForeignKeysByQuery,
-      ResolveRowForeignKeysByReturnType
-    >
-{
+export class ResolveRowForeignKeysByHandler implements IQueryHandler<
+  ResolveRowForeignKeysByQuery,
+  ResolveRowForeignKeysByReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

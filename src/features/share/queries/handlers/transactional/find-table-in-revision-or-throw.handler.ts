@@ -5,9 +5,7 @@ import { FindTableInRevisionOrThrowQuery } from 'src/features/share/queries/impl
 import { FindTableInRevisionType } from 'src/features/share/queries/types';
 
 @QueryHandler(FindTableInRevisionOrThrowQuery)
-export class FindTableInRevisionOrThrowHandler
-  implements IQueryHandler<FindTableInRevisionOrThrowQuery>
-{
+export class FindTableInRevisionOrThrowHandler implements IQueryHandler<FindTableInRevisionOrThrowQuery> {
   constructor(private readonly transactionService: TransactionPrismaService) {}
 
   private get prisma() {

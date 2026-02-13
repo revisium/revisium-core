@@ -14,10 +14,10 @@ import { RemoveTableHandlerReturnType } from 'src/features/draft/commands/types/
 import { ShareCommands } from 'src/features/share/share.commands';
 
 @CommandHandler(ApiRemoveTableCommand)
-export class ApiRemoveTableHandler
-  implements
-    ICommandHandler<ApiRemoveTableCommand, ApiRemoveTableHandlerReturnType>
-{
+export class ApiRemoveTableHandler implements ICommandHandler<
+  ApiRemoveTableCommand,
+  ApiRemoveTableHandlerReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

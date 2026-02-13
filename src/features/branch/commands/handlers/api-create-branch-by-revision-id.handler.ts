@@ -11,9 +11,7 @@ import {
 import { GetBranchByIdQuery } from 'src/features/branch/quieries/impl';
 
 @CommandHandler(ApiCreateBranchByRevisionIdCommand)
-export class ApiCreateBranchByRevisionIdHandler
-  implements ICommandHandler<ApiCreateBranchByRevisionIdCommand>
-{
+export class ApiCreateBranchByRevisionIdHandler implements ICommandHandler<ApiCreateBranchByRevisionIdCommand> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

@@ -9,9 +9,7 @@ import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionCommitCommand)
-export class DraftRevisionCommitHandler
-  implements ICommandHandler<DraftRevisionCommitCommand>
-{
+export class DraftRevisionCommitHandler implements ICommandHandler<DraftRevisionCommitCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly validationService: DraftRevisionValidationService,

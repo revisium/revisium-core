@@ -10,10 +10,10 @@ import { RevisionComparisonService } from '../../services/revision-comparison.se
 import { createEmptyRevisionChangesResponse } from '../../utils/empty-responses';
 
 @QueryHandler(GetRevisionChangesQuery)
-export class GetRevisionChangesHandler
-  implements
-    IQueryHandler<GetRevisionChangesQuery, GetRevisionChangesQueryReturnType>
-{
+export class GetRevisionChangesHandler implements IQueryHandler<
+  GetRevisionChangesQuery,
+  GetRevisionChangesQueryReturnType
+> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly diffService: DiffService,

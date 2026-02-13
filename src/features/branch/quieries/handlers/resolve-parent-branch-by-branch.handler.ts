@@ -3,9 +3,7 @@ import { ResolveParentBranchByBranchQuery } from 'src/features/branch/quieries/i
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(ResolveParentBranchByBranchQuery)
-export class ResolveParentBranchByBranchHandler
-  implements IQueryHandler<ResolveParentBranchByBranchQuery>
-{
+export class ResolveParentBranchByBranchHandler implements IQueryHandler<ResolveParentBranchByBranchQuery> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

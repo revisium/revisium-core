@@ -16,10 +16,10 @@ import { GetTableByIdQuery } from 'src/features/table/queries/impl/get-table-by-
 import { GetTableByIdReturnType } from 'src/features/table/queries/types';
 
 @CommandHandler(ApiRemoveRowsCommand)
-export class ApiRemoveRowsHandler
-  implements
-    ICommandHandler<ApiRemoveRowsCommand, ApiRemoveRowsHandlerReturnType>
-{
+export class ApiRemoveRowsHandler implements ICommandHandler<
+  ApiRemoveRowsCommand,
+  ApiRemoveRowsHandlerReturnType
+> {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,

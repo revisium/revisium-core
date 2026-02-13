@@ -9,9 +9,7 @@ import { IdService } from 'src/infrastructure/database/id.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionCreateTableCommand)
-export class DraftRevisionCreateTableHandler
-  implements ICommandHandler<DraftRevisionCreateTableCommand>
-{
+export class DraftRevisionCreateTableHandler implements ICommandHandler<DraftRevisionCreateTableCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly idService: IdService,

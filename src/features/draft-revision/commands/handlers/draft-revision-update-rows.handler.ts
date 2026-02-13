@@ -14,9 +14,7 @@ import { systemTablesIds } from 'src/features/share/system-tables.consts';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(DraftRevisionUpdateRowsCommand)
-export class DraftRevisionUpdateRowsHandler
-  implements ICommandHandler<DraftRevisionUpdateRowsCommand>
-{
+export class DraftRevisionUpdateRowsHandler implements ICommandHandler<DraftRevisionUpdateRowsCommand> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly internalService: DraftRevisionInternalService,

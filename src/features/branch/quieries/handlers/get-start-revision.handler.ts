@@ -4,9 +4,7 @@ import { GetStartRevisionReturnType } from 'src/features/branch/quieries/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetStartRevisionQuery)
-export class GetStartRevisionHandler
-  implements IQueryHandler<GetStartRevisionQuery>
-{
+export class GetStartRevisionHandler implements IQueryHandler<GetStartRevisionQuery> {
   constructor(private readonly prismaService: TransactionPrismaService) {}
 
   private get prisma() {

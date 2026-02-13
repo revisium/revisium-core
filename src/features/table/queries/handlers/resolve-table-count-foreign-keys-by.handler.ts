@@ -11,9 +11,7 @@ import {
 import { ResolveTableCountForeignKeysByQuery } from 'src/features/table/queries/impl';
 
 @QueryHandler(ResolveTableCountForeignKeysByQuery)
-export class ResolveTableCountForeignKeysByHandler
-  implements IQueryHandler<ResolveTableCountForeignKeysByQuery>
-{
+export class ResolveTableCountForeignKeysByHandler implements IQueryHandler<ResolveTableCountForeignKeysByQuery> {
   constructor(
     private readonly transactionService: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,

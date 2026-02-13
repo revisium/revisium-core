@@ -9,13 +9,10 @@ import {
 } from 'src/features/organization/commands/impl';
 
 @CommandHandler(AddUserToOrganizationCommand)
-export class AddUserToOrganizationHandler
-  implements
-    ICommandHandler<
-      AddUserToOrganizationCommand,
-      AddUserToOrganizationCommandReturnType
-    >
-{
+export class AddUserToOrganizationHandler implements ICommandHandler<
+  AddUserToOrganizationCommand,
+  AddUserToOrganizationCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly idService: IdService,

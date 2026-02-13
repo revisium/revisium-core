@@ -9,10 +9,10 @@ import {
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
 @CommandHandler(CreateEndpointCommand)
-export class CreateEndpointHandler
-  implements
-    ICommandHandler<CreateEndpointCommand, CreateEndpointCommandReturnType>
-{
+export class CreateEndpointHandler implements ICommandHandler<
+  CreateEndpointCommand,
+  CreateEndpointCommandReturnType
+> {
   constructor(
     private readonly prisma: PrismaService,
     private readonly endpointNotification: EndpointNotificationService,
