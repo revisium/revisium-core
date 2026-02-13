@@ -55,6 +55,7 @@ import {
   UpdateRowResponse,
   UploadFileResponse,
 } from 'src/api/rest-api/row/model';
+import { CountModelDto } from 'src/api/rest-api/share/model/count.model';
 import { transformFromPrismaToBranchModel } from 'src/api/rest-api/share/utils/transformFromPrismaToBranchModel';
 import {
   transformFromPaginatedPrismaToRowModel,
@@ -104,19 +105,21 @@ export class RowByIdController {
     operationId: 'rowCountForeignKeysBy',
     summary: 'Count rows that reference this row',
   })
-  @ApiOkResponse({ type: Number })
+  @ApiOkResponse({ type: CountModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Row')
   async countForeignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
-  ) {
-    return this.rowApi.resolveRowCountForeignKeysBy({
-      revisionId,
-      tableId,
-      rowId,
-    });
+  ): Promise<CountModelDto> {
+    return {
+      count: await this.rowApi.resolveRowCountForeignKeysBy({
+        revisionId,
+        tableId,
+        rowId,
+      }),
+    };
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -154,19 +157,21 @@ export class RowByIdController {
     operationId: 'rowCountForeignKeysTo',
     summary: 'Count rows this row references',
   })
-  @ApiOkResponse({ type: Number })
+  @ApiOkResponse({ type: CountModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Row')
   async countForeignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
-  ) {
-    return this.rowApi.resolveRowCountForeignKeysTo({
-      revisionId,
-      tableId,
-      rowId,
-    });
+  ): Promise<CountModelDto> {
+    return {
+      count: await this.rowApi.resolveRowCountForeignKeysTo({
+        revisionId,
+        tableId,
+        rowId,
+      }),
+    };
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)

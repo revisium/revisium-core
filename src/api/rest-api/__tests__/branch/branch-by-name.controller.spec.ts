@@ -88,7 +88,7 @@ describe('restapi - BranchByNameController', () => {
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200);
 
-      expect(response.body).toEqual({});
+      expect(response.body).toEqual({ success: true });
 
       const deletedBranch = await prismaService.branch.findUnique({
         where: { id: childBranch.childBranchId },
@@ -210,7 +210,7 @@ describe('restapi - BranchByNameController', () => {
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200);
 
-      expect(response.body).toEqual({});
+      expect(response.body).toEqual({ success: true });
     });
 
     function getDeleteBranchUrl(

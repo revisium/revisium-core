@@ -18,6 +18,7 @@ import {
   ApiNotFoundError,
 } from 'src/api/rest-api/share/decorators';
 import { GetEndpointResultDto } from 'src/api/rest-api/endpoint/dto';
+import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
@@ -64,12 +65,14 @@ export class EndpointByIdController {
     operationId: 'deleteEndpoint',
     summary: 'Delete an endpoint',
   })
-  @ApiOkResponse({ type: Boolean })
+  @ApiOkResponse({ type: SuccessModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Endpoint')
-  async deleteEndpoint(@Param('endpointId') endpointId: string): Promise<true> {
+  async deleteEndpoint(
+    @Param('endpointId') endpointId: string,
+  ): Promise<SuccessModelDto> {
     await this.endpointApi.deleteEndpoint({ endpointId });
 
-    return true;
+    return { success: true };
   }
 }

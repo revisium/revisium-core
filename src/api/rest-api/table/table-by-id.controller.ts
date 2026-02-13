@@ -74,6 +74,7 @@ import {
   TablesConnection,
 } from 'src/api/rest-api/table/model/table.model';
 import { UpdateTableResponse } from 'src/api/rest-api/table/model/update-table.response';
+import { CountModelDto } from 'src/api/rest-api/share/model/count.model';
 import { Table } from 'src/__generated__/client';
 
 @UseInterceptors(RestMetricsInterceptor)
@@ -114,18 +115,20 @@ export class TableByIdController {
     operationId: 'tableCountRows',
     summary: 'Get row count in table',
   })
-  @ApiOkResponse({ type: Number })
+  @ApiOkResponse({ type: CountModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Table')
   async countRows(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-  ) {
+  ): Promise<CountModelDto> {
     const table = await this.resolveTable(revisionId, tableId);
 
-    return this.tableApi.getCountRowsInTable({
-      tableVersionId: table.versionId,
-    });
+    return {
+      count: await this.tableApi.getCountRowsInTable({
+        tableVersionId: table.versionId,
+      }),
+    };
   }
 
   @UsePipes(
@@ -351,17 +354,19 @@ export class TableByIdController {
     operationId: 'tableCountForeignKeysBy',
     summary: 'Count tables that reference this table',
   })
-  @ApiOkResponse({ type: Number })
+  @ApiOkResponse({ type: CountModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Table')
   async countForeignKeysBy(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-  ) {
-    return this.tableApi.resolveTableCountForeignKeysBy({
-      revisionId,
-      tableId,
-    });
+  ): Promise<CountModelDto> {
+    return {
+      count: await this.tableApi.resolveTableCountForeignKeysBy({
+        revisionId,
+        tableId,
+      }),
+    };
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -395,17 +400,19 @@ export class TableByIdController {
     operationId: 'tableCountForeignKeysTo',
     summary: 'Count tables this table references',
   })
-  @ApiOkResponse({ type: Number })
+  @ApiOkResponse({ type: CountModelDto })
   @ApiCommonErrors()
   @ApiNotFoundError('Table')
   async countForeignKeysTo(
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
-  ) {
-    return this.tableApi.resolveTableCountForeignKeysTo({
-      revisionId,
-      tableId,
-    });
+  ): Promise<CountModelDto> {
+    return {
+      count: await this.tableApi.resolveTableCountForeignKeysTo({
+        revisionId,
+        tableId,
+      }),
+    };
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)

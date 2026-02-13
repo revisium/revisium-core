@@ -123,7 +123,7 @@ describe('restapi - EndpointByIdController', () => {
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200);
 
-      expect(response.body).toEqual({});
+      expect(response.body).toEqual({ success: true });
       expect(response.status).toBe(200);
 
       const deletedEndpoint = await prismaService.endpoint.findUnique({
@@ -188,7 +188,7 @@ describe('restapi - EndpointByIdController', () => {
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200);
 
-      expect(response.body).toEqual({});
+      expect(response.body).toEqual({ success: true });
     });
 
     function getDeleteEndpointUrl(endpointId: string) {
@@ -242,14 +242,13 @@ describe('restapi - EndpointByIdController', () => {
       preparedData = await prepareData(app);
     });
 
-    it('should return empty object for successful delete operation', async () => {
+    it('should return success object for successful delete operation', async () => {
       const response = await request(app.getHttpServer())
         .delete(getDeleteEndpointUrl(preparedData.project.draftEndpointId))
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
         .expect(200);
 
-      expect(response.body).toEqual({});
-      expect(typeof response.body).toBe('object');
+      expect(response.body).toEqual({ success: true });
     });
 
     function getDeleteEndpointUrl(endpointId: string) {
