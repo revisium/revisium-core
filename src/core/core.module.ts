@@ -36,7 +36,9 @@ export class CoreModule {
       imports: [
         AppOptionsModule.forRoot(options),
         AuthModule,
-        ConfigModule.forRoot(),
+        ConfigModule.forRoot({
+          ...(process.env.REVISIUM_STANDALONE ? { ignoreEnvFile: true } : {}),
+        }),
         DatabaseModule,
         GraphqlApiModule,
         RestApiModule,
