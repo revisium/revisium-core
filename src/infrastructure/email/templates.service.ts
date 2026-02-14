@@ -22,7 +22,8 @@ export class TemplateService implements OnModuleInit {
   }
 
   private async loadTemplates() {
-    const templatesDir = path.join(__dirname, 'templates');
+    const templatesDir =
+      process.env.REVISIUM_TEMPLATES_DIR || path.join(__dirname, 'templates');
     const templateFiles = fs.readdirSync(templatesDir);
 
     for (const file of templateFiles) {

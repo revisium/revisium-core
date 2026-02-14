@@ -70,6 +70,7 @@ cp .env.example .env
 | `EMAIL_TRANSPORT` | - | SMTP transport string (nodemailer format) |
 | `EMAIL_PUBLIC_URL` | - | Public URL for email confirmation links |
 | `EMAIL_FROM` | - | Sender email address |
+| `REVISIUM_TEMPLATES_DIR` | `__dirname/templates` | Override path to email templates directory (used in standalone/bundled builds) |
 
 ---
 
