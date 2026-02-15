@@ -176,7 +176,10 @@ export class UpdateTableHandler extends DraftHandler<
       this.jsonSchemaValidator.validateJsonPatchSchema(patches);
 
     if (!result) {
-      throw new BadRequestException('patches is not valid', {
+      const details = (errors ?? [])
+        .map((e) => `${e.instancePath} ${e.message}`)
+        .join('; ');
+      throw new BadRequestException(`patches is not valid: ${details}`, {
         cause: errors,
       });
     }

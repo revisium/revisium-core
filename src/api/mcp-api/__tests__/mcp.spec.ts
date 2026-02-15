@@ -530,6 +530,47 @@ describe('MCP API', () => {
       const content = JSON.parse(data.result.content[0].text);
       expect(content.id).toBe(fixture.project.branchId);
       expect(content.name).toBe(fixture.project.branchName);
+      expect(content.headRevisionId).toBe(fixture.project.headRevisionId);
+      expect(content.draftRevisionId).toBe(fixture.project.draftRevisionId);
+    });
+
+    it('should create revision and return committed head', async () => {
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'create_row',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'commit-test-row',
+            data: { ver: 1 },
+          },
+        },
+      });
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'create_revision',
+          arguments: {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+            comment: 'test commit',
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.isHead).toBe(true);
+      expect(content.isDraft).toBe(false);
+      expect(content.comment).toBe('test commit');
     });
 
     it('should get tables', async () => {

@@ -32,11 +32,20 @@ export class BranchTools implements McpToolRegistrar {
           ],
           session.userId,
         );
-        const result = await this.branchApi.getBranch({
+        const branch = await this.branchApi.getBranch({
           organizationId,
           projectName,
           branchName,
         });
+        const [headRevision, draftRevision] = await Promise.all([
+          this.branchApi.getHeadRevision(branch.id),
+          this.branchApi.getDraftRevision(branch.id),
+        ]);
+        const result = {
+          ...branch,
+          headRevisionId: headRevision.id,
+          draftRevisionId: draftRevision.id,
+        };
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },

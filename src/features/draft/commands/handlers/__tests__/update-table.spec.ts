@@ -100,7 +100,7 @@ describe('UpdateTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'patches is not valid',
+      /patches is not valid:.*must NOT have additional properties/,
     );
 
     // the second "add" element is invalid
@@ -129,7 +129,7 @@ describe('UpdateTableHandler', () => {
     });
 
     await expect(runTransaction(command)).rejects.toThrow(
-      'patches is not valid',
+      /patches is not valid:.*must NOT have additional properties/,
     );
   });
 
