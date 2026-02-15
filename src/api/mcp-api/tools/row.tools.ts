@@ -23,7 +23,7 @@ export class RowTools implements McpToolRegistrar {
 FILTERING with "where" parameter:
 - where: Filter conditions using path-based syntax for the "data" field
   - path: Field path (e.g., "name", "stats.damage", "items[0].price", "items[*].quantity")
-  - Operators: eq, gt, gte, lt, lte, string_contains, string_starts_with, string_ends_with, array_contains, search
+  - Operators: equals, not, gt, gte, lt, lte, in, notIn, string_contains, string_starts_with, string_ends_with, array_contains, array_starts_with, array_ends_with, search
   - Example: { "where": { "data": { "path": "price", "gte": 100 } } }
   - Computed (formula) fields can be used in where just like regular fields
 
