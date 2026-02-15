@@ -369,7 +369,7 @@ describe('CreateTableHandler', () => {
         BadRequestException,
       );
       await expect(runTransaction(command)).rejects.toThrow(
-        'schema is not valid',
+        /schema is not valid:.*must NOT be valid/,
       );
     });
   });
