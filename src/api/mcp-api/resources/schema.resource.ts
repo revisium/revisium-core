@@ -184,7 +184,6 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             tags: {
               type: 'array',
-              default: [],
               description: 'List of tags for categorization',
               items: { type: 'string', default: '' },
             },
@@ -254,7 +253,6 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             photos: {
               type: 'array',
-              default: [],
               items: { $ref: this.fileRef },
               description:
                 'Gallery photos (add items to upload multiple files)',
@@ -289,7 +287,6 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             gallery: {
               type: 'array',
-              default: [],
               items: { $ref: this.fileRef },
               description: 'Additional product images',
             },
@@ -336,7 +333,6 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             attachments: {
               type: 'array',
-              default: [],
               items: { $ref: this.fileRef },
               description: 'Downloadable files (PDFs, docs, etc.)',
             },
@@ -389,7 +385,6 @@ export class SchemaResource implements McpResourceRegistrar {
             },
             portfolio: {
               type: 'array',
-              default: [],
               items: { $ref: this.fileRef },
               description: 'Portfolio samples and work examples',
             },
@@ -424,14 +419,13 @@ export class SchemaResource implements McpResourceRegistrar {
         formulaAvailable
           ? 'x-formula: computed field with expression (string, number, boolean types only)'
           : 'x-formula: NOT AVAILABLE on this server',
-        'Default value rules: string → default: "", number → default: 0, boolean → default: false, array → default: []',
-        'Do NOT add "default" to object types, $ref (File) fields, or "items" when items is an object',
+        'Default value rules: string → default: "", number → default: 0, boolean → default: false',
+        'Do NOT add "default" to array, object, or $ref (File) fields',
       ],
       commonMistakes: [
         'Do NOT add "default" to object types — objects never have default',
+        'Do NOT add "default" to array types — arrays never have default',
         'Do NOT add "default" to $ref fields (File) — only $ref and description allowed',
-        'Do NOT add "default" to "items" when items is type: object — defaults go on individual properties inside',
-        'DO add "default": [] to every array field',
         'DO add "default" to every primitive field (string, number, boolean)',
         'foreignKey value CANNOT be empty string — it must be a valid rowId from referenced table',
         'When adding a foreignKey field to a table that already has rows, existing rows must have valid FK references — adding a new required FK field to a table with data will fail unless the array is empty',
@@ -464,14 +458,14 @@ export class SchemaResource implements McpResourceRegistrar {
       foreignKeyLocations: [
         'Root-level string field: { "categoryId": { "type": "string", "default": "", "foreignKey": "categories" } }',
         'Inside nested object: { "metadata": { "type": "object", "properties": { "authorId": { "type": "string", "default": "", "foreignKey": "authors" } } } }',
-        'Inside array items (object): { "items": { "type": "array", "default": [], "items": { "type": "object", "properties": { "productId": { "type": "string", "default": "", "foreignKey": "products" } } } } }',
-        'NOT inside array of primitives: { "items": { "type": "string" } } — string array items cannot have foreignKey',
+        'Inside array items (object): { "items": { "type": "array", "items": { "type": "object", "properties": { "productId": { "type": "string", "default": "", "foreignKey": "products" } } } } }',
+        'Inside array of strings: { "relatedIds": { "type": "array", "items": { "type": "string", "default": "", "foreignKey": "related-table" } } }',
         'CANNOT be combined with x-formula on the same field',
       ],
       foreignKeyUpdateRules: [
         'Adding a foreignKey field to a table with existing rows will fail — existing rows have empty default value which is not a valid FK reference',
         'Safe to add foreignKey field to an EMPTY table (no rows)',
-        'Adding an ARRAY field with foreignKey in items is safe even with existing rows — default: [] means no items to validate',
+        'Adding an ARRAY field with foreignKey in items is safe even with existing rows — empty array means no items to validate',
         'Removing a foreignKey field is safe — no referential integrity to check',
         'Cannot delete a table that is referenced by foreignKey from another table',
         'Renaming a table automatically updates all foreignKey references in other tables',

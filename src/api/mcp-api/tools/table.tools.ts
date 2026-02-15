@@ -144,15 +144,13 @@ Example of correct schema with formula:
 }
 
 ARRAY FIELD schema notes:
-- Arrays need "default": [] at array level for the field to be optional
-- Array items define their own defaults
-- Don't add "default" inside "items" object itself - defaults go on individual item properties
+- Arrays do NOT have "default" — only "type" and "items" are required
+- Array items follow normal schema rules (strings need default, objects need properties, etc.)
 
-Correct array example:
+Correct array of objects example:
 {
   "values": {
     "type": "array",
-    "default": [],
     "items": {
       "type": "object",
       "properties": {
@@ -164,16 +162,25 @@ Correct array example:
   }
 }
 
+Correct array of strings example:
+{
+  "tags": {
+    "type": "array",
+    "items": { "type": "string", "default": "" }
+  }
+}
+
 DEFAULT VALUE RULES:
 - string: "default": "" (REQUIRED)
 - number: "default": 0 (REQUIRED)
 - boolean: "default": false (REQUIRED)
-- array: "default": [] (REQUIRED)
+- array: NO default (not allowed, only "type" and "items")
 - object: NO default (not allowed, will cause validation error)
 - $ref (File): NO default (not allowed, only $ref and description)
 
 FOREIGN KEY RULES:
-- foreignKey can be on any string field: root level, inside nested objects, inside array items
+- foreignKey can be on any string field: root level, inside nested objects, inside array items (both object and string items)
+- Array of string foreignKeys example: { "type": "array", "items": { "type": "string", "default": "", "foreignKey": "other-table" } }
 - foreignKey value MUST be a valid rowId — empty string is NOT allowed
 - foreignKey and x-formula CANNOT coexist on the same field
 - Self-references (foreignKey pointing to same table) are NOT supported`,

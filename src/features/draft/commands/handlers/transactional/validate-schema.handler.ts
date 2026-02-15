@@ -28,7 +28,10 @@ export class ValidateSchemaHandler implements ICommandHandler<ValidateSchemaComm
     await this.validateForeignKeys(getForeignKeysFromSchema(store));
 
     if (!result) {
-      throw new BadRequestException('schema is not valid', {
+      const details = (errors ?? [])
+        .map((e) => `${e.instancePath} ${e.message ?? '<no message>'}`)
+        .join('; ');
+      throw new BadRequestException(`schema is not valid: ${details}`, {
         cause: errors,
       });
     }
