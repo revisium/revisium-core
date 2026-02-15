@@ -23,7 +23,7 @@ export class ApiCreateRevisionHandler implements ICommandHandler<
 
   async execute({ data }: ApiCreateRevisionCommand) {
     const {
-      nextDraftRevisionId,
+      previousDraftRevisionId,
       draftEndpoints,
       headEndpoints,
     }: CreateRevisionHandlerReturnType =
@@ -36,7 +36,7 @@ export class ApiCreateRevisionHandler implements ICommandHandler<
 
     await this.notifyEndpoints([...draftEndpoints, ...headEndpoints]);
 
-    return this.revisionApi.revision({ revisionId: nextDraftRevisionId });
+    return this.revisionApi.revision({ revisionId: previousDraftRevisionId });
   }
 
   private async notifyEndpoints(endpoints: string[]) {

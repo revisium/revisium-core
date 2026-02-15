@@ -38,10 +38,13 @@ describe('ApiCreateRevisionHandler', () => {
 
     const result = await execute(command);
 
-    const nextDraftRevision = await prismaService.revision.findFirstOrThrow({
-      where: { parentId: draftRevisionId },
-    });
-    expect(result).toStrictEqual(nextDraftRevision);
+    const committedHeadRevision =
+      await prismaService.revision.findUniqueOrThrow({
+        where: { id: draftRevisionId },
+      });
+    expect(committedHeadRevision.isHead).toBe(true);
+    expect(committedHeadRevision.isDraft).toBe(false);
+    expect(result).toStrictEqual(committedHeadRevision);
 
     expect(endpointNotificationService.update).nthCalledWith(
       1,
