@@ -29,7 +29,7 @@ export class ValidateSchemaHandler implements ICommandHandler<ValidateSchemaComm
 
     if (!result) {
       const details = (errors ?? [])
-        .map((e) => `${e.instancePath} ${e.message}`)
+        .map((e) => `${e.instancePath} ${e.message ?? '<no message>'}`)
         .join('; ');
       throw new BadRequestException(`schema is not valid: ${details}`, {
         cause: errors,
