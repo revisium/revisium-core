@@ -129,6 +129,45 @@ export class ProjectTools implements McpToolRegistrar {
     );
 
     server.registerTool(
+      'update_project',
+      {
+        description: 'Update project settings',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          isPublic: z
+            .boolean()
+            .describe('Whether the project is publicly accessible'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: false },
+      },
+      async ({ organizationId, projectName, isPublic }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.update,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const result = await this.projectApi.updateProject({
+          organizationId,
+          projectName,
+          isPublic,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'delete_project',
       {
         description: 'Delete a project',

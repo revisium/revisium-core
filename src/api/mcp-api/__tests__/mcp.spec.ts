@@ -145,6 +145,13 @@ describe('MCP API', () => {
       expect(toolNames).toContain('delete_rows');
       expect(toolNames).toContain('create_revision');
       expect(toolNames).toContain('upload_file');
+      expect(toolNames).toContain('get_branches');
+      expect(toolNames).toContain('get_revisions');
+      expect(toolNames).toContain('delete_branch');
+      expect(toolNames).toContain('count_rows');
+      expect(toolNames).toContain('get_parent_revision');
+      expect(toolNames).toContain('update_project');
+      expect(toolNames).toContain('get_row_foreign_keys_by');
     });
   });
 
@@ -770,6 +777,191 @@ describe('MCP API', () => {
 
       const data = parseResponse(res);
       expect(data.result.isError).toBeFalsy();
+    });
+
+    it('should get branches', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'get_branches',
+          arguments: {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges).toBeDefined();
+      expect(content.edges.length).toBeGreaterThanOrEqual(1);
+      expect(content.edges[0].node.name).toBe(fixture.project.branchName);
+    });
+
+    it('should get revisions', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'get_revisions',
+          arguments: {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges).toBeDefined();
+      expect(content.edges.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should count rows', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'count_rows',
+          arguments: {
+            revisionId: fixture.project.headRevisionId,
+            tableId: fixture.project.tableId,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(typeof content.count).toBe('number');
+    });
+
+    it('should get parent revision', async () => {
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'create_row',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'parent-rev-test-row',
+            data: { ver: 1 },
+          },
+        },
+      });
+
+      const commitRes = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'create_revision',
+          arguments: {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: fixture.project.branchName,
+          },
+        },
+      });
+
+      const commitData = parseResponse(commitRes);
+      const newRevision = JSON.parse(commitData.result.content[0].text);
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 5,
+        method: 'tools/call',
+        params: {
+          name: 'get_parent_revision',
+          arguments: { revisionId: newRevision.id },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.id).toBe(fixture.project.headRevisionId);
+    });
+
+    it('should return null for root revision parent', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'get_parent_revision',
+          arguments: { revisionId: fixture.project.headRevisionId },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.parent).toBeNull();
+    });
+
+    it('should update project', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'update_project',
+          arguments: {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            isPublic: true,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content).toBe(true);
+    });
+
+    it('should delete branch', async () => {
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'create_branch',
+          arguments: {
+            revisionId: fixture.project.headRevisionId,
+            branchName: 'branch-to-delete',
+          },
+        },
+      });
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'delete_branch',
+          arguments: {
+            organizationId: fixture.project.organizationId,
+            projectName: fixture.project.projectName,
+            branchName: 'branch-to-delete',
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content).toBe(true);
     });
   });
 
