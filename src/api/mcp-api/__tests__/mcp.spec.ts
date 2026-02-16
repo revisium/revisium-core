@@ -931,7 +931,9 @@ describe('MCP API', () => {
     });
 
     it('should delete branch', async () => {
-      await mcpPost(app, sessionId, {
+      const branchName = `branch-to-delete-${Date.now()}`;
+
+      const createRes = await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
@@ -939,10 +941,13 @@ describe('MCP API', () => {
           name: 'create_branch',
           arguments: {
             revisionId: fixture.project.headRevisionId,
-            branchName: 'branch-to-delete',
+            branchName,
           },
         },
-      });
+      }).expect(200);
+
+      const createData = parseResponse(createRes);
+      expect(createData.result.isError).toBeFalsy();
 
       const res = await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
@@ -953,7 +958,7 @@ describe('MCP API', () => {
           arguments: {
             organizationId: fixture.project.organizationId,
             projectName: fixture.project.projectName,
-            branchName: 'branch-to-delete',
+            branchName,
           },
         },
       }).expect(200);
