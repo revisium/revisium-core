@@ -889,7 +889,8 @@ describe('MCP API', () => {
       const data = parseResponse(res);
       expect(data.result.isError).toBeFalsy();
       const content = JSON.parse(data.result.content[0].text);
-      expect(content.id).toBe(fixture.project.headRevisionId);
+      expect(content.parent).toBeDefined();
+      expect(content.parent.id).toBe(fixture.project.headRevisionId);
     });
 
     it('should return null for root revision parent', async () => {
@@ -928,6 +929,92 @@ describe('MCP API', () => {
       expect(data.result.isError).toBeFalsy();
       const content = JSON.parse(data.result.content[0].text);
       expect(content).toBe(true);
+    });
+
+    it('should get row foreign keys by', async () => {
+      const childTableId = `fk-child-${Date.now()}`;
+
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'create_table',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: childTableId,
+            schema: {
+              type: 'object',
+              properties: {
+                parentRef: {
+                  type: 'string',
+                  default: '',
+                  foreignKey: fixture.project.tableId,
+                },
+              },
+              additionalProperties: false,
+              required: ['parentRef'],
+            },
+          },
+        },
+      }).expect(200);
+
+      const parentRowId = `fk-parent-${Date.now()}`;
+
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
+          name: 'create_row',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: parentRowId,
+            data: { ver: 1 },
+          },
+        },
+      }).expect(200);
+
+      await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 5,
+        method: 'tools/call',
+        params: {
+          name: 'create_row',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: childTableId,
+            rowId: 'fk-test-child',
+            data: { parentRef: parentRowId },
+          },
+        },
+      }).expect(200);
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 6,
+        method: 'tools/call',
+        params: {
+          name: 'get_row_foreign_keys_by',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: parentRowId,
+            foreignKeyByTableId: childTableId,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges).toBeDefined();
+      expect(
+        content.edges.some(
+          (e: { node: { id: string } }) => e.node.id === 'fk-test-child',
+        ),
+      ).toBe(true);
     });
 
     it('should delete branch', async () => {

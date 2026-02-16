@@ -66,23 +66,12 @@ export class RevisionTools implements McpToolRegistrar {
         );
         const result =
           await this.revisionsApi.resolveParentByRevision(revisionId);
-        if (!result) {
-          return {
-            content: [
-              {
-                type: 'text' as const,
-                text: JSON.stringify(
-                  { parent: null, message: 'This is the root revision' },
-                  null,
-                  2,
-                ),
-              },
-            ],
-          };
-        }
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ parent: result ?? null }, null, 2),
+            },
           ],
         };
       },
