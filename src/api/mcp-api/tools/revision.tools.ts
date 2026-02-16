@@ -43,6 +43,41 @@ export class RevisionTools implements McpToolRegistrar {
     );
 
     server.registerTool(
+      'get_parent_revision',
+      {
+        description:
+          'Get the parent revision of a given revision. Returns null if the revision is the root (first) revision.',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      async ({ revisionId }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const result =
+          await this.revisionsApi.resolveParentByRevision(revisionId);
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ parent: result ?? null }, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'create_revision',
       {
         description:

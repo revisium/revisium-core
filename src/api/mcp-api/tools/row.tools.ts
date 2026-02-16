@@ -472,6 +472,57 @@ IMPORTANT for tables with computed fields (x-formula):
     );
 
     server.registerTool(
+      'get_row_foreign_keys_by',
+      {
+        description:
+          'Get rows that reference a specific row via foreign key. Returns rows from a specified table that have a foreign key pointing to the given row.',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          tableId: z.string().describe('Table ID of the referenced row'),
+          rowId: z.string().describe('Row ID being referenced'),
+          foreignKeyByTableId: z
+            .string()
+            .describe('Table ID to search for referencing rows'),
+          first: z
+            .number()
+            .optional()
+            .describe('Number of items (default 100)'),
+          after: z.string().optional().describe('Cursor'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      async (
+        { revisionId, tableId, rowId, foreignKeyByTableId, first, after },
+        context,
+      ) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const result = await this.rowApi.resolveRowForeignKeysBy({
+          revisionId,
+          tableId,
+          rowId,
+          foreignKeyByTableId,
+          first: first ?? 100,
+          after,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'rename_row',
       {
         description: 'Rename a row (change row ID)',

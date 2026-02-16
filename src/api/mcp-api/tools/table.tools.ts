@@ -82,6 +82,43 @@ export class TableTools implements McpToolRegistrar {
     );
 
     server.registerTool(
+      'count_rows',
+      {
+        description: 'Count rows in a table',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          tableId: z.string().describe('Table ID'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      async ({ revisionId, tableId }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const table = await this.tableApi.getTable({ revisionId, tableId });
+        const count = await this.tableApi.getCountRowsInTable({
+          tableVersionId: table.versionId,
+        });
+        return {
+          content: [
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ count }, null, 2),
+            },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'get_table_schema',
       {
         description: 'Get schema of a table',

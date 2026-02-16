@@ -109,6 +109,135 @@ export class BranchTools implements McpToolRegistrar {
     );
 
     server.registerTool(
+      'get_branches',
+      {
+        description: 'List branches in a project',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          first: z
+            .number()
+            .optional()
+            .describe('Number of items (default 100)'),
+          after: z.string().optional().describe('Cursor'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      async ({ organizationId, projectName, first, after }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const result = await this.branchApi.getBranches({
+          organizationId,
+          projectName,
+          first: first ?? 100,
+          after,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
+      'get_revisions',
+      {
+        description: 'List revisions in a branch',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          branchName: z.string().describe('Branch name'),
+          first: z
+            .number()
+            .optional()
+            .describe('Number of items (default 100)'),
+          after: z.string().optional().describe('Cursor'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      async (
+        { organizationId, projectName, branchName, first, after },
+        context,
+      ) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const branch = await this.branchApi.getBranch({
+          organizationId,
+          projectName,
+          branchName,
+        });
+        const result = await this.branchApi.getRevisionsByBranchId({
+          branchId: branch.id,
+          first: first ?? 100,
+          after,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
+      'delete_branch',
+      {
+        description: 'Delete a branch',
+        inputSchema: {
+          organizationId: z.string().describe('Organization ID'),
+          projectName: z.string().describe('Project name'),
+          branchName: z.string().describe('Branch name'),
+        },
+        annotations: { readOnlyHint: false, destructiveHint: true },
+      },
+      async ({ organizationId, projectName, branchName }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByOrganizationProject(
+          organizationId,
+          projectName,
+          [
+            {
+              action: PermissionAction.delete,
+              subject: PermissionSubject.Branch,
+            },
+          ],
+          session.userId,
+        );
+        const result = await this.branchApi.deleteBranch({
+          organizationId,
+          projectName,
+          branchName,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'revert_changes',
       {
         description: 'Revert all uncommitted changes in a branch',
