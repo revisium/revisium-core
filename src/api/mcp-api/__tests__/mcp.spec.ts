@@ -666,9 +666,7 @@ describe('MCP API', () => {
       if (content.edges.length > 0) {
         expect(content.edges[0].node.row.id).toBe(fixture.project.rowId);
         expect(content.edges[0].node.row.data).toBeDefined();
-        expect(content.edges[0].node.table.id).toBe(
-          fixture.project.tableId,
-        );
+        expect(content.edges[0].node.table.id).toBe(fixture.project.tableId);
       }
     });
 
