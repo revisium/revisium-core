@@ -145,7 +145,7 @@ RESPONSE may include:
       'search_rows',
       {
         description:
-          'Full-text search across all fields of all rows in a revision. Returns matching rows with match details (path, value, highlight). Searches across ALL tables - no tableId needed. By default returns compact results: rowId, tableId, and matches (field path, value, highlight) - saves tokens. Set includeRowData=true to get full row data in results (use sparingly for large datasets). Recommended workflow: search_rows to find rows, then get_row for full data of specific rows.',
+          'Full-text search across all fields of all rows in a revision. Searches across ALL tables - no tableId needed. By default returns compact results: rowId, tableId, and matches (field path and either highlight or value, not both) - saves tokens. Set includeRowData=true to get full row data in results (use sparingly for large datasets). Recommended workflow: search_rows to find rows, then get_row for full data of specific rows.',
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           query: z
@@ -196,7 +196,7 @@ RESPONSE may include:
                   table: { id: edge.node.table.id },
                   matches: edge.node.matches.map((m) => ({
                     path: m.path,
-                    ...(m.highlight
+                    ...(m.highlight != null
                       ? { highlight: m.highlight }
                       : { value: m.value }),
                   })),
