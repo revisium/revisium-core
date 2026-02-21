@@ -145,7 +145,7 @@ RESPONSE may include:
       'search_rows',
       {
         description:
-          'Full-text search across all fields of all rows in a revision. Returns matching rows with match details (path, value, highlight). Searches across ALL tables - no tableId needed.',
+          'Full-text search across all fields of all rows in a revision. Returns matching rows with match details (path, value, highlight). Searches across ALL tables - no tableId needed. By default returns compact results (rowId, tableId, matches only). Set includeRowData=true to include full row data.',
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           query: z
@@ -158,10 +158,16 @@ RESPONSE may include:
             .optional()
             .describe('Number of items (default 50, max 1000)'),
           after: z.string().optional().describe('Cursor for pagination'),
+          includeRowData: z
+            .boolean()
+            .optional()
+            .describe(
+              'Include full row data in results (default false). When false, only rowId, tableId and matches are returned to save tokens. Use get_row to fetch full data for specific rows.',
+            ),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, query, first, after }, context) => {
+      async ({ revisionId, query, first, after, includeRowData }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
           revisionId,
@@ -179,9 +185,28 @@ RESPONSE may include:
           first: first ?? 50,
           after,
         });
+        const compactResult = includeRowData
+          ? result
+          : {
+              ...result,
+              edges: result.edges.map((edge) => ({
+                ...edge,
+                node: {
+                  row: { id: edge.node.row.id },
+                  table: { id: edge.node.table.id },
+                  matches: edge.node.matches,
+                  ...(edge.node.formulaErrors?.length
+                    ? { formulaErrors: edge.node.formulaErrors }
+                    : {}),
+                },
+              })),
+            };
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactResult, null, 2),
+            },
           ],
         };
       },

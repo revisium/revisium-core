@@ -616,7 +616,7 @@ describe('MCP API', () => {
       expect(content.edges).toBeDefined();
     });
 
-    it('should search rows across tables', async () => {
+    it('should search rows across tables (compact mode)', async () => {
       const res = await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
@@ -625,7 +625,7 @@ describe('MCP API', () => {
           name: 'search_rows',
           arguments: {
             revisionId: fixture.project.headRevisionId,
-            query: 'test',
+            query: fixture.project.rowId,
           },
         },
       }).expect(200);
@@ -633,6 +633,41 @@ describe('MCP API', () => {
       const data = parseResponse(res);
       const content = JSON.parse(data.result.content[0].text);
       expect(content.edges).toBeDefined();
+      if (content.edges.length > 0) {
+        expect(content.edges[0].node.row).toEqual({
+          id: fixture.project.rowId,
+        });
+        expect(content.edges[0].node.table).toEqual({
+          id: fixture.project.tableId,
+        });
+        expect(content.edges[0].node.matches).toBeDefined();
+        expect(content.edges[0].node.row.data).toBeUndefined();
+      }
+    });
+
+    it('should search rows with full data (includeRowData)', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'search_rows',
+          arguments: {
+            revisionId: fixture.project.headRevisionId,
+            query: fixture.project.rowId,
+            includeRowData: true,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges).toBeDefined();
+      if (content.edges.length > 0) {
+        expect(content.edges[0].node.row.id).toBe(fixture.project.rowId);
+        expect(content.edges[0].node.row.data).toBeDefined();
+        expect(content.edges[0].node.table.id).toBe(fixture.project.tableId);
+      }
     });
 
     it('should get revision', async () => {
