@@ -148,8 +148,15 @@ RESPONSE may include:
           'Full-text search across all fields of all rows in a revision. Returns matching rows with match details (path, value, highlight). Searches across ALL tables - no tableId needed.',
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
-          query: z.string().describe('Search string to match against row data'),
-          first: z.number().optional().describe('Number of items (default 50)'),
+          query: z
+            .string()
+            .min(1)
+            .describe('Search string to match against row data'),
+          first: z
+            .number()
+            .max(1000)
+            .optional()
+            .describe('Number of items (default 50, max 1000)'),
           after: z.string().optional().describe('Cursor for pagination'),
         },
         annotations: { readOnlyHint: true },
