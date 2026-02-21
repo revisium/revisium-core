@@ -626,6 +626,52 @@ describe('mcp-api - role-based permissions', () => {
         expect(isSuccessResult(result)).toBe(true);
       });
     });
+
+    describe('searchRows (read access)', () => {
+      it('owner can search rows', async () => {
+        const sessionId = await initAndLogin(fixture.owner);
+
+        const result = await callMcpTool(sessionId, 'search_rows', {
+          revisionId: fixture.project.draftRevisionId,
+          query: 'test',
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('developer can search rows', async () => {
+        const sessionId = await initAndLogin(fixture.developer);
+
+        const result = await callMcpTool(sessionId, 'search_rows', {
+          revisionId: fixture.project.draftRevisionId,
+          query: 'test',
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('editor can search rows', async () => {
+        const sessionId = await initAndLogin(fixture.editor);
+
+        const result = await callMcpTool(sessionId, 'search_rows', {
+          revisionId: fixture.project.draftRevisionId,
+          query: 'test',
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+      });
+
+      it('reader can search rows', async () => {
+        const sessionId = await initAndLogin(fixture.reader);
+
+        const result = await callMcpTool(sessionId, 'search_rows', {
+          revisionId: fixture.project.draftRevisionId,
+          query: 'test',
+        });
+
+        expect(isSuccessResult(result)).toBe(true);
+      });
+    });
   });
 
   describe('Branch Operations - Role-Based', () => {

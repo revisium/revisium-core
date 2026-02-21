@@ -138,6 +138,7 @@ describe('MCP API', () => {
       expect(toolNames).toContain('get_tables');
       expect(toolNames).toContain('create_table');
       expect(toolNames).toContain('get_rows');
+      expect(toolNames).toContain('search_rows');
       expect(toolNames).toContain('create_row');
       expect(toolNames).toContain('create_rows');
       expect(toolNames).toContain('update_rows');
@@ -606,6 +607,25 @@ describe('MCP API', () => {
           arguments: {
             revisionId: fixture.project.headRevisionId,
             tableId: fixture.project.tableId,
+          },
+        },
+      }).expect(200);
+
+      const data = parseResponse(res);
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges).toBeDefined();
+    });
+
+    it('should search rows across tables', async () => {
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 3,
+        method: 'tools/call',
+        params: {
+          name: 'search_rows',
+          arguments: {
+            revisionId: fixture.project.headRevisionId,
+            query: 'test',
           },
         },
       }).expect(200);

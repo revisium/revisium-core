@@ -111,6 +111,13 @@ TYPICAL WORKFLOW:
 5. get_revision_changes(draftRevisionId) - review pending changes before commit
 6. create_revision() - only after user approval
 
+SEARCHING DATA:
+- search_rows(revisionId, query) - full-text search across ALL tables and ALL fields in a revision
+- No tableId needed - searches everything
+- Returns matches with: row data, table info (id, name), match details (field path, value, highlight)
+- Use this to find data when you don't know the exact table or rowId
+- Example: search_rows(revisionId, "TableEditor") finds all rows mentioning "TableEditor"
+
 IMPORTANT:
 - Project.rootBranch contains the default branch info
 - Always use branch.draftRevisionId for modifications

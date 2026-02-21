@@ -142,6 +142,50 @@ RESPONSE may include:
     );
 
     server.registerTool(
+      'search_rows',
+      {
+        description:
+          'Full-text search across all fields of all rows in a revision. Returns matching rows with match details (path, value, highlight). Searches across ALL tables - no tableId needed.',
+        inputSchema: {
+          revisionId: z.string().describe('Revision ID'),
+          query: z
+            .string()
+            .describe('Search string to match against row data'),
+          first: z
+            .number()
+            .optional()
+            .describe('Number of items (default 50)'),
+          after: z.string().optional().describe('Cursor for pagination'),
+        },
+        annotations: { readOnlyHint: true },
+      },
+      async ({ revisionId, query, first, after }, context) => {
+        const session = auth.requireAuth(context);
+        await auth.checkPermissionByRevision(
+          revisionId,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          session.userId,
+        );
+        const result = await this.rowApi.searchRows({
+          revisionId,
+          query,
+          first: first ?? 50,
+          after,
+        });
+        return {
+          content: [
+            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+          ],
+        };
+      },
+    );
+
+    server.registerTool(
       'get_row',
       {
         description: `Get a specific row. May include formulaErrors array if formula computation failed.
