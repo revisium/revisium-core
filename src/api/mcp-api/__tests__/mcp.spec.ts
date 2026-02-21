@@ -616,45 +616,71 @@ describe('MCP API', () => {
       expect(content.edges).toBeDefined();
     });
 
-    it('should search rows across tables (compact mode)', async () => {
-      const res = await mcpPost(app, sessionId, {
+    it('should search rows in compact mode', async () => {
+      await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
         params: {
+          name: 'create_row',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'search-test-row',
+            data: { ver: 777 },
+          },
+        },
+      }).expect(200);
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
           name: 'search_rows',
           arguments: {
-            revisionId: fixture.project.headRevisionId,
-            query: fixture.project.rowId,
+            revisionId: fixture.project.draftRevisionId,
+            query: '777',
           },
         },
       }).expect(200);
 
       const data = parseResponse(res);
       const content = JSON.parse(data.result.content[0].text);
-      expect(content.edges).toBeDefined();
-      if (content.edges.length > 0) {
-        expect(content.edges[0].node.row).toEqual({
-          id: fixture.project.rowId,
-        });
-        expect(content.edges[0].node.table).toEqual({
-          id: fixture.project.tableId,
-        });
-        expect(content.edges[0].node.matches).toBeDefined();
-        expect(content.edges[0].node.row.data).toBeUndefined();
-      }
+      expect(content.edges.length).toBeGreaterThan(0);
+      expect(content.edges[0].node.row).toEqual({ id: 'search-test-row' });
+      expect(content.edges[0].node.table).toEqual({
+        id: fixture.project.tableId,
+      });
+      expect(content.edges[0].node.matches).toBeDefined();
+      expect(content.edges[0].node.row.data).toBeUndefined();
     });
 
     it('should search rows with full data (includeRowData)', async () => {
-      const res = await mcpPost(app, sessionId, {
+      await mcpPost(app, sessionId, {
         jsonrpc: '2.0',
         id: 3,
         method: 'tools/call',
         params: {
+          name: 'create_row',
+          arguments: {
+            revisionId: fixture.project.draftRevisionId,
+            tableId: fixture.project.tableId,
+            rowId: 'search-full-row',
+            data: { ver: 888 },
+          },
+        },
+      }).expect(200);
+
+      const res = await mcpPost(app, sessionId, {
+        jsonrpc: '2.0',
+        id: 4,
+        method: 'tools/call',
+        params: {
           name: 'search_rows',
           arguments: {
-            revisionId: fixture.project.headRevisionId,
-            query: fixture.project.rowId,
+            revisionId: fixture.project.draftRevisionId,
+            query: '888',
             includeRowData: true,
           },
         },
@@ -662,12 +688,12 @@ describe('MCP API', () => {
 
       const data = parseResponse(res);
       const content = JSON.parse(data.result.content[0].text);
-      expect(content.edges).toBeDefined();
-      if (content.edges.length > 0) {
-        expect(content.edges[0].node.row.id).toBe(fixture.project.rowId);
-        expect(content.edges[0].node.row.data).toBeDefined();
-        expect(content.edges[0].node.table.id).toBe(fixture.project.tableId);
-      }
+      expect(content.edges.length).toBeGreaterThan(0);
+      expect(content.edges[0].node.row.id).toBe('search-full-row');
+      expect(content.edges[0].node.row.data).toBeDefined();
+      expect(content.edges[0].node.table.id).toBe(
+        fixture.project.tableId,
+      );
     });
 
     it('should get revision', async () => {
