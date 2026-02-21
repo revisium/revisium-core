@@ -6,6 +6,7 @@ import {
 } from 'src/api/graphql-api/branch/model/branch.model';
 import { OrganizationModel } from 'src/api/graphql-api/organization/model/organization.model';
 import { UsersProjectModel } from 'src/api/graphql-api/project/model/users-project.model';
+import { Relation } from 'src/api/graphql-api/share/model/relation.type';
 
 @ObjectType()
 export class ProjectModel {
@@ -28,10 +29,10 @@ export class ProjectModel {
   organization: OrganizationModel;
 
   @Field(() => BranchModel)
-  rootBranch: BranchModel;
+  rootBranch: Relation<BranchModel>;
 
   @Field(() => BranchesConnection)
-  allBranches: BranchesConnection;
+  allBranches: Relation<BranchesConnection>;
 
   @Field(() => UsersProjectModel, { nullable: true })
   userProject?: UsersProjectModel;

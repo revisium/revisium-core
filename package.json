@@ -37,7 +37,6 @@
     "test:watch": "NODE_ENV=test jest --watch",
     "test:cov": "NODE_ENV=test jest --coverage --silent",
     "test:debug": "NODE_ENV=test node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "NODE_ENV=test jest --config ./test/jest-e2e.json",
     "tsc": "tsc -p tsconfig.json",
     "docker:test-container-up": "docker compose -f docker-compose-test.yml -p revisium-core-test up -d && sleep 1 && dotenv -e .env.test npm run prisma:migrate:deploy && dotenv -e .env.test npm run seed",
     "docker:test-container-down": "docker compose -f docker-compose-test.yml -p revisium-core-test down --volumes",
@@ -47,6 +46,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.816.0",
     "@casl/ability": "^6.7.5",
+    "@graphql-yoga/nestjs": "^3.8.0",
     "@modelcontextprotocol/sdk": "^1.25.3",
     "@nestjs/cache-manager": "^3.1.0",
     "@nestjs/common": "^11.1.11",
@@ -54,7 +54,6 @@
     "@nestjs/core": "^11.1.11",
     "@nestjs/cqrs": "^11.0.3",
     "@nestjs/event-emitter": "^3.0.1",
-    "@graphql-yoga/nestjs": "^3.8.0",
     "@nestjs/graphql": "^13.2.3",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/microservices": "^11.1.11",
@@ -77,8 +76,8 @@
     "compression": "^1.8.1",
     "dotenv": "^17.2.3",
     "graphql": "^16.12.0",
-    "graphql-yoga": "^5.18.0",
     "graphql-scalars": "^1.25.0",
+    "graphql-yoga": "^5.18.0",
     "handlebars": "^4.7.8",
     "ioredis": "^5.9.0",
     "lru-cache": "^11.2.4",
@@ -98,6 +97,8 @@
     "@nestjs/cli": "^11.0.14",
     "@nestjs/schematics": "^11.0.9",
     "@nestjs/testing": "^11.1.11",
+    "@swc/core": "^1.15.11",
+    "@swc/jest": "^0.2.39",
     "@types/bcrypt": "^5.0.2",
     "@types/compression": "^1.8.1",
     "@types/express": "^5.0.6",
@@ -147,7 +148,26 @@
     "rootDir": "./",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest",
+        {
+          "jsc": {
+            "target": "es2021",
+            "parser": {
+              "syntax": "typescript",
+              "tsx": false,
+              "decorators": true
+            },
+            "transform": {
+              "decoratorMetadata": true
+            }
+          },
+          "module": {
+            "type": "commonjs"
+          },
+          "sourceMaps": "inline"
+        }
+      ]
     },
     "collectCoverageFrom": [
       "<rootDir>/src/**/*.(t|j)s",

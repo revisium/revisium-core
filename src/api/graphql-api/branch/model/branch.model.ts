@@ -7,6 +7,7 @@ import {
   RevisionModel,
 } from 'src/api/graphql-api/revision/model/revision.model';
 import { Paginated } from 'src/api/graphql-api/share/model/paginated.model';
+import { Relation } from 'src/api/graphql-api/share/model/relation.type';
 
 @ObjectType()
 export class BranchModel {
@@ -32,19 +33,19 @@ export class BranchModel {
   parent?: ParentBranchModel;
 
   @Field(() => ProjectModel)
-  project: ProjectModel;
+  project: Relation<ProjectModel>;
 
   @Field(() => RevisionModel)
-  start: RevisionModel;
+  start: Relation<RevisionModel>;
 
   @Field(() => RevisionModel)
-  head: RevisionModel;
+  head: Relation<RevisionModel>;
 
   @Field(() => RevisionModel)
-  draft: RevisionModel;
+  draft: Relation<RevisionModel>;
 
   @Field(() => RevisionConnection)
-  revisions: RevisionConnection;
+  revisions: Relation<RevisionConnection>;
 }
 
 @ObjectType()

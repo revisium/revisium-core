@@ -48,8 +48,3 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@8c71dc039c2dd71d3821e89a2b58ecc7fee6ced9 #SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-      - name: Upload results to Codecov
-        uses: codecov/codecov-action@18283e04ce6e62d37312384ff67231eb8fd56d24 #codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}

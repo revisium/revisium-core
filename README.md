@@ -6,7 +6,7 @@ Backend API for [Revisium](https://github.com/revisium/revisium) — unopinionat
 
 [![License](https://img.shields.io/github/license/revisium/revisium-core?color=blue)](LICENSE)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=revisium_revisium-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=revisium_revisium-core)
-[![codecov](https://codecov.io/gh/revisium/revisium-core/graph/badge.svg?token=VPIG1CM39K)](https://codecov.io/gh/revisium/revisium-core)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=revisium_revisium-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=revisium_revisium-core)
 [![npm](https://img.shields.io/npm/v/@revisium/core?color=red)](https://www.npmjs.com/package/@revisium/core)
 [![Docker](https://img.shields.io/docker/v/revisium/revisium-core?label=docker&sort=semver)](https://hub.docker.com/r/revisium/revisium-core)
 

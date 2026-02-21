@@ -76,9 +76,9 @@ export class SystemColumnMappingService {
     schema: JsonSchema,
   ): Prisma.RowWhereInput {
     return Object.fromEntries(
-      Object.entries(where).map(([key, value]) =>
-        this.processWhereEntry(key, value, schema),
-      ),
+      Object.entries(where)
+        .filter(([, value]) => value !== undefined)
+        .map(([key, value]) => this.processWhereEntry(key, value, schema)),
     ) as Prisma.RowWhereInput;
   }
 
