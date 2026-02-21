@@ -3,6 +3,7 @@ import { Prisma } from 'src/__generated__/client';
 import { JSONResolver, DateTimeResolver } from 'graphql-scalars';
 import { FormulaFieldErrorModel } from 'src/api/graphql-api/row/model/formula-field-error.model';
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
+import { Relation } from 'src/api/graphql-api/share/model/relation.type';
 
 export type RowModelContext = {
   revisionId: string;
@@ -39,13 +40,13 @@ export class RowModel {
   formulaErrors?: FormulaFieldErrorModel[];
 
   @Field(() => RowsConnection)
-  rowForeignKeysTo: RowsConnection;
+  rowForeignKeysTo: Relation<RowsConnection>;
 
   @Field(() => Int)
   countForeignKeysTo: number;
 
   @Field(() => RowsConnection)
-  rowForeignKeysBy: RowsConnection;
+  rowForeignKeysBy: Relation<RowsConnection>;
 
   context: RowModelContext;
 }

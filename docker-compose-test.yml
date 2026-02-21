@@ -17,6 +17,7 @@ services:
       POSTGRES_USER: prisma
       POSTGRES_PASSWORD: prisma
       POSTGRES_DB: tests
+    command: postgres -c max_connections=300 -c shared_buffers=256MB
 
   mailhog:
     container_name: integration-tests-mailhog

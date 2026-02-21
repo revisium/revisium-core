@@ -4,6 +4,7 @@ import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
+import { Relation } from 'src/api/graphql-api/share/model/relation.type';
 import { TableViewsDataModel } from 'src/api/graphql-api/views/model/table-views-data.model';
 
 export type TableModelContext = {
@@ -40,13 +41,13 @@ export class TableModel {
   schema: Prisma.JsonValue;
 
   @Field(() => TablesConnection)
-  foreignKeysTo: TablesConnection;
+  foreignKeysTo: Relation<TablesConnection>;
 
   @Field(() => Int)
   countForeignKeysTo: number;
 
   @Field(() => TablesConnection)
-  foreignKeysBy: TablesConnection;
+  foreignKeysBy: Relation<TablesConnection>;
 
   @Field(() => Int)
   countForeignKeysBy: number;

@@ -7,6 +7,7 @@ import { ChildBranchModel } from 'src/api/graphql-api/revision/model/child-branc
 import { Paginated } from 'src/api/graphql-api/share/model/paginated.model';
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
 import { RevisionChangesModel } from 'src/api/graphql-api/revision-changes/model';
+import { Relation } from 'src/api/graphql-api/share/model/relation.type';
 
 @ObjectType()
 export class RevisionModel {
@@ -44,13 +45,13 @@ export class RevisionModel {
   children: RevisionModel[];
 
   @Field(() => TablesConnection)
-  tables: TablesConnection;
+  tables: Relation<TablesConnection>;
 
   @Field(() => BranchModel)
-  branch: BranchModel;
+  branch: Relation<BranchModel>;
 
   @Field(() => [EndpointModel])
-  endpoints: EndpointModel[];
+  endpoints: Relation<EndpointModel[]>;
 
   @Field(() => [JSONResolver])
   migrations: Prisma.JsonValue[];
