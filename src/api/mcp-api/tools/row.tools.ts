@@ -5,8 +5,33 @@ import { RowApiService } from 'src/features/row/row-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { SearchRowsResponse } from 'src/features/row/queries/impl';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
+
+function compactMatch(m: { path: string; value: unknown; highlight?: string }) {
+  if (m.highlight === null || m.highlight === undefined) {
+    return { path: m.path, value: m.value };
+  }
+  return { path: m.path, highlight: m.highlight };
+}
+
+function toCompactSearchResult(result: SearchRowsResponse) {
+  return {
+    ...result,
+    edges: result.edges.map((edge) => ({
+      ...edge,
+      node: {
+        row: { id: edge.node.row.id },
+        table: { id: edge.node.table.id },
+        matches: edge.node.matches.map(compactMatch),
+        ...(edge.node.formulaErrors?.length
+          ? { formulaErrors: edge.node.formulaErrors }
+          : {}),
+      },
+    })),
+  };
+}
 
 export class RowTools implements McpToolRegistrar {
   constructor(
@@ -187,25 +212,7 @@ RESPONSE may include:
         });
         const compactResult = includeRowData
           ? result
-          : {
-              ...result,
-              edges: result.edges.map((edge) => ({
-                ...edge,
-                node: {
-                  row: { id: edge.node.row.id },
-                  table: { id: edge.node.table.id },
-                  matches: edge.node.matches.map((m) => ({
-                    path: m.path,
-                    ...(m.highlight != null
-                      ? { highlight: m.highlight }
-                      : { value: m.value }),
-                  })),
-                  ...(edge.node.formulaErrors?.length
-                    ? { formulaErrors: edge.node.formulaErrors }
-                    : {}),
-                },
-              })),
-            };
+          : toCompactSearchResult(result);
         return {
           content: [
             {
