@@ -5,8 +5,33 @@ import { RowApiService } from 'src/features/row/row-api.service';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { SearchRowsResponse } from 'src/features/row/queries/impl';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
+
+function compactMatch(m: { path: string; value: unknown; highlight?: string }) {
+  if (m.highlight === null || m.highlight === undefined) {
+    return { path: m.path, value: m.value };
+  }
+  return { path: m.path, highlight: m.highlight };
+}
+
+function toCompactSearchResult(result: SearchRowsResponse) {
+  return {
+    ...result,
+    edges: result.edges.map((edge) => ({
+      ...edge,
+      node: {
+        row: { id: edge.node.row.id },
+        table: { id: edge.node.table.id },
+        matches: edge.node.matches.map(compactMatch),
+        ...(edge.node.formulaErrors?.length
+          ? { formulaErrors: edge.node.formulaErrors }
+          : {}),
+      },
+    })),
+  };
+}
 
 export class RowTools implements McpToolRegistrar {
   constructor(
@@ -145,7 +170,7 @@ RESPONSE may include:
       'search_rows',
       {
         description:
-          'Full-text search across all fields of all rows in a revision. Returns matching rows with match details (path, value, highlight). Searches across ALL tables - no tableId needed. By default returns compact results (rowId, tableId, matches only). Set includeRowData=true to include full row data.',
+          'Full-text search across all fields of all rows in a revision. Searches across ALL tables - no tableId needed. By default returns compact results: rowId, tableId, and matches (field path and either highlight or value, not both) - saves tokens. Set includeRowData=true to get full row data in results (use sparingly for large datasets). Recommended workflow: search_rows to find rows, then get_row for full data of specific rows.',
         inputSchema: {
           revisionId: z.string().describe('Revision ID'),
           query: z
@@ -187,20 +212,7 @@ RESPONSE may include:
         });
         const compactResult = includeRowData
           ? result
-          : {
-              ...result,
-              edges: result.edges.map((edge) => ({
-                ...edge,
-                node: {
-                  row: { id: edge.node.row.id },
-                  table: { id: edge.node.table.id },
-                  matches: edge.node.matches,
-                  ...(edge.node.formulaErrors?.length
-                    ? { formulaErrors: edge.node.formulaErrors }
-                    : {}),
-                },
-              })),
-            };
+          : toCompactSearchResult(result);
         return {
           content: [
             {
