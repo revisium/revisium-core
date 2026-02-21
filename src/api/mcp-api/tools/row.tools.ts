@@ -167,10 +167,7 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async (
-        { revisionId, query, first, after, includeRowData },
-        context,
-      ) => {
+      async ({ revisionId, query, first, after, includeRowData }, context) => {
         const session = auth.requireAuth(context);
         await auth.checkPermissionByRevision(
           revisionId,
