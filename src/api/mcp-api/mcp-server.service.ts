@@ -114,8 +114,9 @@ TYPICAL WORKFLOW:
 SEARCHING DATA:
 - search_rows(revisionId, query) - full-text search across ALL tables and ALL fields in a revision
 - No tableId needed - searches everything
-- Returns matches with: row data, table info (id, name), match details (field path, value, highlight)
-- Use this to find data when you don't know the exact table or rowId
+- By default returns compact results: rowId, tableId, and matches (field path, value, highlight) - saves tokens
+- Set includeRowData=true to get full row data in results (use sparingly for large datasets)
+- Recommended workflow: search_rows to find rows, then get_row for full data of specific rows
 - Example: search_rows(revisionId, "TableEditor") finds all rows mentioning "TableEditor"
 
 IMPORTANT:
