@@ -132,7 +132,7 @@ export class OAuthController {
       state,
     });
 
-    res.redirect(302, `${this.publicUrl}/get-mcp-token?${params.toString()}`);
+    res.redirect(302, `${this.publicUrl}/authorize?${params.toString()}`);
   }
 
   @Post('oauth/authorize')

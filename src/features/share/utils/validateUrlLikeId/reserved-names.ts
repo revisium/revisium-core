@@ -99,8 +99,11 @@ export const RESERVED_USERNAMES = [
   'me',
   'my',
 
-  // MCP
+  // Auth / MCP
+  'authorize',
+  'get-token',
   'get-mcp-token',
+  'oauth',
   'mcp',
 
   // Misc

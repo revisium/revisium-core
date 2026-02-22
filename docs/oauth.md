@@ -32,7 +32,7 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
        |  5. Open browser -----|----------------------->|
        |     GET /oauth/authorize?client_id=...         |
        |                       |                        |
-       |                       |  302 /get-mcp-token?...|
+       |                       |  302 /authorize?...|
        |                       |----------------------->|
        |                       |                        |
        |                       |    6. User clicks      |
@@ -144,7 +144,7 @@ All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascr
 
 Validates all parameters, then redirects `302` to Admin UI:
 ```
-/get-mcp-token?client_id=...&client_name=...&redirect_uri=...&code_challenge=...&state=...
+/authorize?client_id=...&client_name=...&redirect_uri=...&code_challenge=...&state=...
 ```
 
 **POST /oauth/authorize** (called by Admin UI after user clicks "Authorize"):
@@ -465,18 +465,18 @@ No sessions, no in-memory state, no session IDs. Server restarts do not break MC
 
 ## Admin UI Authorization Flow
 
-Source: [`revisium-admin/src/pages/McpTokenPage/`](../revisium-admin/src/pages/McpTokenPage/)
+Source: [`revisium-admin/src/pages/AuthorizePage/`](../revisium-admin/src/pages/AuthorizePage/)
 
-The Admin UI reuses the existing `get-mcp-token` page for the OAuth authorization screen:
+The Admin UI reuses the existing `authorize` page for the OAuth authorization screen:
 
 ```
-Browser opens /get-mcp-token?client_id=...&client_name=...
+Browser opens /authorize?client_id=...&client_name=...
   |
   +-- checkAuth loader: user not logged in?
-  |   +-- Redirect to /login?redirect=/get-mcp-token?...
-  |       +-- After login, back to /get-mcp-token?...
+  |   +-- Redirect to /login?redirect=/authorize?...
+  |       +-- After login, back to /authorize?...
   |
-  +-- McpTokenPageViewModel.init()
+  +-- AuthorizePageViewModel.init()
   |   +-- Parse query params -> _oauthParams
   |
   +-- isOAuthFlow = true -> render OAuthAuthorizeView
