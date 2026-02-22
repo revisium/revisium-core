@@ -237,7 +237,6 @@ model OAuthClient {
   accessTokens       OAuthAccessToken[]
   refreshTokens      OAuthRefreshToken[]
 
-  @@map("oauth_clients")
 }
 
 model OAuthAuthorizationCode {
@@ -255,7 +254,6 @@ model OAuthAuthorizationCode {
   createdAt     DateTime  @default(now())
 
   @@index([expiresAt])
-  @@map("oauth_authorization_codes")
 }
 
 model OAuthAccessToken {
@@ -271,7 +269,6 @@ model OAuthAccessToken {
   createdAt DateTime  @default(now())
 
   @@index([expiresAt])
-  @@map("oauth_access_tokens")
 }
 
 model OAuthRefreshToken {
@@ -288,5 +285,4 @@ model OAuthRefreshToken {
   createdAt  DateTime  @default(now())
 
   @@index([expiresAt])
-  @@map("oauth_refresh_tokens")
 }
