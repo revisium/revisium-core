@@ -44,6 +44,7 @@ describe('OAuth Controller', () => {
         grant_types_supported: ['authorization_code', 'refresh_token'],
         code_challenge_methods_supported: ['S256'],
         revocation_endpoint_auth_methods_supported: ['client_secret_post'],
+        scopes_supported: ['mcp'],
       });
     });
   });
@@ -58,6 +59,7 @@ describe('OAuth Controller', () => {
         resource: expect.any(String),
         authorization_servers: expect.any(Array),
         bearer_methods_supported: ['header'],
+        scopes_supported: ['mcp'],
       });
     });
   });
@@ -136,6 +138,30 @@ describe('OAuth Controller', () => {
       expect(res.headers.location).toContain('/authorize?');
       expect(res.headers.location).toContain('client_id=');
       expect(res.headers.location).toContain('client_name=authorize-test');
+    });
+
+    it('passes scope to redirect URL', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'scope-redirect-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const res = await request(app.getHttpServer())
+        .get('/oauth/authorize')
+        .query({
+          client_id: regRes.body.client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: 'test_challenge',
+          code_challenge_method: 'S256',
+          response_type: 'code',
+          state: 'test_state',
+          scope: 'mcp',
+        })
+        .expect(302);
+
+      expect(res.headers.location).toContain('scope=mcp');
     });
 
     it('rejects missing parameters', async () => {
@@ -309,6 +335,56 @@ describe('OAuth Controller', () => {
         refresh_token: expect.stringMatching(/^ort_/),
         token_type: 'Bearer',
         expires_in: 3600,
+      });
+    });
+
+    it('returns 30-day TTL with scope=mcp', async () => {
+      const codeVerifier = 'mcp_scope_test_code_verifier_long_enough_here';
+      const codeChallenge = createHash('sha256')
+        .update(codeVerifier)
+        .digest('base64url');
+
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'mcp-scope-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const { client_id, client_secret } = regRes.body;
+
+      const authRes = await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: codeChallenge,
+          state: 'mcp_scope_state',
+          scope: 'mcp',
+        })
+        .expect(201);
+
+      const redirectUrl = new URL(authRes.body.redirect_uri);
+      const code = redirectUrl.searchParams.get('code');
+
+      const tokenRes = await request(app.getHttpServer())
+        .post('/oauth/token')
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier: codeVerifier,
+          redirect_uri: 'https://example.com/callback',
+        })
+        .expect(201);
+
+      expect(tokenRes.body).toMatchObject({
+        access_token: expect.stringMatching(/^oat_/),
+        refresh_token: expect.stringMatching(/^ort_/),
+        token_type: 'Bearer',
+        expires_in: 30 * 86400,
       });
     });
 

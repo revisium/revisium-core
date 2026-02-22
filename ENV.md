@@ -48,6 +48,7 @@ cp .env.example .env
 | `OAUTH_GOOGLE_CLIENT_SECRET` | - | Google OAuth client secret |
 | `OAUTH_GITHUB_CLIENT_ID` | - | GitHub OAuth client ID |
 | `OAUTH_GITHUB_CLIENT_SECRET` | - | GitHub OAuth client secret |
+| `MCP_ACCESS_TOKEN_EXPIRY_DAYS` | `30` | Access token TTL (in days) when `scope=mcp` is used |
 
 ---
 

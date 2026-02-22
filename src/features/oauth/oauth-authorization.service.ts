@@ -14,6 +14,7 @@ export class OAuthAuthorizationService {
     userId: string;
     redirectUri: string;
     codeChallenge: string;
+    scope?: string;
   }): Promise<string> {
     const code = AUTH_CODE_PREFIX + randomBytes(24).toString('hex');
 
@@ -27,6 +28,7 @@ export class OAuthAuthorizationService {
         userId: data.userId,
         redirectUri: data.redirectUri,
         codeChallenge: data.codeChallenge,
+        scope: data.scope ?? null,
         expiresAt,
       },
     });
@@ -39,7 +41,7 @@ export class OAuthAuthorizationService {
     clientId: string;
     codeVerifier: string;
     redirectUri: string;
-  }): Promise<{ userId: string }> {
+  }): Promise<{ userId: string; scope: string | null }> {
     const result = await this.prisma.oAuthAuthorizationCode.updateMany({
       where: {
         code: data.code,
@@ -69,7 +71,7 @@ export class OAuthAuthorizationService {
       throw new BadRequestException('PKCE verification failed');
     }
 
-    return { userId: authCode.userId };
+    return { userId: authCode.userId, scope: authCode.scope };
   }
 
   private verifyPkce(codeVerifier: string, codeChallenge: string): boolean {

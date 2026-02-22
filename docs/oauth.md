@@ -83,7 +83,8 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
   "code_challenge_methods_supported": ["S256"],
   "token_endpoint_auth_methods_supported": ["client_secret_post"],
   "revocation_endpoint": "https://revisium.example.com/oauth/revoke",
-  "revocation_endpoint_auth_methods_supported": ["client_secret_post"]
+  "revocation_endpoint_auth_methods_supported": ["client_secret_post"],
+  "scopes_supported": ["mcp"]
 }
 ```
 
@@ -92,7 +93,8 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
 {
   "resource": "https://revisium.example.com",
   "authorization_servers": ["https://revisium.example.com"],
-  "bearer_methods_supported": ["header"]
+  "bearer_methods_supported": ["header"],
+  "scopes_supported": ["mcp"]
 }
 ```
 
@@ -143,10 +145,11 @@ All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascr
 | `state` | Yes | Opaque value for CSRF protection |
 | `response_type` | Yes | Must be `code` |
 | `code_challenge_method` | Yes | Must be `S256` |
+| `scope` | No | Space-separated scopes (e.g. `mcp`) |
 
 Validates all parameters, then redirects `302` to Admin UI:
 ```text
-/authorize?client_id=...&client_name=...&redirect_uri=...&code_challenge=...&state=...
+/authorize?client_id=...&client_name=...&redirect_uri=...&code_challenge=...&state=...&scope=mcp
 ```
 
 **POST /oauth/authorize** (called by Admin UI after user clicks "Authorize"):
@@ -160,9 +163,12 @@ Content-Type: application/json
   "client_id": "abc123",
   "redirect_uri": "http://127.0.0.1:3000/callback",
   "code_challenge": "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
-  "state": "xyz789"
+  "state": "xyz789",
+  "scope": "mcp"
 }
 ```
+
+The `scope` field is optional. When present, it is stored with the authorization code and propagated to the access token on exchange.
 
 Response:
 ```json
@@ -264,12 +270,12 @@ Accept: application/json, text/event-stream
 }
 ```
 
-On `401`, the response includes a `WWW-Authenticate` header pointing to the resource metadata:
+On `401`, the response includes a `WWW-Authenticate` header pointing to the resource metadata with the `mcp` scope:
 ```text
-WWW-Authenticate: Bearer resource_metadata="https://revisium.example.com/.well-known/oauth-protected-resource"
+WWW-Authenticate: Bearer resource_metadata="https://revisium.example.com/.well-known/oauth-protected-resource", scope="mcp"
 ```
 
-This triggers the MCP SDK's automatic OAuth discovery flow.
+The `scope="mcp"` parameter tells MCP clients to include this scope in the authorization request, resulting in long-lived tokens. This triggers the MCP SDK's automatic OAuth discovery flow.
 
 ## Token Types
 
@@ -277,10 +283,25 @@ This triggers the MCP SDK's automatic OAuth discovery flow.
 |------|--------|--------|-----|---------|
 | Client Secret | `ocs_` | 72 hex chars | Permanent | SHA-256 hash |
 | Authorization Code | `auth_` | 48 hex chars | 10 minutes | Plain text (single-use) |
-| Access Token | `oat_` | 72 hex chars | 1 hour | SHA-256 hash |
-| Refresh Token | `ort_` | 72 hex chars | 30 days | SHA-256 hash |
+| Access Token | `oat_` | 72 hex chars | 1 hour (default) / 30 days (`scope=mcp`) | SHA-256 hash |
+| Refresh Token | `ort_` | 72 hex chars | 30 days (default) / 90 days (`scope=mcp`) | SHA-256 hash |
 
 All tokens are generated with `crypto.randomBytes()`. Client secrets and tokens are stored as SHA-256 hashes; only the authorization code is stored in plain text (it's single-use and short-lived).
+
+The MCP access token TTL can be overridden via `MCP_ACCESS_TOKEN_EXPIRY_DAYS` environment variable (default: 30).
+
+## Scopes
+
+Revisium supports the `mcp` OAuth scope. When an MCP client (Claude Code, Cursor, etc.) connects, the server includes `scope="mcp"` in the `WWW-Authenticate` header on `401` responses. MCP clients pass this scope through the authorization flow, which results in longer-lived tokens:
+
+| Scope | Access Token TTL | Refresh Token TTL |
+|-------|-----------------|-------------------|
+| (none) | 1 hour | 30 days |
+| `mcp` | 30 days (configurable via `MCP_ACCESS_TOKEN_EXPIRY_DAYS`) | 90 days |
+
+The scope is stored on both the authorization code and the access token. On token refresh, the scope is inherited from the previous access token.
+
+**Why longer TTL for MCP?** MCP clients (particularly Claude Code) do not currently implement refresh token rotation. With a 1-hour TTL, users would need to re-authorize via the browser every hour. Since Revisium uses opaque tokens (`oat_`) with instant revocation (DB lookup on every request), a longer TTL is safe — compromised tokens can be revoked immediately via `POST /oauth/revoke`.
 
 ## PKCE (S256)
 
@@ -355,6 +376,7 @@ model OAuthAuthorizationCode {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   redirectUri   String
   codeChallenge String
+  scope         String?
   expiresAt     DateTime
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
@@ -370,6 +392,7 @@ model OAuthAccessToken {
   client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope     String?
   expiresAt DateTime
   revokedAt DateTime?
   createdAt DateTime  @default(now())
@@ -422,6 +445,7 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
 | userId (FK) --------------|---->| roleId                    |
 | redirectUri               |     +---------------------------+
 | codeChallenge             |                  ^
+| scope (nullable)          |                  |
 | expiresAt                 |                  |
 | usedAt (nullable)         |                  |
 | createdAt                 |                  |
@@ -434,6 +458,7 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
 | tokenHash (UNIQUE)        |---- SHA-256(oat_xxx)
 | clientId (FK)             |                  |
 | userId (FK) --------------|------------------+
+| scope (nullable)          |                  |
 | expiresAt                 |                  |
 | revokedAt (nullable)      |                  |
 | createdAt                 |                  |
@@ -573,6 +598,7 @@ In production, `PUBLIC_URL` matches the external domain (e.g. `https://revisium.
 | `PUBLIC_URL` | `http://localhost:8080` | External URL used in OAuth discovery metadata and redirects |
 | `JWT_SECRET` | - | Secret for signing/verifying JWT tokens |
 | `REVISIUM_NO_AUTH` | `false` | Skip auth, treat all requests as admin |
+| `MCP_ACCESS_TOKEN_EXPIRY_DAYS` | `30` | Access token TTL (in days) for `scope=mcp` |
 
 ## Source Files
 
@@ -589,7 +615,7 @@ In production, `PUBLIC_URL` matches the external domain (e.g. `https://revisium.
 
 ## Not Implemented (Future)
 
-- **OAuth scopes** (`mcp:read`, `mcp:write`, `mcp:admin`) -- currently full access
+- **Granular OAuth scopes** (`mcp:read`, `mcp:write`, `mcp:admin`) -- currently `mcp` scope controls TTL only, not permissions
 - **Personal Access Tokens** (`rev_*` prefix)
 - **Reuse detection** (token family tracking)
 - **Token cleanup cron job** (expired tokens accumulate in DB)

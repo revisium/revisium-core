@@ -1,4 +1,5 @@
 import { UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { OAuthTokenService } from '../oauth-token.service';
@@ -14,12 +15,13 @@ describe('OAuthTokenService', () => {
     oAuthAccessToken: {
       create: jest.Mock;
       findUnique: jest.Mock;
+      findFirst: jest.Mock;
       updateMany: jest.Mock;
     };
     $transaction: jest.Mock;
   };
 
-  beforeEach(async () => {
+  const createService = async (envOverrides: Record<string, string> = {}) => {
     prisma = {
       oAuthRefreshToken: {
         updateMany: jest.fn(),
@@ -29,6 +31,7 @@ describe('OAuthTokenService', () => {
       oAuthAccessToken: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        findFirst: jest.fn(),
         updateMany: jest.fn(),
       },
       $transaction: jest.fn().mockImplementation((arg: unknown) => {
@@ -39,18 +42,30 @@ describe('OAuthTokenService', () => {
       }),
     };
 
+    const configValues: Record<string, string> = { ...envOverrides };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OAuthTokenService,
         { provide: PrismaService, useValue: prisma },
+        {
+          provide: ConfigService,
+          useValue: {
+            get: (key: string) => configValues[key] ?? undefined,
+          },
+        },
       ],
     }).compile();
 
-    service = module.get(OAuthTokenService);
+    return module.get(OAuthTokenService);
+  };
+
+  beforeEach(async () => {
+    service = await createService();
   });
 
   describe('createTokens', () => {
-    it('returns token pair with correct prefixes', async () => {
+    it('returns token pair with 1-hour TTL without scope', async () => {
       const result = await service.createTokens('client-1', 'user-1');
 
       expect(result.accessToken).toMatch(/^oat_/);
@@ -58,6 +73,49 @@ describe('OAuthTokenService', () => {
       expect(result.expiresIn).toBe(3600);
       expect(result.tokenType).toBe('Bearer');
       expect(prisma.$transaction).toHaveBeenCalled();
+    });
+
+    it('returns token pair with 30-day TTL for mcp scope', async () => {
+      const result = await service.createTokens('client-1', 'user-1', 'mcp');
+
+      expect(result.accessToken).toMatch(/^oat_/);
+      expect(result.refreshToken).toMatch(/^ort_/);
+      expect(result.expiresIn).toBe(30 * 86400);
+      expect(result.tokenType).toBe('Bearer');
+    });
+
+    it('stores scope in access token record', async () => {
+      await service.createTokens('client-1', 'user-1', 'mcp');
+
+      const createCall = prisma.$transaction.mock.calls[0][0][0];
+      await createCall;
+      expect(prisma.oAuthAccessToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ scope: 'mcp' }),
+      });
+    });
+
+    it('stores null scope when not provided', async () => {
+      await service.createTokens('client-1', 'user-1');
+
+      const createCall = prisma.$transaction.mock.calls[0][0][0];
+      await createCall;
+      expect(prisma.oAuthAccessToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ scope: null }),
+      });
+    });
+
+    it('uses custom MCP_ACCESS_TOKEN_EXPIRY_DAYS from config', async () => {
+      const customService = await createService({
+        MCP_ACCESS_TOKEN_EXPIRY_DAYS: '7',
+      });
+
+      const result = await customService.createTokens(
+        'client-1',
+        'user-1',
+        'mcp',
+      );
+
+      expect(result.expiresIn).toBe(7 * 86400);
     });
   });
 
@@ -175,12 +233,26 @@ describe('OAuthTokenService', () => {
         userId: 'user-1',
         clientId,
       });
+      prisma.oAuthAccessToken.findFirst.mockResolvedValue(null);
 
       const result = await service.refreshTokens(refreshToken, clientId);
 
       expect(result.accessToken).toMatch(/^oat_/);
       expect(result.refreshToken).toMatch(/^ort_/);
       expect(result.tokenType).toBe('Bearer');
+    });
+
+    it('inherits mcp scope from previous access token', async () => {
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
+        userId: 'user-1',
+        clientId,
+      });
+      prisma.oAuthAccessToken.findFirst.mockResolvedValue({ scope: 'mcp' });
+
+      const result = await service.refreshTokens(refreshToken, clientId);
+
+      expect(result.expiresIn).toBe(30 * 86400);
     });
 
     it('rejects second concurrent call (only first updateMany succeeds)', async () => {
@@ -192,6 +264,7 @@ describe('OAuthTokenService', () => {
         userId: 'user-1',
         clientId,
       });
+      prisma.oAuthAccessToken.findFirst.mockResolvedValue(null);
 
       const results = await Promise.all([
         service

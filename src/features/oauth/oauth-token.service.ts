@@ -1,4 +1,5 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createHash, randomBytes } from 'node:crypto';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -6,6 +7,8 @@ const ACCESS_TOKEN_PREFIX = 'oat_';
 const REFRESH_TOKEN_PREFIX = 'ort_';
 const ACCESS_TOKEN_EXPIRY_HOURS = 1;
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
+const DEFAULT_MCP_ACCESS_TOKEN_EXPIRY_DAYS = 30;
+const MCP_REFRESH_TOKEN_EXPIRY_DAYS = 90;
 
 export interface OAuthTokenPair {
   accessToken: string;
@@ -23,24 +26,49 @@ export interface OAuthTokenUser {
 
 @Injectable()
 export class OAuthTokenService {
-  constructor(private readonly prisma: PrismaService) {}
+  private readonly mcpAccessTokenExpiryDays: number;
+
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    this.mcpAccessTokenExpiryDays =
+      parseInt(
+        this.configService.get<string>('MCP_ACCESS_TOKEN_EXPIRY_DAYS') ?? '',
+        10,
+      ) || DEFAULT_MCP_ACCESS_TOKEN_EXPIRY_DAYS;
+  }
 
   async createTokens(
     clientId: string,
     userId: string,
+    scope?: string,
   ): Promise<OAuthTokenPair> {
     const accessToken = ACCESS_TOKEN_PREFIX + randomBytes(36).toString('hex');
     const refreshToken = REFRESH_TOKEN_PREFIX + randomBytes(36).toString('hex');
 
+    const isMcpScope = scope?.split(' ').includes('mcp') ?? false;
     const accessExpiresAt = new Date();
-    accessExpiresAt.setHours(
-      accessExpiresAt.getHours() + ACCESS_TOKEN_EXPIRY_HOURS,
-    );
 
+    if (isMcpScope) {
+      accessExpiresAt.setDate(
+        accessExpiresAt.getDate() + this.mcpAccessTokenExpiryDays,
+      );
+    } else {
+      accessExpiresAt.setHours(
+        accessExpiresAt.getHours() + ACCESS_TOKEN_EXPIRY_HOURS,
+      );
+    }
+
+    const refreshExpiryDays = isMcpScope
+      ? MCP_REFRESH_TOKEN_EXPIRY_DAYS
+      : REFRESH_TOKEN_EXPIRY_DAYS;
     const refreshExpiresAt = new Date();
-    refreshExpiresAt.setDate(
-      refreshExpiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS,
-    );
+    refreshExpiresAt.setDate(refreshExpiresAt.getDate() + refreshExpiryDays);
+
+    const expiresIn = isMcpScope
+      ? this.mcpAccessTokenExpiryDays * 86400
+      : ACCESS_TOKEN_EXPIRY_HOURS * 3600;
 
     await this.prisma.$transaction([
       this.prisma.oAuthAccessToken.create({
@@ -48,6 +76,7 @@ export class OAuthTokenService {
           tokenHash: this.hashToken(accessToken),
           clientId,
           userId,
+          scope: scope ?? null,
           expiresAt: accessExpiresAt,
         },
       }),
@@ -64,7 +93,7 @@ export class OAuthTokenService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: ACCESS_TOKEN_EXPIRY_HOURS * 3600,
+      expiresIn,
       tokenType: 'Bearer',
     };
   }
@@ -134,7 +163,17 @@ export class OAuthTokenService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    return this.createTokens(clientId, existing.userId);
+    const latestAccessToken = await this.prisma.oAuthAccessToken.findFirst({
+      where: { clientId, userId: existing.userId },
+      orderBy: { createdAt: 'desc' },
+      select: { scope: true },
+    });
+
+    return this.createTokens(
+      clientId,
+      existing.userId,
+      latestAccessToken?.scope ?? undefined,
+    );
   }
 
   async revokeToken(
