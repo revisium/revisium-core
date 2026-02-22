@@ -131,6 +131,20 @@ describe('OAuthClientService', () => {
 
       expect(result.clientId).toBe('client-4');
     });
+
+    it('allows http redirect_uri for [::1] (IPv6 loopback)', async () => {
+      prisma.oAuthClient.create.mockResolvedValue({
+        id: 'client-5',
+        clientName: 'local-app',
+      });
+
+      const result = await service.registerClient({
+        clientName: 'local-app',
+        redirectUris: ['http://[::1]:3000/callback'],
+      });
+
+      expect(result.clientId).toBe('client-5');
+    });
   });
 
   describe('findClient', () => {

@@ -4,7 +4,7 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
 
 ## Architecture Overview
 
-```
+```text
   MCP Client             revisium-core           revisium-admin
   (Claude Code)           (API :8080)              (UI :5173)
        |                       |                        |
@@ -122,7 +122,7 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
 
 The `client_secret` is returned **once** and stored as a SHA-256 hash in the database. It cannot be retrieved later.
 
-All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascript:`, `data:`, etc.) are rejected. `http:` is only allowed for `localhost` and `127.0.0.1`.
+All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascript:`, `data:`, etc.) are rejected. `http:` is only allowed for `localhost`, `127.0.0.1`, and `[::1]` (IPv6 loopback).
 
 ### Authorization
 
@@ -143,13 +143,13 @@ All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascr
 | `code_challenge_method` | Yes | Must be `S256` |
 
 Validates all parameters, then redirects `302` to Admin UI:
-```
+```text
 /authorize?client_id=...&client_name=...&redirect_uri=...&code_challenge=...&state=...
 ```
 
 **POST /oauth/authorize** (called by Admin UI after user clicks "Authorize"):
 
-```
+```http
 POST /oauth/authorize
 Authorization: Bearer <user-jwt>
 Content-Type: application/json
@@ -176,7 +176,7 @@ Response:
 | POST | `/oauth/token` | None | Exchange code or refresh token for tokens |
 
 **Authorization Code Grant:**
-```
+```http
 POST /oauth/token
 Content-Type: application/json
 
@@ -191,7 +191,7 @@ Content-Type: application/json
 ```
 
 **Refresh Token Grant:**
-```
+```http
 POST /oauth/token
 Content-Type: application/json
 
@@ -221,7 +221,7 @@ Content-Type: application/json
 | GET | `/mcp` | - | Returns 405 (SSE not supported) |
 | DELETE | `/mcp` | - | Returns 405 (sessions not supported) |
 
-```
+```http
 POST /mcp
 Authorization: Bearer oat_xxx
 Content-Type: application/json
@@ -236,7 +236,7 @@ Accept: application/json, text/event-stream
 ```
 
 On `401`, the response includes a `WWW-Authenticate` header pointing to the resource metadata:
-```
+```text
 WWW-Authenticate: Bearer resource_metadata="https://revisium.example.com/.well-known/oauth-protected-resource"
 ```
 
@@ -257,7 +257,7 @@ All tokens are generated with `crypto.randomBytes()`. Client secrets and tokens 
 
 All authorization requests require Proof Key for Code Exchange:
 
-```
+```text
 Client generates:
   code_verifier  = random(43-128 URL-safe chars)
   code_challenge = base64url(sha256(code_verifier))
@@ -278,7 +278,7 @@ Only `S256` method is supported. Plain PKCE is rejected. Hash comparison uses `t
 
 The `/mcp` endpoint accepts two types of Bearer tokens:
 
-```
+```text
 Authorization: Bearer <token>
                         |
                         +-- 3 dots (xxx.yyy.zzz) --> JWT validation
@@ -370,7 +370,7 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
 
 ### Entity Relationship Diagram
 
-```
+```text
 +---------------------------+
 | oauth_clients             |
 +---------------------------+
@@ -430,7 +430,7 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
 
 When a refresh token is used, the old token is **revoked** and a new pair (access + refresh) is issued:
 
-```
+```text
 Client:  POST /oauth/token { grant_type: refresh_token, refresh_token: ort_OLD }
 
 Server:
@@ -447,7 +447,7 @@ The atomic `updateMany` prevents TOCTOU race conditions -- concurrent refresh at
 
 Each `POST /mcp` request creates a fresh `McpServer` + `StreamableHTTPServerTransport` instance:
 
-```
+```text
 POST /mcp
   |
   +-- Create transport (sessionIdGenerator: undefined)
@@ -469,7 +469,7 @@ Source: [`revisium-admin/src/pages/AuthorizePage/`](../revisium-admin/src/pages/
 
 The Admin UI reuses the existing `authorize` page for the OAuth authorization screen:
 
-```
+```text
 Browser opens /authorize?client_id=...&client_name=...
   |
   +-- checkAuth loader: user not logged in?
@@ -507,7 +507,7 @@ Without OAuth params, the page falls back to the standard token-copy view for ma
 
 [`revisium-admin/vite.config.ts`](../revisium-admin/vite.config.ts) proxies API paths from the UI dev server (`:5173`) to the backend (`:8080`):
 
-```
+```text
 /mcp                                   -> http://localhost:8080
 /.well-known/oauth-authorization-server -> http://localhost:8080
 /.well-known/oauth-protected-resource   -> http://localhost:8080

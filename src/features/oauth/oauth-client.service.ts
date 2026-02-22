@@ -72,7 +72,8 @@ export class OAuthClientService {
     if (
       parsed.protocol === 'http:' &&
       parsed.hostname !== 'localhost' &&
-      parsed.hostname !== '127.0.0.1'
+      parsed.hostname !== '127.0.0.1' &&
+      parsed.hostname !== '[::1]'
     ) {
       throw new BadRequestException(
         `http redirect_uri is only allowed for localhost: ${uri}`,
