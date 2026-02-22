@@ -137,6 +137,81 @@ export class OAuthTokenService {
     return this.createTokens(clientId, existing.userId);
   }
 
+  async revokeToken(
+    token: string,
+    tokenTypeHint: string | undefined,
+    clientId: string,
+  ): Promise<void> {
+    const tokenHash = this.hashToken(token);
+
+    if (
+      tokenTypeHint === 'refresh_token' ||
+      token.startsWith(REFRESH_TOKEN_PREFIX)
+    ) {
+      const revoked = await this.revokeRefreshTokenWithCascade(
+        tokenHash,
+        clientId,
+      );
+      if (revoked) {
+        return;
+      }
+    }
+
+    if (
+      tokenTypeHint === 'access_token' ||
+      token.startsWith(ACCESS_TOKEN_PREFIX)
+    ) {
+      await this.revokeAccessToken(tokenHash, clientId);
+      return;
+    }
+
+    const accessResult = await this.revokeAccessToken(tokenHash, clientId);
+
+    if (accessResult.count === 0) {
+      await this.revokeRefreshTokenWithCascade(tokenHash, clientId);
+    }
+  }
+
+  private async revokeAccessToken(tokenHash: string, clientId: string) {
+    return this.prisma.oAuthAccessToken.updateMany({
+      where: { tokenHash, clientId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
+  private async revokeRefreshTokenWithCascade(
+    tokenHash: string,
+    clientId: string,
+  ): Promise<boolean> {
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.oAuthRefreshToken.updateMany({
+        where: { tokenHash, clientId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+
+      if (result.count === 0) {
+        return false;
+      }
+
+      const refreshToken = await tx.oAuthRefreshToken.findUnique({
+        where: { tokenHash },
+      });
+
+      if (refreshToken) {
+        await tx.oAuthAccessToken.updateMany({
+          where: {
+            clientId: refreshToken.clientId,
+            userId: refreshToken.userId,
+            revokedAt: null,
+          },
+          data: { revokedAt: new Date() },
+        });
+      }
+
+      return true;
+    });
+  }
+
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }

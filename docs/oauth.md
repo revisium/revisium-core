@@ -81,7 +81,9 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
   "response_types_supported": ["code"],
   "grant_types_supported": ["authorization_code", "refresh_token"],
   "code_challenge_methods_supported": ["S256"],
-  "token_endpoint_auth_methods_supported": ["client_secret_post"]
+  "token_endpoint_auth_methods_supported": ["client_secret_post"],
+  "revocation_endpoint": "https://revisium.example.com/oauth/revoke",
+  "revocation_endpoint_auth_methods_supported": ["client_secret_post"]
 }
 ```
 
@@ -168,6 +170,33 @@ Response:
   "redirect_uri": "http://127.0.0.1:3000/callback?code=auth_<48 hex chars>&state=xyz789"
 }
 ```
+
+### Token Revocation (RFC 7009)
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/oauth/revoke` | `client_secret_post` | Revoke an access or refresh token |
+
+```http
+POST /oauth/revoke
+Content-Type: application/json
+
+{
+  "token": "oat_<72 hex chars>",
+  "token_type_hint": "access_token",
+  "client_id": "abc123",
+  "client_secret": "ocs_<72 hex chars>"
+}
+```
+
+**Behavior:**
+- Always returns `200 OK`, even for invalid or already-revoked tokens (per RFC 7009)
+- `token_type_hint` is optional; the server uses token prefix (`oat_`/`ort_`) as a fallback hint
+- Revoking a **refresh token** cascades: all access tokens for the same client+user pair are also revoked
+- Revoking an **access token** does not revoke the associated refresh token
+- Client authentication (`client_id` + `client_secret`) is required
+
+MCP clients discover this endpoint via `revocation_endpoint` in the authorization server metadata.
 
 ### Token Exchange
 
@@ -525,7 +554,7 @@ Without OAuth params, the page falls back to the standard token-copy view for ma
 location /.well-known/oauth-authorization-server { proxy_pass http://localhost:8080; }
 location /.well-known/oauth-protected-resource   { proxy_pass http://localhost:8080; }
 
-# OAuth endpoints (register, authorize, token)
+# OAuth endpoints (register, authorize, token, revoke)
 location /oauth/ { proxy_pass http://localhost:8080; }
 
 # MCP (stateless, Bearer auth)
@@ -561,7 +590,6 @@ In production, `PUBLIC_URL` matches the external domain (e.g. `https://revisium.
 ## Not Implemented (Future)
 
 - **OAuth scopes** (`mcp:read`, `mcp:write`, `mcp:admin`) -- currently full access
-- **Token revocation endpoint** (`POST /oauth/revoke`)
 - **Personal Access Tokens** (`rev_*` prefix)
 - **Reuse detection** (token family tracking)
 - **Token cleanup cron job** (expired tokens accumulate in DB)

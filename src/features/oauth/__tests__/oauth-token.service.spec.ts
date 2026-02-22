@@ -14,6 +14,7 @@ describe('OAuthTokenService', () => {
     oAuthAccessToken: {
       create: jest.Mock;
       findUnique: jest.Mock;
+      updateMany: jest.Mock;
     };
     $transaction: jest.Mock;
   };
@@ -28,10 +29,14 @@ describe('OAuthTokenService', () => {
       oAuthAccessToken: {
         create: jest.fn(),
         findUnique: jest.fn(),
+        updateMany: jest.fn(),
       },
-      $transaction: jest
-        .fn()
-        .mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops)),
+      $transaction: jest.fn().mockImplementation((arg: unknown) => {
+        if (typeof arg === 'function') {
+          return arg(prisma);
+        }
+        return Promise.all(arg as Promise<unknown>[]);
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -204,6 +209,114 @@ describe('OAuthTokenService', () => {
 
       expect(successes.length).toBe(1);
       expect(failures.length).toBe(1);
+    });
+  });
+
+  describe('revokeToken', () => {
+    const clientId = 'client-1';
+
+    it('revokes access token by prefix', async () => {
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.revokeToken('oat_test_token', undefined, clientId);
+
+      expect(prisma.oAuthAccessToken.updateMany).toHaveBeenCalledWith({
+        where: { tokenHash: expect.any(String), clientId, revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+    });
+
+    it('revokes refresh token with cascade by prefix', async () => {
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
+        clientId,
+        userId: 'user-1',
+      });
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 2 });
+
+      await service.revokeToken('ort_test_token', undefined, clientId);
+
+      expect(prisma.oAuthRefreshToken.updateMany).toHaveBeenCalledWith({
+        where: { tokenHash: expect.any(String), clientId, revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(prisma.oAuthAccessToken.updateMany).toHaveBeenCalledWith({
+        where: { clientId, userId: 'user-1', revokedAt: null },
+        data: { revokedAt: expect.any(Date) },
+      });
+    });
+
+    it('uses token_type_hint for access_token', async () => {
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 1 });
+
+      await service.revokeToken('unknown_prefix', 'access_token', clientId);
+
+      expect(prisma.oAuthAccessToken.updateMany).toHaveBeenCalled();
+      expect(prisma.oAuthRefreshToken.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('uses token_type_hint for refresh_token', async () => {
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
+        clientId,
+        userId: 'user-1',
+      });
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.revokeToken('unknown_prefix', 'refresh_token', clientId);
+
+      expect(prisma.oAuthRefreshToken.updateMany).toHaveBeenCalled();
+    });
+
+    it('tries both types when no hint and no prefix match', async () => {
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 0 });
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.revokeToken('unknown_token', undefined, clientId);
+
+      expect(prisma.oAuthAccessToken.updateMany).toHaveBeenCalled();
+      expect(prisma.oAuthRefreshToken.updateMany).toHaveBeenCalled();
+    });
+
+    it('does not throw on unknown token', async () => {
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 0 });
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.revokeToken('nonexistent', undefined, clientId),
+      ).resolves.toBeUndefined();
+    });
+
+    it('does not throw on already-revoked token', async () => {
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(
+        service.revokeToken('oat_already_revoked', undefined, clientId),
+      ).resolves.toBeUndefined();
+    });
+
+    it('skips cascade when refresh token not found after revocation', async () => {
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthRefreshToken.findUnique.mockResolvedValue(null);
+
+      await service.revokeToken('ort_test', undefined, clientId);
+
+      expect(prisma.oAuthAccessToken.updateMany).not.toHaveBeenCalled();
+    });
+
+    it('ignores token belonging to another client', async () => {
+      prisma.oAuthAccessToken.updateMany.mockResolvedValue({ count: 0 });
+
+      await service.revokeToken('oat_other_client', undefined, 'other-client');
+
+      expect(prisma.oAuthAccessToken.updateMany).toHaveBeenCalledWith({
+        where: {
+          tokenHash: expect.any(String),
+          clientId: 'other-client',
+          revokedAt: null,
+        },
+        data: { revokedAt: expect.any(Date) },
+      });
     });
   });
 });

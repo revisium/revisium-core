@@ -39,9 +39,11 @@ describe('OAuth Controller', () => {
         authorization_endpoint: expect.stringContaining('/oauth/authorize'),
         token_endpoint: expect.stringContaining('/oauth/token'),
         registration_endpoint: expect.stringContaining('/oauth/register'),
+        revocation_endpoint: expect.stringContaining('/oauth/revoke'),
         response_types_supported: ['code'],
         grant_types_supported: ['authorization_code', 'refresh_token'],
         code_challenge_methods_supported: ['S256'],
+        revocation_endpoint_auth_methods_supported: ['client_secret_post'],
       });
     });
   });
@@ -426,6 +428,191 @@ describe('OAuth Controller', () => {
           refresh_token: 'ort_test',
         })
         .expect(400);
+    });
+  });
+
+  describe('POST /oauth/revoke', () => {
+    const obtainTokens = async () => {
+      const codeVerifier = 'revoke_test_code_verifier_that_is_long_enough';
+      const codeChallenge = createHash('sha256')
+        .update(codeVerifier)
+        .digest('base64url');
+
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'revoke-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const { client_id, client_secret } = regRes.body;
+
+      const authRes = await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: codeChallenge,
+          state: 'revoke_state',
+        })
+        .expect(201);
+
+      const redirectUrl = new URL(authRes.body.redirect_uri);
+      const code = redirectUrl.searchParams.get('code');
+
+      const tokenRes = await request(app.getHttpServer())
+        .post('/oauth/token')
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier: codeVerifier,
+          redirect_uri: 'https://example.com/callback',
+        })
+        .expect(201);
+
+      return {
+        client_id,
+        client_secret,
+        access_token: tokenRes.body.access_token,
+        refresh_token: tokenRes.body.refresh_token,
+      };
+    };
+
+    it('returns 200 on successful access token revocation', async () => {
+      const { client_id, client_secret, access_token } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({
+          token: access_token,
+          client_id,
+          client_secret,
+        })
+        .expect(200);
+    });
+
+    it('revoked access token is rejected by MCP', async () => {
+      const { client_id, client_secret, access_token } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({
+          token: access_token,
+          client_id,
+          client_secret,
+        })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/mcp')
+        .set('Authorization', `Bearer ${access_token}`)
+        .send({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/list',
+          params: {},
+        })
+        .expect(401);
+    });
+
+    it('returns 200 for unknown token', async () => {
+      const { client_id, client_secret } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({
+          token: 'oat_nonexistent_token_value',
+          client_id,
+          client_secret,
+        })
+        .expect(200);
+    });
+
+    it('returns 200 for already-revoked token', async () => {
+      const { client_id, client_secret, access_token } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({ token: access_token, client_id, client_secret })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({ token: access_token, client_id, client_secret })
+        .expect(200);
+    });
+
+    it('rejects missing token', async () => {
+      const { client_id, client_secret } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({ client_id, client_secret })
+        .expect(400);
+    });
+
+    it('rejects missing client credentials', async () => {
+      const { access_token } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({ token: access_token })
+        .expect(400);
+    });
+
+    it('rejects invalid client credentials', async () => {
+      const { client_id, access_token } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({
+          token: access_token,
+          client_id,
+          client_secret: 'ocs_wrong',
+        })
+        .expect(400);
+    });
+
+    it('supports token_type_hint', async () => {
+      const { client_id, client_secret, access_token } = await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({
+          token: access_token,
+          token_type_hint: 'access_token',
+          client_id,
+          client_secret,
+        })
+        .expect(200);
+    });
+
+    it('revoking refresh token cascades to access tokens', async () => {
+      const { client_id, client_secret, access_token, refresh_token } =
+        await obtainTokens();
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .send({
+          token: refresh_token,
+          client_id,
+          client_secret,
+        })
+        .expect(200);
+
+      await request(app.getHttpServer())
+        .post('/mcp')
+        .set('Authorization', `Bearer ${access_token}`)
+        .send({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'tools/list',
+          params: {},
+        })
+        .expect(401);
     });
   });
 });
