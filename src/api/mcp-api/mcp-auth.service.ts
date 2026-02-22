@@ -33,7 +33,7 @@ export class McpAuthService {
     }
 
     const authHeader = req.headers['authorization'];
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!authHeader?.startsWith('Bearer ')) {
       throw new UnauthorizedException('Missing Authorization header');
     }
 

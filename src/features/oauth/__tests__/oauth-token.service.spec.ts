@@ -44,11 +44,110 @@ describe('OAuthTokenService', () => {
     service = module.get(OAuthTokenService);
   });
 
+  describe('createTokens', () => {
+    it('returns token pair with correct prefixes', async () => {
+      const result = await service.createTokens('client-1', 'user-1');
+
+      expect(result.accessToken).toMatch(/^oat_/);
+      expect(result.refreshToken).toMatch(/^ort_/);
+      expect(result.expiresIn).toBe(3600);
+      expect(result.tokenType).toBe('Bearer');
+      expect(prisma.$transaction).toHaveBeenCalled();
+    });
+  });
+
+  describe('validateAccessToken', () => {
+    it('returns user data for valid token', async () => {
+      const futureDate = new Date();
+      futureDate.setHours(futureDate.getHours() + 1);
+
+      prisma.oAuthAccessToken.findUnique.mockResolvedValue({
+        tokenHash: 'hash',
+        revokedAt: null,
+        expiresAt: futureDate,
+        user: {
+          id: 'user-1',
+          username: 'testuser',
+          email: 'test@example.com',
+          roleId: null,
+        },
+      });
+
+      const result = await service.validateAccessToken('oat_test');
+
+      expect(result).toEqual({
+        userId: 'user-1',
+        username: 'testuser',
+        email: 'test@example.com',
+        roleId: null,
+      });
+    });
+
+    it('returns empty strings for null username and email', async () => {
+      const futureDate = new Date();
+      futureDate.setHours(futureDate.getHours() + 1);
+
+      prisma.oAuthAccessToken.findUnique.mockResolvedValue({
+        tokenHash: 'hash',
+        revokedAt: null,
+        expiresAt: futureDate,
+        user: {
+          id: 'user-1',
+          username: null,
+          email: null,
+          roleId: 'admin',
+        },
+      });
+
+      const result = await service.validateAccessToken('oat_test');
+
+      expect(result.username).toBe('');
+      expect(result.email).toBe('');
+    });
+
+    it('rejects unknown token', async () => {
+      prisma.oAuthAccessToken.findUnique.mockResolvedValue(null);
+
+      await expect(service.validateAccessToken('oat_bad')).rejects.toThrow(
+        'Invalid access token',
+      );
+    });
+
+    it('rejects revoked token', async () => {
+      prisma.oAuthAccessToken.findUnique.mockResolvedValue({
+        tokenHash: 'hash',
+        revokedAt: new Date(),
+        expiresAt: new Date(Date.now() + 3600000),
+        user: { id: 'user-1', username: 'test', email: 'a@b.c', roleId: null },
+      });
+
+      await expect(service.validateAccessToken('oat_revoked')).rejects.toThrow(
+        'Access token has been revoked',
+      );
+    });
+
+    it('rejects expired token', async () => {
+      const pastDate = new Date();
+      pastDate.setHours(pastDate.getHours() - 1);
+
+      prisma.oAuthAccessToken.findUnique.mockResolvedValue({
+        tokenHash: 'hash',
+        revokedAt: null,
+        expiresAt: pastDate,
+        user: { id: 'user-1', username: 'test', email: 'a@b.c', roleId: null },
+      });
+
+      await expect(service.validateAccessToken('oat_expired')).rejects.toThrow(
+        'Access token expired',
+      );
+    });
+  });
+
   describe('refreshTokens', () => {
     const clientId = 'client-1';
     const refreshToken = 'ort_abc123';
 
-    it('should reject when atomic revocation fails (already revoked)', async () => {
+    it('rejects when atomic revocation fails (already revoked)', async () => {
       prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
@@ -56,7 +155,30 @@ describe('OAuthTokenService', () => {
       ).rejects.toThrow(UnauthorizedException);
     });
 
-    it('should reject second concurrent call (only first updateMany succeeds)', async () => {
+    it('rejects when existing token not found after revocation', async () => {
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthRefreshToken.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.refreshTokens(refreshToken, clientId),
+      ).rejects.toThrow('Invalid refresh token');
+    });
+
+    it('returns new token pair on success', async () => {
+      prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
+        userId: 'user-1',
+        clientId,
+      });
+
+      const result = await service.refreshTokens(refreshToken, clientId);
+
+      expect(result.accessToken).toMatch(/^oat_/);
+      expect(result.refreshToken).toMatch(/^ort_/);
+      expect(result.tokenType).toBe('Bearer');
+    });
+
+    it('rejects second concurrent call (only first updateMany succeeds)', async () => {
       prisma.oAuthRefreshToken.updateMany
         .mockResolvedValueOnce({ count: 1 })
         .mockResolvedValueOnce({ count: 0 });

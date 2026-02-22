@@ -295,9 +295,9 @@ export class OAuthController {
     const token = authHeader.slice(7);
 
     try {
-      const decoded = this.jwtService.verify(token, {
+      const decoded: { sub?: string } = this.jwtService.verify(token, {
         secret: this.jwtSecret.secret,
-      }) as { sub?: string };
+      });
 
       if (!decoded?.sub) {
         throw new UnauthorizedException('Invalid token');
