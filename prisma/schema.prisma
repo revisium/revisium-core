@@ -253,6 +253,8 @@ model OAuthAuthorizationCode {
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
 
+  @@index([clientId])
+  @@index([userId])
   @@index([expiresAt])
 }
 
@@ -268,6 +270,8 @@ model OAuthAccessToken {
   revokedAt DateTime?
   createdAt DateTime  @default(now())
 
+  @@index([clientId])
+  @@index([userId])
   @@index([expiresAt])
 }
 
@@ -284,5 +288,7 @@ model OAuthRefreshToken {
   revokedAt  DateTime?
   createdAt  DateTime  @default(now())
 
+  @@index([clientId])
+  @@index([userId])
   @@index([expiresAt])
 }
