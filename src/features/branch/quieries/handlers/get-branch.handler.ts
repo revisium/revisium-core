@@ -1,5 +1,4 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { GetBranchQuery } from 'src/features/branch/quieries/impl/get-branch.query';
 import { GetBranchReturnType } from 'src/features/branch/quieries/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -17,9 +16,9 @@ export class GetBranchHandler implements IQueryHandler<GetBranchQuery> {
   }
 
   execute({ data }: GetBranchQuery): Promise<GetBranchReturnType> {
-    return this.transactionPrisma.run(() => this.transactionHandler(data), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
+    return this.transactionPrisma.runSerializable(
+      () => this.transactionHandler(data),
+    );
   }
 
   private async transactionHandler(data: GetBranchQuery['data']) {

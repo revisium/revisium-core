@@ -74,7 +74,7 @@ describe('MCP API', () => {
       const data = parseResponse(res);
       expect(data.result).toMatchObject({
         protocolVersion: '2024-11-05',
-        serverInfo: { name: 'revisium', version: '1.0.0' },
+        serverInfo: { name: 'revisium', version: expect.any(String) },
         capabilities: expect.objectContaining({
           resources: expect.any(Object),
           tools: expect.any(Object),

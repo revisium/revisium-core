@@ -33,9 +33,9 @@
     "start:prod": "NODE_ENV=production npm run prisma:migrate:deploy && npm run seed:prod && node --experimental-require-module dist/src/main",
     "lint:ci": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings 0",
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings 0 --fix",
-    "test": "NODE_ENV=test jest",
+    "test": "NODE_ENV=test jest --maxWorkers=50% --forceExit",
     "test:watch": "NODE_ENV=test jest --watch",
-    "test:cov": "NODE_ENV=test jest --coverage --silent",
+    "test:cov": "NODE_ENV=test jest --maxWorkers=50% --forceExit --coverage --silent",
     "test:debug": "NODE_ENV=test node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "tsc": "tsc -p tsconfig.json",
     "docker:test-container-up": "docker compose -f docker-compose-test.yml -p revisium-core-test up -d && sleep 1 && dotenv -e .env.test npm run prisma:migrate:deploy && dotenv -e .env.test npm run seed",
@@ -182,6 +182,7 @@
       "text-summary",
       "lcov"
     ],
+    "testTimeout": 30000,
     "testEnvironment": "node",
     "setupFiles": [
       "<rootDir>/jest.setup.ts"

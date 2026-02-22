@@ -1,6 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import {
@@ -26,9 +25,8 @@ export class DeleteBranchHandler implements ICommandHandler<
   }
 
   public async execute({ data }: DeleteBranchCommand) {
-    const endpointIds = await this.transactionPrisma.run(
+    const endpointIds = await this.transactionPrisma.runSerializable(
       () => this.transactionHandler(data),
-      { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
     );
 
     await this.notifyEndpoints(endpointIds);

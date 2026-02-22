@@ -12,6 +12,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { version } from '../../../package.json';
 import { McpServerService } from './mcp-server.service';
 import { McpAuthService } from './mcp-auth.service';
 
@@ -31,7 +32,7 @@ export class McpController {
     });
 
     const server = new McpServer(
-      { name: 'revisium', version: '1.0.0' },
+      { name: 'revisium', version },
       { instructions: this.mcpServer.getInstructions() },
     );
 
