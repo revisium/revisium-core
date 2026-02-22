@@ -299,7 +299,7 @@ Revisium supports the `mcp` OAuth scope. When an MCP client (Claude Code, Cursor
 | (none) | 1 hour | 30 days |
 | `mcp` | 30 days (configurable via `MCP_ACCESS_TOKEN_EXPIRY_DAYS`) | 90 days |
 
-The scope is stored on both the authorization code and the access token. On token refresh, the scope is inherited from the previous access token.
+The scope is stored on the authorization code, access token, and refresh token. On token refresh, the scope is inherited from the refresh token being rotated.
 
 **Why longer TTL for MCP?** MCP clients (particularly Claude Code) do not currently implement refresh token rotation. With a 1-hour TTL, users would need to re-authorize via the browser every hour. Since Revisium uses opaque tokens (`oat_`) with instant revocation (DB lookup on every request), a longer TTL is safe — compromised tokens can be revoked immediately via `POST /oauth/revoke`.
 
@@ -408,6 +408,7 @@ model OAuthRefreshToken {
   client     OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope      String?
   expiresAt  DateTime
   lastUsedAt DateTime  @default(now())
   revokedAt  DateTime?
@@ -471,6 +472,7 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
 | tokenHash (UNIQUE)        |---- SHA-256(ort_xxx)
 | clientId (FK)             |                  |
 | userId (FK) --------------|------------------+
+| scope (nullable)          |
 | expiresAt                 |
 | lastUsedAt                |
 | revokedAt (nullable)      |
@@ -491,8 +493,9 @@ Server:
   1. Atomic: UPDATE oauth_refresh_tokens SET revokedAt=now()
      WHERE tokenHash=hash(ort_OLD) AND clientId=... AND revokedAt IS NULL AND expiresAt > now()
   2. If count=0 -> 401 (invalid, expired, or already revoked)
-  3. Create new oat_NEW + ort_NEW
-  4. Return { access_token: oat_NEW, refresh_token: ort_NEW }
+  3. Read scope from revoked refresh token
+  4. Create new oat_NEW + ort_NEW (inheriting scope from old token)
+  5. Return { access_token: oat_NEW, refresh_token: ort_NEW }
 ```
 
 The atomic `updateMany` prevents TOCTOU race conditions -- concurrent refresh attempts with the same token will only succeed once. If a revoked refresh token is presented, the request fails with `401`.

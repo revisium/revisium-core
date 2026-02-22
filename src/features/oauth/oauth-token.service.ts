@@ -32,11 +32,12 @@ export class OAuthTokenService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {
+    const parsed = Number.parseInt(
+      this.configService.get<string>('MCP_ACCESS_TOKEN_EXPIRY_DAYS') ?? '',
+      10,
+    );
     this.mcpAccessTokenExpiryDays =
-      parseInt(
-        this.configService.get<string>('MCP_ACCESS_TOKEN_EXPIRY_DAYS') ?? '',
-        10,
-      ) || DEFAULT_MCP_ACCESS_TOKEN_EXPIRY_DAYS;
+      parsed > 0 ? parsed : DEFAULT_MCP_ACCESS_TOKEN_EXPIRY_DAYS;
   }
 
   async createTokens(
@@ -85,6 +86,7 @@ export class OAuthTokenService {
           tokenHash: this.hashToken(refreshToken),
           clientId,
           userId,
+          scope: scope ?? null,
           expiresAt: refreshExpiresAt,
         },
       }),
@@ -163,16 +165,10 @@ export class OAuthTokenService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const latestAccessToken = await this.prisma.oAuthAccessToken.findFirst({
-      where: { clientId, userId: existing.userId },
-      orderBy: { createdAt: 'desc' },
-      select: { scope: true },
-    });
-
     return this.createTokens(
       clientId,
       existing.userId,
-      latestAccessToken?.scope ?? undefined,
+      existing.scope ?? undefined,
     );
   }
 

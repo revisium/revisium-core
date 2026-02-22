@@ -29,6 +29,7 @@ export type OAuthRefreshTokenMinAggregateOutputType = {
   tokenHash: string | null;
   clientId: string | null;
   userId: string | null;
+  scope: string | null;
   expiresAt: Date | null;
   lastUsedAt: Date | null;
   revokedAt: Date | null;
@@ -40,6 +41,7 @@ export type OAuthRefreshTokenMaxAggregateOutputType = {
   tokenHash: string | null;
   clientId: string | null;
   userId: string | null;
+  scope: string | null;
   expiresAt: Date | null;
   lastUsedAt: Date | null;
   revokedAt: Date | null;
@@ -51,6 +53,7 @@ export type OAuthRefreshTokenCountAggregateOutputType = {
   tokenHash: number;
   clientId: number;
   userId: number;
+  scope: number;
   expiresAt: number;
   lastUsedAt: number;
   revokedAt: number;
@@ -63,6 +66,7 @@ export type OAuthRefreshTokenMinAggregateInputType = {
   tokenHash?: true;
   clientId?: true;
   userId?: true;
+  scope?: true;
   expiresAt?: true;
   lastUsedAt?: true;
   revokedAt?: true;
@@ -74,6 +78,7 @@ export type OAuthRefreshTokenMaxAggregateInputType = {
   tokenHash?: true;
   clientId?: true;
   userId?: true;
+  scope?: true;
   expiresAt?: true;
   lastUsedAt?: true;
   revokedAt?: true;
@@ -85,6 +90,7 @@ export type OAuthRefreshTokenCountAggregateInputType = {
   tokenHash?: true;
   clientId?: true;
   userId?: true;
+  scope?: true;
   expiresAt?: true;
   lastUsedAt?: true;
   revokedAt?: true;
@@ -182,6 +188,7 @@ export type OAuthRefreshTokenGroupByOutputType = {
   tokenHash: string;
   clientId: string;
   userId: string;
+  scope: string | null;
   expiresAt: Date;
   lastUsedAt: Date;
   revokedAt: Date | null;
@@ -218,6 +225,7 @@ export type OAuthRefreshTokenWhereInput = {
   tokenHash?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
   clientId?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
   userId?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
+  scope?: Prisma.StringNullableFilter<'OAuthRefreshToken'> | string | null;
   expiresAt?: Prisma.DateTimeFilter<'OAuthRefreshToken'> | Date | string;
   lastUsedAt?: Prisma.DateTimeFilter<'OAuthRefreshToken'> | Date | string;
   revokedAt?:
@@ -238,6 +246,7 @@ export type OAuthRefreshTokenOrderByWithRelationInput = {
   tokenHash?: Prisma.SortOrder;
   clientId?: Prisma.SortOrder;
   userId?: Prisma.SortOrder;
+  scope?: Prisma.SortOrderInput | Prisma.SortOrder;
   expiresAt?: Prisma.SortOrder;
   lastUsedAt?: Prisma.SortOrder;
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -260,6 +269,7 @@ export type OAuthRefreshTokenWhereUniqueInput = Prisma.AtLeast<
       | Prisma.OAuthRefreshTokenWhereInput[];
     clientId?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
     userId?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
+    scope?: Prisma.StringNullableFilter<'OAuthRefreshToken'> | string | null;
     expiresAt?: Prisma.DateTimeFilter<'OAuthRefreshToken'> | Date | string;
     lastUsedAt?: Prisma.DateTimeFilter<'OAuthRefreshToken'> | Date | string;
     revokedAt?:
@@ -282,6 +292,7 @@ export type OAuthRefreshTokenOrderByWithAggregationInput = {
   tokenHash?: Prisma.SortOrder;
   clientId?: Prisma.SortOrder;
   userId?: Prisma.SortOrder;
+  scope?: Prisma.SortOrderInput | Prisma.SortOrder;
   expiresAt?: Prisma.SortOrder;
   lastUsedAt?: Prisma.SortOrder;
   revokedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
@@ -303,6 +314,10 @@ export type OAuthRefreshTokenScalarWhereWithAggregatesInput = {
   tokenHash?: Prisma.StringWithAggregatesFilter<'OAuthRefreshToken'> | string;
   clientId?: Prisma.StringWithAggregatesFilter<'OAuthRefreshToken'> | string;
   userId?: Prisma.StringWithAggregatesFilter<'OAuthRefreshToken'> | string;
+  scope?:
+    | Prisma.StringNullableWithAggregatesFilter<'OAuthRefreshToken'>
+    | string
+    | null;
   expiresAt?:
     | Prisma.DateTimeWithAggregatesFilter<'OAuthRefreshToken'>
     | Date
@@ -325,6 +340,7 @@ export type OAuthRefreshTokenScalarWhereWithAggregatesInput = {
 export type OAuthRefreshTokenCreateInput = {
   id?: string;
   tokenHash: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -338,6 +354,7 @@ export type OAuthRefreshTokenUncheckedCreateInput = {
   tokenHash: string;
   clientId: string;
   userId: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -347,6 +364,7 @@ export type OAuthRefreshTokenUncheckedCreateInput = {
 export type OAuthRefreshTokenUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -364,6 +382,7 @@ export type OAuthRefreshTokenUncheckedUpdateInput = {
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
   clientId?: Prisma.StringFieldUpdateOperationsInput | string;
   userId?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -379,6 +398,7 @@ export type OAuthRefreshTokenCreateManyInput = {
   tokenHash: string;
   clientId: string;
   userId: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -388,6 +408,7 @@ export type OAuthRefreshTokenCreateManyInput = {
 export type OAuthRefreshTokenUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -403,6 +424,7 @@ export type OAuthRefreshTokenUncheckedUpdateManyInput = {
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
   clientId?: Prisma.StringFieldUpdateOperationsInput | string;
   userId?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -436,6 +458,7 @@ export type OAuthRefreshTokenCountOrderByAggregateInput = {
   tokenHash?: Prisma.SortOrder;
   clientId?: Prisma.SortOrder;
   userId?: Prisma.SortOrder;
+  scope?: Prisma.SortOrder;
   expiresAt?: Prisma.SortOrder;
   lastUsedAt?: Prisma.SortOrder;
   revokedAt?: Prisma.SortOrder;
@@ -447,6 +470,7 @@ export type OAuthRefreshTokenMaxOrderByAggregateInput = {
   tokenHash?: Prisma.SortOrder;
   clientId?: Prisma.SortOrder;
   userId?: Prisma.SortOrder;
+  scope?: Prisma.SortOrder;
   expiresAt?: Prisma.SortOrder;
   lastUsedAt?: Prisma.SortOrder;
   revokedAt?: Prisma.SortOrder;
@@ -458,6 +482,7 @@ export type OAuthRefreshTokenMinOrderByAggregateInput = {
   tokenHash?: Prisma.SortOrder;
   clientId?: Prisma.SortOrder;
   userId?: Prisma.SortOrder;
+  scope?: Prisma.SortOrder;
   expiresAt?: Prisma.SortOrder;
   lastUsedAt?: Prisma.SortOrder;
   revokedAt?: Prisma.SortOrder;
@@ -687,6 +712,7 @@ export type OAuthRefreshTokenUncheckedUpdateManyWithoutClientNestedInput = {
 export type OAuthRefreshTokenCreateWithoutUserInput = {
   id?: string;
   tokenHash: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -698,6 +724,7 @@ export type OAuthRefreshTokenUncheckedCreateWithoutUserInput = {
   id?: string;
   tokenHash: string;
   clientId: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -759,6 +786,7 @@ export type OAuthRefreshTokenScalarWhereInput = {
   tokenHash?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
   clientId?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
   userId?: Prisma.StringFilter<'OAuthRefreshToken'> | string;
+  scope?: Prisma.StringNullableFilter<'OAuthRefreshToken'> | string | null;
   expiresAt?: Prisma.DateTimeFilter<'OAuthRefreshToken'> | Date | string;
   lastUsedAt?: Prisma.DateTimeFilter<'OAuthRefreshToken'> | Date | string;
   revokedAt?:
@@ -772,6 +800,7 @@ export type OAuthRefreshTokenScalarWhereInput = {
 export type OAuthRefreshTokenCreateWithoutClientInput = {
   id?: string;
   tokenHash: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -783,6 +812,7 @@ export type OAuthRefreshTokenUncheckedCreateWithoutClientInput = {
   id?: string;
   tokenHash: string;
   userId: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -836,6 +866,7 @@ export type OAuthRefreshTokenCreateManyUserInput = {
   id?: string;
   tokenHash: string;
   clientId: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -845,6 +876,7 @@ export type OAuthRefreshTokenCreateManyUserInput = {
 export type OAuthRefreshTokenUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -860,6 +892,7 @@ export type OAuthRefreshTokenUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
   clientId?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -874,6 +907,7 @@ export type OAuthRefreshTokenUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
   clientId?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -888,6 +922,7 @@ export type OAuthRefreshTokenCreateManyClientInput = {
   id?: string;
   tokenHash: string;
   userId: string;
+  scope?: string | null;
   expiresAt: Date | string;
   lastUsedAt?: Date | string;
   revokedAt?: Date | string | null;
@@ -897,6 +932,7 @@ export type OAuthRefreshTokenCreateManyClientInput = {
 export type OAuthRefreshTokenUpdateWithoutClientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -912,6 +948,7 @@ export type OAuthRefreshTokenUncheckedUpdateWithoutClientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
   userId?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -926,6 +963,7 @@ export type OAuthRefreshTokenUncheckedUpdateManyWithoutClientInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string;
   tokenHash?: Prisma.StringFieldUpdateOperationsInput | string;
   userId?: Prisma.StringFieldUpdateOperationsInput | string;
+  scope?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastUsedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   revokedAt?:
@@ -945,6 +983,7 @@ export type OAuthRefreshTokenSelect<
     tokenHash?: boolean;
     clientId?: boolean;
     userId?: boolean;
+    scope?: boolean;
     expiresAt?: boolean;
     lastUsedAt?: boolean;
     revokedAt?: boolean;
@@ -964,6 +1003,7 @@ export type OAuthRefreshTokenSelectCreateManyAndReturn<
     tokenHash?: boolean;
     clientId?: boolean;
     userId?: boolean;
+    scope?: boolean;
     expiresAt?: boolean;
     lastUsedAt?: boolean;
     revokedAt?: boolean;
@@ -983,6 +1023,7 @@ export type OAuthRefreshTokenSelectUpdateManyAndReturn<
     tokenHash?: boolean;
     clientId?: boolean;
     userId?: boolean;
+    scope?: boolean;
     expiresAt?: boolean;
     lastUsedAt?: boolean;
     revokedAt?: boolean;
@@ -998,6 +1039,7 @@ export type OAuthRefreshTokenSelectScalar = {
   tokenHash?: boolean;
   clientId?: boolean;
   userId?: boolean;
+  scope?: boolean;
   expiresAt?: boolean;
   lastUsedAt?: boolean;
   revokedAt?: boolean;
@@ -1012,6 +1054,7 @@ export type OAuthRefreshTokenOmit<
   | 'tokenHash'
   | 'clientId'
   | 'userId'
+  | 'scope'
   | 'expiresAt'
   | 'lastUsedAt'
   | 'revokedAt'
@@ -1055,6 +1098,7 @@ export type $OAuthRefreshTokenPayload<
       tokenHash: string;
       clientId: string;
       userId: string;
+      scope: string | null;
       expiresAt: Date;
       lastUsedAt: Date;
       revokedAt: Date | null;
@@ -1705,6 +1749,7 @@ export interface OAuthRefreshTokenFieldRefs {
   readonly tokenHash: Prisma.FieldRef<'OAuthRefreshToken', 'String'>;
   readonly clientId: Prisma.FieldRef<'OAuthRefreshToken', 'String'>;
   readonly userId: Prisma.FieldRef<'OAuthRefreshToken', 'String'>;
+  readonly scope: Prisma.FieldRef<'OAuthRefreshToken', 'String'>;
   readonly expiresAt: Prisma.FieldRef<'OAuthRefreshToken', 'DateTime'>;
   readonly lastUsedAt: Prisma.FieldRef<'OAuthRefreshToken', 'DateTime'>;
   readonly revokedAt: Prisma.FieldRef<'OAuthRefreshToken', 'DateTime'>;

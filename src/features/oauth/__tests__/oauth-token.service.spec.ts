@@ -15,7 +15,6 @@ describe('OAuthTokenService', () => {
     oAuthAccessToken: {
       create: jest.Mock;
       findUnique: jest.Mock;
-      findFirst: jest.Mock;
       updateMany: jest.Mock;
     };
     $transaction: jest.Mock;
@@ -31,7 +30,6 @@ describe('OAuthTokenService', () => {
       oAuthAccessToken: {
         create: jest.fn(),
         findUnique: jest.fn(),
-        findFirst: jest.fn(),
         updateMany: jest.fn(),
       },
       $transaction: jest.fn().mockImplementation((arg: unknown) => {
@@ -87,9 +85,15 @@ describe('OAuthTokenService', () => {
     it('stores scope in access token record', async () => {
       await service.createTokens('client-1', 'user-1', 'mcp');
 
-      const createCall = prisma.$transaction.mock.calls[0][0][0];
-      await createCall;
       expect(prisma.oAuthAccessToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ scope: 'mcp' }),
+      });
+    });
+
+    it('stores scope in refresh token record', async () => {
+      await service.createTokens('client-1', 'user-1', 'mcp');
+
+      expect(prisma.oAuthRefreshToken.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ scope: 'mcp' }),
       });
     });
@@ -97,9 +101,10 @@ describe('OAuthTokenService', () => {
     it('stores null scope when not provided', async () => {
       await service.createTokens('client-1', 'user-1');
 
-      const createCall = prisma.$transaction.mock.calls[0][0][0];
-      await createCall;
       expect(prisma.oAuthAccessToken.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ scope: null }),
+      });
+      expect(prisma.oAuthRefreshToken.create).toHaveBeenCalledWith({
         data: expect.objectContaining({ scope: null }),
       });
     });
@@ -232,23 +237,24 @@ describe('OAuthTokenService', () => {
       prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
         userId: 'user-1',
         clientId,
+        scope: null,
       });
-      prisma.oAuthAccessToken.findFirst.mockResolvedValue(null);
 
       const result = await service.refreshTokens(refreshToken, clientId);
 
       expect(result.accessToken).toMatch(/^oat_/);
       expect(result.refreshToken).toMatch(/^ort_/);
       expect(result.tokenType).toBe('Bearer');
+      expect(result.expiresIn).toBe(3600);
     });
 
-    it('inherits mcp scope from previous access token', async () => {
+    it('inherits mcp scope from refresh token', async () => {
       prisma.oAuthRefreshToken.updateMany.mockResolvedValue({ count: 1 });
       prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
         userId: 'user-1',
         clientId,
+        scope: 'mcp',
       });
-      prisma.oAuthAccessToken.findFirst.mockResolvedValue({ scope: 'mcp' });
 
       const result = await service.refreshTokens(refreshToken, clientId);
 
@@ -263,8 +269,8 @@ describe('OAuthTokenService', () => {
       prisma.oAuthRefreshToken.findUnique.mockResolvedValue({
         userId: 'user-1',
         clientId,
+        scope: null,
       });
-      prisma.oAuthAccessToken.findFirst.mockResolvedValue(null);
 
       const results = await Promise.all([
         service

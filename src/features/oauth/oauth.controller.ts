@@ -96,15 +96,28 @@ export class OAuthController {
 
   @Get('oauth/authorize')
   async handleAuthorizeGet(
-    @Query('client_id') clientId: string,
-    @Query('redirect_uri') redirectUri: string,
-    @Query('code_challenge') codeChallenge: string,
-    @Query('code_challenge_method') codeChallengeMethod: string,
-    @Query('response_type') responseType: string,
-    @Query('state') state: string,
-    @Query('scope') scope: string | undefined,
+    @Query()
+    query: {
+      client_id: string;
+      redirect_uri: string;
+      code_challenge: string;
+      code_challenge_method: string;
+      response_type: string;
+      state: string;
+      scope?: string;
+    },
     @Res() res: Response,
   ) {
+    const {
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod,
+      response_type: responseType,
+      state,
+      scope,
+    } = query;
+
     if (!clientId || !redirectUri || !codeChallenge || !state) {
       throw new BadRequestException('Missing required parameters');
     }

@@ -2094,6 +2094,7 @@ export const OAuthRefreshTokenScalarFieldEnum = {
   tokenHash: 'tokenHash',
   clientId: 'clientId',
   userId: 'userId',
+  scope: 'scope',
   expiresAt: 'expiresAt',
   lastUsedAt: 'lastUsedAt',
   revokedAt: 'revokedAt',
@@ -2316,6 +2317,7 @@ export const OAuthRefreshTokenOrderByRelevanceFieldEnum = {
   tokenHash: 'tokenHash',
   clientId: 'clientId',
   userId: 'userId',
+  scope: 'scope',
 } as const;
 
 export type OAuthRefreshTokenOrderByRelevanceFieldEnum =
