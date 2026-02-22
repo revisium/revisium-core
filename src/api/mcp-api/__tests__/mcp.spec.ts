@@ -46,7 +46,7 @@ describe('MCP API', () => {
     await app.close();
   });
 
-  const getToken = (user: { username: string; id: string }) =>
+  const getToken = (user: { username: string | null; id: string }) =>
     authService.login({ username: user.username, sub: user.id });
 
   describe('initialize', () => {

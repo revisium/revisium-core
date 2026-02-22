@@ -31,7 +31,7 @@ describe('OAuthTokenService', () => {
       },
       $transaction: jest
         .fn()
-        .mockImplementation((ops: Promise[]) => Promise.all(ops)),
+        .mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops)),
     };
 
     const module: TestingModule = await Test.createTestingModule({
