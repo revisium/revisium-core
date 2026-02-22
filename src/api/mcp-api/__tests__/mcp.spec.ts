@@ -116,6 +116,7 @@ describe('MCP API', () => {
       }).expect(401);
 
       expect(res.headers['www-authenticate']).toMatch(/^Bearer /);
+      expect(res.headers['www-authenticate']).toContain('scope="mcp"');
       expect(res.body.error.message).toBe('Unauthorized');
     });
   });

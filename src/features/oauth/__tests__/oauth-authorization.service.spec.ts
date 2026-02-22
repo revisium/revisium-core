@@ -32,6 +32,35 @@ describe('OAuthAuthorizationService', () => {
     service = module.get(OAuthAuthorizationService);
   });
 
+  describe('createAuthorizationCode', () => {
+    it('stores scope when provided', async () => {
+      await service.createAuthorizationCode({
+        clientId: 'client-1',
+        userId: 'user-1',
+        redirectUri: 'http://localhost:3000/callback',
+        codeChallenge: 'challenge',
+        scope: 'mcp',
+      });
+
+      expect(prisma.oAuthAuthorizationCode.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ scope: 'mcp' }),
+      });
+    });
+
+    it('stores null scope when not provided', async () => {
+      await service.createAuthorizationCode({
+        clientId: 'client-1',
+        userId: 'user-1',
+        redirectUri: 'http://localhost:3000/callback',
+        codeChallenge: 'challenge',
+      });
+
+      expect(prisma.oAuthAuthorizationCode.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({ scope: null }),
+      });
+    });
+  });
+
   describe('exchangeCode', () => {
     const validParams = {
       code: 'auth_abc123',
@@ -61,6 +90,7 @@ describe('OAuthAuthorizationService', () => {
         usedAt: new Date(),
         expiresAt: new Date(Date.now() + 600_000),
         userId: 'user-1',
+        scope: null,
       });
 
       const results = await Promise.all([
@@ -90,11 +120,48 @@ describe('OAuthAuthorizationService', () => {
         usedAt: new Date(),
         expiresAt: new Date(Date.now() + 600_000),
         userId: 'user-1',
+        scope: null,
       });
 
       await expect(service.exchangeCode(validParams)).rejects.toThrow(
         'PKCE verification failed',
       );
+    });
+
+    it('returns scope from stored authorization code', async () => {
+      prisma.oAuthAuthorizationCode.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthAuthorizationCode.findUnique.mockResolvedValue({
+        code: validParams.code,
+        clientId: validParams.clientId,
+        redirectUri: validParams.redirectUri,
+        codeChallenge: 'JBbiqONGWPaAmwXk_8bT6UnlPfrn65D32eZlJS-zGG0',
+        usedAt: new Date(),
+        expiresAt: new Date(Date.now() + 600_000),
+        userId: 'user-1',
+        scope: 'mcp',
+      });
+
+      const result = await service.exchangeCode(validParams);
+
+      expect(result).toEqual({ userId: 'user-1', scope: 'mcp' });
+    });
+
+    it('returns null scope when not stored', async () => {
+      prisma.oAuthAuthorizationCode.updateMany.mockResolvedValue({ count: 1 });
+      prisma.oAuthAuthorizationCode.findUnique.mockResolvedValue({
+        code: validParams.code,
+        clientId: validParams.clientId,
+        redirectUri: validParams.redirectUri,
+        codeChallenge: 'JBbiqONGWPaAmwXk_8bT6UnlPfrn65D32eZlJS-zGG0',
+        usedAt: new Date(),
+        expiresAt: new Date(Date.now() + 600_000),
+        userId: 'user-1',
+        scope: null,
+      });
+
+      const result = await service.exchangeCode(validParams);
+
+      expect(result).toEqual({ userId: 'user-1', scope: null });
     });
   });
 });

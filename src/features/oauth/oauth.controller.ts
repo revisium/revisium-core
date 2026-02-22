@@ -49,6 +49,7 @@ export class OAuthController {
       token_endpoint_auth_methods_supported: ['client_secret_post'],
       revocation_endpoint: `${this.publicUrl}/oauth/revoke`,
       revocation_endpoint_auth_methods_supported: ['client_secret_post'],
+      scopes_supported: ['mcp'],
     };
   }
 
@@ -58,6 +59,7 @@ export class OAuthController {
       resource: this.publicUrl,
       authorization_servers: [this.publicUrl],
       bearer_methods_supported: ['header'],
+      scopes_supported: ['mcp'],
     };
   }
 
@@ -94,14 +96,28 @@ export class OAuthController {
 
   @Get('oauth/authorize')
   async handleAuthorizeGet(
-    @Query('client_id') clientId: string,
-    @Query('redirect_uri') redirectUri: string,
-    @Query('code_challenge') codeChallenge: string,
-    @Query('code_challenge_method') codeChallengeMethod: string,
-    @Query('response_type') responseType: string,
-    @Query('state') state: string,
+    @Query()
+    query: {
+      client_id: string;
+      redirect_uri: string;
+      code_challenge: string;
+      code_challenge_method: string;
+      response_type: string;
+      state: string;
+      scope?: string;
+    },
     @Res() res: Response,
   ) {
+    const {
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      code_challenge: codeChallenge,
+      code_challenge_method: codeChallengeMethod,
+      response_type: responseType,
+      state,
+      scope,
+    } = query;
+
     if (!clientId || !redirectUri || !codeChallenge || !state) {
       throw new BadRequestException('Missing required parameters');
     }
@@ -135,6 +151,10 @@ export class OAuthController {
       state,
     });
 
+    if (scope) {
+      params.set('scope', scope);
+    }
+
     res.redirect(302, `${this.publicUrl}/authorize?${params.toString()}`);
   }
 
@@ -147,9 +167,10 @@ export class OAuthController {
       redirect_uri: string;
       code_challenge: string;
       state: string;
+      scope?: string;
     },
   ) {
-    const { client_id, redirect_uri, code_challenge, state } = body;
+    const { client_id, redirect_uri, code_challenge, state, scope } = body;
 
     if (!client_id || !redirect_uri || !code_challenge || !state) {
       throw new BadRequestException('Missing required fields');
@@ -171,6 +192,7 @@ export class OAuthController {
       userId,
       redirectUri: redirect_uri,
       codeChallenge: code_challenge,
+      scope,
     });
 
     const redirectUrl = new URL(redirect_uri);
@@ -272,14 +294,18 @@ export class OAuthController {
       throw new BadRequestException('Invalid client credentials');
     }
 
-    const { userId } = await this.authorizationService.exchangeCode({
+    const { userId, scope } = await this.authorizationService.exchangeCode({
       code,
       clientId: client_id,
       codeVerifier: code_verifier,
       redirectUri: redirect_uri,
     });
 
-    const tokens = await this.tokenService.createTokens(client_id, userId);
+    const tokens = await this.tokenService.createTokens(
+      client_id,
+      userId,
+      scope ?? undefined,
+    );
 
     return {
       access_token: tokens.accessToken,

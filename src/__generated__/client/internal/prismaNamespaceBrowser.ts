@@ -272,6 +272,7 @@ export const OAuthAuthorizationCodeScalarFieldEnum = {
   userId: 'userId',
   redirectUri: 'redirectUri',
   codeChallenge: 'codeChallenge',
+  scope: 'scope',
   expiresAt: 'expiresAt',
   usedAt: 'usedAt',
   createdAt: 'createdAt',
@@ -285,6 +286,7 @@ export const OAuthAccessTokenScalarFieldEnum = {
   tokenHash: 'tokenHash',
   clientId: 'clientId',
   userId: 'userId',
+  scope: 'scope',
   expiresAt: 'expiresAt',
   revokedAt: 'revokedAt',
   createdAt: 'createdAt',
@@ -298,6 +300,7 @@ export const OAuthRefreshTokenScalarFieldEnum = {
   tokenHash: 'tokenHash',
   clientId: 'clientId',
   userId: 'userId',
+  scope: 'scope',
   expiresAt: 'expiresAt',
   lastUsedAt: 'lastUsedAt',
   revokedAt: 'revokedAt',
@@ -498,6 +501,7 @@ export const OAuthAuthorizationCodeOrderByRelevanceFieldEnum = {
   userId: 'userId',
   redirectUri: 'redirectUri',
   codeChallenge: 'codeChallenge',
+  scope: 'scope',
 } as const;
 
 export type OAuthAuthorizationCodeOrderByRelevanceFieldEnum =
@@ -508,6 +512,7 @@ export const OAuthAccessTokenOrderByRelevanceFieldEnum = {
   tokenHash: 'tokenHash',
   clientId: 'clientId',
   userId: 'userId',
+  scope: 'scope',
 } as const;
 
 export type OAuthAccessTokenOrderByRelevanceFieldEnum =
@@ -518,6 +523,7 @@ export const OAuthRefreshTokenOrderByRelevanceFieldEnum = {
   tokenHash: 'tokenHash',
   clientId: 'clientId',
   userId: 'userId',
+  scope: 'scope',
 } as const;
 
 export type OAuthRefreshTokenOrderByRelevanceFieldEnum =

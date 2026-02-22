@@ -52,7 +52,7 @@ export class McpController {
             .status(401)
             .setHeader(
               'WWW-Authenticate',
-              `Bearer resource_metadata="${publicUrl}/.well-known/oauth-protected-resource"`,
+              `Bearer resource_metadata="${publicUrl}/.well-known/oauth-protected-resource", scope="mcp"`,
             )
             .json({
               jsonrpc: '2.0',

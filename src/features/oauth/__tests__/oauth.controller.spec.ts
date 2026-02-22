@@ -28,6 +28,55 @@ describe('OAuth Controller', () => {
     await app.close();
   });
 
+  const obtainTokens = async (options: { scope?: string } = {}) => {
+    const codeVerifier = 'shared_test_code_verifier_that_is_long_enough';
+    const codeChallenge = createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
+
+    const regRes = await request(app.getHttpServer())
+      .post('/oauth/register')
+      .send({
+        client_name: 'obtain-tokens-test',
+        redirect_uris: ['https://example.com/callback'],
+      });
+
+    const { client_id, client_secret } = regRes.body;
+
+    const authRes = await request(app.getHttpServer())
+      .post('/oauth/authorize')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        client_id,
+        redirect_uri: 'https://example.com/callback',
+        code_challenge: codeChallenge,
+        state: 'test_state',
+        ...(options.scope ? { scope: options.scope } : {}),
+      })
+      .expect(201);
+
+    const redirectUrl = new URL(authRes.body.redirect_uri);
+    const code = redirectUrl.searchParams.get('code');
+
+    const tokenRes = await request(app.getHttpServer())
+      .post('/oauth/token')
+      .send({
+        grant_type: 'authorization_code',
+        code,
+        client_id,
+        client_secret,
+        code_verifier: codeVerifier,
+        redirect_uri: 'https://example.com/callback',
+      })
+      .expect(201);
+
+    return {
+      client_id,
+      client_secret,
+      ...tokenRes.body,
+    };
+  };
+
   describe('GET /.well-known/oauth-authorization-server', () => {
     it('returns authorization server metadata', async () => {
       const res = await request(app.getHttpServer())
@@ -44,6 +93,7 @@ describe('OAuth Controller', () => {
         grant_types_supported: ['authorization_code', 'refresh_token'],
         code_challenge_methods_supported: ['S256'],
         revocation_endpoint_auth_methods_supported: ['client_secret_post'],
+        scopes_supported: ['mcp'],
       });
     });
   });
@@ -58,6 +108,7 @@ describe('OAuth Controller', () => {
         resource: expect.any(String),
         authorization_servers: expect.any(Array),
         bearer_methods_supported: ['header'],
+        scopes_supported: ['mcp'],
       });
     });
   });
@@ -136,6 +187,30 @@ describe('OAuth Controller', () => {
       expect(res.headers.location).toContain('/authorize?');
       expect(res.headers.location).toContain('client_id=');
       expect(res.headers.location).toContain('client_name=authorize-test');
+    });
+
+    it('passes scope to redirect URL', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'scope-redirect-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const res = await request(app.getHttpServer())
+        .get('/oauth/authorize')
+        .query({
+          client_id: regRes.body.client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: 'test_challenge',
+          code_challenge_method: 'S256',
+          response_type: 'code',
+          state: 'test_state',
+          scope: 'mcp',
+        })
+        .expect(302);
+
+      expect(res.headers.location).toContain('scope=mcp');
     });
 
     it('rejects missing parameters', async () => {
@@ -263,48 +338,9 @@ describe('OAuth Controller', () => {
 
   describe('POST /oauth/token', () => {
     it('exchanges authorization code for tokens', async () => {
-      const codeVerifier = 'test_code_verifier_that_is_long_enough_for_pkce';
-      const codeChallenge = createHash('sha256')
-        .update(codeVerifier)
-        .digest('base64url');
+      const tokens = await obtainTokens();
 
-      const regRes = await request(app.getHttpServer())
-        .post('/oauth/register')
-        .send({
-          client_name: 'token-test',
-          redirect_uris: ['https://example.com/callback'],
-        });
-
-      const { client_id, client_secret } = regRes.body;
-
-      const authRes = await request(app.getHttpServer())
-        .post('/oauth/authorize')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          client_id,
-          redirect_uri: 'https://example.com/callback',
-          code_challenge: codeChallenge,
-          state: 'token_test_state',
-        })
-        .expect(201);
-
-      const redirectUrl = new URL(authRes.body.redirect_uri);
-      const code = redirectUrl.searchParams.get('code');
-      expect(code).toBeTruthy();
-
-      const tokenRes = await request(app.getHttpServer())
-        .post('/oauth/token')
-        .send({
-          grant_type: 'authorization_code',
-          code,
-          client_id,
-          client_secret,
-          code_verifier: codeVerifier,
-          redirect_uri: 'https://example.com/callback',
-        })
-        .expect(201);
-
-      expect(tokenRes.body).toMatchObject({
+      expect(tokens).toMatchObject({
         access_token: expect.stringMatching(/^oat_/),
         refresh_token: expect.stringMatching(/^ort_/),
         token_type: 'Bearer',
@@ -312,45 +348,19 @@ describe('OAuth Controller', () => {
       });
     });
 
+    it('returns 30-day TTL with scope=mcp', async () => {
+      const tokens = await obtainTokens({ scope: 'mcp' });
+
+      expect(tokens).toMatchObject({
+        access_token: expect.stringMatching(/^oat_/),
+        refresh_token: expect.stringMatching(/^ort_/),
+        token_type: 'Bearer',
+        expires_in: 30 * 86400,
+      });
+    });
+
     it('refreshes token', async () => {
-      const codeVerifier = 'refresh_test_code_verifier_that_is_long_enough';
-      const codeChallenge = createHash('sha256')
-        .update(codeVerifier)
-        .digest('base64url');
-
-      const regRes = await request(app.getHttpServer())
-        .post('/oauth/register')
-        .send({
-          client_name: 'refresh-test',
-          redirect_uris: ['https://example.com/callback'],
-        });
-
-      const { client_id, client_secret } = regRes.body;
-
-      const authRes = await request(app.getHttpServer())
-        .post('/oauth/authorize')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          client_id,
-          redirect_uri: 'https://example.com/callback',
-          code_challenge: codeChallenge,
-          state: 'refresh_state',
-        })
-        .expect(201);
-
-      const redirectUrl = new URL(authRes.body.redirect_uri);
-      const code = redirectUrl.searchParams.get('code');
-
-      const tokenRes = await request(app.getHttpServer())
-        .post('/oauth/token')
-        .send({
-          grant_type: 'authorization_code',
-          code,
-          client_id,
-          client_secret,
-          code_verifier: codeVerifier,
-          redirect_uri: 'https://example.com/callback',
-        });
+      const { client_id, client_secret, refresh_token } = await obtainTokens();
 
       const refreshRes = await request(app.getHttpServer())
         .post('/oauth/token')
@@ -358,7 +368,7 @@ describe('OAuth Controller', () => {
           grant_type: 'refresh_token',
           client_id,
           client_secret,
-          refresh_token: tokenRes.body.refresh_token,
+          refresh_token,
         })
         .expect(201);
 
@@ -367,6 +377,24 @@ describe('OAuth Controller', () => {
         refresh_token: expect.stringMatching(/^ort_/),
         token_type: 'Bearer',
       });
+    });
+
+    it('preserves mcp scope on refresh', async () => {
+      const { client_id, client_secret, refresh_token } = await obtainTokens({
+        scope: 'mcp',
+      });
+
+      const refreshRes = await request(app.getHttpServer())
+        .post('/oauth/token')
+        .send({
+          grant_type: 'refresh_token',
+          client_id,
+          client_secret,
+          refresh_token,
+        })
+        .expect(201);
+
+      expect(refreshRes.body.expires_in).toBe(30 * 86400);
     });
 
     it('rejects unsupported grant_type', async () => {
@@ -432,55 +460,6 @@ describe('OAuth Controller', () => {
   });
 
   describe('POST /oauth/revoke', () => {
-    const obtainTokens = async () => {
-      const codeVerifier = 'revoke_test_code_verifier_that_is_long_enough';
-      const codeChallenge = createHash('sha256')
-        .update(codeVerifier)
-        .digest('base64url');
-
-      const regRes = await request(app.getHttpServer())
-        .post('/oauth/register')
-        .send({
-          client_name: 'revoke-test',
-          redirect_uris: ['https://example.com/callback'],
-        });
-
-      const { client_id, client_secret } = regRes.body;
-
-      const authRes = await request(app.getHttpServer())
-        .post('/oauth/authorize')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          client_id,
-          redirect_uri: 'https://example.com/callback',
-          code_challenge: codeChallenge,
-          state: 'revoke_state',
-        })
-        .expect(201);
-
-      const redirectUrl = new URL(authRes.body.redirect_uri);
-      const code = redirectUrl.searchParams.get('code');
-
-      const tokenRes = await request(app.getHttpServer())
-        .post('/oauth/token')
-        .send({
-          grant_type: 'authorization_code',
-          code,
-          client_id,
-          client_secret,
-          code_verifier: codeVerifier,
-          redirect_uri: 'https://example.com/callback',
-        })
-        .expect(201);
-
-      return {
-        client_id,
-        client_secret,
-        access_token: tokenRes.body.access_token,
-        refresh_token: tokenRes.body.refresh_token,
-      };
-    };
-
     it('returns 200 on successful access token revocation', async () => {
       const { client_id, client_secret, access_token } = await obtainTokens();
 

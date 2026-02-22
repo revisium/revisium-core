@@ -249,6 +249,7 @@ model OAuthAuthorizationCode {
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   redirectUri   String
   codeChallenge String
+  scope         String?
   expiresAt     DateTime
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
@@ -264,6 +265,7 @@ model OAuthAccessToken {
   client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope     String?
   expiresAt DateTime
   revokedAt DateTime?
   createdAt DateTime  @default(now())
@@ -279,6 +281,7 @@ model OAuthRefreshToken {
   client     OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
   userId     String
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scope      String?
   expiresAt  DateTime
   lastUsedAt DateTime  @default(now())
   revokedAt  DateTime?
