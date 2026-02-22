@@ -82,17 +82,19 @@ No authentication required. All tools are available immediately.`
 Authentication is handled automatically via OAuth or Bearer token in the HTTP header.
 No login tools needed — all tools are available immediately after authentication.`;
 
-    this.instructions = `Revisium is a headless CMS with Git-like version control.
+    this.instructions = `Revisium is a versioned data platform with Git-like version control. Use it as a headless CMS, dictionary service, configuration store, or structured memory for AI agents. Agents can design their own schemas (tables, fields, foreign keys), organize data relationships, and evolve the structure as needs change — all with branching, rollback, and human review.
 
 ${authSection}
 
-DATA STRUCTURE:
-- Organization: contains projects (organizationId is usually the owner's username)
-- Project: has a default branch (usually "master"), contains tables and rows
-- Branch: has headRevisionId (committed state) and draftRevisionId (working state)
-- Revision: immutable snapshot; use draftRevisionId for all changes
-- Table: has schema (JSON Schema) and rows
-- Row: data record with rowId
+DATA STRUCTURE (hierarchy):
+Organization → Project → Branch → Revision → Table → Row
+
+- Organization: top-level container, identified by organizationId (= owner's username)
+- Project: belongs to an organization, has a default branch (usually "master")
+- Branch: has headRevisionId (committed, read-only) and draftRevisionId (working state)
+- Revision: immutable snapshot of all tables and rows
+- Table: has schema (JSON Schema) and rows within a revision
+- Row: data record identified by rowId within a table
 
 TYPICAL WORKFLOW:
 1. get_project(organizationId, projectName) - returns project with rootBranch info

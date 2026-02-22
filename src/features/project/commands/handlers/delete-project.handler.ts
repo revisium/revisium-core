@@ -1,5 +1,5 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { EndpointType, Prisma } from 'src/__generated__/client';
+import { EndpointType } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import {
@@ -26,9 +26,9 @@ export class DeleteProjectHandler implements ICommandHandler<
 
   public async execute({ data }: DeleteProjectCommand) {
     const endpoints: { id: string; type: EndpointType }[] =
-      await this.transactionPrisma.run(() => this.transactionHandler(data), {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
+      await this.transactionPrisma.runSerializable(() =>
+        this.transactionHandler(data),
+      );
 
     await this.notifyEndpoints(endpoints);
 

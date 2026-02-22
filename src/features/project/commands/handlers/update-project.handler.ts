@@ -1,5 +1,4 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UpdateProjectCommand } from 'src/features/project/commands/impl';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -19,9 +18,9 @@ export class UpdateProjectHandler implements ICommandHandler<
   }
 
   public async execute({ data }: UpdateProjectCommand): Promise<boolean> {
-    return this.transactionPrisma.run(() => this.transactionHandler(data), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
+    return this.transactionPrisma.runSerializable(() =>
+      this.transactionHandler(data),
+    );
   }
 
   private async transactionHandler(data: UpdateProjectCommand['data']) {

@@ -1,5 +1,4 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetProjectQuery,
@@ -23,9 +22,9 @@ export class GetProjectHandler implements IQueryHandler<
   }
 
   execute({ data }: GetProjectQuery) {
-    return this.transactionPrisma.run(() => this.transactionHandler(data), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
+    return this.transactionPrisma.runSerializable(() =>
+      this.transactionHandler(data),
+    );
   }
 
   private async transactionHandler(data: GetProjectQueryData) {
