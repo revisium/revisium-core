@@ -16,8 +16,8 @@ export class GetBranchHandler implements IQueryHandler<GetBranchQuery> {
   }
 
   execute({ data }: GetBranchQuery): Promise<GetBranchReturnType> {
-    return this.transactionPrisma.runSerializable(
-      () => this.transactionHandler(data),
+    return this.transactionPrisma.runSerializable(() =>
+      this.transactionHandler(data),
     );
   }
 

@@ -18,8 +18,8 @@ export class UpdateProjectHandler implements ICommandHandler<
   }
 
   public async execute({ data }: UpdateProjectCommand): Promise<boolean> {
-    return this.transactionPrisma.runSerializable(
-      () => this.transactionHandler(data),
+    return this.transactionPrisma.runSerializable(() =>
+      this.transactionHandler(data),
     );
   }
 

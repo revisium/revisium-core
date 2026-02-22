@@ -25,8 +25,8 @@ export class DeleteBranchHandler implements ICommandHandler<
   }
 
   public async execute({ data }: DeleteBranchCommand) {
-    const endpointIds = await this.transactionPrisma.runSerializable(
-      () => this.transactionHandler(data),
+    const endpointIds = await this.transactionPrisma.runSerializable(() =>
+      this.transactionHandler(data),
     );
 
     await this.notifyEndpoints(endpointIds);

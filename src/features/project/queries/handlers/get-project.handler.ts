@@ -22,8 +22,8 @@ export class GetProjectHandler implements IQueryHandler<
   }
 
   execute({ data }: GetProjectQuery) {
-    return this.transactionPrisma.runSerializable(
-      () => this.transactionHandler(data),
+    return this.transactionPrisma.runSerializable(() =>
+      this.transactionHandler(data),
     );
   }
 

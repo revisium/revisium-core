@@ -26,8 +26,8 @@ export class DeleteProjectHandler implements ICommandHandler<
 
   public async execute({ data }: DeleteProjectCommand) {
     const endpoints: { id: string; type: EndpointType }[] =
-      await this.transactionPrisma.runSerializable(
-        () => this.transactionHandler(data),
+      await this.transactionPrisma.runSerializable(() =>
+        this.transactionHandler(data),
       );
 
     await this.notifyEndpoints(endpoints);
