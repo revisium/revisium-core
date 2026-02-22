@@ -161,52 +161,55 @@ export class OAuthTokenService {
       tokenTypeHint === 'access_token' ||
       token.startsWith(ACCESS_TOKEN_PREFIX)
     ) {
-      await this.prisma.oAuthAccessToken.updateMany({
-        where: { tokenHash, clientId, revokedAt: null },
-        data: { revokedAt: new Date() },
-      });
+      await this.revokeAccessToken(tokenHash, clientId);
       return;
     }
 
-    const accessResult = await this.prisma.oAuthAccessToken.updateMany({
-      where: { tokenHash, clientId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+    const accessResult = await this.revokeAccessToken(tokenHash, clientId);
 
     if (accessResult.count === 0) {
       await this.revokeRefreshTokenWithCascade(tokenHash, clientId);
     }
   }
 
+  private async revokeAccessToken(tokenHash: string, clientId: string) {
+    return this.prisma.oAuthAccessToken.updateMany({
+      where: { tokenHash, clientId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+  }
+
   private async revokeRefreshTokenWithCascade(
     tokenHash: string,
     clientId: string,
   ): Promise<boolean> {
-    const result = await this.prisma.oAuthRefreshToken.updateMany({
-      where: { tokenHash, clientId, revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
-
-    if (result.count === 0) {
-      return false;
-    }
-
-    const refreshToken = await this.prisma.oAuthRefreshToken.findUnique({
-      where: { tokenHash },
-    });
-
-    if (refreshToken) {
-      await this.prisma.oAuthAccessToken.updateMany({
-        where: {
-          clientId: refreshToken.clientId,
-          userId: refreshToken.userId,
-          revokedAt: null,
-        },
+    return this.prisma.$transaction(async (tx) => {
+      const result = await tx.oAuthRefreshToken.updateMany({
+        where: { tokenHash, clientId, revokedAt: null },
         data: { revokedAt: new Date() },
       });
-    }
 
-    return true;
+      if (result.count === 0) {
+        return false;
+      }
+
+      const refreshToken = await tx.oAuthRefreshToken.findUnique({
+        where: { tokenHash },
+      });
+
+      if (refreshToken) {
+        await tx.oAuthAccessToken.updateMany({
+          where: {
+            clientId: refreshToken.clientId,
+            userId: refreshToken.userId,
+            revokedAt: null,
+          },
+          data: { revokedAt: new Date() },
+        });
+      }
+
+      return true;
+    });
   }
 
   private hashToken(token: string): string {

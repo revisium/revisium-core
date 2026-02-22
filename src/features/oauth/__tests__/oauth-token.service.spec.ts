@@ -31,9 +31,12 @@ describe('OAuthTokenService', () => {
         findUnique: jest.fn(),
         updateMany: jest.fn(),
       },
-      $transaction: jest
-        .fn()
-        .mockImplementation((ops: Promise<unknown>[]) => Promise.all(ops)),
+      $transaction: jest.fn().mockImplementation((arg: unknown) => {
+        if (typeof arg === 'function') {
+          return arg(prisma);
+        }
+        return Promise.all(arg as Promise<unknown>[]);
+      }),
     };
 
     const module: TestingModule = await Test.createTestingModule({
