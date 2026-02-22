@@ -43,15 +43,19 @@ For arrays of files: each array element has its own fileId, upload files one by 
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async (
-        { revisionId, tableId, rowId, fileId, fileName, mimeType, fileData },
-        context,
-      ) => {
-        const session = auth.requireAuth(context);
+      async ({
+        revisionId,
+        tableId,
+        rowId,
+        fileId,
+        fileName,
+        mimeType,
+        fileData,
+      }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
 
         const buffer = Buffer.from(fileData, 'base64');

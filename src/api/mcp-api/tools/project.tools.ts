@@ -23,8 +23,7 @@ export class ProjectTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ organizationId, projectName }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -34,7 +33,7 @@ export class ProjectTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const project = await this.projectApi.getProject({
           organizationId,
@@ -89,8 +88,7 @@ export class ProjectTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ organizationId, projectName, branchName }, context) => {
-        auth.requireAuth(context);
+      async ({ organizationId, projectName, branchName }) => {
         const project = await this.projectApi.apiCreateProject({
           organizationId,
           projectName,
@@ -141,8 +139,7 @@ export class ProjectTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ organizationId, projectName, isPublic }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, isPublic }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -152,7 +149,7 @@ export class ProjectTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.projectApi.updateProject({
           organizationId,
@@ -177,8 +174,7 @@ export class ProjectTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ organizationId, projectName }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -188,7 +184,7 @@ export class ProjectTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.projectApi.deleteProject({
           organizationId,

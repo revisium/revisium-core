@@ -1,8 +1,5 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import { McpSession } from './mcp-session.service';
-
-export type McpContext = { sessionId?: string };
 
 export interface McpPermissionCheck {
   action: PermissionAction;
@@ -34,7 +31,7 @@ export type CheckSystemPermission = (
 ) => Promise<void>;
 
 export interface McpAuthHelpers {
-  requireAuth: (context: McpContext) => McpSession;
+  userId: string;
   checkPermissionByRevision: CheckPermissionByRevision;
   checkPermissionByOrganizationProject: CheckPermissionByOrganizationProject;
   checkPermissionByOrganization: CheckPermissionByOrganization;

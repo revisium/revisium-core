@@ -25,8 +25,7 @@ export class TableTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, first, after }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, first, after }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -35,7 +34,7 @@ export class TableTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.tableApi.getTables({
           revisionId,
@@ -60,8 +59,7 @@ export class TableTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -70,7 +68,7 @@ export class TableTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.tableApi.getTable({ revisionId, tableId });
         return {
@@ -91,8 +89,7 @@ export class TableTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -101,7 +98,7 @@ export class TableTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const table = await this.tableApi.getTable({ revisionId, tableId });
         const count = await this.tableApi.getCountRowsInTable({
@@ -128,8 +125,7 @@ export class TableTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -138,7 +134,7 @@ export class TableTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.tableApi.resolveTableSchema({
           revisionId,
@@ -234,8 +230,7 @@ FOREIGN KEY RULES:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, schema }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, schema }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -244,7 +239,7 @@ FOREIGN KEY RULES:
               subject: PermissionSubject.Table,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiCreateTable({
           revisionId,
@@ -275,8 +270,7 @@ FOREIGN KEY RULES:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, patches }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, patches }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -285,7 +279,7 @@ FOREIGN KEY RULES:
               subject: PermissionSubject.Table,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiUpdateTable({
           revisionId,
@@ -311,8 +305,7 @@ FOREIGN KEY RULES:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, nextTableId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, nextTableId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -321,7 +314,7 @@ FOREIGN KEY RULES:
               subject: PermissionSubject.Table,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiRenameTable({
           revisionId,
@@ -346,8 +339,7 @@ FOREIGN KEY RULES:
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ revisionId, tableId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -356,7 +348,7 @@ FOREIGN KEY RULES:
               subject: PermissionSubject.Table,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiRemoveTable({
           revisionId,

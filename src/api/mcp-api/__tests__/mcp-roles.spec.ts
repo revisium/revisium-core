@@ -10,6 +10,7 @@ import {
 import { UserSystemRoles } from 'src/features/auth/consts';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { AuthService } from 'src/features/auth/auth.service';
 
 interface McpToolResult {
   content: Array<{
@@ -21,10 +22,12 @@ interface McpToolResult {
 describe('mcp-api - role-based permissions', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
+  let authService: AuthService;
 
   beforeAll(async () => {
     app = await createFreshTestApp();
     prismaService = app.get(PrismaService);
+    authService = app.get(AuthService);
   });
 
   afterAll(async () => {
@@ -38,8 +41,14 @@ describe('mcp-api - role-based permissions', () => {
     });
   };
 
+  const getToken = (user: PrepareProjectUserReturnType) =>
+    authService.login({
+      username: user.user.username,
+      sub: user.user.id,
+    });
+
   const callMcpTool = async (
-    sessionId: string,
+    token: string,
     toolName: string,
     args: object,
   ): Promise<{ result?: McpToolResult; error?: { message: string } }> => {
@@ -47,7 +56,7 @@ describe('mcp-api - role-based permissions', () => {
       .post('/mcp')
       .set('Content-Type', 'application/json')
       .set('Accept', 'application/json, text/event-stream')
-      .set('mcp-session-id', sessionId)
+      .set('Authorization', `Bearer ${token}`)
       .buffer(true)
       .send({
         jsonrpc: '2.0',
@@ -73,55 +82,6 @@ describe('mcp-api - role-based permissions', () => {
     }
 
     return response.body;
-  };
-
-  const initAndLogin = async (
-    user: PrepareProjectUserReturnType,
-  ): Promise<string> => {
-    const initResponse = await request(app.getHttpServer())
-      .post('/mcp')
-      .set('Content-Type', 'application/json')
-      .set('Accept', 'application/json, text/event-stream')
-      .buffer(true)
-      .send({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-        params: {
-          protocolVersion: '2024-11-05',
-          capabilities: {},
-          clientInfo: { name: 'test', version: '1.0.0' },
-        },
-      });
-
-    const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-    if (!sessionId) {
-      throw new Error(
-        `No session ID returned. Status: ${initResponse.status}, Headers: ${JSON.stringify(initResponse.headers)}, Body: ${initResponse.text}`,
-      );
-    }
-
-    await request(app.getHttpServer())
-      .post('/mcp')
-      .set('Content-Type', 'application/json')
-      .set('Accept', 'application/json, text/event-stream')
-      .set('mcp-session-id', sessionId)
-      .buffer(true)
-      .send({
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'tools/call',
-        params: {
-          name: 'login',
-          arguments: {
-            username: user.user.username,
-            password: 'password',
-          },
-        },
-      });
-
-    return sessionId;
   };
 
   const parseToolResult = <T>(result: McpToolResult): T => {
@@ -153,7 +113,7 @@ describe('mcp-api - role-based permissions', () => {
         if (
           text.includes('Error') ||
           text.includes('not allowed') ||
-          text.includes('Not authenticated')
+          text.includes('Unauthorized')
         ) {
           return text;
         }
@@ -183,8 +143,8 @@ describe('mcp-api - role-based permissions', () => {
       preparedData = await prepareData(app);
     });
 
-    it('should require authentication for protected tools', async () => {
-      const initResponse = await request(app.getHttpServer())
+    it('should return 401 without Bearer token', async () => {
+      const res = await request(app.getHttpServer())
         .post('/mcp')
         .set('Content-Type', 'application/json')
         .set('Accept', 'application/json, text/event-stream')
@@ -192,33 +152,23 @@ describe('mcp-api - role-based permissions', () => {
         .send({
           jsonrpc: '2.0',
           id: 1,
-          method: 'initialize',
+          method: 'tools/call',
           params: {
-            protocolVersion: '2024-11-05',
-            capabilities: {},
-            clientInfo: { name: 'test', version: '1.0.0' },
+            name: 'get_tables',
+            arguments: {
+              revisionId: preparedData.project.draftRevisionId,
+            },
           },
         });
 
-      const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-      if (!sessionId) {
-        throw new Error(
-          `No session ID returned. Status: ${initResponse.status}, Headers: ${JSON.stringify(initResponse.headers)}, Body: ${initResponse.text}`,
-        );
-      }
-
-      const result = await callMcpTool(sessionId, 'get_tables', {
-        revisionId: preparedData.project.draftRevisionId,
-      });
-
-      expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+      expect(res.status).toBe(401);
+      expect(res.headers['www-authenticate']).toMatch(/^Bearer /);
     });
 
-    it('should allow login and access for owner', async () => {
-      const sessionId = await initAndLogin(preparedData.owner);
+    it('should allow access for owner with Bearer token', async () => {
+      const token = getToken(preparedData.owner);
 
-      const result = await callMcpTool(sessionId, 'get_tables', {
+      const result = await callMcpTool(token, 'get_tables', {
         revisionId: preparedData.project.draftRevisionId,
       });
 
@@ -234,9 +184,9 @@ describe('mcp-api - role-based permissions', () => {
     });
 
     it('owner can access own project resources', async () => {
-      const sessionId = await initAndLogin(preparedData.owner);
+      const token = getToken(preparedData.owner);
 
-      const result = await callMcpTool(sessionId, 'get_project', {
+      const result = await callMcpTool(token, 'get_project', {
         organizationId: preparedData.project.organizationId,
         projectName: preparedData.project.projectName,
       });
@@ -249,9 +199,9 @@ describe('mcp-api - role-based permissions', () => {
     });
 
     it('another owner cannot access private project', async () => {
-      const sessionId = await initAndLogin(preparedData.anotherOwner);
+      const token = getToken(preparedData.anotherOwner);
 
-      const result = await callMcpTool(sessionId, 'get_project', {
+      const result = await callMcpTool(token, 'get_project', {
         organizationId: preparedData.project.organizationId,
         projectName: preparedData.project.projectName,
       });
@@ -269,9 +219,9 @@ describe('mcp-api - role-based permissions', () => {
     });
 
     it('another owner can read public project', async () => {
-      const sessionId = await initAndLogin(preparedData.anotherOwner);
+      const token = getToken(preparedData.anotherOwner);
 
-      const result = await callMcpTool(sessionId, 'get_project', {
+      const result = await callMcpTool(token, 'get_project', {
         organizationId: preparedData.project.organizationId,
         projectName: preparedData.project.projectName,
       });
@@ -280,9 +230,9 @@ describe('mcp-api - role-based permissions', () => {
     });
 
     it('another owner cannot write to public project', async () => {
-      const sessionId = await initAndLogin(preparedData.anotherOwner);
+      const token = getToken(preparedData.anotherOwner);
 
-      const result = await callMcpTool(sessionId, 'create_table', {
+      const result = await callMcpTool(token, 'create_table', {
         revisionId: preparedData.project.draftRevisionId,
         tableId: 'test-table',
         schema: {
@@ -306,9 +256,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('create_table', () => {
       it('owner can create table', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'create_table', {
+        const result = await callMcpTool(token, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'owner-table',
           schema: {
@@ -323,9 +273,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can create table', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'create_table', {
+        const result = await callMcpTool(token, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'dev-table',
           schema: {
@@ -340,9 +290,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor cannot create table', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'create_table', {
+        const result = await callMcpTool(token, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'editor-table',
           schema: {
@@ -359,9 +309,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot create table', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'create_table', {
+        const result = await callMcpTool(token, 'create_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: 'reader-table',
           schema: {
@@ -380,9 +330,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('delete_table', () => {
       it('owner can remove table', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'delete_table', {
+        const result = await callMcpTool(token, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -391,9 +341,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can remove table', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'delete_table', {
+        const result = await callMcpTool(token, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -402,9 +352,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor cannot remove table', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'delete_table', {
+        const result = await callMcpTool(token, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -415,9 +365,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot remove table', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'delete_table', {
+        const result = await callMcpTool(token, 'delete_table', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -430,18 +380,18 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('getTables (read access)', () => {
       it('owner can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'get_tables', {
+        const result = await callMcpTool(token, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
         expect(isSuccessResult(result)).toBe(true);
       });
 
       it('developer can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'get_tables', {
+        const result = await callMcpTool(token, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -449,9 +399,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'get_tables', {
+        const result = await callMcpTool(token, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -459,9 +409,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader can read tables', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'get_tables', {
+        const result = await callMcpTool(token, 'get_tables', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -479,9 +429,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('create_row', () => {
       it('owner can create row', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'create_row', {
+        const result = await callMcpTool(token, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'owner-row',
@@ -492,9 +442,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can create row', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'create_row', {
+        const result = await callMcpTool(token, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'dev-row',
@@ -505,9 +455,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can create row', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'create_row', {
+        const result = await callMcpTool(token, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'editor-row',
@@ -518,9 +468,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot create row', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'create_row', {
+        const result = await callMcpTool(token, 'create_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: 'reader-row',
@@ -533,9 +483,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('delete_row', () => {
       it('owner can remove row', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'delete_row', {
+        const result = await callMcpTool(token, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -545,9 +495,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can remove row', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'delete_row', {
+        const result = await callMcpTool(token, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -557,9 +507,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can remove row', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'delete_row', {
+        const result = await callMcpTool(token, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -569,9 +519,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot remove row', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'delete_row', {
+        const result = await callMcpTool(token, 'delete_row', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
@@ -583,9 +533,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('getRows (read access)', () => {
       it('owner can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'get_rows', {
+        const result = await callMcpTool(token, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -594,9 +544,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'get_rows', {
+        const result = await callMcpTool(token, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -605,9 +555,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'get_rows', {
+        const result = await callMcpTool(token, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -616,9 +566,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader can read rows', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'get_rows', {
+        const result = await callMcpTool(token, 'get_rows', {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
         });
@@ -629,9 +579,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('searchRows (read access)', () => {
       it('owner can search rows', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'search_rows', {
+        const result = await callMcpTool(token, 'search_rows', {
           revisionId: fixture.project.draftRevisionId,
           query: 'test',
         });
@@ -640,9 +590,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can search rows', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'search_rows', {
+        const result = await callMcpTool(token, 'search_rows', {
           revisionId: fixture.project.draftRevisionId,
           query: 'test',
         });
@@ -651,9 +601,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can search rows', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'search_rows', {
+        const result = await callMcpTool(token, 'search_rows', {
           revisionId: fixture.project.draftRevisionId,
           query: 'test',
         });
@@ -662,9 +612,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader can search rows', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'search_rows', {
+        const result = await callMcpTool(token, 'search_rows', {
           revisionId: fixture.project.draftRevisionId,
           query: 'test',
         });
@@ -683,9 +633,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('create_branch', () => {
       it('owner can create branch', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'create_branch', {
+        const result = await callMcpTool(token, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'owner-branch',
         });
@@ -694,9 +644,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can create branch', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'create_branch', {
+        const result = await callMcpTool(token, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'dev-branch',
         });
@@ -705,9 +655,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor cannot create branch', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'create_branch', {
+        const result = await callMcpTool(token, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'editor-branch',
         });
@@ -718,9 +668,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot create branch', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'create_branch', {
+        const result = await callMcpTool(token, 'create_branch', {
           revisionId: fixture.project.headRevisionId,
           branchName: 'reader-branch',
         });
@@ -733,9 +683,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('revert_changes', () => {
       it('owner can revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'revert_changes', {
+        const result = await callMcpTool(token, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -745,9 +695,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'revert_changes', {
+        const result = await callMcpTool(token, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -757,9 +707,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'revert_changes', {
+        const result = await callMcpTool(token, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -769,9 +719,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot revert changes', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'revert_changes', {
+        const result = await callMcpTool(token, 'revert_changes', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -793,9 +743,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('create_revision', () => {
       it('owner can commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'create_revision', {
+        const result = await callMcpTool(token, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -806,9 +756,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'create_revision', {
+        const result = await callMcpTool(token, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -819,9 +769,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'create_revision', {
+        const result = await callMcpTool(token, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -832,9 +782,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot commit revision', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'create_revision', {
+        const result = await callMcpTool(token, 'create_revision', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
           branchName: fixture.project.branchName,
@@ -849,9 +799,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('getRevision (read access)', () => {
       it('owner can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'get_revision', {
+        const result = await callMcpTool(token, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -859,9 +809,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'get_revision', {
+        const result = await callMcpTool(token, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -869,9 +819,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'get_revision', {
+        const result = await callMcpTool(token, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -879,9 +829,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader can read revision', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'get_revision', {
+        const result = await callMcpTool(token, 'get_revision', {
           revisionId: fixture.project.draftRevisionId,
         });
 
@@ -899,9 +849,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('get_organization', () => {
       it('owner can access own organization', async () => {
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'get_organization', {
+        const result = await callMcpTool(token, 'get_organization', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -913,9 +863,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('another owner can read organization metadata (public)', async () => {
-        const sessionId = await initAndLogin(preparedData.anotherOwner);
+        const token = getToken(preparedData.anotherOwner);
 
-        const result = await callMcpTool(sessionId, 'get_organization', {
+        const result = await callMcpTool(token, 'get_organization', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -926,8 +876,8 @@ describe('mcp-api - role-based permissions', () => {
         expect(org.id).toBe(preparedData.project.organizationId);
       });
 
-      it('requires authentication', async () => {
-        const initResponse = await request(app.getHttpServer())
+      it('returns 401 without Bearer token', async () => {
+        const res = await request(app.getHttpServer())
           .post('/mcp')
           .set('Content-Type', 'application/json')
           .set('Accept', 'application/json, text/event-stream')
@@ -935,29 +885,24 @@ describe('mcp-api - role-based permissions', () => {
           .send({
             jsonrpc: '2.0',
             id: 1,
-            method: 'initialize',
+            method: 'tools/call',
             params: {
-              protocolVersion: '2024-11-05',
-              capabilities: {},
-              clientInfo: { name: 'test', version: '1.0.0' },
+              name: 'get_organization',
+              arguments: {
+                organizationId: preparedData.project.organizationId,
+              },
             },
           });
 
-        const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-        const result = await callMcpTool(sessionId, 'get_organization', {
-          organizationId: preparedData.project.organizationId,
-        });
-
-        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+        expect(res.status).toBe(401);
       });
     });
 
     describe('get_projects', () => {
       it('owner can list projects in own organization', async () => {
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'get_projects', {
+        const result = await callMcpTool(token, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -970,9 +915,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('another owner can access organization endpoint but sees filtered results', async () => {
-        const sessionId = await initAndLogin(preparedData.anotherOwner);
+        const token = getToken(preparedData.anotherOwner);
 
-        const result = await callMcpTool(sessionId, 'get_projects', {
+        const result = await callMcpTool(token, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -985,9 +930,9 @@ describe('mcp-api - role-based permissions', () => {
 
       it('owner sees public projects in organization', async () => {
         await makeProjectPublic(preparedData.project.projectId);
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'get_projects', {
+        const result = await callMcpTool(token, 'get_projects', {
           organizationId: preparedData.project.organizationId,
         });
 
@@ -999,8 +944,8 @@ describe('mcp-api - role-based permissions', () => {
         expect(projects.edges[0].node.id).toBe(preparedData.project.projectId);
       });
 
-      it('requires authentication', async () => {
-        const initResponse = await request(app.getHttpServer())
+      it('returns 401 without Bearer token', async () => {
+        const res = await request(app.getHttpServer())
           .post('/mcp')
           .set('Content-Type', 'application/json')
           .set('Accept', 'application/json, text/event-stream')
@@ -1008,21 +953,16 @@ describe('mcp-api - role-based permissions', () => {
           .send({
             jsonrpc: '2.0',
             id: 1,
-            method: 'initialize',
+            method: 'tools/call',
             params: {
-              protocolVersion: '2024-11-05',
-              capabilities: {},
-              clientInfo: { name: 'test', version: '1.0.0' },
+              name: 'get_projects',
+              arguments: {
+                organizationId: preparedData.project.organizationId,
+              },
             },
           });
 
-        const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-        const result = await callMcpTool(sessionId, 'get_projects', {
-          organizationId: preparedData.project.organizationId,
-        });
-
-        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+        expect(res.status).toBe(401);
       });
     });
   });
@@ -1036,9 +976,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('delete_project', () => {
       it('owner can delete project', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'delete_project', {
+        const result = await callMcpTool(token, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1047,9 +987,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer cannot delete project', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'delete_project', {
+        const result = await callMcpTool(token, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1060,9 +1000,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor cannot delete project', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'delete_project', {
+        const result = await callMcpTool(token, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1073,9 +1013,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader cannot delete project', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'delete_project', {
+        const result = await callMcpTool(token, 'delete_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1088,9 +1028,9 @@ describe('mcp-api - role-based permissions', () => {
 
     describe('getProject (read access)', () => {
       it('owner can read project', async () => {
-        const sessionId = await initAndLogin(fixture.owner);
+        const token = getToken(fixture.owner);
 
-        const result = await callMcpTool(sessionId, 'get_project', {
+        const result = await callMcpTool(token, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1099,9 +1039,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('developer can read project', async () => {
-        const sessionId = await initAndLogin(fixture.developer);
+        const token = getToken(fixture.developer);
 
-        const result = await callMcpTool(sessionId, 'get_project', {
+        const result = await callMcpTool(token, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1110,9 +1050,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('editor can read project', async () => {
-        const sessionId = await initAndLogin(fixture.editor);
+        const token = getToken(fixture.editor);
 
-        const result = await callMcpTool(sessionId, 'get_project', {
+        const result = await callMcpTool(token, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1121,9 +1061,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('reader can read project', async () => {
-        const sessionId = await initAndLogin(fixture.reader);
+        const token = getToken(fixture.reader);
 
-        const result = await callMcpTool(sessionId, 'get_project', {
+        const result = await callMcpTool(token, 'get_project', {
           organizationId: fixture.project.organizationId,
           projectName: fixture.project.projectName,
         });
@@ -1147,9 +1087,9 @@ describe('mcp-api - role-based permissions', () => {
           data: { roleId: UserSystemRoles.systemAdmin },
         });
 
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'admin_get_user', {
+        const result = await callMcpTool(token, 'admin_get_user', {
           userId: preparedData.anotherOwner.user.id,
         });
 
@@ -1162,17 +1102,17 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('non-admin cannot get user details', async () => {
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'admin_get_user', {
+        const result = await callMcpTool(token, 'admin_get_user', {
           userId: preparedData.anotherOwner.user.id,
         });
 
         expect(getErrorMessage(result)).toMatch(/not allowed to read on User/);
       });
 
-      it('requires authentication', async () => {
-        const initResponse = await request(app.getHttpServer())
+      it('returns 401 without Bearer token', async () => {
+        const res = await request(app.getHttpServer())
           .post('/mcp')
           .set('Content-Type', 'application/json')
           .set('Accept', 'application/json, text/event-stream')
@@ -1180,29 +1120,22 @@ describe('mcp-api - role-based permissions', () => {
           .send({
             jsonrpc: '2.0',
             id: 1,
-            method: 'initialize',
+            method: 'tools/call',
             params: {
-              protocolVersion: '2024-11-05',
-              capabilities: {},
-              clientInfo: { name: 'test', version: '1.0.0' },
+              name: 'admin_get_user',
+              arguments: { userId: preparedData.owner.user.id },
             },
           });
 
-        const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-        const result = await callMcpTool(sessionId, 'admin_get_user', {
-          userId: preparedData.owner.user.id,
-        });
-
-        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+        expect(res.status).toBe(401);
       });
     });
 
     describe('search_users', () => {
       it('authenticated user can search users', async () => {
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'search_users', {
+        const result = await callMcpTool(token, 'search_users', {
           search: preparedData.anotherOwner.user.username,
         });
 
@@ -1214,9 +1147,9 @@ describe('mcp-api - role-based permissions', () => {
       });
 
       it('can search without query to list users', async () => {
-        const sessionId = await initAndLogin(preparedData.owner);
+        const token = getToken(preparedData.owner);
 
-        const result = await callMcpTool(sessionId, 'search_users', {
+        const result = await callMcpTool(token, 'search_users', {
           first: 5,
         });
 
@@ -1227,8 +1160,8 @@ describe('mcp-api - role-based permissions', () => {
         expect(users.edges).toBeDefined();
       });
 
-      it('requires authentication', async () => {
-        const initResponse = await request(app.getHttpServer())
+      it('returns 401 without Bearer token', async () => {
+        const res = await request(app.getHttpServer())
           .post('/mcp')
           .set('Content-Type', 'application/json')
           .set('Accept', 'application/json, text/event-stream')
@@ -1236,21 +1169,14 @@ describe('mcp-api - role-based permissions', () => {
           .send({
             jsonrpc: '2.0',
             id: 1,
-            method: 'initialize',
+            method: 'tools/call',
             params: {
-              protocolVersion: '2024-11-05',
-              capabilities: {},
-              clientInfo: { name: 'test', version: '1.0.0' },
+              name: 'search_users',
+              arguments: { search: 'test' },
             },
           });
 
-        const sessionId = initResponse.headers['mcp-session-id'] as string;
-
-        const result = await callMcpTool(sessionId, 'search_users', {
-          search: 'test',
-        });
-
-        expect(getErrorMessage(result)).toMatch(/Not authenticated/);
+        expect(res.status).toBe(401);
       });
     });
   });

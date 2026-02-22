@@ -14,8 +14,8 @@ import { RevisionChangesApiService } from 'src/features/revision-changes/revisio
 import { UserApiService } from 'src/features/user/user-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { FormulaService } from 'src/features/plugin/formula';
-import { McpSession, McpSessionService } from './mcp-session.service';
-import { McpAuthHelpers, McpContext, McpPermissionCheck } from './types';
+import { McpUserContext } from './mcp-auth.service';
+import { McpAuthHelpers, McpPermissionCheck } from './types';
 
 import {
   SchemaResource,
@@ -25,7 +25,6 @@ import {
 } from './resources';
 
 import {
-  AuthTools,
   OrganizationTools,
   ProjectTools,
   BranchTools,
@@ -42,14 +41,12 @@ import {
 @Injectable()
 export class McpServerService {
   private readonly instructions: string;
-  private readonly auth: McpAuthHelpers;
 
   private readonly schemaResource: SchemaResource;
   private readonly queryResource: QueryResource;
   private readonly migrationResource: MigrationResource;
   private readonly fileResource: FileResource;
 
-  private readonly authTools: AuthTools;
   private readonly organizationTools: OrganizationTools;
   private readonly projectTools: ProjectTools;
   private readonly branchTools: BranchTools;
@@ -64,7 +61,6 @@ export class McpServerService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly mcpSession: McpSessionService,
     private readonly noAuth: NoAuthService,
     private readonly authApi: AuthApiService,
     private readonly organizationApi: OrganizationApiService,
@@ -79,17 +75,12 @@ export class McpServerService {
     private readonly endpointApi: EndpointApiService,
     private readonly formulaService: FormulaService,
   ) {
-    const publicUrl = this.configService.get<string>('PUBLIC_URL');
-    const tokenUrl = publicUrl ? `${publicUrl}/get-mcp-token` : null;
-
     const authSection = this.noAuth.enabled
       ? `AUTHENTICATION:
-No authentication required. All tools are available immediately without calling login() or login_with_token().`
+No authentication required. All tools are available immediately.`
       : `AUTHENTICATION:
-When not authenticated, ASK THE USER which method they prefer:
-1. [Recommended] Token auth: User opens ${tokenUrl || '<PUBLIC_URL>/get-mcp-token'} to get token, then use login_with_token(token)
-2. Credentials: Ask user for username/password, then use login(username, password)
-DO NOT assume or guess credentials.`;
+Authentication is handled automatically via OAuth or Bearer token in the HTTP header.
+No login tools needed — all tools are available immediately after authentication.`;
 
     this.instructions = `Revisium is a headless CMS with Git-like version control.
 
@@ -104,12 +95,11 @@ DATA STRUCTURE:
 - Row: data record with rowId
 
 TYPICAL WORKFLOW:
-1. me() - check auth status
-2. get_project(organizationId, projectName) - returns project with rootBranch info
-3. get_branch(organizationId, projectName, branchName) - get branch details including draftRevisionId
-4. Use draftRevisionId for: get_tables, get_rows, create_row, update_row, etc.
-5. get_revision_changes(draftRevisionId) - review pending changes before commit
-6. create_revision() - only after user approval
+1. get_project(organizationId, projectName) - returns project with rootBranch info
+2. get_branch(organizationId, projectName, branchName) - get branch details including draftRevisionId
+3. Use draftRevisionId for: get_tables, get_rows, create_row, update_row, etc.
+4. get_revision_changes(draftRevisionId) - review pending changes before commit
+5. create_revision() - only after user approval
 
 SEARCHING DATA:
 - search_rows(revisionId, query) - full-text search across ALL tables and ALL fields in a revision
@@ -142,11 +132,6 @@ PERMISSIONS:
     this.migrationResource = new MigrationResource();
     this.fileResource = new FileResource();
 
-    this.authTools = new AuthTools(
-      this.mcpSession,
-      this.authApi,
-      this.configService.get<string>('PUBLIC_URL'),
-    );
     this.organizationTools = new OrganizationTools(this.organizationApi);
     this.projectTools = new ProjectTools(this.projectApi, this.branchApi);
     this.branchTools = new BranchTools(this.branchApi);
@@ -163,9 +148,22 @@ PERMISSIONS:
       this.configService.get<string>('ENDPOINT_SERVICE_URL'),
     );
     this.fileTools = new FileTools(this.draftApi);
+  }
 
-    this.auth = {
-      requireAuth: this.requireAuth.bind(this),
+  public getInstructions(): string {
+    return this.instructions;
+  }
+
+  public registerResources(server: McpServer): void {
+    this.schemaResource.register(server);
+    this.queryResource.register(server);
+    this.migrationResource.register(server);
+    this.fileResource.register(server);
+  }
+
+  public registerTools(server: McpServer, userContext: McpUserContext): void {
+    const auth: McpAuthHelpers = {
+      userId: userContext.userId,
       checkPermissionByRevision: this.checkPermissionByRevision.bind(this),
       checkPermissionByOrganizationProject:
         this.checkPermissionByOrganizationProject.bind(this),
@@ -173,76 +171,18 @@ PERMISSIONS:
         this.checkPermissionByOrganization.bind(this),
       checkSystemPermission: this.checkSystemPermission.bind(this),
     };
-  }
 
-  public createServer(): McpServer {
-    const server = new McpServer(
-      {
-        name: 'revisium',
-        version: '1.0.0',
-      },
-      {
-        instructions: this.instructions,
-      },
-    );
-
-    this.schemaResource.register(server);
-    this.queryResource.register(server);
-    this.migrationResource.register(server);
-    this.fileResource.register(server);
-
-    this.authTools.register(server, this.auth);
-    this.organizationTools.register(server, this.auth);
-    this.projectTools.register(server, this.auth);
-    this.branchTools.register(server, this.auth);
-    this.tableTools.register(server, this.auth);
-    this.rowTools.register(server, this.auth);
-    this.revisionTools.register(server, this.auth);
-    this.revisionChangesTools.register(server, this.auth);
-    this.migrationTools.register(server, this.auth);
-    this.userTools.register(server, this.auth);
-    this.endpointTools.register(server, this.auth);
-    this.fileTools.register(server, this.auth);
-
-    return server;
-  }
-
-  private getSessionFromContext(context: McpContext): McpSession | null {
-    if (!context?.sessionId) return null;
-    return this.mcpSession.getSession(context.sessionId);
-  }
-
-  private requireAuth(context: McpContext): McpSession {
-    if (this.noAuth.enabled) {
-      const admin = this.noAuth.adminUser;
-      return {
-        userId: admin.userId,
-        username: admin.userId,
-        email: admin.email,
-        roleId: 'systemAdmin',
-      };
-    }
-
-    const session = this.getSessionFromContext(context);
-    if (!session) {
-      const publicUrl = this.configService.get<string>('PUBLIC_URL');
-      const tokenUrl = publicUrl ? `${publicUrl}/get-mcp-token` : null;
-
-      let message =
-        'Not authenticated. ASK THE USER which method they prefer:\n\n';
-      message += '1. [Recommended] Login with access token:\n';
-      if (tokenUrl) {
-        message += `   - User should open ${tokenUrl} to get their token\n`;
-      }
-      message += '   - Then use: login_with_token(accessToken)\n\n';
-      message += '2. Login with credentials:\n';
-      message += '   - Ask user for their username and password\n';
-      message += '   - Then use: login(username, password)\n\n';
-      message += 'IMPORTANT: DO NOT assume or guess credentials.';
-
-      throw new Error(message);
-    }
-    return session;
+    this.organizationTools.register(server, auth);
+    this.projectTools.register(server, auth);
+    this.branchTools.register(server, auth);
+    this.tableTools.register(server, auth);
+    this.rowTools.register(server, auth);
+    this.revisionTools.register(server, auth);
+    this.revisionChangesTools.register(server, auth);
+    this.migrationTools.register(server, auth);
+    this.userTools.register(server, auth);
+    this.endpointTools.register(server, auth);
+    this.fileTools.register(server, auth);
   }
 
   private async checkPermissionByRevision(

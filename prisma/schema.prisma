@@ -31,6 +31,10 @@ model User {
 
   userOrganizations UserOrganization[]
   userProjects      UserProject[]
+
+  oauthAuthorizationCodes OAuthAuthorizationCode[]
+  oauthAccessTokens       OAuthAccessToken[]
+  oauthRefreshTokens      OAuthRefreshToken[]
 }
 
 enum RoleLevel {
@@ -219,4 +223,67 @@ model Row {
   @@index([hash])
   @@index([schemaHash])
   @@index([publishedAt])
+}
+
+model OAuthClient {
+  id               String   @id @default(nanoid())
+  clientSecretHash String
+  clientName       String   @db.VarChar(255)
+  redirectUris     String[]
+  grantTypes       String[] @default(["authorization_code", "refresh_token"])
+  createdAt        DateTime @default(now())
+
+  authorizationCodes OAuthAuthorizationCode[]
+  accessTokens       OAuthAccessToken[]
+  refreshTokens      OAuthRefreshToken[]
+
+  @@map("oauth_clients")
+}
+
+model OAuthAuthorizationCode {
+  id            String    @id @default(nanoid())
+  code          String    @unique
+  clientId      String
+  client        OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  redirectUri   String
+  codeChallenge String
+  expiresAt     DateTime
+  usedAt        DateTime?
+  createdAt     DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@map("oauth_authorization_codes")
+}
+
+model OAuthAccessToken {
+  id        String    @id @default(nanoid())
+  tokenHash String    @unique
+  clientId  String
+  client    OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@map("oauth_access_tokens")
+}
+
+model OAuthRefreshToken {
+  id         String    @id @default(nanoid())
+  tokenHash  String    @unique
+  clientId   String
+  client     OAuthClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt  DateTime
+  lastUsedAt DateTime  @default(now())
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
+  @@map("oauth_refresh_tokens")
 }

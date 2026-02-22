@@ -21,8 +21,7 @@ export class RevisionTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -31,7 +30,7 @@ export class RevisionTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.revisionsApi.revision({ revisionId });
         return {
@@ -52,8 +51,7 @@ export class RevisionTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -62,7 +60,7 @@ export class RevisionTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result =
           await this.revisionsApi.resolveParentByRevision(revisionId);
@@ -90,8 +88,7 @@ export class RevisionTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ organizationId, projectName, branchName, comment }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, branchName, comment }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -101,7 +98,7 @@ export class RevisionTools implements McpToolRegistrar {
               subject: PermissionSubject.Revision,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiCreateRevision({
           organizationId,
