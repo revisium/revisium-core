@@ -347,7 +347,7 @@ Authorization: Bearer <token>
 
 ## Database Schema
 
-**Migration:** [`20260222064046_add_oauth_models`](../prisma/migrations/20260222064046_add_oauth_models/)
+**Migration:** [`20260222210834_add_oauth`](../prisma/migrations/20260222210834_add_oauth/)
 
 ### Prisma Models
 
@@ -363,8 +363,6 @@ model OAuthClient {
   authorizationCodes OAuthAuthorizationCode[]
   accessTokens       OAuthAccessToken[]
   refreshTokens      OAuthRefreshToken[]
-
-  @@map("oauth_clients")
 }
 
 model OAuthAuthorizationCode {
@@ -381,8 +379,9 @@ model OAuthAuthorizationCode {
   usedAt        DateTime?
   createdAt     DateTime  @default(now())
 
+  @@index([clientId])
+  @@index([userId])
   @@index([expiresAt])
-  @@map("oauth_authorization_codes")
 }
 
 model OAuthAccessToken {
@@ -397,8 +396,9 @@ model OAuthAccessToken {
   revokedAt DateTime?
   createdAt DateTime  @default(now())
 
+  @@index([clientId])
+  @@index([userId])
   @@index([expiresAt])
-  @@map("oauth_access_tokens")
 }
 
 model OAuthRefreshToken {
@@ -414,8 +414,9 @@ model OAuthRefreshToken {
   revokedAt  DateTime?
   createdAt  DateTime  @default(now())
 
+  @@index([clientId])
+  @@index([userId])
   @@index([expiresAt])
-  @@map("oauth_refresh_tokens")
 }
 ```
 
@@ -425,10 +426,10 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
 
 ```text
 +---------------------------+
-| oauth_clients             |
+| OAuthClient               |
 +---------------------------+
 | id (PK, nanoid)           |
-| clientSecretHash           |---- SHA-256(ocs_xxx)
+| clientSecretHash          |---- SHA-256(ocs_xxx)
 | clientName                |
 | redirectUris[]            |
 | grantTypes[]              |
@@ -438,49 +439,49 @@ All models cascade on delete from both `OAuthClient` and `User`. The `User` mode
               | 1:N
               |
 +-------------v-------------+     +---------------------------+
-| oauth_authorization_codes |     | users                     |
+| OAuthAuthorizationCode    |     | User                      |
 +---------------------------+     +---------------------------+
 | id (PK)                   |     | id (PK)                   |
 | code (UNIQUE)             |     | username                  |
-| clientId (FK) ------------|     | email                     |
-| userId (FK) --------------|---->| roleId                    |
+| clientId (FK, IDX) -------|     | email                     |
+| userId (FK, IDX) ---------|---->| roleId                    |
 | redirectUri               |     +---------------------------+
 | codeChallenge             |                  ^
 | scope (nullable)          |                  |
-| expiresAt                 |                  |
+| expiresAt (IDX)           |                  |
 | usedAt (nullable)         |                  |
 | createdAt                 |                  |
 +---------------------------+                  |
                                                |
 +---------------------------+                  |
-| oauth_access_tokens       |                  |
+| OAuthAccessToken          |                  |
 +---------------------------+                  |
 | id (PK)                   |                  |
 | tokenHash (UNIQUE)        |---- SHA-256(oat_xxx)
-| clientId (FK)             |                  |
-| userId (FK) --------------|------------------+
+| clientId (FK, IDX)        |                  |
+| userId (FK, IDX) ---------|------------------+
 | scope (nullable)          |                  |
-| expiresAt                 |                  |
+| expiresAt (IDX)           |                  |
 | revokedAt (nullable)      |                  |
 | createdAt                 |                  |
 +---------------------------+                  |
                                                |
 +---------------------------+                  |
-| oauth_refresh_tokens      |                  |
+| OAuthRefreshToken         |                  |
 +---------------------------+                  |
 | id (PK)                   |                  |
 | tokenHash (UNIQUE)        |---- SHA-256(ort_xxx)
-| clientId (FK)             |                  |
-| userId (FK) --------------|------------------+
+| clientId (FK, IDX)        |                  |
+| userId (FK, IDX) ---------|------------------+
 | scope (nullable)          |
-| expiresAt                 |
+| expiresAt (IDX)           |
 | lastUsedAt                |
 | revokedAt (nullable)      |
 | createdAt                 |
 +---------------------------+
 ```
 
-**Indexes:** Each table has a unique index on the lookup column (`code` / `tokenHash`) provided by `@unique`, plus a non-unique index on `expiresAt` for cleanup queries.
+**Indexes:** Each child table has a unique index on the lookup column (`code` / `tokenHash`), B-tree indexes on foreign key columns (`clientId`, `userId`) for efficient cascaded deletes and joins, and a non-unique index on `expiresAt` for cleanup queries.
 
 ## Refresh Token Rotation
 
@@ -616,9 +617,18 @@ In production, `PUBLIC_URL` matches the external domain (e.g. `https://revisium.
 | [`src/api/mcp-api/mcp-auth.service.ts`](../src/api/mcp-api/mcp-auth.service.ts) | Bearer token detection (JWT vs OAuth) |
 | [`prisma/schema.prisma`](../prisma/schema.prisma) | Database models (OAuthClient, OAuthAuthorizationCode, OAuthAccessToken, OAuthRefreshToken) |
 
+## Token Cleanup
+
+Expired OAuth tokens are automatically cleaned up by a cron job that runs daily at 3:00 AM. The cleanup deletes:
+
+- **Authorization codes** where `expiresAt < now()`
+- **Access tokens** where `expiresAt < now()`
+- **Refresh tokens** where `expiresAt < now()`
+
+Revoked-but-not-expired tokens are kept until they expire to preserve the audit trail and prevent token reuse detection gaps.
+
 ## Not Implemented (Future)
 
 - **Granular OAuth scopes** (`mcp:read`, `mcp:write`, `mcp:admin`) -- currently `mcp` scope controls TTL only, not permissions
 - **Personal Access Tokens** (`rev_*` prefix)
 - **Reuse detection** (token family tracking)
-- **Token cleanup cron job** (expired tokens accumulate in DB)
