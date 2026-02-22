@@ -18,11 +18,10 @@ export class UserTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ userId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ userId }) => {
         await auth.checkSystemPermission(
           [{ action: PermissionAction.read, subject: PermissionSubject.User }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.userApi.adminUser({ userId });
         return {
@@ -46,8 +45,7 @@ export class UserTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ search, first }, context) => {
-        auth.requireAuth(context);
+      async ({ search, first }) => {
         const result = await this.userApi.searchUsers({
           search,
           first: first ?? 20,

@@ -27,8 +27,7 @@ export class MigrationTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -37,7 +36,7 @@ export class MigrationTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.revisionsApi.migrations({ revisionId });
         return {
@@ -65,8 +64,7 @@ export class MigrationTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, migrations }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, migrations }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -75,7 +73,7 @@ export class MigrationTools implements McpToolRegistrar {
               subject: PermissionSubject.Table,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.applyMigrations({
           revisionId,

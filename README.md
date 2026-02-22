@@ -76,9 +76,10 @@ CQRS pattern separates read and write operations:
 | **S3** | File storage |
 | **SMTP** | Email notifications |
 
-## Configuration
+## Documentation
 
-See [ENV.md](./ENV.md) for all environment variables.
+- [ENV.md](./ENV.md) — Environment variables
+- [docs/](./docs/index.md) — Technical documentation
 
 ## Related Packages
 

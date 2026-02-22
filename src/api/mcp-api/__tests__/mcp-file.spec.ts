@@ -18,19 +18,16 @@ import { CoreModule } from 'src/core/core.module';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { S3Service } from 'src/infrastructure/database/s3.service';
+import { AuthService } from 'src/features/auth/auth.service';
 
-const mcpPost = (
-  app: INestApplication,
-  sessionId: string | null,
-  body: object,
-) => {
+const mcpPost = (app: INestApplication, body: object, token?: string) => {
   const req = request(app.getHttpServer())
     .post('/mcp')
     .set('Content-Type', 'application/json')
     .set('Accept', 'application/json, text/event-stream');
 
-  if (sessionId) {
-    req.set('mcp-session-id', sessionId);
+  if (token) {
+    req.set('Authorization', `Bearer ${token}`);
   }
 
   return req.send(body);
@@ -52,8 +49,9 @@ const parseResponse = (res: request.Response) => {
 describe('MCP API - File Tools', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
+  let authService: AuthService;
   let preparedData: PrepareDataReturnType;
-  let sessionId: string;
+  let token: string;
   let tableId: string;
   let rowId: string;
   let fileId: string;
@@ -76,6 +74,7 @@ describe('MCP API - File Tools', () => {
 
     app = moduleFixture.createNestApplication();
     prismaService = app.get(PrismaService);
+    authService = app.get(AuthService);
     await app.init();
   });
 
@@ -125,40 +124,24 @@ describe('MCP API - File Tools', () => {
     rowId = rowDraft.id;
     fileId = data.document.fileId;
 
-    const initRes = await mcpPost(app, null, {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'initialize',
-      params: {
-        protocolVersion: '2024-11-05',
-        capabilities: {},
-        clientInfo: { name: 'test-client', version: '1.0.0' },
-      },
-    });
-    sessionId = initRes.headers['mcp-session-id'];
-
-    await mcpPost(app, sessionId, {
-      jsonrpc: '2.0',
-      id: 2,
-      method: 'tools/call',
-      params: {
-        name: 'login',
-        arguments: {
-          username: preparedData.owner.user.username,
-          password: 'password',
-        },
-      },
+    token = authService.login({
+      username: preparedData.owner.user.username,
+      sub: preparedData.owner.user.id,
     });
   });
 
   describe('tools/list', () => {
     it('should include uploadFile tool', async () => {
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'tools/list',
-        params: {},
-      }).expect(200);
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/list',
+          params: {},
+        },
+        token,
+      ).expect(200);
 
       const data = parseResponse(res);
       const toolNames = data.result.tools.map((t: { name: string }) => t.name);
@@ -168,12 +151,16 @@ describe('MCP API - File Tools', () => {
 
   describe('resources/list', () => {
     it('should include file specification resource', async () => {
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'resources/list',
-        params: {},
-      }).expect(200);
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'resources/list',
+          params: {},
+        },
+        token,
+      ).expect(200);
 
       const data = parseResponse(res);
       expect(data.result.resources).toContainEqual(
@@ -187,12 +174,16 @@ describe('MCP API - File Tools', () => {
 
   describe('resources/read file specification', () => {
     it('should read file specification with examples', async () => {
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'resources/read',
-        params: { uri: 'revisium://specs/file' },
-      }).expect(200);
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'resources/read',
+          params: { uri: 'revisium://specs/file' },
+        },
+        token,
+      ).expect(200);
 
       const data = parseResponse(res);
       expect(data.result.contents).toBeDefined();
@@ -211,23 +202,27 @@ describe('MCP API - File Tools', () => {
       const fileContent = 'Hello, this is a test file content';
       const base64Data = Buffer.from(fileContent).toString('base64');
 
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'tools/call',
-        params: {
-          name: 'upload_file',
-          arguments: {
-            revisionId: preparedData.project.draftRevisionId,
-            tableId,
-            rowId,
-            fileId,
-            fileName: 'test-document.txt',
-            mimeType: 'text/plain',
-            fileData: base64Data,
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: {
+            name: 'upload_file',
+            arguments: {
+              revisionId: preparedData.project.draftRevisionId,
+              tableId,
+              rowId,
+              fileId,
+              fileName: 'test-document.txt',
+              mimeType: 'text/plain',
+              fileData: base64Data,
+            },
           },
         },
-      }).expect(200);
+        token,
+      ).expect(200);
 
       const data = parseResponse(res);
       expect(data.result.content).toBeDefined();
@@ -236,20 +231,8 @@ describe('MCP API - File Tools', () => {
       expect(content.row).toBeDefined();
     });
 
-    it('should fail when not authenticated', async () => {
-      const newSessionRes = await mcpPost(app, null, {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-        params: {
-          protocolVersion: '2024-11-05',
-          capabilities: {},
-          clientInfo: { name: 'test-client', version: '1.0.0' },
-        },
-      });
-      const unauthSessionId = newSessionRes.headers['mcp-session-id'];
-
-      const res = await mcpPost(app, unauthSessionId, {
+    it('should return 401 when not authenticated', async () => {
+      const res = await mcpPost(app, {
         jsonrpc: '2.0',
         id: 2,
         method: 'tools/call',
@@ -265,55 +248,38 @@ describe('MCP API - File Tools', () => {
             fileData: Buffer.from('test').toString('base64'),
           },
         },
-      }).expect(200);
+      }).expect(401);
 
-      const data = parseResponse(res);
-      expect(data.result.content[0].text).toContain('Not authenticated');
+      expect(res.headers['www-authenticate']).toMatch(/^Bearer /);
     });
 
     it('should fail when another user tries to upload', async () => {
-      const anotherSessionRes = await mcpPost(app, null, {
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'initialize',
-        params: {
-          protocolVersion: '2024-11-05',
-          capabilities: {},
-          clientInfo: { name: 'test-client', version: '1.0.0' },
-        },
-      });
-      const anotherSessionId = anotherSessionRes.headers['mcp-session-id'];
-
-      await mcpPost(app, anotherSessionId, {
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'tools/call',
-        params: {
-          name: 'login',
-          arguments: {
-            username: preparedData.anotherOwner.user.username,
-            password: 'password',
-          },
-        },
+      const anotherToken = authService.login({
+        username: preparedData.anotherOwner.user.username,
+        sub: preparedData.anotherOwner.user.id,
       });
 
-      const res = await mcpPost(app, anotherSessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'tools/call',
-        params: {
-          name: 'upload_file',
-          arguments: {
-            revisionId: preparedData.project.draftRevisionId,
-            tableId,
-            rowId,
-            fileId,
-            fileName: 'test.txt',
-            mimeType: 'text/plain',
-            fileData: Buffer.from('test').toString('base64'),
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: {
+            name: 'upload_file',
+            arguments: {
+              revisionId: preparedData.project.draftRevisionId,
+              tableId,
+              rowId,
+              fileId,
+              fileName: 'test.txt',
+              mimeType: 'text/plain',
+              fileData: Buffer.from('test').toString('base64'),
+            },
           },
         },
-      }).expect(200);
+        anotherToken,
+      ).expect(200);
 
       const data = parseResponse(res);
       expect(data.result.content[0].text).toContain('not allowed');
@@ -322,23 +288,27 @@ describe('MCP API - File Tools', () => {
     it('should reject file exceeding size limit (base64 decoded)', async () => {
       const base64Data = Buffer.alloc(51 * 1024 * 1024).toString('base64');
 
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'tools/call',
-        params: {
-          name: 'upload_file',
-          arguments: {
-            revisionId: preparedData.project.draftRevisionId,
-            tableId,
-            rowId,
-            fileId,
-            fileName: 'large-file.bin',
-            mimeType: 'application/octet-stream',
-            fileData: base64Data,
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: {
+            name: 'upload_file',
+            arguments: {
+              revisionId: preparedData.project.draftRevisionId,
+              tableId,
+              rowId,
+              fileId,
+              fileName: 'large-file.bin',
+              mimeType: 'application/octet-stream',
+              fileData: base64Data,
+            },
           },
         },
-      });
+        token,
+      );
 
       expect(res.status).toBe(413);
     });

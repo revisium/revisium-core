@@ -135,11 +135,7 @@ export class EndpointTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async (
-        { organizationId, projectName, branchId, type, first, after },
-        context,
-      ) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, branchId, type, first, after }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -149,7 +145,7 @@ export class EndpointTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.endpointApi.getProjectEndpoints({
           organizationId,
@@ -177,8 +173,7 @@ export class EndpointTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ endpointId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ endpointId }) => {
         const result = await this.endpointApi.getEndpointRelatives({
           endpointId,
         });
@@ -191,7 +186,7 @@ export class EndpointTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         return {
           content: [
@@ -214,8 +209,7 @@ export class EndpointTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, type }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, type }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -224,7 +218,7 @@ export class EndpointTools implements McpToolRegistrar {
               subject: PermissionSubject.Endpoint,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.endpointApi.apiCreateEndpoint({
           revisionId,
@@ -247,8 +241,7 @@ export class EndpointTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ endpointId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ endpointId }) => {
         const relatives = await this.endpointApi.getEndpointRelatives({
           endpointId,
         });
@@ -261,7 +254,7 @@ export class EndpointTools implements McpToolRegistrar {
               subject: PermissionSubject.Endpoint,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         await this.endpointApi.deleteEndpoint({ endpointId });
         return {
@@ -285,8 +278,7 @@ export class EndpointTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ endpointId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ endpointId }) => {
         const path = await this.buildEndpointPath(endpointId);
         await auth.checkPermissionByOrganizationProject(
           path.project.organizationId,
@@ -297,7 +289,7 @@ export class EndpointTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
 
         if (path.endpoint.type !== 'GRAPHQL') {
@@ -379,8 +371,7 @@ export class EndpointTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ endpointId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ endpointId }) => {
         const path = await this.buildEndpointPath(endpointId);
         await auth.checkPermissionByOrganizationProject(
           path.project.organizationId,
@@ -391,7 +382,7 @@ export class EndpointTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
 
         if (path.endpoint.type !== 'REST_API') {

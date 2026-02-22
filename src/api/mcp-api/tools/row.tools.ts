@@ -109,11 +109,7 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async (
-        { revisionId, tableId, first, after, where, orderBy },
-        context,
-      ) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, first, after, where, orderBy }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -122,7 +118,7 @@ RESPONSE may include:
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const prismaOrderBy = mapToPrismaOrderBy(orderBy);
         const result = await this.rowApi.getRows({
@@ -167,8 +163,7 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, query, first, after, includeRowData }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, query, first, after, includeRowData }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -177,7 +172,7 @@ RESPONSE may include:
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.rowApi.searchRows({
           revisionId,
@@ -228,8 +223,7 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId, rowId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -238,7 +232,7 @@ RESPONSE may include:
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.rowApi.getRow({ revisionId, tableId, rowId });
         return {
@@ -275,12 +269,11 @@ Example:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, data }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowId, data }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiCreateRow({
           revisionId,
@@ -308,12 +301,11 @@ Example:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, data }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowId, data }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiUpdateRow({
           revisionId,
@@ -346,12 +338,11 @@ Example:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, patches }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowId, patches }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiPatchRow({
           revisionId,
@@ -396,12 +387,11 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rows }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rows }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiCreateRows({
           revisionId,
@@ -440,12 +430,11 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rows }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rows }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiUpdateRows({
           revisionId,
@@ -485,12 +474,11 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rows }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rows }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiPatchRows({
           revisionId,
@@ -522,12 +510,11 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ revisionId, tableId, rowIds }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowIds }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiRemoveRows({
           revisionId,
@@ -562,11 +549,14 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: true },
       },
-      async (
-        { revisionId, tableId, rowId, foreignKeyByTableId, first, after },
-        context,
-      ) => {
-        const session = auth.requireAuth(context);
+      async ({
+        revisionId,
+        tableId,
+        rowId,
+        foreignKeyByTableId,
+        first,
+        after,
+      }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -575,7 +565,7 @@ IMPORTANT for tables with computed fields (x-formula):
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.rowApi.resolveRowForeignKeysBy({
           revisionId,
@@ -605,12 +595,11 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, nextRowId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowId, nextRowId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiRenameRow({
           revisionId,
@@ -637,12 +626,11 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ revisionId, tableId, rowId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, tableId, rowId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
-          session.userId,
+          auth.userId,
         );
         const result = await this.draftApi.apiRemoveRow({
           revisionId,

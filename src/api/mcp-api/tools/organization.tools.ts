@@ -17,8 +17,7 @@ export class OrganizationTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ organizationId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId }) => {
         await auth.checkPermissionByOrganization(
           organizationId,
           [
@@ -27,7 +26,7 @@ export class OrganizationTools implements McpToolRegistrar {
               subject: PermissionSubject.Organization,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.organizationApi.organization({
           organizationId,
@@ -51,8 +50,7 @@ export class OrganizationTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ organizationId, first, after }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, first, after }) => {
         await auth.checkPermissionByOrganization(
           organizationId,
           [
@@ -61,13 +59,13 @@ export class OrganizationTools implements McpToolRegistrar {
               subject: PermissionSubject.Organization,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.organizationApi.getProjectsByOrganizationId({
           organizationId,
           first: first ?? 100,
           after,
-          userId: session.userId,
+          userId: auth.userId,
         });
         return {
           content: [

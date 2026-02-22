@@ -25,6 +25,7 @@ cp .env.example .env
 |----------|---------|-------------|
 | `PORT` | `8080` | HTTP server port |
 | `BODY_LIMIT` | `10mb` | Maximum request body size |
+| `PUBLIC_URL` | `http://localhost:8080` | Public base URL (used for OAuth discovery endpoints and MCP `WWW-Authenticate` header) |
 
 ---
 

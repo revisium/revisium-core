@@ -5,110 +5,100 @@ import {
   Delete,
   Req,
   Res,
-  HttpStatus,
+  UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Request, Response } from 'express';
-import { randomUUID } from 'node:crypto';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { McpServerService } from './mcp-server.service';
+import { McpAuthService } from './mcp-auth.service';
 
 @ApiExcludeController()
 @Controller('mcp')
 export class McpController {
-  private readonly transports: Map<string, StreamableHTTPServerTransport> =
-    new Map();
-
-  constructor(private readonly mcpServer: McpServerService) {}
+  constructor(
+    private readonly mcpServer: McpServerService,
+    private readonly mcpAuth: McpAuthService,
+    private readonly configService: ConfigService,
+  ) {}
 
   @Post()
   async handlePost(@Req() req: Request, @Res() res: Response) {
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+    });
 
-    const preferStreaming =
-      req.headers['x-mcp-prefer-sse'] === 'true' ||
-      req.headers['x-mcp-prefer-sse'] === '1';
+    const server = new McpServer(
+      { name: 'revisium', version: '1.0.0' },
+      { instructions: this.mcpServer.getInstructions() },
+    );
 
-    let transport: StreamableHTTPServerTransport;
-
-    if (sessionId && this.transports.has(sessionId)) {
-      transport = this.transports.get(sessionId)!;
-    } else if (!sessionId && isInitializeRequest(req.body)) {
-      transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: () => randomUUID(),
-        enableJsonResponse: !preferStreaming,
-        onsessioninitialized: (newSessionId) => {
-          this.transports.set(newSessionId, transport);
-        },
-      });
-
-      transport.onclose = () => {
-        const sid = transport.sessionId;
-        if (sid) {
-          this.transports.delete(sid);
-        }
-      };
-
-      const server = this.mcpServer.createServer();
+    try {
+      const userContext = await this.mcpAuth.extractUserContext(req);
+      this.mcpServer.registerTools(server, userContext);
+      this.mcpServer.registerResources(server);
       await server.connect(transport);
-    } else {
-      res.status(HttpStatus.BAD_REQUEST).json({
-        jsonrpc: '2.0',
-        error: {
-          code: -32000,
-          message: sessionId
-            ? 'Session expired or server was restarted. Please reconnect the MCP client (use /mcp command in Claude Code or restart the client).'
-            : 'Bad Request: No session ID provided. Send an initialize request first.',
-        },
-        id: null,
-      });
-      return;
+      await transport.handleRequest(req, res, req.body);
+    } catch (error) {
+      if (!res.headersSent) {
+        if (error instanceof UnauthorizedException) {
+          const publicUrl =
+            this.configService.get<string>('PUBLIC_URL') ||
+            `${req.protocol}://${req.get('host')}`;
+          res
+            .status(401)
+            .setHeader(
+              'WWW-Authenticate',
+              `Bearer resource_metadata="${publicUrl}/.well-known/oauth-protected-resource"`,
+            )
+            .json({
+              jsonrpc: '2.0',
+              error: { code: -32001, message: 'Unauthorized' },
+              id: null,
+            });
+        } else {
+          res.status(500).json({
+            jsonrpc: '2.0',
+            error: { code: -32603, message: 'Internal error' },
+            id: null,
+          });
+        }
+      }
+    } finally {
+      await server.close().catch(() => {});
+      await transport.close().catch(() => {});
     }
-
-    await transport.handleRequest(req, res, req.body);
   }
 
   @Get()
-  async handleGet(@Req() req: Request, @Res() res: Response) {
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-
-    if (!sessionId || !this.transports.has(sessionId)) {
-      res.status(HttpStatus.BAD_REQUEST).json({
+  handleGet(@Res() res: Response) {
+    res
+      .status(405)
+      .setHeader('Allow', 'POST')
+      .json({
         jsonrpc: '2.0',
         error: {
-          code: -32000,
-          message:
-            'Session expired or server was restarted. Please reconnect the MCP client.',
+          code: -32001,
+          message: 'SSE not supported. Use stateless POST requests.',
         },
         id: null,
       });
-      return;
-    }
-
-    const transport = this.transports.get(sessionId)!;
-    await transport.handleRequest(req, res);
   }
 
   @Delete()
-  async handleDelete(@Req() req: Request, @Res() res: Response) {
-    const sessionId = req.headers['mcp-session-id'] as string | undefined;
-
-    if (!sessionId || !this.transports.has(sessionId)) {
-      res.status(HttpStatus.BAD_REQUEST).json({
+  handleDelete(@Res() res: Response) {
+    res
+      .status(405)
+      .setHeader('Allow', 'POST')
+      .json({
         jsonrpc: '2.0',
         error: {
-          code: -32000,
-          message:
-            'Session expired or server was restarted. Please reconnect the MCP client.',
+          code: -32001,
+          message: 'Session management not supported in stateless mode.',
         },
         id: null,
       });
-      return;
-    }
-
-    const transport = this.transports.get(sessionId)!;
-    await transport.handleRequest(req, res);
-    this.transports.delete(sessionId);
   }
 }

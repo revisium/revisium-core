@@ -2,6 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { prepareData } from 'src/__tests__/utils/prepareProject';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+import { AuthService } from 'src/features/auth/auth.service';
 
 interface McpToolResult {
   content: Array<{
@@ -10,18 +11,14 @@ interface McpToolResult {
   }>;
 }
 
-const mcpPost = (
-  app: INestApplication,
-  sessionId: string | null,
-  body: object,
-) => {
+const mcpPost = (app: INestApplication, body: object, token?: string) => {
   const req = request(app.getHttpServer())
     .post('/mcp')
     .set('Content-Type', 'application/json')
     .set('Accept', 'application/json, text/event-stream');
 
-  if (sessionId) {
-    req.set('mcp-session-id', sessionId);
+  if (token) {
+    req.set('Authorization', `Bearer ${token}`);
   }
 
   return req.buffer(true).send(body);
@@ -51,9 +48,11 @@ const getToolResultJson = (result: McpToolResult) => {
 
 describe('mcp-api - endpoint tools', () => {
   let app: INestApplication;
+  let authService: AuthService;
 
   beforeAll(async () => {
     app = await createFreshTestApp();
+    authService = app.get(AuthService);
   });
 
   afterAll(async () => {
@@ -61,65 +60,50 @@ describe('mcp-api - endpoint tools', () => {
   });
 
   const setupTest = async () => {
-    // Note: prepareData/prepareProject automatically creates 2 endpoints:
-    // - REST_API on headRevision (headEndpointId)
-    // - GRAPHQL on draftRevision (draftEndpointId)
     const testData = await prepareData(app);
 
-    const initRes = await mcpPost(app, null, {
-      jsonrpc: '2.0',
-      id: 1,
-      method: 'initialize',
-      params: {
-        protocolVersion: '2024-11-05',
-        capabilities: {},
-        clientInfo: { name: 'test-client', version: '1.0.0' },
-      },
-    });
-    const sessionId = initRes.headers['mcp-session-id'] as string;
-
-    await mcpPost(app, sessionId, {
-      jsonrpc: '2.0',
-      id: 2,
-      method: 'tools/call',
-      params: {
-        name: 'login',
-        arguments: {
-          username: testData.owner.user.username,
-          password: 'password',
-        },
-      },
+    const token = authService.login({
+      username: testData.owner.user.username,
+      sub: testData.owner.user.id,
     });
 
     const callTool = async (
       toolName: string,
       args: object,
     ): Promise<{ result?: McpToolResult; error?: { message: string } }> => {
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: Date.now(),
-        method: 'tools/call',
-        params: {
-          name: toolName,
-          arguments: args,
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: Date.now(),
+          method: 'tools/call',
+          params: {
+            name: toolName,
+            arguments: args,
+          },
         },
-      });
+        token,
+      );
       return parseResponse(res);
     };
 
-    return { testData, sessionId, callTool };
+    return { testData, token, callTool };
   };
 
   describe('tools/list includes endpoint tools', () => {
     it('should list endpoint tools', async () => {
-      const { sessionId } = await setupTest();
+      const { token } = await setupTest();
 
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 3,
-        method: 'tools/list',
-        params: {},
-      });
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/list',
+          params: {},
+        },
+        token,
+      );
 
       const data = parseResponse(res);
       const toolNames = data.result.tools.map((t: { name: string }) => t.name);
@@ -144,7 +128,6 @@ describe('mcp-api - endpoint tools', () => {
 
       expect(response.result).toBeDefined();
       const result = getToolResultJson(response.result!);
-      // prepareData creates 2 endpoints: REST_API on head, GRAPHQL on draft
       expect(result.totalCount).toBe(2);
       const types = result.edges.map(
         (e: { node: { type: string } }) => e.node.type,
@@ -173,7 +156,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should fail to create duplicate endpoint on same revision', async () => {
       const { testData, callTool } = await setupTest();
 
-      // headRevision already has REST_API endpoint from prepareData
       const response = await callTool('create_endpoint', {
         revisionId: testData.project.headRevisionId,
         type: 'REST_API',
@@ -187,7 +169,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should create endpoint of different type on same revision', async () => {
       const { testData, callTool } = await setupTest();
 
-      // headRevision has REST_API, so we can create GRAPHQL
       const response = await callTool('create_endpoint', {
         revisionId: testData.project.headRevisionId,
         type: 'GRAPHQL',
@@ -205,7 +186,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should return endpoint with related entities', async () => {
       const { testData, callTool } = await setupTest();
 
-      // Use pre-existing endpoint from prepareData
       const endpointId = testData.project.headEndpointId;
 
       const response = await callTool('get_endpoint_relatives', {
@@ -226,7 +206,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should delete endpoint', async () => {
       const { testData, callTool } = await setupTest();
 
-      // Use pre-existing endpoint from prepareData
       const endpointId = testData.project.headEndpointId;
 
       const deleteResponse = await callTool('delete_endpoint', {
@@ -237,7 +216,6 @@ describe('mcp-api - endpoint tools', () => {
       const result = getToolResultJson(deleteResponse.result!);
       expect(result.success).toBe(true);
 
-      // After deleting one, should have 1 endpoint left
       const listResponse = await callTool('get_project_endpoints', {
         organizationId: testData.project.organizationId,
         projectName: testData.project.projectName,
@@ -251,7 +229,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should return error for REST_API endpoint', async () => {
       const { testData, callTool } = await setupTest();
 
-      // Use pre-existing REST_API endpoint on head revision
       const endpointId = testData.project.headEndpointId;
 
       const response = await callTool('get_graphql_schema', {
@@ -266,7 +243,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should return fetch error when endpoint service is not available', async () => {
       const { testData, callTool } = await setupTest();
 
-      // Use pre-existing GRAPHQL endpoint on draft revision
       const endpointId = testData.project.draftEndpointId;
 
       const response = await callTool('get_graphql_schema', {
@@ -284,7 +260,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should return error for GRAPHQL endpoint', async () => {
       const { testData, callTool } = await setupTest();
 
-      // Use pre-existing GRAPHQL endpoint on draft revision
       const endpointId = testData.project.draftEndpointId;
 
       const response = await callTool('get_openapi_spec', {
@@ -299,7 +274,6 @@ describe('mcp-api - endpoint tools', () => {
     it('should return fetch error when endpoint service is not available', async () => {
       const { testData, callTool } = await setupTest();
 
-      // Use pre-existing REST_API endpoint on head revision
       const endpointId = testData.project.headEndpointId;
 
       const response = await callTool('get_openapi_spec', {

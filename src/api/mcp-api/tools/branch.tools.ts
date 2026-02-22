@@ -19,8 +19,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ organizationId, projectName, branchName }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, branchName }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -30,7 +29,7 @@ export class BranchTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const branch = await this.branchApi.getBranch({
           organizationId,
@@ -63,8 +62,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ branchId }, context) => {
-        auth.requireAuth(context);
+      async ({ branchId }) => {
         const result = await this.branchApi.getDraftRevision(branchId);
         return {
           content: [
@@ -84,8 +82,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, branchName }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, branchName }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -94,7 +91,7 @@ export class BranchTools implements McpToolRegistrar {
               subject: PermissionSubject.Branch,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.branchApi.apiCreateBranchByRevisionId({
           revisionId,
@@ -123,8 +120,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ organizationId, projectName, first, after }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, first, after }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -134,7 +130,7 @@ export class BranchTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.branchApi.getBranches({
           organizationId,
@@ -166,11 +162,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async (
-        { organizationId, projectName, branchName, first, after },
-        context,
-      ) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, branchName, first, after }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -180,7 +172,7 @@ export class BranchTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const branch = await this.branchApi.getBranch({
           organizationId,
@@ -211,8 +203,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ organizationId, projectName, branchName }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, branchName }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -222,7 +213,7 @@ export class BranchTools implements McpToolRegistrar {
               subject: PermissionSubject.Branch,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.branchApi.deleteBranch({
           organizationId,
@@ -248,8 +239,7 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ organizationId, projectName, branchName }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ organizationId, projectName, branchName }) => {
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
@@ -259,7 +249,7 @@ export class BranchTools implements McpToolRegistrar {
               subject: PermissionSubject.Revision,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.branchApi.apiRevertChanges({
           organizationId,

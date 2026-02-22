@@ -12,21 +12,12 @@ import {
   PrepareDataReturnType,
 } from 'src/__tests__/utils/prepareProject';
 
-const mcpPost = (
-  app: INestApplication,
-  sessionId: string | null,
-  body: object,
-) => {
-  const req = request(app.getHttpServer())
+const mcpPost = (app: INestApplication, body: object) => {
+  return request(app.getHttpServer())
     .post('/mcp')
     .set('Content-Type', 'application/json')
-    .set('Accept', 'application/json, text/event-stream');
-
-  if (sessionId) {
-    req.set('mcp-session-id', sessionId);
-  }
-
-  return req.send(body);
+    .set('Accept', 'application/json, text/event-stream')
+    .send(body);
 };
 
 const parseResponse = (res: request.Response) => {
@@ -40,20 +31,6 @@ const parseResponse = (res: request.Response) => {
     return null;
   }
   return res.body;
-};
-
-const initMcpSession = async (app: INestApplication): Promise<string> => {
-  const res = await mcpPost(app, null, {
-    jsonrpc: '2.0',
-    id: 1,
-    method: 'initialize',
-    params: {
-      protocolVersion: '2024-11-05',
-      capabilities: {},
-      clientInfo: { name: 'test-client', version: '1.0.0' },
-    },
-  });
-  return res.headers['mcp-session-id'];
 };
 
 describe('NO_AUTH mode', () => {
@@ -156,7 +133,7 @@ describe('NO_AUTH mode', () => {
 
   describe('MCP API', () => {
     it('instructions say no authentication required', async () => {
-      const res = await mcpPost(app, null, {
+      const res = await mcpPost(app, {
         jsonrpc: '2.0',
         id: 1,
         method: 'initialize',
@@ -171,10 +148,8 @@ describe('NO_AUTH mode', () => {
       expect(data.result.instructions).toContain('No authentication required');
     });
 
-    it('tools work without login', async () => {
-      const sessionId = await initMcpSession(app);
-
-      const res = await mcpPost(app, sessionId, {
+    it('tools work without Bearer token', async () => {
+      const res = await mcpPost(app, {
         jsonrpc: '2.0',
         id: 2,
         method: 'tools/call',
@@ -192,10 +167,8 @@ describe('NO_AUTH mode', () => {
       expect(content.edges).toBeDefined();
     });
 
-    it('get_tables works without login', async () => {
-      const sessionId = await initMcpSession(app);
-
-      const res = await mcpPost(app, sessionId, {
+    it('get_tables works without Bearer token', async () => {
+      const res = await mcpPost(app, {
         jsonrpc: '2.0',
         id: 2,
         method: 'tools/call',
@@ -213,10 +186,8 @@ describe('NO_AUTH mode', () => {
       expect(content.edges).toBeDefined();
     });
 
-    it('create_row works without login', async () => {
-      const sessionId = await initMcpSession(app);
-
-      const res = await mcpPost(app, sessionId, {
+    it('create_row works without Bearer token', async () => {
+      const res = await mcpPost(app, {
         jsonrpc: '2.0',
         id: 2,
         method: 'tools/call',
@@ -233,27 +204,6 @@ describe('NO_AUTH mode', () => {
 
       const data = parseResponse(res);
       expect(data.result.isError).toBeFalsy();
-    });
-
-    it('login accepts any credentials', async () => {
-      const sessionId = await initMcpSession(app);
-
-      const res = await mcpPost(app, sessionId, {
-        jsonrpc: '2.0',
-        id: 2,
-        method: 'tools/call',
-        params: {
-          name: 'login',
-          arguments: {
-            username: 'anything',
-            password: 'anything',
-          },
-        },
-      }).expect(200);
-
-      const data = parseResponse(res);
-      const content = JSON.parse(data.result.content[0].text);
-      expect(content.success).toBe(true);
     });
   });
 });

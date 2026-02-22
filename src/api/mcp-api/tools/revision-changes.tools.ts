@@ -28,8 +28,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, compareWithRevisionId }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, compareWithRevisionId }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -38,7 +37,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.revisionChangesApi.revisionChanges({
           revisionId,
@@ -71,8 +70,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, compareWithRevisionId, first, after }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, compareWithRevisionId, first, after }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -81,7 +79,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.revisionChangesApi.tableChanges({
           revisionId,
@@ -116,8 +114,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, compareWithRevisionId, first, after }, context) => {
-        const session = auth.requireAuth(context);
+      async ({ revisionId, compareWithRevisionId, first, after }) => {
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -126,7 +123,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
               subject: PermissionSubject.Project,
             },
           ],
-          session.userId,
+          auth.userId,
         );
         const result = await this.revisionChangesApi.rowChanges({
           revisionId,
