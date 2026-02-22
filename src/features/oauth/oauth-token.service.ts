@@ -137,6 +137,78 @@ export class OAuthTokenService {
     return this.createTokens(clientId, existing.userId);
   }
 
+  async revokeToken(
+    token: string,
+    tokenTypeHint: string | undefined,
+    clientId: string,
+  ): Promise<void> {
+    const tokenHash = this.hashToken(token);
+
+    if (
+      tokenTypeHint === 'refresh_token' ||
+      token.startsWith(REFRESH_TOKEN_PREFIX)
+    ) {
+      const revoked = await this.revokeRefreshTokenWithCascade(
+        tokenHash,
+        clientId,
+      );
+      if (revoked) {
+        return;
+      }
+    }
+
+    if (
+      tokenTypeHint === 'access_token' ||
+      token.startsWith(ACCESS_TOKEN_PREFIX)
+    ) {
+      await this.prisma.oAuthAccessToken.updateMany({
+        where: { tokenHash, clientId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+      return;
+    }
+
+    const accessResult = await this.prisma.oAuthAccessToken.updateMany({
+      where: { tokenHash, clientId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    if (accessResult.count === 0) {
+      await this.revokeRefreshTokenWithCascade(tokenHash, clientId);
+    }
+  }
+
+  private async revokeRefreshTokenWithCascade(
+    tokenHash: string,
+    clientId: string,
+  ): Promise<boolean> {
+    const result = await this.prisma.oAuthRefreshToken.updateMany({
+      where: { tokenHash, clientId, revokedAt: null },
+      data: { revokedAt: new Date() },
+    });
+
+    if (result.count === 0) {
+      return false;
+    }
+
+    const refreshToken = await this.prisma.oAuthRefreshToken.findUnique({
+      where: { tokenHash },
+    });
+
+    if (refreshToken) {
+      await this.prisma.oAuthAccessToken.updateMany({
+        where: {
+          clientId: refreshToken.clientId,
+          userId: refreshToken.userId,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
+    }
+
+    return true;
+  }
+
   private hashToken(token: string): string {
     return createHash('sha256').update(token).digest('hex');
   }

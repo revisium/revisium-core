@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  HttpCode,
   Post,
   Req,
   Res,
@@ -46,6 +47,8 @@ export class OAuthController {
       grant_types_supported: ['authorization_code', 'refresh_token'],
       code_challenge_methods_supported: ['S256'],
       token_endpoint_auth_methods_supported: ['client_secret_post'],
+      revocation_endpoint: `${this.publicUrl}/oauth/revoke`,
+      revocation_endpoint_auth_methods_supported: ['client_secret_post'],
     };
   }
 
@@ -177,6 +180,40 @@ export class OAuthController {
     return {
       redirect_uri: redirectUrl.toString(),
     };
+  }
+
+  @Post('oauth/revoke')
+  @HttpCode(200)
+  async revokeToken(
+    @Body()
+    body: {
+      token: string;
+      token_type_hint?: string;
+      client_id?: string;
+      client_secret?: string;
+    },
+  ) {
+    const { token, token_type_hint, client_id, client_secret } = body;
+
+    if (!token) {
+      throw new BadRequestException('token is required');
+    }
+
+    if (!client_id || !client_secret) {
+      throw new BadRequestException('Client authentication required');
+    }
+
+    const validSecret = await this.clientService.validateClientSecret(
+      client_id,
+      client_secret,
+    );
+    if (!validSecret) {
+      throw new BadRequestException('Invalid client credentials');
+    }
+
+    await this.tokenService.revokeToken(token, token_type_hint, client_id);
+
+    return {};
   }
 
   @Post('oauth/token')
