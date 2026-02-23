@@ -317,7 +317,11 @@ describe('file.plugin', () => {
         dataDraft: previousData,
       });
 
-      const valueStore = createJsonValueStore(schemaStore, '', rowDraft.data as JsonValue);
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        '',
+        rowDraft.data as JsonValue,
+      );
       const file = createExpressFile();
 
       await filePlugin.uploadFile({
@@ -362,7 +366,11 @@ describe('file.plugin', () => {
         dataDraft: previousData,
       });
 
-      const valueStore = createJsonValueStore(schemaStore, '', rowDraft.data as JsonValue);
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        '',
+        rowDraft.data as JsonValue,
+      );
       const file = createExpressImageFile();
 
       await filePlugin.uploadFile({
@@ -404,7 +412,11 @@ describe('file.plugin', () => {
 
       await expect(
         filePlugin.uploadFile({
-          valueStore: createJsonValueStore(schemaStore, '', rowDraft.data as JsonValue),
+          valueStore: createJsonValueStore(
+            schemaStore,
+            '',
+            rowDraft.data as JsonValue,
+          ),
           fileId: 'unrealId',
           file: createExpressImageFile(),
         }),
@@ -432,7 +444,11 @@ describe('file.plugin', () => {
 
       await expect(
         filePlugin.uploadFile({
-          valueStore: createJsonValueStore(schemaStore, '', rowDraft.data as JsonValue),
+          valueStore: createJsonValueStore(
+            schemaStore,
+            '',
+            rowDraft.data as JsonValue,
+          ),
           fileId: file.fileId,
           file: createExpressImageFile(),
         }),

@@ -148,7 +148,11 @@ export class InternalRenameRowHandler extends DraftHandler<
     schemaStore: JsonSchemaStore,
   ): Promise<void> {
     for (const row of rows) {
-      const valueStore = createJsonValueStore(schemaStore, row.id, row.data as JsonValue);
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        row.id,
+        row.data as JsonValue,
+      );
       const wasUpdated = replaceForeignKeyValue({
         valueStore: valueStore,
         foreignKey: input.tableId,
