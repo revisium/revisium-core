@@ -1,7 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
-import { Prisma } from 'src/__generated__/client';
-type JsonValue = Prisma.JsonValue;
+import { JsonValue } from '@revisium/schema-toolkit/types';
 import {
   UpdateRowsCommand,
   UpdateRowsRowInput,

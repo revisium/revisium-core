@@ -1,7 +1,7 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, EventBus, CommandBus } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
-type JsonValue = Prisma.JsonValue;
+import { JsonValue } from '@revisium/schema-toolkit/types';
 import {
   PatchRowsCommand,
   PatchRowsRowInput,
@@ -114,7 +114,7 @@ export class PatchRowsHandler extends DraftHandler<
       const patchedData = this.applyPatches(
         schemaStore,
         rowInput.rowId,
-        row.data,
+        row.data as JsonValue,
         rowInput.patches,
       );
       return { rowId: rowInput.rowId, data: patchedData };

@@ -15,7 +15,7 @@ import {
   JsonStringValueStore,
   JsonValueStore,
 } from '@revisium/schema-toolkit/model';
-import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import { JsonSchemaTypeName, JsonValue } from '@revisium/schema-toolkit/types';
 
 @Injectable()
 export class RowPublishedAtPlugin implements IPluginService {
@@ -36,7 +36,7 @@ export class RowPublishedAtPlugin implements IPluginService {
       const valueStore = createJsonValueStore(
         options.schemaStore,
         '',
-        row.data,
+        row.data as JsonValue,
       );
 
       this.setPublishedAt(valueStore, row.publishedAt.toISOString());
@@ -50,7 +50,7 @@ export class RowPublishedAtPlugin implements IPluginService {
       const valueStore = createJsonValueStore(
         options.schemaStore,
         '',
-        row.data,
+        row.data as JsonValue,
       );
 
       this.setPublishedAt(valueStore, '');

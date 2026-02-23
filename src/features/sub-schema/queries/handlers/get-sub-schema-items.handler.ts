@@ -2,6 +2,7 @@ import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
 import { Prisma, Table } from 'src/__generated__/client';
 import { SubSchemaTableConfig, SubSchemaPath } from '@revisium/prisma-pg-json';
 import { getValueByPath } from '@revisium/schema-toolkit/lib';
+import { JsonValue } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -123,7 +124,7 @@ export class GetSubSchemaItemsHandler implements IQueryHandler<
   }
 
   private transformItem(item: ParsedSubSchemaItem): SubSchemaItemResult {
-    const data = getValueByPath(item.row.data, item.fieldPath);
+    const data = getValueByPath(item.row.data as JsonValue, item.fieldPath);
 
     return {
       row: item.row,

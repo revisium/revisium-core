@@ -15,7 +15,7 @@ import {
   JsonStringValueStore,
   JsonValueStore,
 } from '@revisium/schema-toolkit/model';
-import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import { JsonSchemaTypeName, JsonValue } from '@revisium/schema-toolkit/types';
 
 @Injectable()
 export class RowCreatedIdPlugin implements IPluginService {
@@ -36,7 +36,7 @@ export class RowCreatedIdPlugin implements IPluginService {
       const valueStore = createJsonValueStore(
         options.schemaStore,
         '',
-        row.data,
+        row.data as JsonValue,
       );
 
       this.setCreatedId(valueStore, row.createdId);
@@ -50,7 +50,7 @@ export class RowCreatedIdPlugin implements IPluginService {
       const valueStore = createJsonValueStore(
         options.schemaStore,
         '',
-        row.data,
+        row.data as JsonValue,
       );
 
       this.setCreatedId(valueStore, '');
