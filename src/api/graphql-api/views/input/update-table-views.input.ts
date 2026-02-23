@@ -9,6 +9,9 @@ export class ViewColumnInput {
 
   @Field(() => Float, { nullable: true })
   width?: number;
+
+  @Field({ nullable: true })
+  pinned?: string;
 }
 
 @InputType()
