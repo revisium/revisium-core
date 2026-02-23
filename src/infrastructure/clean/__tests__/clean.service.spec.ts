@@ -47,6 +47,7 @@ describe('CleanService', () => {
 
       await service.cleanTablesAndRows();
 
+      expect(logSpy).toHaveBeenCalledTimes(1);
       expect(logSpy).toHaveBeenCalledWith('deleted 3 empty [Table]s');
     });
 
@@ -59,6 +60,7 @@ describe('CleanService', () => {
 
       await service.cleanTablesAndRows();
 
+      expect(logSpy).toHaveBeenCalledTimes(1);
       expect(logSpy).toHaveBeenCalledWith('deleted 5 empty [Row]s');
     });
 
