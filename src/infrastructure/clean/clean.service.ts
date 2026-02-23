@@ -28,10 +28,6 @@ export class CleanService {
     if (resultRow.count) {
       this.logger.log(`deleted ${resultRow.count} empty [Row]s`);
     }
-
-    // TODO logic depends on resultTables.count, resultRow.count
-    // maybe @Interval
-    // + waiting for https://github.com/prisma/prisma/issues/6957
   }
 
   @Cron(CronExpression.EVERY_DAY_AT_3AM)
