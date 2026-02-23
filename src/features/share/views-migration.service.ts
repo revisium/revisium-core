@@ -348,7 +348,7 @@ export class ViewsMigrationService {
     if (isRefSchema(schema)) {
       return null;
     }
-    return schema.type;
+    return schema.type as JsonSchemaTypeName;
   }
 
   private cloneViewsData(viewsData: TableViewsData): TableViewsData {

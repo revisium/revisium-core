@@ -1367,11 +1367,13 @@ type ViewChangeModel {
 
 input ViewColumnInput {
   field: String!
+  pinned: String
   width: Float
 }
 
 type ViewColumnModel {
   field: String!
+  pinned: String
   width: Float
 }
 

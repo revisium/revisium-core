@@ -82,7 +82,7 @@ export class PluginService {
     const previousValueStore = createJsonValueStore(
       schemaStore,
       options.rowId,
-      row.data,
+      row.data as JsonValue,
     );
 
     const internalOptions: InternalAfterUpdateRowOptions = {

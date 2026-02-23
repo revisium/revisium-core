@@ -33,6 +33,7 @@ import {
   JsonPatch,
   JsonSchema,
   JsonSchemaTypeName,
+  JsonValue,
 } from '@revisium/schema-toolkit/types';
 
 @CommandHandler(UpdateTableCommand)
@@ -126,7 +127,7 @@ export class UpdateTableHandler extends DraftHandler<
 
     const rows = await this.getRows(tableVersionId);
     for (const row of rows) {
-      schemaTable.addRow(row.id, row.data);
+      schemaTable.addRow(row.id, row.data as JsonValue);
     }
 
     schemaTable.applyPatches(data.patches);

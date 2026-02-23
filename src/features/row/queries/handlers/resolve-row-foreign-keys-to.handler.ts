@@ -152,6 +152,6 @@ export class ResolveRowForeignKeysToHandler implements IQueryHandler<
       where: { versionId: rowVersionId },
     });
 
-    return row.data;
+    return row.data as JsonValue;
   }
 }

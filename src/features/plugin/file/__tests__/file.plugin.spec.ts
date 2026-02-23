@@ -23,6 +23,7 @@ import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.ser
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
+import { JsonValue } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('file.plugin', () => {
@@ -316,7 +317,11 @@ describe('file.plugin', () => {
         dataDraft: previousData,
       });
 
-      const valueStore = createJsonValueStore(schemaStore, '', rowDraft.data);
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        '',
+        rowDraft.data as JsonValue,
+      );
       const file = createExpressFile();
 
       await filePlugin.uploadFile({
@@ -361,7 +366,11 @@ describe('file.plugin', () => {
         dataDraft: previousData,
       });
 
-      const valueStore = createJsonValueStore(schemaStore, '', rowDraft.data);
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        '',
+        rowDraft.data as JsonValue,
+      );
       const file = createExpressImageFile();
 
       await filePlugin.uploadFile({
@@ -403,7 +412,11 @@ describe('file.plugin', () => {
 
       await expect(
         filePlugin.uploadFile({
-          valueStore: createJsonValueStore(schemaStore, '', rowDraft.data),
+          valueStore: createJsonValueStore(
+            schemaStore,
+            '',
+            rowDraft.data as JsonValue,
+          ),
           fileId: 'unrealId',
           file: createExpressImageFile(),
         }),
@@ -431,7 +444,11 @@ describe('file.plugin', () => {
 
       await expect(
         filePlugin.uploadFile({
-          valueStore: createJsonValueStore(schemaStore, '', rowDraft.data),
+          valueStore: createJsonValueStore(
+            schemaStore,
+            '',
+            rowDraft.data as JsonValue,
+          ),
           fileId: file.fileId,
           file: createExpressImageFile(),
         }),

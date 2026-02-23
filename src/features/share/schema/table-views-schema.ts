@@ -56,6 +56,7 @@ export const tableViewsSchema: Schema = {
       properties: {
         field: { type: 'string', minLength: 1 },
         width: { type: 'number', minimum: 40 },
+        pinned: { type: 'string', enum: ['left', 'right'] },
       },
     },
     FilterGroup: {

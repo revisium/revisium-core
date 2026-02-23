@@ -25,7 +25,7 @@ import {
   JsonSchemaStore,
   JsonValueStore,
 } from '@revisium/schema-toolkit/model';
-import { JsonSchemaTypeName } from '@revisium/schema-toolkit/types';
+import { JsonSchemaTypeName, JsonValue } from '@revisium/schema-toolkit/types';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(InternalRenameRowCommand)
@@ -148,7 +148,11 @@ export class InternalRenameRowHandler extends DraftHandler<
     schemaStore: JsonSchemaStore,
   ): Promise<void> {
     for (const row of rows) {
-      const valueStore = createJsonValueStore(schemaStore, row.id, row.data);
+      const valueStore = createJsonValueStore(
+        schemaStore,
+        row.id,
+        row.data as JsonValue,
+      );
       const wasUpdated = replaceForeignKeyValue({
         valueStore: valueStore,
         foreignKey: input.tableId,

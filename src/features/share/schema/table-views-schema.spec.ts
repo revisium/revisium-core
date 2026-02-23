@@ -252,6 +252,74 @@ describe('table-views-schema', () => {
     expect(ajv.errors).not.toBeNull();
   });
 
+  it('validates column with pinned left', () => {
+    const valid = ajv.validate(tableViewsSchema, {
+      version: 1,
+      defaultViewId: 'default',
+      views: [
+        {
+          id: 'default',
+          name: 'Default',
+          columns: [{ field: 'id', pinned: 'left' }],
+        },
+      ],
+    });
+
+    expect(ajv.errors).toBeNull();
+    expect(valid).toBe(true);
+  });
+
+  it('validates column with pinned right', () => {
+    const valid = ajv.validate(tableViewsSchema, {
+      version: 1,
+      defaultViewId: 'default',
+      views: [
+        {
+          id: 'default',
+          name: 'Default',
+          columns: [{ field: 'id', pinned: 'right' }],
+        },
+      ],
+    });
+
+    expect(ajv.errors).toBeNull();
+    expect(valid).toBe(true);
+  });
+
+  it('validates column with width and pinned', () => {
+    const valid = ajv.validate(tableViewsSchema, {
+      version: 1,
+      defaultViewId: 'default',
+      views: [
+        {
+          id: 'default',
+          name: 'Default',
+          columns: [{ field: 'id', width: 150, pinned: 'left' }],
+        },
+      ],
+    });
+
+    expect(ajv.errors).toBeNull();
+    expect(valid).toBe(true);
+  });
+
+  it('rejects invalid pinned value', () => {
+    const valid = ajv.validate(tableViewsSchema, {
+      version: 1,
+      defaultViewId: 'default',
+      views: [
+        {
+          id: 'default',
+          name: 'Default',
+          columns: [{ field: 'id', pinned: 'center' }],
+        },
+      ],
+    });
+
+    expect(valid).toBe(false);
+    expect(ajv.errors).not.toBeNull();
+  });
+
   it('rejects column width less than minimum', () => {
     const invalid = {
       version: 1,

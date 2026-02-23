@@ -1,6 +1,7 @@
 export interface ViewColumn {
   field: string;
   width?: number;
+  pinned?: 'left' | 'right';
 }
 
 export interface ViewFilterCondition {

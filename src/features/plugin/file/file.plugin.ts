@@ -14,6 +14,7 @@ import {
 } from 'src/features/plugin/types';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { JsonValueStore } from '@revisium/schema-toolkit/model';
+import { JsonValue } from '@revisium/schema-toolkit/types';
 import { S3Service } from 'src/infrastructure/database/s3.service';
 
 @Injectable()
@@ -87,7 +88,7 @@ export class FilePlugin implements IPluginService {
       const valueStore = createJsonValueStore(
         options.schemaStore,
         '',
-        row.data,
+        row.data as JsonValue,
       );
 
       forEachFile(valueStore, (item) => {
@@ -107,7 +108,7 @@ export class FilePlugin implements IPluginService {
       const valueStore = createJsonValueStore(
         options.schemaStore,
         '',
-        row.data,
+        row.data as JsonValue,
       );
 
       forEachFile(valueStore, (item) => {
