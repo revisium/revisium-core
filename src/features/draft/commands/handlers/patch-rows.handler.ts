@@ -1,7 +1,11 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CommandHandler, EventBus, CommandBus } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
-import { JsonValue, JsonArray, JsonObject } from '@revisium/schema-toolkit/types';
+import {
+  JsonValue,
+  JsonArray,
+  JsonObject,
+} from '@revisium/schema-toolkit/types';
 import {
   PatchRowsCommand,
   PatchRowsRowInput,
@@ -28,7 +32,7 @@ import {
   JsonObjectValueStore,
   JsonSchemaStore,
 } from '@revisium/schema-toolkit/model';
-import { TransactionPrismaService} from 'src/infrastructure/database/transaction-prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(PatchRowsCommand)
 export class PatchRowsHandler extends DraftHandler<
