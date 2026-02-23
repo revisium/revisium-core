@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { CleanOAuthExpiredAccessTokensCommand } from 'src/infrastructure/clean/commands/impl/clean-oauth-expired-access-tokens.command';
+import { CleanOAuthExpiredCodesCommand } from 'src/infrastructure/clean/commands/impl/clean-oauth-expired-codes.command';
+import { CleanOAuthExpiredRefreshTokensCommand } from 'src/infrastructure/clean/commands/impl/clean-oauth-expired-refresh-tokens.command';
 import { CleanRowsCommand } from 'src/infrastructure/clean/commands/impl/clean-rows.command';
 import { CleanTablesCommand } from 'src/infrastructure/clean/commands/impl/clean-tables.command';
 
@@ -29,5 +32,36 @@ export class CleanService {
     // TODO logic depends on resultTables.count, resultRow.count
     // maybe @Interval
     // + waiting for https://github.com/prisma/prisma/issues/6957
+  }
+
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async cleanOAuthTokens() {
+    const resultCodes: { count: number } = await this.commandBus.execute(
+      new CleanOAuthExpiredCodesCommand(),
+    );
+    if (resultCodes.count) {
+      this.logger.log(
+        `deleted ${resultCodes.count} expired [OAuthAuthorizationCode]s`,
+      );
+    }
+
+    const resultAccessTokens: { count: number } = await this.commandBus.execute(
+      new CleanOAuthExpiredAccessTokensCommand(),
+    );
+    if (resultAccessTokens.count) {
+      this.logger.log(
+        `deleted ${resultAccessTokens.count} expired [OAuthAccessToken]s`,
+      );
+    }
+
+    const resultRefreshTokens: { count: number } =
+      await this.commandBus.execute(
+        new CleanOAuthExpiredRefreshTokensCommand(),
+      );
+    if (resultRefreshTokens.count) {
+      this.logger.log(
+        `deleted ${resultRefreshTokens.count} expired [OAuthRefreshToken]s`,
+      );
+    }
   }
 }
