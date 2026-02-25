@@ -1,0 +1,59 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`getRowsSql SQL snapshots count query snapshot 1`] = `
+"
+    SELECT COUNT(*) as count
+    FROM "Row" r
+    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
+    WHERE rt."B" = $
+      AND (TRUE)
+  "
+`;
+
+exports[`getRowsSql SQL snapshots default ORDER BY includes versionId tiebreaker 1`] = `
+"
+    SELECT
+      r."versionId",
+      r."createdId",
+      r."id",
+      r."readonly",
+      r."createdAt",
+      r."updatedAt",
+      r."publishedAt",
+      r."data",
+      r."meta",
+      r."hash",
+      r."schemaHash"
+    FROM "Row" r
+    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
+    WHERE rt."B" = $
+      AND (TRUE)
+    ORDER BY r."createdAt" DESC, r."versionId" DESC
+    LIMIT $
+    OFFSET $
+  "
+`;
+
+exports[`getRowsSql SQL snapshots explicit orderBy includes versionId tiebreaker 1`] = `
+"
+    SELECT
+      r."versionId",
+      r."createdId",
+      r."id",
+      r."readonly",
+      r."createdAt",
+      r."updatedAt",
+      r."publishedAt",
+      r."data",
+      r."meta",
+      r."hash",
+      r."schemaHash"
+    FROM "Row" r
+    INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
+    WHERE rt."B" = $
+      AND (TRUE)
+    ORDER BY r."createdAt" DESC, r."versionId" DESC
+    LIMIT $
+    OFFSET $
+  "
+`;

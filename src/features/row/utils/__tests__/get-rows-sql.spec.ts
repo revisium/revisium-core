@@ -637,4 +637,22 @@ describe('getRowsSql', () => {
       expect(result.length).toBe(0);
     });
   });
+
+  describe('SQL snapshots', () => {
+    it('default ORDER BY includes versionId tiebreaker', () => {
+      const sql = getRowsSql('table-1', 10, 0);
+      expect(sql.strings.join('$')).toMatchSnapshot();
+    });
+
+    it('explicit orderBy includes versionId tiebreaker', () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'desc' }];
+      const sql = getRowsSql('table-1', 10, 0, {}, orderBy);
+      expect(sql.strings.join('$')).toMatchSnapshot();
+    });
+
+    it('count query snapshot', () => {
+      const sql = getRowsCountSql('table-1');
+      expect(sql.strings.join('$')).toMatchSnapshot();
+    });
+  });
 });
