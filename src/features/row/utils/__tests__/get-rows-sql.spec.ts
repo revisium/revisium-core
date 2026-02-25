@@ -637,4 +637,125 @@ describe('getRowsSql', () => {
       expect(result.length).toBe(0);
     });
   });
+
+  describe('Tiebreaker: deterministic pagination with duplicate createdAt', () => {
+    let dupTableVersionId: string;
+    const ROW_COUNT = 20;
+
+    beforeAll(async () => {
+      const table = await prisma.table.create({
+        data: {
+          id: nanoid(),
+          versionId: nanoid(),
+          createdId: nanoid(),
+        },
+      });
+      dupTableVersionId = table.versionId;
+
+      const sameTimestamp = new Date('2025-06-01T12:00:00.000Z');
+      const rowVersionIds: string[] = [];
+
+      const rowsData = Array.from({ length: ROW_COUNT }, (_, i) => {
+        const vId = nanoid();
+        rowVersionIds.push(vId);
+        return {
+          id: `dup-row-${String(i).padStart(2, '0')}`,
+          versionId: vId,
+          createdId: nanoid(),
+          hash: '',
+          schemaHash: '',
+          meta: {},
+          data: { index: i },
+          createdAt: sameTimestamp,
+        };
+      });
+
+      await prisma.row.createMany({ data: rowsData });
+
+      for (const vId of rowVersionIds) {
+        await prisma.row.update({
+          where: { versionId: vId },
+          data: { tables: { connect: { versionId: dupTableVersionId } } },
+        });
+      }
+    });
+
+    it('pages should not overlap with default sort', async () => {
+      const page1 = await prisma.$queryRaw<Row[]>(
+        getRowsSql(dupTableVersionId, 10, 0),
+      );
+      const page2 = await prisma.$queryRaw<Row[]>(
+        getRowsSql(dupTableVersionId, 10, 10),
+      );
+
+      const ids1 = new Set(page1.map((r) => r.id));
+      const ids2 = new Set(page2.map((r) => r.id));
+      const overlap = [...ids1].filter((id) => ids2.has(id));
+
+      expect(page1).toHaveLength(10);
+      expect(page2).toHaveLength(10);
+      expect(overlap).toEqual([]);
+    });
+
+    it('all rows should appear exactly once across pages', async () => {
+      const allIds: string[] = [];
+      for (let offset = 0; offset < ROW_COUNT; offset += 7) {
+        const page = await prisma.$queryRaw<Row[]>(
+          getRowsSql(dupTableVersionId, 7, offset),
+        );
+        allIds.push(...page.map((r) => r.id));
+      }
+
+      expect(allIds).toHaveLength(ROW_COUNT);
+      expect(new Set(allIds).size).toBe(ROW_COUNT);
+    });
+
+    it('page boundary is determined by versionId', async () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'desc' }];
+
+      const page1 = await prisma.$queryRaw<Row[]>(
+        getRowsSql(dupTableVersionId, 10, 0, {}, orderBy),
+      );
+      const page2 = await prisma.$queryRaw<Row[]>(
+        getRowsSql(dupTableVersionId, 10, 10, {}, orderBy),
+      );
+
+      const lastOnPage1 = page1[page1.length - 1];
+      const firstOnPage2 = page2[0];
+
+      expect(lastOnPage1.versionId > firstOnPage2.versionId).toBe(true);
+
+      const ids1 = new Set(page1.map((r) => r.id));
+      const ids2 = new Set(page2.map((r) => r.id));
+      const overlap = [...ids1].filter((id) => ids2.has(id));
+
+      expect(overlap).toEqual([]);
+    });
+
+    it('count matches total rows', async () => {
+      const count = await prisma.$queryRaw<[{ count: bigint }]>(
+        getRowsCountSql(dupTableVersionId, {}),
+      );
+
+      expect(Number(count[0].count)).toBe(ROW_COUNT);
+    });
+  });
+
+  describe('SQL snapshots', () => {
+    it('default ORDER BY includes versionId tiebreaker', () => {
+      const sql = getRowsSql('table-1', 10, 0);
+      expect(sql.strings.join('$')).toMatchSnapshot();
+    });
+
+    it('explicit orderBy includes versionId tiebreaker', () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'desc' }];
+      const sql = getRowsSql('table-1', 10, 0, {}, orderBy);
+      expect(sql.strings.join('$')).toMatchSnapshot();
+    });
+
+    it('count query snapshot', () => {
+      const sql = getRowsCountSql('table-1');
+      expect(sql.strings.join('$')).toMatchSnapshot();
+    });
+  });
 });

@@ -1,7 +1,7 @@
 import { Prisma } from 'src/__generated__/client';
 import {
   FieldConfig,
-  generateOrderBy,
+  generateOrderByClauses,
   generateWhere,
   OrderByConditions,
   WhereConditionsTyped,
@@ -34,15 +34,17 @@ export function getRowsSql(
     tableAlias: 'r',
   });
 
-  const orderByClause = (orderBy ?? []).length
-    ? generateOrderBy({
+  const userClauses = (orderBy ?? []).length
+    ? generateOrderByClauses({
         orderBy,
         fieldConfig: DEFAULT_ROW_FIELDS,
         tableAlias: 'r',
       })
-    : Prisma.sql`ORDER BY r."createdAt" DESC`;
+    : null;
+  const orderByClause = userClauses
+    ? Prisma.sql`ORDER BY ${userClauses}, ${Prisma.raw('r."versionId" DESC')}`
+    : Prisma.sql`ORDER BY r."createdAt" DESC, r."versionId" DESC`;
 
-  // Placeholder implementation
   return Prisma.sql`
     SELECT
       r."versionId",
