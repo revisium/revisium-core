@@ -377,7 +377,7 @@ describe('RemoveRowsHandler', () => {
     expect(row).toBeNull();
   });
 
-  it('should revert table correctly when table exists only in draft (not in head)', async () => {
+  it('should keep draft-only table when all rows removed (not in head)', async () => {
     const { draftRevisionId } = await prepareProject(prismaService);
 
     const newTableId = nanoid();
@@ -439,7 +439,8 @@ describe('RemoveRowsHandler', () => {
         revisions: { some: { id: draftRevisionId } },
       },
     });
-    expect(table).toBeNull();
+    expect(table).not.toBeNull();
+    expect(table?.versionId).toBe(newTableVersionId);
   });
 
   function runTransaction(

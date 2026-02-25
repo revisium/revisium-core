@@ -6,7 +6,7 @@ This document describes the internal versioning system of revisium-core: data mo
 
 ### Entity Hierarchy
 
-```
+```text
 Organization
   └── Project
         └── Branch
@@ -99,7 +99,7 @@ model Table {
 | `createdId` | string | Stable identity across versions, never changes |
 | `id` | string | User-facing name, changes on rename |
 | `readonly` | boolean | Set `true` after commit, triggers copy-on-write |
-| `system` | boolean | Internal CMS table (`__schema`, `__migration`, `__views`) |
+| `system` | boolean | Internal CMS table (`revisium_schema_table`, `revisium_migration_table`, `revisium_shared_schemas_table`, `revisium_views_table`) |
 | `revisions` | Revision[] | M:N — which revisions include this table version |
 | `rows` | Row[] | M:N — rows belonging to this table version |
 
@@ -151,7 +151,7 @@ Tables and Rows use three identifiers:
 
 #### Lifecycle Example
 
-```
+```text
 Step 1: Create row "product-1" in draft
   id:        "product-1"
   versionId: "aaa"          ← generated
@@ -213,7 +213,7 @@ CREATE INDEX "_RowToTable_B_index" ON "_RowToTable"("B");
 
 #### Sharing Diagram
 
-```
+```text
 Unchanged table — shared between Head and Draft:
 
   Head R1 ───┐
@@ -240,7 +240,7 @@ Each branch has exactly two pointer revisions at all times:
 
 Revisions form a linked list via `parentId`:
 
-```
+```text
 Branch "master"
 
   R0 (isStart=true)        ← first revision
@@ -260,7 +260,7 @@ When modifying data in a draft, the system clones readonly entities to preserve 
 
 ### Touch Table
 
-```
+```text
 touchTable(revisionId, tableId):
   1. Find Table in Revision by tableId
   2. If readonly=false → return as-is (already mutable)
@@ -274,7 +274,7 @@ touchTable(revisionId, tableId):
   6. Return new Table
 ```
 
-```
+```text
 BEFORE (shared):
   Head R1 ───┐
              ├── Table v1 (readonly=true) ── rows...
@@ -288,7 +288,7 @@ AFTER touchTable:
 
 ### Touch Row
 
-```
+```text
 touchRow(tableVersionId, rowId):
   1. Find Row in Table by rowId
   2. If readonly=false → return as-is (already mutable)
@@ -301,7 +301,7 @@ touchRow(tableVersionId, rowId):
   6. Return new Row
 ```
 
-```
+```text
 BEFORE (Row "bob" shared):
   Table v2 (draft) ──┬── Row "alice" v1 (readonly=true)
                       └── Row "bob" v1 (readonly=true)
@@ -313,7 +313,7 @@ AFTER touchRow("bob"):
 
 ## Commit Flow
 
-```
+```text
 commit(branchId, comment?):
   1. Validate draftRevision.hasChanges = true
   2. Get all table versionIds from Draft
@@ -324,7 +324,7 @@ commit(branchId, comment?):
   7. Move endpoints: head endpoints → new head, draft endpoints → new draft
 ```
 
-```
+```text
 BEFORE:
   R1 (isHead)           R2 (isDraft, hasChanges=true)
     │                     │
@@ -344,7 +344,7 @@ Revision chain: `R1 ← R2 ← R3` (via parentId).
 
 `revert(branchId)` resets the entire draft to match head:
 
-```
+```text
 revert(branchId):
   1. Validate hasChanges = true
   2. Get all table versionIds from Head
@@ -352,7 +352,7 @@ revert(branchId):
   4. Draft.hasChanges = false
 ```
 
-```
+```text
 BEFORE:
   Head R1 ── Table v1 ── Row A v1
   Draft R2 ── Table v2 ── Row A v2 (modified)
@@ -369,7 +369,7 @@ AFTER:
 
 When rows are removed, `recomputeHasChanges` may revert individual tables back to head.
 
-```
+```text
 recomputeHasChanges(revisionId, tableId):
 
   ┌─ Find table in draft revision
@@ -391,7 +391,7 @@ recomputeHasChanges(revisionId, tableId):
 
 **Rule: Draft-only tables are never auto-reverted.** A table created in the current draft that has no counterpart in head represents an intentional creation. Removing all rows does not undo the table creation.
 
-```
+```text
 Table exists in head — reverted after removing all draft changes:
 
   BEFORE:
@@ -416,7 +416,7 @@ Table NOT in head — kept in draft even with zero rows:
 
 ## Branch Creation
 
-```
+```text
 createBranch(sourceRevisionId, branchName):
   1. Validate: source is NOT a draft (must be committed)
   2. Get all tables from source revision
@@ -425,7 +425,7 @@ createBranch(sourceRevisionId, branchName):
   5. Create Draft: isDraft=true, parentId=new head, connect same tables
 ```
 
-```
+```text
 Source (master):
   R1 ← R2 (Head) ← R3 (Draft)
          │
@@ -469,7 +469,7 @@ Removal operations call `recomputeHasChanges` instead of `markRevisionAsChanged`
 
 ### Row Deletion Strategies
 
-```
+```text
 Remove rows from table:
 
   For each row:
@@ -488,7 +488,7 @@ AFTER:
 
 ### Table Deletion Strategies
 
-```
+```text
 Remove table from revision:
 
   ├── readonly=false → DELETE table + DELETE orphaned rows (rows with no other tables)
@@ -573,7 +573,7 @@ Both queries use `FULL OUTER JOIN` on `createdId` to detect additions (left-only
 
 Orphaned entities (disconnected from all revisions/tables) are cleaned periodically:
 
-```
+```text
 @Cron(EVERY_MINUTE)
 cleanTablesAndRows():
   1. DELETE FROM "Table" WHERE NOT EXISTS (
