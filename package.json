@@ -65,7 +65,7 @@
     "@nestjs/terminus": "^11.0.0",
     "@prisma/adapter-pg": "^7.4.0",
     "@prisma/client": "^7.4.0",
-    "@revisium/prisma-pg-json": "^1.4.0",
+    "@revisium/prisma-pg-json": "^1.4.1",
     "@revisium/schema-toolkit": "^0.22.1",
     "ajv": "^8.17.1",
     "bcrypt": "^6.0.0",
