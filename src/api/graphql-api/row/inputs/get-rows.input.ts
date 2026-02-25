@@ -102,6 +102,12 @@ export class DateTimeFilter {
 @InputType()
 export class StringFilter {
   @Field({ nullable: true })
+  equals?: string;
+
+  @Field(() => [String], { nullable: true })
+  in?: string[];
+
+  @Field({ nullable: true })
   contains?: string;
 
   @Field({ nullable: true })
