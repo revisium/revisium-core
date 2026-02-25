@@ -9,14 +9,18 @@ import { SearchRowsResponse } from 'src/features/row/queries/impl';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 
-function compactMatch(m: { path: string; value: unknown; highlight?: string }) {
+export function compactMatch(m: {
+  path: string;
+  value: unknown;
+  highlight?: string;
+}) {
   if (m.highlight === null || m.highlight === undefined) {
     return { path: m.path, value: m.value };
   }
   return { path: m.path, highlight: m.highlight };
 }
 
-function toCompactSearchResult(result: SearchRowsResponse) {
+export function toCompactSearchResult(result: SearchRowsResponse) {
   return {
     ...result,
     edges: result.edges.map((edge) => ({
