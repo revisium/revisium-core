@@ -1,7 +1,4 @@
-import {
-  compactMatch,
-  toCompactSearchResult,
-} from '../tools/row.tools';
+import { compactMatch, toCompactSearchResult } from '../tools/row.tools';
 
 describe('compactMatch', () => {
   it('should return path and highlight when highlight is present', () => {
@@ -64,9 +61,7 @@ describe('toCompactSearchResult', () => {
             row: { id: 'row-1', data: {} } as any,
             table: { id: 'table-1', versionId: 'v1' } as any,
             matches: [{ path: 'ver', value: 42 }],
-            formulaErrors: [
-              { fieldPath: 'total', error: 'Division by zero' },
-            ],
+            formulaErrors: [{ fieldPath: 'total', error: 'Division by zero' }],
           },
         },
       ],
@@ -77,9 +72,7 @@ describe('toCompactSearchResult', () => {
     expect(result.edges[0].node.formulaErrors).toEqual([
       { fieldPath: 'total', error: 'Division by zero' },
     ]);
-    expect(result.edges[0].node.matches).toEqual([
-      { path: 'ver', value: 42 },
-    ]);
+    expect(result.edges[0].node.matches).toEqual([{ path: 'ver', value: 42 }]);
   });
 
   it('should not include formulaErrors when empty array', () => {
