@@ -40,7 +40,7 @@ describe('toCompactSearchResult', () => {
           },
         },
       ],
-      pageInfo: { hasNextPage: false, endCursor: null },
+      pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: undefined },
       totalCount: 1,
     });
 
@@ -61,16 +61,28 @@ describe('toCompactSearchResult', () => {
             row: { id: 'row-1', data: {} } as any,
             table: { id: 'table-1', versionId: 'v1' } as any,
             matches: [{ path: 'ver', value: 42 }],
-            formulaErrors: [{ fieldPath: 'total', error: 'Division by zero' }],
+            formulaErrors: [
+              {
+                field: 'total',
+                expression: 'price * qty',
+                error: 'Division by zero',
+                defaultUsed: false,
+              },
+            ],
           },
         },
       ],
-      pageInfo: { hasNextPage: false, endCursor: null },
+      pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: undefined },
       totalCount: 1,
     });
 
     expect(result.edges[0].node.formulaErrors).toEqual([
-      { fieldPath: 'total', error: 'Division by zero' },
+      {
+        field: 'total',
+        expression: 'price * qty',
+        error: 'Division by zero',
+        defaultUsed: false,
+      },
     ]);
     expect(result.edges[0].node.matches).toEqual([{ path: 'ver', value: 42 }]);
   });
@@ -88,7 +100,7 @@ describe('toCompactSearchResult', () => {
           },
         },
       ],
-      pageInfo: { hasNextPage: false, endCursor: null },
+      pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: undefined },
       totalCount: 1,
     });
 
