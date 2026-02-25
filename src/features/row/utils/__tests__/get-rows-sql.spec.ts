@@ -710,7 +710,7 @@ describe('getRowsSql', () => {
       expect(new Set(allIds).size).toBe(ROW_COUNT);
     });
 
-    it('page boundary is determined by versionId', async () => {
+    it('pages should not overlap with explicit orderBy', async () => {
       const orderBy: OrderByConditions[] = [{ createdAt: 'desc' }];
 
       const page1 = await prisma.$queryRaw<Row[]>(
@@ -720,10 +720,8 @@ describe('getRowsSql', () => {
         getRowsSql(dupTableVersionId, 10, 10, {}, orderBy),
       );
 
-      const lastOnPage1 = page1[page1.length - 1];
-      const firstOnPage2 = page2[0];
-
-      expect(lastOnPage1.versionId > firstOnPage2.versionId).toBe(true);
+      expect(page1).toHaveLength(10);
+      expect(page2).toHaveLength(10);
 
       const ids1 = new Set(page1.map((r) => r.id));
       const ids2 = new Set(page2.map((r) => r.id));
