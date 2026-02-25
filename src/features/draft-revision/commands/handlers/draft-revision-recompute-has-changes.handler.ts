@@ -70,6 +70,10 @@ export class DraftRevisionRecomputeHasChangesHandler implements ICommandHandler<
         tableId,
       );
 
+    if (!tableInHead) {
+      return;
+    }
+
     const tableInDraft =
       await this.shareTransactionalQueries.findTableInRevisionOrThrow(
         draftRevision.id,
@@ -83,11 +87,9 @@ export class DraftRevisionRecomputeHasChangesHandler implements ICommandHandler<
           disconnect: {
             versionId: tableInDraft.versionId,
           },
-          ...(tableInHead && {
-            connect: {
-              versionId: tableInHead.versionId,
-            },
-          }),
+          connect: {
+            versionId: tableInHead.versionId,
+          },
         },
       },
     });

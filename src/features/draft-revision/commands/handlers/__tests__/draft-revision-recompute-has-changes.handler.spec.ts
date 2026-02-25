@@ -11,17 +11,33 @@ import {
 describe('DraftRevisionRecomputeHasChangesHandler', () => {
   describe('revert table', () => {
     it('should revert table to head when no row changes remain', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId, headRevisionId } =
+        await prepareDraftRevisionTest(prismaService);
 
       const tableId = 'test-table';
-      const tableVersionId = nanoid();
+      const headTableVersionId = nanoid();
+      const draftTableVersionId = nanoid();
+      const tableCreatedId = nanoid();
       const rowVersionId = nanoid();
 
       await prismaService.table.create({
         data: {
           id: tableId,
-          versionId: tableVersionId,
-          createdId: nanoid(),
+          versionId: headTableVersionId,
+          createdId: tableCreatedId,
+          system: false,
+          readonly: true,
+          revisions: {
+            connect: { id: headRevisionId },
+          },
+        },
+      });
+
+      await prismaService.table.create({
+        data: {
+          id: tableId,
+          versionId: draftTableVersionId,
+          createdId: tableCreatedId,
           system: false,
           readonly: false,
           revisions: {
@@ -63,7 +79,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
           revisions: { some: { id: draftRevisionId } },
         },
       });
-      expect(tableInDraft).toBeNull();
+      expect(tableInDraft?.versionId).toBe(headTableVersionId);
 
       const revision = await prismaService.revision.findUnique({
         where: { id: draftRevisionId },
@@ -211,6 +227,116 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
           revisions: { some: { id: draftRevisionId } },
         },
       });
+      expect(tableInDraft?.versionId).toBe(tableVersionId);
+
+      const revision = await prismaService.revision.findUnique({
+        where: { id: draftRevisionId },
+        select: { hasChanges: true },
+      });
+      expect(revision?.hasChanges).toBe(true);
+    });
+
+    it('should NOT revert table when table does not exist in head', async () => {
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+
+      const tableId = 'new-draft-table';
+      const tableVersionId = nanoid();
+
+      await prismaService.table.create({
+        data: {
+          id: tableId,
+          versionId: tableVersionId,
+          createdId: nanoid(),
+          system: false,
+          readonly: false,
+          revisions: {
+            connect: { id: draftRevisionId },
+          },
+        },
+      });
+
+      await prismaService.revision.update({
+        where: { id: draftRevisionId },
+        data: { hasChanges: true },
+      });
+
+      const command = new DraftRevisionRecomputeHasChangesCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      });
+
+      await runInTransaction(command);
+
+      const tableInDraft = await prismaService.table.findFirst({
+        where: {
+          id: tableId,
+          revisions: { some: { id: draftRevisionId } },
+        },
+      });
+      expect(tableInDraft).not.toBeNull();
+      expect(tableInDraft?.versionId).toBe(tableVersionId);
+
+      const revision = await prismaService.revision.findUnique({
+        where: { id: draftRevisionId },
+        select: { hasChanges: true },
+      });
+      expect(revision?.hasChanges).toBe(true);
+    });
+
+    it('should NOT revert table when table created in draft and all rows removed', async () => {
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+
+      const tableId = 'new-draft-table';
+      const tableVersionId = nanoid();
+      const rowVersionId = nanoid();
+
+      await prismaService.table.create({
+        data: {
+          id: tableId,
+          versionId: tableVersionId,
+          createdId: nanoid(),
+          system: false,
+          readonly: false,
+          revisions: {
+            connect: { id: draftRevisionId },
+          },
+          rows: {
+            create: {
+              id: 'row-1',
+              versionId: rowVersionId,
+              createdId: nanoid(),
+              data: { test: 'value' },
+              hash: 'hash',
+              schemaHash: 'schemaHash',
+              readonly: false,
+            },
+          },
+        },
+      });
+
+      await prismaService.revision.update({
+        where: { id: draftRevisionId },
+        data: { hasChanges: true },
+      });
+
+      await prismaService.row.delete({
+        where: { versionId: rowVersionId },
+      });
+
+      const command = new DraftRevisionRecomputeHasChangesCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      });
+
+      await runInTransaction(command);
+
+      const tableInDraft = await prismaService.table.findFirst({
+        where: {
+          id: tableId,
+          revisions: { some: { id: draftRevisionId } },
+        },
+      });
+      expect(tableInDraft).not.toBeNull();
       expect(tableInDraft?.versionId).toBe(tableVersionId);
 
       const revision = await prismaService.revision.findUnique({
