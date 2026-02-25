@@ -467,9 +467,7 @@ describe('MCP API', () => {
       expect(content.edges.length).toBeGreaterThan(0);
       expect(content.edges[0].node.row.id).toBe('search-full-row');
       expect(content.edges[0].node.row.data).toBeDefined();
-      expect(content.edges[0].node.table.id).toBe(
-        fixture.project.tableId,
-      );
+      expect(content.edges[0].node.table.id).toBe(fixture.project.tableId);
     });
 
     it('should get revision', async () => {
