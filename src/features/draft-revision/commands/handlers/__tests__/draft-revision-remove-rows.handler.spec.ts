@@ -348,17 +348,11 @@ describe('DraftRevisionRemoveRowsHandler', () => {
   });
 
   describe('hasChanges', () => {
-    it('should set hasChanges to false when removing all rows from new table', async () => {
+    it('should keep table in draft when removing all rows from new table (not in head)', async () => {
       const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
       await createTableAndRows(draftRevisionId, 'test-table', [
         { rowId: 'row-1', data: { test: 'value' } },
       ]);
-
-      const revisionBefore = await prismaService.revision.findUnique({
-        where: { id: draftRevisionId },
-        select: { hasChanges: true },
-      });
-      expect(revisionBefore?.hasChanges).toBe(true);
 
       const command = new DraftRevisionRemoveRowsCommand({
         revisionId: draftRevisionId,
@@ -368,11 +362,50 @@ describe('DraftRevisionRemoveRowsHandler', () => {
 
       await runInTransaction(command);
 
+      const tableInDraft = await prismaService.table.findFirst({
+        where: {
+          id: 'test-table',
+          revisions: { some: { id: draftRevisionId } },
+        },
+      });
+      expect(tableInDraft).not.toBeNull();
+
       const revisionAfter = await prismaService.revision.findUnique({
         where: { id: draftRevisionId },
         select: { hasChanges: true },
       });
-      expect(revisionAfter?.hasChanges).toBe(false);
+      expect(revisionAfter?.hasChanges).toBe(true);
+    });
+
+    it('should keep table in draft when bulk removing all rows from new table (not in head)', async () => {
+      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      await createTableAndRows(draftRevisionId, 'test-table', [
+        { rowId: 'row-1', data: { test: 'value1' } },
+        { rowId: 'row-2', data: { test: 'value2' } },
+        { rowId: 'row-3', data: { test: 'value3' } },
+      ]);
+
+      const command = new DraftRevisionRemoveRowsCommand({
+        revisionId: draftRevisionId,
+        tableId: 'test-table',
+        rowIds: ['row-1', 'row-2', 'row-3'],
+      });
+
+      await runInTransaction(command);
+
+      const tableInDraft = await prismaService.table.findFirst({
+        where: {
+          id: 'test-table',
+          revisions: { some: { id: draftRevisionId } },
+        },
+      });
+      expect(tableInDraft).not.toBeNull();
+
+      const revisionAfter = await prismaService.revision.findUnique({
+        where: { id: draftRevisionId },
+        select: { hasChanges: true },
+      });
+      expect(revisionAfter?.hasChanges).toBe(true);
     });
 
     it('should keep hasChanges true when other rows remain', async () => {
