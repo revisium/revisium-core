@@ -40,7 +40,11 @@ describe('toCompactSearchResult', () => {
           },
         },
       ],
-      pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: undefined },
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+        endCursor: undefined,
+      },
       totalCount: 1,
     });
 
@@ -72,7 +76,11 @@ describe('toCompactSearchResult', () => {
           },
         },
       ],
-      pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: undefined },
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+        endCursor: undefined,
+      },
       totalCount: 1,
     });
 
@@ -100,7 +108,11 @@ describe('toCompactSearchResult', () => {
           },
         },
       ],
-      pageInfo: { hasNextPage: false, hasPreviousPage: false, endCursor: undefined },
+      pageInfo: {
+        hasNextPage: false,
+        hasPreviousPage: false,
+        endCursor: undefined,
+      },
       totalCount: 1,
     });
 
