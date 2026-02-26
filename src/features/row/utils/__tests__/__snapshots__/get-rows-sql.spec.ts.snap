@@ -28,6 +28,7 @@ exports[`getRowsSql SQL snapshots default ORDER BY includes versionId tiebreaker
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     WHERE rt."B" = $
       AND (TRUE)
+      
     ORDER BY r."createdAt" DESC, r."versionId" DESC
     LIMIT $
     OFFSET $
@@ -52,6 +53,7 @@ exports[`getRowsSql SQL snapshots explicit orderBy includes versionId tiebreaker
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     WHERE rt."B" = $
       AND (TRUE)
+      
     ORDER BY r."createdAt" DESC, r."versionId" DESC
     LIMIT $
     OFFSET $

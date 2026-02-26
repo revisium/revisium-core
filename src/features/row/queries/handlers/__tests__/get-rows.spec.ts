@@ -744,6 +744,267 @@ describe('getRows', () => {
     });
   });
 
+  describe('keyset pagination', () => {
+    it('should paginate with cursor - second page has no overlap with first', async () => {
+      const { draftRevisionId, tableId, draftTableVersionId } =
+        await prepareProject(prismaService);
+
+      for (let i = 0; i < 9; i++) {
+        await prismaService.row.create({
+          data: {
+            tables: { connect: { versionId: draftTableVersionId } },
+            id: `pag-row-${i}`,
+            versionId: nanoid(),
+            createdId: nanoid(),
+            hash: '',
+            schemaHash: '',
+            data: { ver: i },
+          },
+        });
+      }
+
+      const page1 = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 5,
+        }),
+      );
+
+      expect(page1.edges).toHaveLength(5);
+      expect(page1.pageInfo.hasNextPage).toBe(true);
+      expect(page1.pageInfo.hasPreviousPage).toBe(false);
+      expect(page1.pageInfo.endCursor).toBeDefined();
+
+      const page2 = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 5,
+          after: page1.pageInfo.endCursor,
+        }),
+      );
+
+      expect(page2.edges).toHaveLength(5);
+      expect(page2.pageInfo.hasPreviousPage).toBe(true);
+
+      const ids1 = page1.edges.map((e) => e.node.id);
+      const ids2 = page2.edges.map((e) => e.node.id);
+      const overlap = ids1.filter((id) => ids2.includes(id));
+      expect(overlap).toEqual([]);
+    });
+
+    it('should traverse all rows via cursor chain without duplicates', async () => {
+      const { draftRevisionId, tableId, draftTableVersionId } =
+        await prepareProject(prismaService);
+
+      const totalRows = 20;
+      const pageSize = 3;
+
+      for (let i = 0; i < totalRows - 1; i++) {
+        await prismaService.row.create({
+          data: {
+            tables: { connect: { versionId: draftTableVersionId } },
+            id: `chain-row-${String(i).padStart(3, '0')}`,
+            versionId: nanoid(),
+            createdId: nanoid(),
+            hash: '',
+            schemaHash: '',
+            data: { ver: i },
+          },
+        });
+      }
+
+      const collected: string[] = [];
+      let cursor: string | undefined;
+      let pageCount = 0;
+      const maxPages = Math.ceil(totalRows / pageSize) + 2;
+      let previousPageIds: string[] = [];
+
+      while (pageCount < maxPages) {
+        const result = await runTransaction(
+          new GetRowsQuery({
+            revisionId: draftRevisionId,
+            tableId,
+            first: pageSize,
+            after: cursor,
+          }),
+        );
+
+        const currentIds = result.edges.map((e) => e.node.id);
+
+        if (previousPageIds.length > 0) {
+          const overlap = currentIds.filter((id) =>
+            previousPageIds.includes(id),
+          );
+          expect(overlap).toEqual([]);
+        }
+
+        previousPageIds = currentIds;
+        collected.push(...currentIds);
+        pageCount++;
+
+        if (!result.pageInfo.hasNextPage) {
+          break;
+        }
+        cursor = result.pageInfo.endCursor;
+      }
+
+      expect(pageCount).toBeLessThan(maxPages);
+      expect(collected).toHaveLength(totalRows);
+      expect(new Set(collected).size).toBe(totalRows);
+    });
+
+    it('should return first page for invalid cursor', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const withInvalidCursor = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 10,
+          after: 'invalid-not-base64',
+        }),
+      );
+
+      const withoutCursor = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 10,
+        }),
+      );
+
+      expect(withInvalidCursor.edges.map((e) => e.node.id)).toEqual(
+        withoutCursor.edges.map((e) => e.node.id),
+      );
+      expect(withInvalidCursor.pageInfo.hasPreviousPage).toBe(false);
+    });
+
+    it('should return first page for old numeric cursor', async () => {
+      const { draftRevisionId, tableId } = await prepareProject(prismaService);
+
+      const result = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 10,
+          after: '5',
+        }),
+      );
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+    });
+
+    it('should paginate correctly with JSON field sort + cursor', async () => {
+      const { draftRevisionId, tableId, draftTableVersionId } =
+        await prepareProject(prismaService);
+
+      for (let i = 0; i < 5; i++) {
+        await prismaService.row.create({
+          data: {
+            tables: { connect: { versionId: draftTableVersionId } },
+            id: `json-pag-${i}`,
+            versionId: nanoid(),
+            createdId: nanoid(),
+            hash: '',
+            schemaHash: '',
+            data: { ver: (i + 1) * 10 },
+          },
+        });
+      }
+
+      const orderBy = [
+        {
+          data: {
+            path: 'ver',
+            type: 'int' as const,
+            direction: 'asc' as const,
+          },
+        },
+      ];
+
+      const page1 = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 3,
+          orderBy,
+        }),
+      );
+
+      const page2 = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 3,
+          after: page1.pageInfo.endCursor,
+          orderBy,
+        }),
+      );
+
+      const vers1 = page1.edges.map(
+        (e) => (e.node.data as { ver: number }).ver,
+      );
+      const vers2 = page2.edges.map(
+        (e) => (e.node.data as { ver: number }).ver,
+      );
+
+      expect(vers1).toEqual(vers1.slice().sort((a, b) => a - b));
+      expect(vers2).toEqual(vers2.slice().sort((a, b) => a - b));
+
+      const lastVer1 = vers1[vers1.length - 1];
+      const firstVer2 = vers2[0];
+      expect(firstVer2).toBeGreaterThanOrEqual(lastVer1);
+
+      const allIds = [
+        ...page1.edges.map((e) => e.node.id),
+        ...page2.edges.map((e) => e.node.id),
+      ];
+      expect(new Set(allIds).size).toBe(allIds.length);
+    });
+
+    it('should reject cursor when sort order changes', async () => {
+      const { draftRevisionId, tableId, draftTableVersionId } =
+        await prepareProject(prismaService);
+
+      for (let i = 0; i < 5; i++) {
+        await prismaService.row.create({
+          data: {
+            tables: { connect: { versionId: draftTableVersionId } },
+            id: `sort-change-${i}`,
+            versionId: nanoid(),
+            createdId: nanoid(),
+            hash: '',
+            schemaHash: '',
+            data: { ver: i },
+          },
+        });
+      }
+
+      const page1 = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 3,
+          orderBy: [{ createdAt: 'asc' }],
+        }),
+      );
+
+      const page2DiffSort = await runTransaction(
+        new GetRowsQuery({
+          revisionId: draftRevisionId,
+          tableId,
+          first: 3,
+          after: page1.pageInfo.endCursor,
+          orderBy: [{ createdAt: 'desc' }],
+        }),
+      );
+
+      expect(page2DiffSort.pageInfo.hasPreviousPage).toBe(false);
+    });
+  });
+
   function runTransaction(
     query: GetRowsQuery,
   ): Promise<GetRowsQueryReturnType> {
