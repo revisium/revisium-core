@@ -1,22 +1,18 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { Row } from 'src/__generated__/client';
 import {
   OrderByConditions,
   WhereConditionsTyped,
 } from '@revisium/prisma-pg-json';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { SystemColumnMappingService } from 'src/features/row/services/system-column-mapping.service';
-import {
-  getRowsSql,
-  getRowsCountSql,
-} from 'src/features/row/utils/get-rows-sql';
+import { DEFAULT_ROW_FIELDS } from 'src/features/row/utils/get-rows-sql';
+import { getKeysetPagination } from 'src/features/row/utils/get-keyset-pagination';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   GetRowsQuery,
   GetRowsQueryData,
   GetRowsQueryReturnType,
 } from 'src/features/row/queries/impl';
-import { getOffsetPagination } from 'src/features/share/commands/utils/getOffsetPagination';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 
 @QueryHandler(GetRowsQuery)
@@ -44,11 +40,15 @@ export class GetRowsHandler implements IQueryHandler<
 
     const mappedData = await this.mapFieldsToSystemColumns(data);
 
-    return getOffsetPagination({
+    return getKeysetPagination({
       pageData: data,
-      findMany: async (args) => {
-        const rows = await this.getRows(args, tableVersionId, mappedData);
-
+      tableVersionId,
+      whereConditions: mappedData.where as unknown as WhereConditionsTyped<
+        typeof DEFAULT_ROW_FIELDS
+      >,
+      orderBy: mappedData.orderBy as unknown as OrderByConditions[],
+      queryRaw: (sql) => this.transaction.$queryRaw(sql),
+      transformRows: async (rows) => {
         const { formulaErrors } = await this.pluginService.computeRows({
           revisionId: data.revisionId,
           tableId: data.tableId,
@@ -64,7 +64,6 @@ export class GetRowsHandler implements IQueryHandler<
           formulaErrors: formulaErrors?.get(row.id),
         }));
       },
-      count: () => this.getRowsCount(tableVersionId, mappedData),
     });
   }
 
@@ -91,31 +90,5 @@ export class GetRowsHandler implements IQueryHandler<
       where: mappedWhere,
       orderBy: mappedOrderBy,
     };
-  }
-
-  private getRows(
-    args: { take: number; skip: number },
-    tableVersionId: string,
-    data: GetRowsQueryData,
-  ): Promise<Row[]> {
-    return this.transaction.$queryRaw(
-      getRowsSql(
-        tableVersionId,
-        args.take,
-        args.skip,
-        data.where as unknown as WhereConditionsTyped<{ id: 'string' }>,
-        data.orderBy as unknown as OrderByConditions[],
-      ),
-    );
-  }
-
-  private async getRowsCount(tableVersionId: string, data: GetRowsQueryData) {
-    const result = await this.transaction.$queryRaw<[{ count: bigint }]>(
-      getRowsCountSql(
-        tableVersionId,
-        data.where as unknown as WhereConditionsTyped<{ id: 'string' }>,
-      ),
-    );
-    return Number(result[0].count);
   }
 }

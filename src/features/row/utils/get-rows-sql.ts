@@ -27,6 +27,7 @@ export function getRowsSql(
   skip: number,
   whereConditions?: WhereConditionsTyped<typeof DEFAULT_ROW_FIELDS>,
   orderBy?: OrderByConditions[],
+  keysetCondition?: Prisma.Sql,
 ): Prisma.Sql {
   const whereClause = generateWhere({
     where: whereConditions ?? {},
@@ -45,6 +46,14 @@ export function getRowsSql(
     ? Prisma.sql`ORDER BY ${userClauses}, ${Prisma.raw('r."versionId" DESC')}`
     : Prisma.sql`ORDER BY r."createdAt" DESC, r."versionId" DESC`;
 
+  const keysetClause = keysetCondition
+    ? Prisma.sql`AND ${keysetCondition}`
+    : Prisma.sql``;
+
+  const offsetClause = keysetCondition
+    ? Prisma.sql``
+    : Prisma.sql`OFFSET ${skip}`;
+
   return Prisma.sql`
     SELECT
       r."versionId",
@@ -62,9 +71,10 @@ export function getRowsSql(
     INNER JOIN "_RowToTable" rt ON r."versionId" = rt."A"
     WHERE rt."B" = ${tableId}
       AND (${whereClause})
+      ${keysetClause}
     ${orderByClause}
     LIMIT ${take}
-    OFFSET ${skip}
+    ${offsetClause}
   `;
 }
 
