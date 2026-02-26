@@ -60,9 +60,8 @@ export async function getKeysetPagination<T>({
   if (pageData.after) {
     const decoded = decodeCursor(pageData.after);
     if (
-      decoded &&
-      decoded.sortHash === sortHash &&
-      decoded.values.length === effectiveParts.length
+      decoded?.sortHash === sortHash &&
+      decoded?.values.length === effectiveParts.length
     ) {
       keysetCondition = buildKeysetCondition(
         effectiveParts,
@@ -109,8 +108,8 @@ export async function getKeysetPagination<T>({
   return {
     edges,
     pageInfo: {
-      startCursor: edges.length > 0 ? edges[0].cursor : undefined,
-      endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : undefined,
+      startCursor: edges.at(0)?.cursor,
+      endCursor: edges.at(-1)?.cursor,
       hasNextPage,
       hasPreviousPage,
     },
