@@ -64,6 +64,16 @@ export class BranchTools implements McpToolRegistrar {
       },
       async ({ branchId }) => {
         const result = await this.branchApi.getDraftRevision(branchId);
+        await auth.checkPermissionByRevision(
+          result.id,
+          [
+            {
+              action: PermissionAction.read,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          auth.userId,
+        );
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
