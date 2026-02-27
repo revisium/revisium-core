@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { Row } from 'src/__generated__/client';
+import { Prisma, Row } from 'src/__generated__/client';
 import {
   JsonFilter,
   OrderByConditions,
@@ -736,6 +736,46 @@ describe('getRowsSql', () => {
       );
 
       expect(Number(count[0].count)).toBe(ROW_COUNT);
+    });
+  });
+
+  describe('Query structure: json filters use subquery to avoid Seq Scan', () => {
+    function getSqlText(sql: Prisma.Sql): string {
+      return sql.strings.join('?');
+    }
+
+    it('getRowsSql with json filter should use subquery', () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: ['products', '*', 'price'],
+          gt: 100,
+        } as JsonFilter,
+      };
+
+      const sqlText = getSqlText(
+        getRowsSql(tableVersionId, 10, 0, where, [{ createdAt: 'asc' }]),
+      );
+
+      expect(sqlText).toMatch(/WITH\s+/i);
+    });
+
+    it('getRowsCountSql with json filter should use subquery', () => {
+      const where: WhereConditionsTyped<{ data: 'json' }> = {
+        data: {
+          path: ['tags'],
+          array_contains: ['admin'],
+        } as JsonFilter,
+      };
+
+      const sqlText = getSqlText(getRowsCountSql(tableVersionId, where));
+
+      expect(sqlText).toMatch(/WITH\s+/i);
+    });
+
+    it('getRowsSql without json filter should not need subquery', () => {
+      const sqlText = getSqlText(getRowsSql(tableVersionId, 10, 0));
+
+      expect(sqlText).not.toMatch(/WITH\s+/i);
     });
   });
 
