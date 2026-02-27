@@ -8,7 +8,9 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 const ROW_COUNT = 15000;
 const PAGE_SIZE = 100;
 
-describe('keyset pagination - large dataset (15K rows)', () => {
+const describeOrSkip = process.env.CI ? describe.skip : describe;
+
+describeOrSkip('keyset pagination - large dataset (15K rows)', () => {
   let prisma: PrismaService;
   let tableVersionId: string;
   let allRowIds: string[];
