@@ -805,7 +805,7 @@ describe('getRowsSql', () => {
 
     it('returns true when json filter in AND array', () => {
       expect(
-        hasJsonFilter({ AND: [{ data: { path: ['x'], equals: 1 } }] }),
+        hasJsonFilter({ AND: [{ data: { path: ['x'], equals: 1 } }] } as any),
       ).toBe(true);
     });
 
@@ -817,7 +817,7 @@ describe('getRowsSql', () => {
 
     it('returns true when json filter in OR array', () => {
       expect(
-        hasJsonFilter({ OR: [{ data: { path: ['x'], equals: 1 } }] }),
+        hasJsonFilter({ OR: [{ data: { path: ['x'], equals: 1 } }] } as any),
       ).toBe(true);
     });
 
@@ -848,8 +848,8 @@ describe('getRowsSql', () => {
     it('returns true for nested AND > OR > data filter', () => {
       expect(
         hasJsonFilter({
-          AND: [{ OR: [{ data: { path: ['x'], equals: 1 } }] } as any],
-        }),
+          AND: [{ OR: [{ data: { path: ['x'], equals: 1 } }] }],
+        } as any),
       ).toBe(true);
     });
   });
