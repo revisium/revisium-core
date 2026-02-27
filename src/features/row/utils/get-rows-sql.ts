@@ -27,6 +27,11 @@ const JSON_FIELDS = new Set(
     .map(([name]) => name),
 );
 
+function hasJsonFilterInClauses(clauses: unknown): boolean {
+  const arr = Array.isArray(clauses) ? clauses : clauses ? [clauses] : [];
+  return arr.some((clause) => hasJsonFilter(clause));
+}
+
 export function hasJsonFilter(
   where: WhereConditionsTyped<typeof DEFAULT_ROW_FIELDS> | undefined,
 ): boolean {
@@ -43,35 +48,12 @@ export function hasJsonFilter(
     }
   }
 
-  const andClauses = (where as Record<string, unknown>).AND;
-  if (Array.isArray(andClauses)) {
-    for (const clause of andClauses) {
-      if (hasJsonFilter(clause)) {
-        return true;
-      }
-    }
-  }
-
-  const orClauses = (where as Record<string, unknown>).OR;
-  if (Array.isArray(orClauses)) {
-    for (const clause of orClauses) {
-      if (hasJsonFilter(clause)) {
-        return true;
-      }
-    }
-  }
-
-  const notClause = (where as Record<string, unknown>).NOT;
-  if (notClause) {
-    const notClauses = Array.isArray(notClause) ? notClause : [notClause];
-    for (const clause of notClauses) {
-      if (hasJsonFilter(clause)) {
-        return true;
-      }
-    }
-  }
-
-  return false;
+  const record = where as Record<string, unknown>;
+  return (
+    hasJsonFilterInClauses(record.AND) ||
+    hasJsonFilterInClauses(record.OR) ||
+    hasJsonFilterInClauses(record.NOT)
+  );
 }
 
 const ROW_COLUMNS = Prisma.sql`

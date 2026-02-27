@@ -9,6 +9,7 @@ import { nanoid } from 'nanoid';
 import {
   getRowsCountSql,
   getRowsSql,
+  hasJsonFilter,
 } from 'src/features/row/utils/get-rows-sql';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -776,6 +777,129 @@ describe('getRowsSql', () => {
       const sqlText = getSqlText(getRowsSql(tableVersionId, 10, 0));
 
       expect(sqlText).not.toMatch(/WITH\s+/i);
+    });
+  });
+
+  describe('hasJsonFilter', () => {
+    it('returns false for undefined', () => {
+      expect(hasJsonFilter(undefined)).toBe(false);
+    });
+
+    it('returns false for empty object', () => {
+      expect(hasJsonFilter({})).toBe(false);
+    });
+
+    it('returns true for top-level data filter', () => {
+      expect(hasJsonFilter({ data: { path: ['x'], equals: 1 } })).toBe(true);
+    });
+
+    it('returns true for top-level meta filter', () => {
+      expect(hasJsonFilter({ meta: { path: ['y'], equals: 2 } })).toBe(true);
+    });
+
+    it('returns false for non-json field (createdAt)', () => {
+      expect(hasJsonFilter({ createdAt: { gte: new Date() } } as any)).toBe(
+        false,
+      );
+    });
+
+    it('returns true when json filter in AND array', () => {
+      expect(
+        hasJsonFilter({ AND: [{ data: { path: ['x'], equals: 1 } }] }),
+      ).toBe(true);
+    });
+
+    it('returns false when AND has no json filter', () => {
+      expect(
+        hasJsonFilter({ AND: [{ createdAt: { gte: new Date() } }] } as any),
+      ).toBe(false);
+    });
+
+    it('returns true when json filter in OR array', () => {
+      expect(
+        hasJsonFilter({ OR: [{ data: { path: ['x'], equals: 1 } }] }),
+      ).toBe(true);
+    });
+
+    it('returns false when OR has no json filter', () => {
+      expect(
+        hasJsonFilter({ OR: [{ createdAt: { gte: new Date() } }] } as any),
+      ).toBe(false);
+    });
+
+    it('returns true when json filter in NOT (object)', () => {
+      expect(
+        hasJsonFilter({ NOT: { data: { path: ['x'], equals: 1 } } } as any),
+      ).toBe(true);
+    });
+
+    it('returns true when json filter in NOT (array)', () => {
+      expect(
+        hasJsonFilter({ NOT: [{ data: { path: ['x'], equals: 1 } }] } as any),
+      ).toBe(true);
+    });
+
+    it('returns false when NOT has no json filter', () => {
+      expect(
+        hasJsonFilter({ NOT: { createdAt: { gte: new Date() } } } as any),
+      ).toBe(false);
+    });
+
+    it('returns true for nested AND > OR > data filter', () => {
+      expect(
+        hasJsonFilter({
+          AND: [{ OR: [{ data: { path: ['x'], equals: 1 } }] } as any],
+        }),
+      ).toBe(true);
+    });
+  });
+
+  describe('keyset condition', () => {
+    it('should apply keyset condition and skip offset', async () => {
+      const orderBy: OrderByConditions[] = [{ createdAt: 'asc' }];
+
+      const allRows = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 100, 0, {}, orderBy),
+      );
+      expect(allRows.length).toBeGreaterThanOrEqual(3);
+
+      const pivot = allRows[1];
+      const keysetCondition = Prisma.sql`r."createdAt" > ${pivot.createdAt}`;
+
+      const result = await prisma.$queryRaw<Row[]>(
+        getRowsSql(tableVersionId, 100, 999, {}, orderBy, keysetCondition),
+      );
+
+      expect(result.length).toBe(allRows.length - 2);
+      expect(result.map((r) => r.id)).toEqual(
+        allRows.slice(2).map((r) => r.id),
+      );
+    });
+  });
+
+  describe('Query structure: non-JSON filters', () => {
+    function getSqlText(sql: Prisma.Sql): string {
+      return sql.strings.join('?');
+    }
+
+    it('getRowsSql with non-JSON filter should not use subquery', () => {
+      const where = { createdAt: { gte: new Date() } } as any;
+
+      const sqlText = getSqlText(
+        getRowsSql(tableVersionId, 10, 0, where, [{ createdAt: 'asc' }]),
+      );
+
+      expect(sqlText).not.toMatch(/WITH\s+/i);
+      expect(sqlText).toMatch(/WHERE/i);
+    });
+
+    it('getRowsCountSql with non-JSON filter should not use subquery', () => {
+      const where = { createdAt: { gte: new Date() } } as any;
+
+      const sqlText = getSqlText(getRowsCountSql(tableVersionId, where));
+
+      expect(sqlText).not.toMatch(/WITH\s+/i);
+      expect(sqlText).toMatch(/WHERE/i);
     });
   });
 
