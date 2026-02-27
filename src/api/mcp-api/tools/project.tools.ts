@@ -89,6 +89,16 @@ export class ProjectTools implements McpToolRegistrar {
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ organizationId, projectName, branchName }) => {
+        await auth.checkPermissionByOrganization(
+          organizationId,
+          [
+            {
+              action: PermissionAction.create,
+              subject: PermissionSubject.Project,
+            },
+          ],
+          auth.userId,
+        );
         const project = await this.projectApi.apiCreateProject({
           organizationId,
           projectName,

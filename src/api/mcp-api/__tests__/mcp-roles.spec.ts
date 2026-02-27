@@ -208,6 +208,50 @@ describe('mcp-api - role-based permissions', () => {
 
       expect(getErrorMessage(result)).toMatch(/not allowed to read on Project/);
     });
+
+    it('another owner cannot create project in foreign organization', async () => {
+      const token = getToken(preparedData.anotherOwner);
+
+      const result = await callMcpTool(token, 'create_project', {
+        organizationId: preparedData.project.organizationId,
+        projectName: 'malicious-project',
+      });
+
+      expect(getErrorMessage(result)).toMatch(
+        /not allowed to create on Project/,
+      );
+    });
+
+    it('owner can create project in own organization', async () => {
+      const token = getToken(preparedData.owner);
+
+      const result = await callMcpTool(token, 'create_project', {
+        organizationId: preparedData.project.organizationId,
+        projectName: 'legit-project',
+      });
+
+      expect(isSuccessResult(result)).toBe(true);
+    });
+
+    it('another owner cannot get draft revision of private project branch', async () => {
+      const token = getToken(preparedData.anotherOwner);
+
+      const result = await callMcpTool(token, 'get_draft_revision', {
+        branchId: preparedData.project.branchId,
+      });
+
+      expect(getErrorMessage(result)).toMatch(/not allowed to read on Project/);
+    });
+
+    it('owner can get draft revision of own branch', async () => {
+      const token = getToken(preparedData.owner);
+
+      const result = await callMcpTool(token, 'get_draft_revision', {
+        branchId: preparedData.project.branchId,
+      });
+
+      expect(isSuccessResult(result)).toBe(true);
+    });
   });
 
   describe('Public Project Access', () => {
