@@ -12,7 +12,14 @@ import {
   ViewFilterGroup,
 } from 'src/features/views/types';
 
-const SYSTEM_FIELDS = new Set(['id', 'createdAt', 'updatedAt']);
+const SYSTEM_FIELDS = new Set([
+  'id',
+  'createdAt',
+  'updatedAt',
+  'createdId',
+  'versionId',
+  'publishedAt',
+]);
 
 @Injectable()
 export class ViewValidationService {
