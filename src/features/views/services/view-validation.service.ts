@@ -19,6 +19,8 @@ const SYSTEM_FIELDS = new Set([
   'createdId',
   'versionId',
   'publishedAt',
+  'hash',
+  'schemaHash',
 ]);
 
 @Injectable()

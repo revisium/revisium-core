@@ -19,6 +19,8 @@ const SYSTEM_SCHEMA_TO_COLUMN: Record<string, string> = {
   [SystemSchemaIds.RowCreatedAt]: 'createdAt',
   [SystemSchemaIds.RowUpdatedAt]: 'updatedAt',
   [SystemSchemaIds.RowPublishedAt]: 'publishedAt',
+  [SystemSchemaIds.RowHash]: 'hash',
+  [SystemSchemaIds.RowSchemaHash]: 'schemaHash',
 };
 
 const JSON_FILTER_KEY_MAP: Record<string, string> = {
