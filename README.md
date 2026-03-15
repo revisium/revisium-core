@@ -2,7 +2,9 @@
 
 # @revisium/core
 
-Backend API for [Revisium](https://github.com/revisium/revisium) — unopinionated data platform for hierarchical structures.
+Backend API for [Revisium](https://github.com/revisium/revisium) — unopinionated data platform with referential integrity.
+
+**Your schema. Your data. Full control.**
 
 [![License](https://img.shields.io/github/license/revisium/revisium-core?color=blue)](LICENSE)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=revisium_revisium-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=revisium_revisium-core)
