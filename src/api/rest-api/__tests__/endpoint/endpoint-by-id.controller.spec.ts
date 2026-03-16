@@ -54,13 +54,13 @@ describe('restapi - EndpointByIdController', () => {
         .expect(403);
     });
 
-    it('should return 403 for non-existent endpoint (due to project guard)', async () => {
+    it('should return 404 for non-existent endpoint', async () => {
       const nonExistentEndpointId = 'non-existent-endpoint';
 
       return request(app.getHttpServer())
         .get(getEndpointRelativesUrl(nonExistentEndpointId))
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('should handle draft endpoint relatives', async () => {
@@ -146,13 +146,13 @@ describe('restapi - EndpointByIdController', () => {
         .expect(401);
     });
 
-    it('should return 403 when deleting non-existent endpoint (due to project guard)', async () => {
+    it('should return 404 when deleting non-existent endpoint', async () => {
       const nonExistentEndpointId = 'non-existent-endpoint';
 
       return request(app.getHttpServer())
         .delete(getDeleteEndpointUrl(nonExistentEndpointId))
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     function getDeleteEndpointUrl(endpointId: string) {
@@ -209,7 +209,7 @@ describe('restapi - EndpointByIdController', () => {
       return request(app.getHttpServer())
         .get(getEndpointRelativesUrl(malformedEndpointId))
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('should handle very long endpoint IDs gracefully', async () => {
@@ -218,7 +218,7 @@ describe('restapi - EndpointByIdController', () => {
       return request(app.getHttpServer())
         .get(getEndpointRelativesUrl(longEndpointId))
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('should handle special characters in endpoint ID', async () => {
