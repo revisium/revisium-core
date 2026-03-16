@@ -729,7 +729,7 @@ describe('restapi - revision-by-id', () => {
       return request(app.getHttpServer())
         .get('/api/revision/non-existent-revision')
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('should require authentication for protected endpoints', async () => {

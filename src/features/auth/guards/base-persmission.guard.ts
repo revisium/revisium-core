@@ -84,6 +84,9 @@ export abstract class BasePermissionGuard<
     try {
       await this.executeCommand(params, permissions, user?.userId);
     } catch (e) {
+      if (e instanceof NotFoundException) {
+        throw e;
+      }
       if (e instanceof Error) {
         throw new ForbiddenException(e.message);
       } else {

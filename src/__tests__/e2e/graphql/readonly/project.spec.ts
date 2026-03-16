@@ -91,10 +91,80 @@ describe('graphql - project (readonly)', () => {
       );
     });
 
+    it('non-existent project returns not found error', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          token: fixture.owner.token,
+          ...getQuery(fixture.project.organizationId, 'non-existent-project'),
+        },
+        /Project not found/,
+      );
+    });
+
+    it('unauthenticated non-existent project returns not found error', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          ...getQuery(fixture.project.organizationId, 'non-existent-project'),
+        },
+        /Project not found/,
+      );
+    });
+
     describe('public project', () => {
       it('unauthenticated can get public project', async () => {
         const result = await gqlQuery({
           app,
+          ...getQuery(
+            publicFixture.project.organizationId,
+            publicFixture.project.projectName,
+          ),
+        });
+
+        expect(result.project.id).toBe(publicFixture.project.projectId);
+        expect(result.project.isPublic).toBe(true);
+      });
+
+      it('unauthenticated gets null userProject on public project', async () => {
+        const result = await gqlQuery({
+          app,
+          ...{
+            query: gql`
+              query project($data: GetProjectInput!) {
+                project(data: $data) {
+                  id
+                  isPublic
+                  userProject {
+                    id
+                  }
+                  organization {
+                    id
+                    userOrganization {
+                      id
+                    }
+                  }
+                }
+              }
+            `,
+            variables: {
+              data: {
+                organizationId: publicFixture.project.organizationId,
+                projectName: publicFixture.project.projectName,
+              },
+            },
+          },
+        });
+
+        expect(result.project.id).toBe(publicFixture.project.projectId);
+        expect(result.project.userProject).toBeNull();
+        expect(result.project.organization.userOrganization).toBeNull();
+      });
+
+      it('cross-owner can get public project', async () => {
+        const result = await gqlQuery({
+          app,
+          token: fixture.anotherOwner.token,
           ...getQuery(
             publicFixture.project.organizationId,
             publicFixture.project.projectName,

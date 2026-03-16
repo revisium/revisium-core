@@ -463,7 +463,7 @@ describe('restapi - branch-by-name', () => {
         app,
         '/api/organization/non-existent/projects/test/branches/master',
         preparedData.owner.token,
-      ).expect(403);
+      ).expect(404);
     });
 
     it('should reject requests to non-existent project', async () => {
@@ -471,7 +471,7 @@ describe('restapi - branch-by-name', () => {
         app,
         `/api/organization/${preparedData.project.organizationId}/projects/non-existent/branches/master`,
         preparedData.owner.token,
-      ).expect(403);
+      ).expect(404);
     });
 
     it('should reject requests to non-existent branch', async () => {

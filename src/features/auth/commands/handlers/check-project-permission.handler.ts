@@ -1,5 +1,8 @@
 import { ForbiddenError, subject } from '@casl/ability';
-import { InternalServerErrorException } from '@nestjs/common';
+import {
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
 import {
@@ -131,13 +134,19 @@ export class CheckProjectPermissionHandler implements ICommandHandler<
     organizationId: string,
     projectName: string,
   ) {
-    return this.prisma.project.findFirstOrThrow({
+    const project = await this.prisma.project.findFirst({
       where: { organizationId, name: projectName, isDeleted: false },
     });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return project;
   }
 
   private async getProjectByEndpointId(endpointId: string) {
-    const revision = await this.prisma.endpoint.findUniqueOrThrow({
+    const endpoint = await this.prisma.endpoint.findUnique({
       where: { id: endpointId },
       select: {
         revision: {
@@ -152,11 +161,15 @@ export class CheckProjectPermissionHandler implements ICommandHandler<
       },
     });
 
-    return revision.revision.branch.project;
+    if (!endpoint) {
+      throw new NotFoundException('Endpoint not found');
+    }
+
+    return endpoint.revision.branch.project;
   }
 
   private async getProjectByRevisionId(revisionId: string) {
-    const revision = await this.prisma.revision.findUniqueOrThrow({
+    const revision = await this.prisma.revision.findUnique({
       where: { id: revisionId },
       select: {
         branch: {
@@ -167,13 +180,23 @@ export class CheckProjectPermissionHandler implements ICommandHandler<
       },
     });
 
+    if (!revision) {
+      throw new NotFoundException('Revision not found');
+    }
+
     return revision.branch.project;
   }
 
   private async getProjectByProjectId(projectId: string) {
-    return this.prisma.project.findFirstOrThrow({
+    const project = await this.prisma.project.findFirst({
       where: { id: projectId, isDeleted: false },
     });
+
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    return project;
   }
 
   private async getSystemRole(

@@ -25,7 +25,7 @@ import {
 import { GetProjectBranchesInput } from 'src/api/graphql-api/project/inputs/get-project-branches.input';
 import { ProjectModel } from 'src/api/graphql-api/project/model';
 import { UsersProjectConnection } from 'src/api/graphql-api/project/model/users-project.connection';
-import { IAuthUser } from 'src/features/auth/types';
+import { IOptionalAuthUser } from 'src/features/auth/types';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
@@ -132,7 +132,13 @@ export class ProjectResolver {
   }
 
   @ResolveField()
-  userProject(@Parent() parent: ProjectModel, @CurrentUser() user: IAuthUser) {
+  userProject(
+    @Parent() parent: ProjectModel,
+    @CurrentUser() user: IOptionalAuthUser,
+  ) {
+    if (!user) {
+      return null;
+    }
     return this.userApi.userProject({
       projectId: parent.id,
       userId: user.userId,

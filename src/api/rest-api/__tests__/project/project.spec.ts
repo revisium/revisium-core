@@ -498,7 +498,7 @@ describe('restapi - project', () => {
       return request(app.getHttpServer())
         .get('/api/organization/non-existent/projects/test')
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('should reject requests to non-existent project', async () => {
@@ -507,7 +507,7 @@ describe('restapi - project', () => {
           `/api/organization/${preparedData.project.organizationId}/projects/non-existent`,
         )
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .expect(403);
+        .expect(404);
     });
 
     it('should require authentication for protected endpoints', async () => {

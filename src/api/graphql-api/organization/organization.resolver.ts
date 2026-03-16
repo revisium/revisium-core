@@ -13,7 +13,7 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { GQLOrganizationGuard } from 'src/features/auth/guards/organization.guard';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
-import { IAuthUser, IOptionalAuthUser } from 'src/features/auth/types';
+import { IOptionalAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import {
   AddUserToOrganizationInput,
@@ -102,8 +102,11 @@ export class OrganizationResolver {
   @ResolveField()
   userOrganization(
     @Parent() parent: OrganizationModel,
-    @CurrentUser() user: IAuthUser,
+    @CurrentUser() user: IOptionalAuthUser,
   ) {
+    if (!user) {
+      return null;
+    }
     return this.userApi.userOrganization({
       organizationId: parent.id,
       userId: user.userId,
