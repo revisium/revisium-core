@@ -25,8 +25,6 @@ export class SchemaResource implements McpResourceRegistrar {
   private readonly mcpMetaSchema = createMcpMetaSchema();
   private readonly fileRef = SystemSchemaIds.File;
 
-  constructor() {}
-
   register(server: McpServer): void {
     server.registerResource(
       'schema-specification',
