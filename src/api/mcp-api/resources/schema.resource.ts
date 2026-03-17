@@ -51,7 +51,6 @@ export class SchemaResource implements McpResourceRegistrar {
     return {
       description:
         'Revisium Table Schema Specification. Use this JSON Schema to create and update table schemas.',
-      formulaAvailable: true,
       schema: this.mcpMetaSchema,
       examples: {
         simpleObject: {
