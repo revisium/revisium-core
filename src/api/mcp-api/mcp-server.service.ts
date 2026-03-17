@@ -13,7 +13,6 @@ import { RevisionsApiService } from 'src/features/revision/revisions-api.service
 import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
-import { FormulaService } from 'src/features/plugin/formula';
 import { McpUserContext } from './mcp-auth.service';
 import { McpAuthHelpers, McpPermissionCheck } from './types';
 
@@ -73,7 +72,6 @@ export class McpServerService {
     private readonly revisionChangesApi: RevisionChangesApiService,
     private readonly userApi: UserApiService,
     private readonly endpointApi: EndpointApiService,
-    private readonly formulaService: FormulaService,
   ) {
     const authSection = this.noAuth.enabled
       ? `AUTHENTICATION:
@@ -129,7 +127,7 @@ PERMISSIONS:
 - Create/update operations need confirmation with change summary
 - Delete/remove/revert are destructive - need explicit user approval`;
 
-    this.schemaResource = new SchemaResource(this.formulaService);
+    this.schemaResource = new SchemaResource();
     this.queryResource = new QueryResource();
     this.migrationResource = new MigrationResource();
     this.fileResource = new FileResource();

@@ -7,7 +7,6 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { FormulaService } from 'src/features/plugin/formula';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { ApiCreateRowCommand } from 'src/features/draft/commands/impl/api-create-row.command';
 import {
@@ -181,10 +180,6 @@ describe('getRow', () => {
   });
 
   describe('formula computation', () => {
-    beforeEach(() => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: true });
-    });
-
     it('should compute formula and return computed value in data', async () => {
       const { draftRevisionId } = await prepareProject(prismaService);
 
@@ -341,7 +336,6 @@ describe('getRow', () => {
   let transactionService: TransactionPrismaService;
   let queryBus: QueryBus;
   let commandBus: CommandBus;
-  let formulaService: FormulaService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -349,7 +343,6 @@ describe('getRow', () => {
     transactionService = result.transactionService;
     queryBus = result.queryBus;
     commandBus = result.commandBus;
-    formulaService = result.module.get<FormulaService>(FormulaService);
   });
 
   afterAll(async () => {

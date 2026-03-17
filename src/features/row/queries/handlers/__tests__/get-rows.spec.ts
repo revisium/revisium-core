@@ -12,7 +12,6 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { FormulaService } from 'src/features/plugin/formula';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { CreateTableCommand } from 'src/features/draft/commands/impl/create-table.command';
 import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
@@ -574,10 +573,6 @@ describe('getRows', () => {
   });
 
   describe('formula computation', () => {
-    beforeEach(() => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: true });
-    });
-
     it('should compute formulas for rows', async () => {
       const { draftRevisionId } = await prepareProject(prismaService);
 
@@ -1017,7 +1012,6 @@ describe('getRows', () => {
   let transactionService: TransactionPrismaService;
   let queryBus: QueryBus;
   let commandBus: CommandBus;
-  let formulaService: FormulaService;
   let draftRevisionApiService: DraftRevisionApiService;
 
   beforeAll(async () => {
@@ -1028,7 +1022,6 @@ describe('getRows', () => {
     transactionService = result.transactionService;
     queryBus = result.queryBus;
     commandBus = result.commandBus;
-    formulaService = result.module.get<FormulaService>(FormulaService);
     draftRevisionApiService = result.module.get<DraftRevisionApiService>(
       DraftRevisionApiService,
     );

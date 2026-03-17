@@ -678,7 +678,6 @@ type PermissionModel {
 
 type PluginsModel {
   file: Boolean!
-  formula: Boolean!
 }
 
 type ProjectModel {
