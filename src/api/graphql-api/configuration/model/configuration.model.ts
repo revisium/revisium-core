@@ -22,9 +22,6 @@ export class GithubOauth {
 export class PluginsModel {
   @Field(() => Boolean)
   file: boolean;
-
-  @Field(() => Boolean)
-  formula: boolean;
 }
 
 @ObjectType()

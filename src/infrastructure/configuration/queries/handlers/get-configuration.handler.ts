@@ -36,7 +36,6 @@ export class GetConfigurationHandler implements IQueryHandler<
       },
       plugins: {
         file: this.filePlugin.isAvailable,
-        formula: true,
       },
     };
   }
