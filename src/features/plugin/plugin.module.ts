@@ -15,10 +15,6 @@ import { DatabaseModule } from 'src/infrastructure/database/database.module';
     PluginService,
     FormulaValidationService,
   ],
-  exports: [
-    PluginService,
-    FormulaValidationService,
-    ...PLUGINS,
-  ],
+  exports: [PluginService, FormulaValidationService, ...PLUGINS],
 })
 export class PluginModule {}

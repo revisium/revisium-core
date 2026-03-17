@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
   validateSchemaFormulas,
-  extractSchemaFormulas,
   type SchemaValidationResult,
 } from '@revisium/schema-toolkit/formula';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
