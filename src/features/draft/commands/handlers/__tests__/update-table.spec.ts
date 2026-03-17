@@ -32,10 +32,6 @@ import {
 } from 'src/features/share/views-migration.service';
 import { TableViewsData } from 'src/features/views/types';
 import objectHash from 'object-hash';
-import {
-  FormulaService,
-  FormulaValidationService,
-} from 'src/features/plugin/formula';
 import { FormulaValidationException } from 'src/features/share/exceptions';
 
 describe('UpdateTableHandler', () => {
@@ -282,9 +278,6 @@ describe('UpdateTableHandler', () => {
   let viewsMigrationService: ViewsMigrationService;
   let rowApiService: RowApiService;
   let tableApiService: TableApiService;
-  let formulaService: FormulaService;
-  let formulaValidationService: FormulaValidationService;
-
   beforeAll(async () => {
     const result = await createTestingModule();
     prismaService = result.prismaService;
@@ -294,10 +287,6 @@ describe('UpdateTableHandler', () => {
     viewsMigrationService = result.viewsMigrationService;
     rowApiService = result.module.get<RowApiService>(RowApiService);
     tableApiService = result.module.get<TableApiService>(TableApiService);
-    formulaService = result.module.get<FormulaService>(FormulaService);
-    formulaValidationService = result.module.get<FormulaValidationService>(
-      FormulaValidationService,
-    );
   });
 
   beforeEach(() => {
@@ -548,15 +537,6 @@ describe('UpdateTableHandler', () => {
   });
 
   describe('formula validation', () => {
-    beforeEach(() => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: true });
-      Object.defineProperty(
-        formulaValidationService['formulaService'],
-        'isAvailable',
-        { value: true },
-      );
-    });
-
     const numberFieldWithFormula = (expression: string): any => ({
       type: JsonSchemaTypeName.Number,
       default: 0,
@@ -689,41 +669,7 @@ describe('UpdateTableHandler', () => {
       );
     });
 
-    it('should reject x-formula when formula feature is disabled', async () => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: false });
-      Object.defineProperty(
-        formulaValidationService['formulaService'],
-        'isAvailable',
-        { value: false },
-      );
-
-      const { draftRevisionId, tableId } = await prepareProject(prismaService);
-
-      const command = new UpdateTableCommand({
-        revisionId: draftRevisionId,
-        tableId,
-        patches: [
-          {
-            op: 'add',
-            path: '/properties/computed',
-            value: numberFieldWithFormula('ver * 2'),
-          },
-        ],
-      });
-
-      await expect(runTransaction(command)).rejects.toThrow(
-        FormulaValidationException,
-      );
-    });
-
-    it('should allow update without x-formula when formula feature is disabled', async () => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: false });
-      Object.defineProperty(
-        formulaValidationService['formulaService'],
-        'isAvailable',
-        { value: false },
-      );
-
+    it('should allow update without x-formula', async () => {
       const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
       const command = new UpdateTableCommand({

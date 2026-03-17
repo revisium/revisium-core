@@ -2,7 +2,6 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { formulaSpec } from '@revisium/schema-toolkit/formula';
 import { SchemaObject } from 'ajv';
-import { FormulaService } from 'src/features/plugin/formula';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { McpResourceRegistrar } from '../types';
 
@@ -26,7 +25,7 @@ export class SchemaResource implements McpResourceRegistrar {
   private readonly mcpMetaSchema = createMcpMetaSchema();
   private readonly fileRef = SystemSchemaIds.File;
 
-  constructor(private readonly formulaService: FormulaService) {}
+  constructor() {}
 
   register(server: McpServer): void {
     server.registerResource(
@@ -49,12 +48,10 @@ export class SchemaResource implements McpResourceRegistrar {
   }
 
   private getSpecification() {
-    const formulaAvailable = this.formulaService.isAvailable;
-
     return {
       description:
         'Revisium Table Schema Specification. Use this JSON Schema to create and update table schemas.',
-      formulaAvailable,
+      formulaAvailable: true,
       schema: this.mcpMetaSchema,
       examples: {
         simpleObject: {
@@ -416,9 +413,7 @@ export class SchemaResource implements McpResourceRegistrar {
         'Supported types: string, number, boolean, object, array',
         'String formats: date-time, date, time, email, regex',
         'String contentMediaType: text/plain, text/markdown, text/html, application/json',
-        formulaAvailable
-          ? 'x-formula: computed field with expression (string, number, boolean types only)'
-          : 'x-formula: NOT AVAILABLE on this server',
+        'x-formula: computed field with expression (string, number, boolean types only)',
         'Default value rules: string → default: "", number → default: 0, boolean → default: false',
         'Do NOT add "default" to array, object, or $ref (File) fields',
       ],
@@ -430,23 +425,21 @@ export class SchemaResource implements McpResourceRegistrar {
         'foreignKey value CANNOT be empty string — it must be a valid rowId from referenced table',
         'When adding a foreignKey field to a table that already has rows, existing rows must have valid FK references — adding a new required FK field to a table with data will fail unless the array is empty',
       ],
-      ...(formulaAvailable && {
-        formulaSpec: {
-          version: formulaSpec.version,
-          description: formulaSpec.description,
-          syntax: formulaSpec.syntax,
-          functions: formulaSpec.functions,
-          features: formulaSpec.features,
-          schemaUsage: formulaSpec.schemaUsage,
-          examples: formulaSpec.examples,
-        },
-        formulaLimitations: [
-          'Formulas can ONLY reference fields within the SAME ROW — no cross-row or cross-table references',
-          'Formula field types: string, number, boolean only — NOT object, array, or $ref',
-          'CANNOT combine foreignKey and x-formula on the same field',
-          'Circular dependencies are rejected (a → b → a)',
-        ],
-      }),
+      formulaSpec: {
+        version: formulaSpec.version,
+        description: formulaSpec.description,
+        syntax: formulaSpec.syntax,
+        functions: formulaSpec.functions,
+        features: formulaSpec.features,
+        schemaUsage: formulaSpec.schemaUsage,
+        examples: formulaSpec.examples,
+      },
+      formulaLimitations: [
+        'Formulas can ONLY reference fields within the SAME ROW — no cross-row or cross-table references',
+        'Formula field types: string, number, boolean only — NOT object, array, or $ref',
+        'CANNOT combine foreignKey and x-formula on the same field',
+        'Circular dependencies are rejected (a → b → a)',
+      ],
       foreignKeyRules: [
         'IMPORTANT: Tables with foreignKey must be created AFTER the referenced table exists',
         'Create tables in dependency order: first tables without foreignKey, then tables that reference them',

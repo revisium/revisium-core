@@ -11,7 +11,6 @@ import { CreateTableCommand } from 'src/features/draft/commands/impl/create-tabl
 import { CreateTableHandlerReturnType } from 'src/features/draft/commands/types/create-table.handler.types';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { TableApiService } from 'src/features/table/table-api.service';
-import { FormulaService } from 'src/features/plugin/formula';
 import { FormulaValidationException } from 'src/features/share/exceptions';
 
 describe('CreateTableHandler', () => {
@@ -175,10 +174,6 @@ describe('CreateTableHandler', () => {
   });
 
   describe('formula validation', () => {
-    beforeEach(() => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: true });
-    });
-
     it('should create table with valid formula', async () => {
       const { draftRevisionId } = await prepareProject(prismaService);
 
@@ -292,56 +287,6 @@ describe('CreateTableHandler', () => {
       );
     });
 
-    it('should reject x-formula when formula feature is disabled', async () => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: false });
-
-      const { draftRevisionId } = await prepareProject(prismaService);
-
-      const command = new CreateTableCommand({
-        revisionId: draftRevisionId,
-        tableId: 'products',
-        schema: {
-          type: 'object',
-          properties: {
-            total: {
-              type: 'number',
-              default: 0,
-              readOnly: true,
-              'x-formula': { version: 1, expression: 'price * 2' },
-            },
-          },
-          additionalProperties: false,
-          required: ['total'],
-        },
-      });
-
-      await expect(runTransaction(command)).rejects.toThrow(
-        FormulaValidationException,
-      );
-    });
-
-    it('should allow schema without x-formula when formula feature is disabled', async () => {
-      Object.defineProperty(formulaService, 'isAvailable', { value: false });
-
-      const { draftRevisionId } = await prepareProject(prismaService);
-
-      const command = new CreateTableCommand({
-        revisionId: draftRevisionId,
-        tableId: 'products',
-        schema: {
-          type: 'object',
-          properties: {
-            price: { type: 'number', default: 0 },
-          },
-          additionalProperties: false,
-          required: ['price'],
-        },
-      });
-
-      const result = await runTransaction(command);
-      expect(result.tableVersionId).toBeTruthy();
-    });
-
     it('should throw error for field with both x-formula and foreignKey', async () => {
       const { draftRevisionId, tableId } = await prepareProject(prismaService);
 
@@ -385,7 +330,6 @@ describe('CreateTableHandler', () => {
   let transactionService: TransactionPrismaService;
   let draftTransactionalCommands: DraftTransactionalCommands;
   let tableApiService: TableApiService;
-  let formulaService: FormulaService;
 
   beforeAll(async () => {
     const result = await createTestingModule();
@@ -394,7 +338,6 @@ describe('CreateTableHandler', () => {
     transactionService = result.transactionService;
     draftTransactionalCommands = result.draftTransactionalCommands;
     tableApiService = result.module.get<TableApiService>(TableApiService);
-    formulaService = result.module.get<FormulaService>(FormulaService);
   });
 
   beforeEach(() => {

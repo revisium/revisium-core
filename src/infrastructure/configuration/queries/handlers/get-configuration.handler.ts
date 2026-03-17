@@ -3,7 +3,6 @@ import { GitHubAuthService } from 'src/features/auth/github-oauth.service';
 import { GoogleOauthService } from 'src/features/auth/google-oauth.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { FilePlugin } from 'src/features/plugin/file/file.plugin';
-import { FormulaService } from 'src/features/plugin/formula';
 import {
   GetConfigurationQuery,
   GetConfigurationQueryReturnType,
@@ -21,7 +20,6 @@ export class GetConfigurationHandler implements IQueryHandler<
     private readonly githubOauthService: GitHubAuthService,
     private readonly noAuthService: NoAuthService,
     private readonly filePlugin: FilePlugin,
-    private readonly formulaService: FormulaService,
   ) {}
 
   public async execute(): Promise<GetConfigurationQueryReturnType> {
@@ -38,7 +36,7 @@ export class GetConfigurationHandler implements IQueryHandler<
       },
       plugins: {
         file: this.filePlugin.isAvailable,
-        formula: this.formulaService.isAvailable,
+        formula: true,
       },
     };
   }
