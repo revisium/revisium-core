@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import {
   InternalUpdateRowCommand,
@@ -18,7 +18,10 @@ import { ShareTransactionalQueries } from 'src/features/share/share.transactiona
 import { RowApiService } from 'src/features/row/row-api.service';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { JsonValue, JsonSchema } from '@revisium/schema-toolkit/types';
-import { S3Service } from 'src/infrastructure/database/s3.service';
+import {
+  IStorageService,
+  STORAGE_SERVICE,
+} from 'src/infrastructure/storage/storage.interface';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @CommandHandler(UploadFileCommand)
@@ -34,7 +37,8 @@ export class UploadFileHandler extends DraftHandler<
     protected readonly shareTransactionalQueries: ShareTransactionalQueries,
     protected readonly filePlugin: FilePlugin,
     protected readonly jsonSchemaStore: JsonSchemaStoreService,
-    protected readonly s3Service: S3Service,
+    @Inject(STORAGE_SERVICE)
+    protected readonly storageService: IStorageService,
     protected readonly rowApiService: RowApiService,
   ) {
     super(transactionService, draftContext);
@@ -76,7 +80,7 @@ export class UploadFileHandler extends DraftHandler<
     { data: { file } }: UploadFileCommand,
     { path }: UploadFileCommandReturnType,
   ) {
-    await this.s3Service.uploadFile(file, path);
+    await this.storageService.uploadFile(file, path);
   }
 
   private async fileProcess(

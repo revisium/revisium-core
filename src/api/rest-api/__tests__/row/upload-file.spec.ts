@@ -16,7 +16,7 @@ import {
 import { CoreModule } from 'src/core/core.module';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { S3Service } from 'src/infrastructure/database/s3.service';
+import { STORAGE_SERVICE } from 'src/infrastructure/storage/storage.interface';
 import request from 'supertest';
 
 describe('restapi - row - upload file', () => {
@@ -53,19 +53,20 @@ describe('restapi - row - upload file', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    const mockS3 = {
+    const mockStorage = {
       isAvailable: true,
+      canServeFiles: false,
       uploadFile: jest.fn().mockResolvedValue({
-        bucket: 'test-bucket',
         key: 'uploads/fake.png',
       }),
+      getPublicUrl: jest.fn((key: string) => `http://test-files/${key}`),
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [CoreModule.forRoot({ mode: 'monolith' })],
     })
-      .overrideProvider(S3Service)
-      .useValue(mockS3)
+      .overrideProvider(STORAGE_SERVICE)
+      .useValue(mockStorage)
       .compile();
 
     app = moduleFixture.createNestApplication();

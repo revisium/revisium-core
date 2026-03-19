@@ -53,7 +53,8 @@ import { ResolveTableSchemaHandler } from 'src/features/table/queries/handlers/r
 import { CacheService, RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { S3Service } from 'src/infrastructure/database/s3.service';
+import { STORAGE_SERVICE } from 'src/infrastructure/storage/storage.interface';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
@@ -115,10 +116,11 @@ export const getTestLinkedSchema = (tableId: string): JsonObjectSchema => ({
 export const createTestingModule = async () => {
   const mockS3 = {
     isAvailable: true,
+    canServeFiles: false,
     uploadFile: jest.fn().mockResolvedValue({
-      bucket: 'test-bucket',
       key: 'uploads/fake.png',
     }),
+    getPublicUrl: jest.fn((key: string) => `http://test-files/${key}`),
   };
 
   const module: TestingModule = await Test.createTestingModule({
@@ -133,6 +135,7 @@ export const createTestingModule = async () => {
       RevisionModule,
       ViewsModule,
       DraftRevisionModule,
+      StorageModule,
       RevisiumCacheModule.forRootAsync(),
     ],
     providers: [
@@ -167,7 +170,7 @@ export const createTestingModule = async () => {
       SystemColumnMappingService,
     ],
   })
-    .overrideProvider(S3Service)
+    .overrideProvider(STORAGE_SERVICE)
     .useValue(mockS3)
     .compile();
 

@@ -13,6 +13,7 @@ import { DRAFT_REQUEST_DTO } from 'src/features/draft/draft-request-dto';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { ShareModule } from 'src/features/share/share.module';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ShareModule } from 'src/features/share/share.module';
     RowModule,
     RevisionModule,
     DraftRevisionModule,
+    StorageModule,
   ],
   providers: [
     DraftTransactionalCommands,

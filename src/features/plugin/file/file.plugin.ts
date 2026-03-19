@@ -1,5 +1,4 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import { FileStatus, ID_LENGTH } from 'src/features/plugin/file/consts';
 import { FileValueStore } from 'src/features/plugin/file/file-value.store';
@@ -15,23 +14,20 @@ import {
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 import { JsonValueStore } from '@revisium/schema-toolkit/model';
 import { JsonValue } from '@revisium/schema-toolkit/types';
-import { S3Service } from 'src/infrastructure/database/s3.service';
+import {
+  IStorageService,
+  STORAGE_SERVICE,
+} from 'src/infrastructure/storage/storage.interface';
 
 @Injectable()
 export class FilePlugin implements IPluginService {
-  public readonly publicEndpoint: string;
-
   constructor(
-    private readonly s3Service: S3Service,
-    configService: ConfigService,
-  ) {
-    const endpoint = configService.get('FILE_PLUGIN_PUBLIC_ENDPOINT');
-
-    this.publicEndpoint = endpoint ?? '';
-  }
+    @Inject(STORAGE_SERVICE)
+    private readonly storageService: IStorageService,
+  ) {}
 
   public get isAvailable() {
-    return this.s3Service.isAvailable;
+    return this.storageService.isAvailable;
   }
 
   public async afterCreateRow(
@@ -149,7 +145,7 @@ export class FilePlugin implements IPluginService {
   }
 
   public getUrl(hash: string) {
-    return encodeURI(`${this.publicEndpoint}/${this.getPathname(hash)}`);
+    return this.storageService.getPublicUrl(this.getPathname(hash));
   }
 
   public getPathname(hash: string) {

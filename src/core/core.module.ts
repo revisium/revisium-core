@@ -19,6 +19,7 @@ import { HealthModule } from 'src/infrastructure/health/health.module';
 import { McpModule } from 'src/api/mcp-api/mcp.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
+import { StorageModule } from 'src/infrastructure/storage/storage.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
 import { ProjectModule } from 'src/features/project/project.module';
 import { RestApiModule } from 'src/api/rest-api/rest-api.module';
@@ -66,6 +67,7 @@ export class CoreModule {
         EndpointModule,
         MetricsModule,
         McpModule,
+        StorageModule,
         RevisiumCacheModule.forRootAsync(),
       ],
     };
