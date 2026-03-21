@@ -105,7 +105,7 @@ describe('coerceStringifiedArgs', () => {
         schema:
           '{"type":"object","properties":{"title":{"type":"string","default":""}},"additionalProperties":false,"required":["title"]}',
       };
-      const result = coerceStringifiedArgs(args);
+      const result = coerceStringifiedArgs(args)!;
       expect(result.schema).toEqual({
         type: 'object',
         properties: { title: { type: 'string', default: '' } },
