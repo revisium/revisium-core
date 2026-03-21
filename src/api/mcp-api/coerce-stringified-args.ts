@@ -56,7 +56,13 @@ function coerceJsonRpcMessage(message: unknown): unknown {
     params?: { arguments?: Record<string, unknown> };
   };
 
-  if (msg.method !== 'tools/call' || !msg.params?.arguments) {
+  const args = msg.params?.arguments;
+  if (
+    msg.method !== 'tools/call' ||
+    !args ||
+    typeof args !== 'object' ||
+    Array.isArray(args)
+  ) {
     return message;
   }
 
@@ -64,7 +70,7 @@ function coerceJsonRpcMessage(message: unknown): unknown {
     ...msg,
     params: {
       ...msg.params,
-      arguments: coerceStringifiedArgs(msg.params.arguments),
+      arguments: coerceStringifiedArgs(args as Record<string, unknown>),
     },
   };
 }

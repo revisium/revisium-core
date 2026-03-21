@@ -251,4 +251,30 @@ describe('coerceJsonRpcBody', () => {
     expect(coerceJsonRpcBody(null)).toBeNull();
     expect(coerceJsonRpcBody(undefined)).toBeUndefined();
   });
+
+  it('should not coerce when arguments is a string', () => {
+    const body = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: {
+        name: 'some_tool',
+        arguments: 'not-an-object',
+      },
+    };
+    expect(coerceJsonRpcBody(body)).toEqual(body);
+  });
+
+  it('should not coerce when arguments is an array', () => {
+    const body = {
+      jsonrpc: '2.0',
+      id: 1,
+      method: 'tools/call',
+      params: {
+        name: 'some_tool',
+        arguments: [1, 2, 3],
+      },
+    };
+    expect(coerceJsonRpcBody(body)).toEqual(body);
+  });
 });
