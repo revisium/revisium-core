@@ -70,7 +70,7 @@ function coerceJsonRpcMessage(message: unknown): unknown {
     ...msg,
     params: {
       ...msg.params,
-      arguments: coerceStringifiedArgs(args as Record<string, unknown>),
+      arguments: coerceStringifiedArgs(args),
     },
   };
 }
