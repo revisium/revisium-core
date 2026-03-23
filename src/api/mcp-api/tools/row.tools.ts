@@ -308,7 +308,8 @@ Example:
     server.registerTool(
       'update_row',
       {
-        description: 'Update a row (replace all data)',
+        description:
+          'Update a row by REPLACING all data. You must send the complete object with ALL fields. If you only need to change a few fields, use patch_row instead — it is more efficient and avoids accidentally overwriting other fields.',
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -341,7 +342,7 @@ Example:
       'patch_row',
       {
         description:
-          'Patch a row using JSON Patch operations. ONLY "replace" operation is supported. Path is field name WITHOUT leading slash.',
+          'Partially update a row — change only specific fields without touching the rest. Preferred over update_row when modifying 1-2 fields. Uses JSON Patch format with ONLY "replace" operation. Path is field name WITHOUT leading slash.',
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -428,7 +429,8 @@ IMPORTANT for tables with computed fields (x-formula):
     server.registerTool(
       'update_rows',
       {
-        description: 'Update multiple rows (replace all data for each row)',
+        description:
+          'Update multiple rows by REPLACING all data for each row. If you only need to change a few fields, use patch_rows instead.',
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
@@ -472,7 +474,7 @@ IMPORTANT for tables with computed fields (x-formula):
       'patch_rows',
       {
         description:
-          'Patch multiple rows using JSON Patch operations. ONLY "replace" operation is supported.',
+          'Partially update multiple rows — change only specific fields. Preferred over update_rows when modifying a few fields per row. Uses JSON Patch with ONLY "replace" operation.',
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
