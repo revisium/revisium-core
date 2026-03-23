@@ -258,14 +258,14 @@ FOREIGN KEY RULES:
       'update_table',
       {
         description:
-          'Update table schema using JSON Patch. IMPORTANT: Always call getTableSchema first to understand current structure before updating.',
+          'Update table schema using JSON Patch. IMPORTANT: Always call get_table_schema first to understand current structure before updating. Do NOT manually add/remove/replace the "required" array or its elements — the system manages "required" automatically based on field defaults.',
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
           patches: z
             .array(z.record(z.string(), z.unknown()))
             .describe(
-              'JSON Patch operations (RFC 6902). Example: [{"op":"add","path":"/properties/newField","value":{"type":"string","default":""}},{"op":"add","path":"/required/-","value":"newField"}]',
+              'JSON Patch operations (RFC 6902). Only patch fields under /properties. Do NOT patch /required — it is managed automatically. Example: [{"op":"add","path":"/properties/newField","value":{"type":"string","default":""}}]',
             ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
