@@ -55,7 +55,7 @@ Local storage writes a `{hash}.meta` file alongside each file containing only th
 
 ### File Immutability After Upload
 
-Once a file field reaches `status=uploaded`, only `fileName` and `url` can be modified. All other fields (`hash`, `size`, `mimeType`, etc.) are locked.
+Once a file field reaches `status=uploaded`, only `fileName` can be modified by the user. The `url` field is computed (overwritten by `computeRows` on every read) and excluded from the immutability check, but is not user-editable in practice. All other fields (`hash`, `size`, `mimeType`, etc.) are locked.
 
 **Why:** File metadata is derived from the binary content. Allowing arbitrary edits would break the content-hash invariant and could lead to data corruption (e.g. hash says X but actual file is Y).
 
@@ -390,7 +390,7 @@ When restoring row data (backup/rollback), `validate-file-data-for-restore` enfo
 
 ### Immutability After Upload
 
-Once a file has `status=uploaded`, only `fileName` and `url` can be modified. All other fields are locked. This prevents accidental data corruption when updating rows that contain file fields.
+Once a file has `status=uploaded`, only `fileName` can be meaningfully modified by the user. The `url` field is computed (overwritten by `computeRows` on every read), so it is excluded from the immutability check but not user-editable in practice. All other fields (`hash`, `size`, `mimeType`, `extension`, `width`, `height`, `status`, `fileId`) are locked — any attempt to change them is rejected.
 
 ## Module Registration
 
