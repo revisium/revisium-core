@@ -142,7 +142,8 @@
     "schema-utils": {
       "ajv": "^8.18.0"
     },
-    "file-type": "^21.3.2"
+    "file-type": "^21.3.2",
+    "effect": "^3.21.0"
   },
   "jest": {
     "modulePaths": [
