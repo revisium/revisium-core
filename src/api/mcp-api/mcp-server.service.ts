@@ -109,6 +109,13 @@ SEARCHING DATA:
 - Recommended workflow: search_rows to find rows, then get_row for full data of specific rows
 - Example: search_rows(revisionId, "TableEditor") finds all rows mentioning "TableEditor"
 
+UPDATING DATA — patch_row vs update_row:
+- update_row REPLACES all row data — you must send the complete object with ALL fields
+- patch_row updates ONLY the specified fields — much more efficient when changing 1-2 fields
+- Prefer patch_row when you know which fields to change: patch_row(revisionId, tableId, rowId, [{"op":"replace","path":"title","value":"New Title"}])
+- Use update_row only when replacing the entire row data
+- Same applies to batch operations: patch_rows vs update_rows
+
 IMPORTANT:
 - Project.rootBranch contains the default branch info
 - Always use branch.draftRevisionId for modifications
