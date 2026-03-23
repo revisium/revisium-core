@@ -6,3 +6,4 @@ Technical documentation for the Revisium Core backend.
 
 - [OAuth 2.1 & MCP Authentication](./oauth.md) - OAuth 2.1 Provider, PKCE, token lifecycle, stateless MCP transport
 - [Versioning System](./versioning.md) - Data model, draft operations, revert rules, hasChanges system, invariants
+- [File Storage](./file-storage.md) - Storage providers, file plugin, upload workflow, file serving, configuration
