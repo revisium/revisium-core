@@ -111,10 +111,13 @@ The provider is selected by `STORAGE_PROVIDER` env variable. Registration happen
 ```text
 STORAGE_PROVIDER=s3     → S3StorageService
 STORAGE_PROVIDER=local  → LocalStorageService
-STORAGE_PROVIDER=       → auto-detect:
+(unset or empty)        → auto-detect:
                            if S3_* env vars present → S3StorageService
                            otherwise               → NullStorageService (files disabled)
+(any other value)       → same as empty (falls through to auto-detect)
 ```
+
+The factory uses a `switch` with explicit `'s3'` and `'local'` cases; everything else (including unset, empty string, or any unrecognized value like `"null"`) falls through to the `default` branch which attempts S3 auto-detection and falls back to `NullStorageService`.
 
 Auto-detection exists for backwards compatibility with deployments that configured S3 before `STORAGE_PROVIDER` was introduced.
 
@@ -148,7 +151,7 @@ Stores files on the local filesystem. Designed for development and self-hosted d
 
 - **Storage path:** `STORAGE_LOCAL_PATH` (default: `./uploads`)
 - **File layout:** `{storagePath}/{hash}` + `{storagePath}/{hash}.meta` (MIME type sidecar)
-- **Public URL:** auto-generated as `http://localhost:{PORT}/files/{hash}` or custom `FILE_PLUGIN_PUBLIC_ENDPOINT`
+- **Public URL:** auto-generated as `http://localhost:{PORT}/files/{hash}` (where `PORT` is the application's HTTP port env var, default `8080`) or custom `FILE_PLUGIN_PUBLIC_ENDPOINT`
 - **File serving:** enabled (`canServeFiles=true`) — serves via built-in `GET /files/:key` endpoint
 - **Directory init:** creates storage directory on startup if it doesn't exist
 
@@ -260,7 +263,7 @@ Form field: "file" (binary)
    │  b. Fetches current row data + schema
    │  c. FilePlugin.uploadFile():
    │     - Finds FileValueStore by fileId
-   │     - Computes hash(buffer) via object-hash
+   │     - Computes content hash via `object-hash` library (deterministic within same Node.js version)
    │     - Extracts extension, mimeType
    │     - sharp(buffer).metadata() for images → width, height
    │     - Sets status = uploaded

@@ -40,3 +40,4 @@ lerna-debug.log*
 # db
 initial-backup.sql
 initial-backup.dump
+/.uploads
