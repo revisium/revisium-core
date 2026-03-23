@@ -52,16 +52,28 @@ cp .env.example .env
 
 ---
 
-## File Storage (S3)
+## File Storage
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `FILE_PLUGIN_PUBLIC_ENDPOINT` | - | Public URL for accessing uploaded files |
+| `STORAGE_PROVIDER` | - | Storage backend: `s3`, `local`, or empty (disabled). If not set, auto-detects S3 from `S3_*` vars for backwards compatibility |
+| `FILE_PLUGIN_PUBLIC_ENDPOINT` | - | Public URL prefix for file access. Required for `s3`. Auto-generated for `local` (`http://localhost:{PORT}/files`) |
+
+### S3 (`STORAGE_PROVIDER=s3`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `S3_ENDPOINT` | - | S3-compatible storage endpoint URL |
 | `S3_REGION` | - | S3 region |
 | `S3_BUCKET` | - | S3 bucket name |
 | `S3_ACCESS_KEY_ID` | - | S3 access key |
 | `S3_SECRET_ACCESS_KEY` | - | S3 secret key |
+
+### Local filesystem (`STORAGE_PROVIDER=local`)
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `STORAGE_LOCAL_PATH` | `./uploads` | Directory for file storage |
 
 ---
 

@@ -121,7 +121,6 @@ describe('UploadFileHandler', () => {
 
     expect(row).not.toBeNull();
     const fileHash = hash(command.data.file.buffer);
-    const publicEndpoint = process.env.FILE_PLUGIN_PUBLIC_ENDPOINT ?? '';
     expect((row?.data as typeof data).file).toStrictEqual({
       extension: 'png',
       fileId: data.file.fileId,
@@ -131,7 +130,7 @@ describe('UploadFileHandler', () => {
       mimeType: 'image/png',
       size: 10037,
       status: 'uploaded',
-      url: `${publicEndpoint}/${fileHash}`,
+      url: `http://test-files/${fileHash}`,
       width: 420,
     });
   });

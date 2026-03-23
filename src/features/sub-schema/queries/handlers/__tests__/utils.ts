@@ -15,7 +15,7 @@ import { SUB_SCHEMA_QUERIES_HANDLERS } from 'src/features/sub-schema/queries/han
 import { SubSchemaApiService } from 'src/features/sub-schema/sub-schema-api.service';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
-import { S3Service } from 'src/infrastructure/database/s3.service';
+import { STORAGE_SERVICE } from 'src/infrastructure/storage/storage.interface';
 import { TABLE_QUERIES_HANDLERS } from 'src/features/table/queries/handlers';
 import { BRANCH_QUERIES_HANDLERS } from 'src/features/branch/quieries/handlers';
 import { ViewsModule } from 'src/features/views/views.module';
@@ -112,12 +112,13 @@ export async function prepareSubSchemaTest(
 }
 
 export const createSubSchemaTestingModule = async () => {
-  const mockS3 = {
+  const mockStorage = {
     isAvailable: true,
+    canServeFiles: false,
     uploadFile: jest.fn().mockResolvedValue({
-      bucket: 'test-bucket',
       key: 'uploads/fake.png',
     }),
+    getPublicUrl: jest.fn((key: string) => `http://test-files/${key}`),
   };
 
   const module: TestingModule = await Test.createTestingModule({
@@ -140,8 +141,8 @@ export const createSubSchemaTestingModule = async () => {
       ...BRANCH_QUERIES_HANDLERS,
     ],
   })
-    .overrideProvider(S3Service)
-    .useValue(mockS3)
+    .overrideProvider(STORAGE_SERVICE)
+    .useValue(mockStorage)
     .compile();
 
   await module.init();
