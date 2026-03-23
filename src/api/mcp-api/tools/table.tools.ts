@@ -258,7 +258,7 @@ FOREIGN KEY RULES:
       'update_table',
       {
         description:
-          'Update table schema using JSON Patch. IMPORTANT: Always call getTableSchema first to understand current structure before updating. Do NOT manually add/remove/replace the "required" array or its elements — the system manages "required" automatically based on field defaults.',
+          'Update table schema using JSON Patch. IMPORTANT: Always call get_table_schema first to understand current structure before updating. Do NOT manually add/remove/replace the "required" array or its elements — the system manages "required" automatically based on field defaults.',
         inputSchema: {
           revisionId: z.string().describe('Draft revision ID'),
           tableId: z.string().describe('Table ID'),
