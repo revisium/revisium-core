@@ -12,6 +12,11 @@ export class RowRenamedEventHandler implements IEventHandler<RowRenamedEvent> {
       tableId: event.tableId,
       rowId: event.oldRowId,
     });
+    await this.rowCache.invalidateRow({
+      revisionId: event.revisionId,
+      tableId: event.tableId,
+      rowId: event.newRowId,
+    });
     await this.rowCache.invalidateGetRows(event);
   }
 }

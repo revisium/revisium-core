@@ -1,6 +1,6 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, TestingModule, TestingModuleBuilder } from '@nestjs/testing';
 import {
   getArraySchema,
   getNumberSchema,
@@ -113,7 +113,13 @@ export const getTestLinkedSchema = (tableId: string): JsonObjectSchema => ({
   additionalProperties: false,
 });
 
-export const createTestingModule = async () => {
+export interface CreateTestingModuleOptions {
+  overrides?: (builder: TestingModuleBuilder) => void;
+}
+
+export const createTestingModule = async (
+  options?: CreateTestingModuleOptions,
+) => {
   const mockS3 = {
     isAvailable: true,
     canServeFiles: false,
@@ -123,7 +129,7 @@ export const createTestingModule = async () => {
     getPublicUrl: jest.fn((key: string) => `http://test-files/${key}`),
   };
 
-  const module: TestingModule = await Test.createTestingModule({
+  const builder = Test.createTestingModule({
     imports: [
       DatabaseModule,
       CqrsModule,
@@ -171,8 +177,13 @@ export const createTestingModule = async () => {
     ],
   })
     .overrideProvider(STORAGE_SERVICE)
-    .useValue(mockS3)
-    .compile();
+    .useValue(mockS3);
+
+  if (options?.overrides) {
+    options.overrides(builder);
+  }
+
+  const module: TestingModule = await builder.compile();
 
   await module.init();
 
