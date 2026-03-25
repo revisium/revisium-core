@@ -11,5 +11,9 @@ export class TableRenamedEventHandler implements IEventHandler<TableRenamedEvent
       revisionId: event.revisionId,
       tableId: event.oldTableId,
     });
+    await this.rowCache.invalidateTableRelatives({
+      revisionId: event.revisionId,
+      tableId: event.newTableId,
+    });
   }
 }
