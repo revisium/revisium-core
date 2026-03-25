@@ -2,49 +2,48 @@ import { CommandBus } from '@nestjs/cqrs';
 import { prepareProject } from 'src/__tests__/utils/prepareProject';
 import { createTestingModule } from 'src/features/draft/commands/handlers/__tests__/utils';
 import {
-  RenameRowCommand,
-  RenameRowCommandReturnType,
-} from 'src/features/draft/commands/impl/rename-row.command';
+  RenameTableCommand,
+  RenameTableCommandReturnType,
+} from 'src/features/draft/commands/impl/rename-table.command';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { InMemoryBentoCache } from 'src/infrastructure/cache/handlers/__tests__/in-memory-bento-cache';
 import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
-describe('RowRenamedEventHandler (e2e cache)', () => {
-  const nextRowId = 'renamedRow';
+describe('TableRenamedEventHandler (e2e cache)', () => {
+  const nextTableId = 'renamedTable';
 
-  it('should invalidate cached null for new rowId after rename', async () => {
+  it('should invalidate cached null for row in renamed table', async () => {
     const { draftRevisionId, tableId, rowId } =
       await prepareProject(prismaService);
 
-    // 1. Cache null for the new rowId (row doesn't exist yet under this id)
+    // 1. Cache null for the row under the future table name
     const cachedNull = await rowApiService.getRow({
       revisionId: draftRevisionId,
-      tableId,
-      rowId: nextRowId,
+      tableId: nextTableId,
+      rowId,
     });
     expect(cachedNull).toBeNull();
 
-    // 2. Rename row: oldRowId -> nextRowId
-    const command = new RenameRowCommand({
+    // 2. Rename table: oldTableId -> nextTableId
+    const command = new RenameTableCommand({
       revisionId: draftRevisionId,
       tableId,
-      rowId,
-      nextRowId,
+      nextTableId,
     });
     await runTransaction(command);
 
-    // 3. getRow(nextRowId) must return actual data, not cached null
+    // 3. getRow under new table name must return data, not cached null
     const row = await rowApiService.getRow({
       revisionId: draftRevisionId,
-      tableId,
-      rowId: nextRowId,
+      tableId: nextTableId,
+      rowId,
     });
     expect(row).not.toBeNull();
-    expect(row?.id).toBe(nextRowId);
+    expect(row?.id).toBe(rowId);
 
-    // 4. Old rowId should not return stale cached data
+    // 4. getRow under old table name should return null
     const oldRow = await rowApiService.getRow({
       revisionId: draftRevisionId,
       tableId,
@@ -54,8 +53,8 @@ describe('RowRenamedEventHandler (e2e cache)', () => {
   });
 
   function runTransaction(
-    command: RenameRowCommand,
-  ): Promise<RenameRowCommandReturnType> {
+    command: RenameTableCommand,
+  ): Promise<RenameTableCommandReturnType> {
     return transactionService.run(async () => commandBus.execute(command));
   }
 
