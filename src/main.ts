@@ -22,7 +22,9 @@ async function bootstrap() {
 
   app.useBodyParser('json', { limit: bodyLimit });
   app.use(compression());
-  app.enableCors();
+  app.enableCors({
+    maxAge: 86400,
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({
