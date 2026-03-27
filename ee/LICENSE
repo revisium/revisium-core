@@ -1,0 +1,59 @@
+Revisium Enterprise License
+Copyright (c) 2025-2026 Anton Kashirov. All rights reserved.
+
+This license applies to all source code in any directory named "ee/" within
+this repository, including all subdirectories of such directories
+(the "Enterprise Software").
+
+1. GRANT OF LICENSE
+
+   Subject to the terms of this license, you are granted a limited,
+   non-exclusive, non-transferable license to use the Enterprise Software
+   solely for development, testing, and evaluation purposes.
+
+2. PRODUCTION USE
+
+   Use of the Enterprise Software in a production environment requires a
+   valid Revisium subscription. A "production environment" means any
+   deployment that serves end users or processes live business or customer
+   data, excluding development, testing, or evaluation instances. Permitted
+   user counts and usage limits are governed by the subscription agreement.
+   You may obtain a subscription at https://revisium.io or by contacting
+   sales@revisium.io.
+
+3. RESTRICTIONS
+
+   You may not:
+
+   (a) distribute, sublicense, sell, or otherwise make the Enterprise
+       Software available to third parties, except as part of a deployment
+       covered by a valid subscription;
+
+   (b) remove or alter any license notices or proprietary markings in the
+       Enterprise Software;
+
+   (c) use the Enterprise Software to provide a competing hosted or managed
+       service, regardless of subscription status. A "competing hosted or
+       managed service" means a service that offers substantially similar
+       functionality to Revisium's commercial offerings as its primary
+       value proposition.
+
+4. OWNERSHIP
+
+   The Enterprise Software is and remains the property of Anton Kashirov.
+   This license does not grant you any rights to trademarks, service marks,
+   or trade names.
+
+5. DISCLAIMER OF WARRANTY
+
+   THE ENTERPRISE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY
+   KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+6. LIMITATION OF LIABILITY
+
+   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+   CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+   TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+   ENTERPRISE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE ENTERPRISE
+   SOFTWARE.
