@@ -94,4 +94,4 @@ CQRS pattern separates read and write operations:
 
 ## License
 
-Apache 2.0 — See [Revisium](https://github.com/revisium/revisium) for full license.
+Apache 2.0 — see [LICENSING.md](./LICENSING.md) for details. Code in `ee/` directories is licensed under the [Revisium Enterprise License](./ee/LICENSE).
