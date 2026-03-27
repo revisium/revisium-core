@@ -9,12 +9,13 @@ All code in this repository is licensed under the [Apache License 2.0](./LICENSE
 
 ## Enterprise Code — Revisium Enterprise License
 
-Code in `ee/` directories (at any level of the directory tree) is licensed under the
+All source code in any directory named `ee/` within this repository, including all
+subdirectories of such directories, is licensed under the
 [Revisium Enterprise License](./ee/LICENSE).
 
 - **Source-available**: enterprise code is readable and open for inspection.
-- **Development and testing**: permitted without a license key.
+- **Development, testing, and evaluation**: permitted without a subscription.
 - **Production use**: requires a valid Revisium subscription.
-- **Distribution**: not permitted without written agreement.
+- **Distribution**: permitted only as part of a deployment covered by a valid subscription.
 
 See [ee/LICENSE](./ee/LICENSE) for the full terms.

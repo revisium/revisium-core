@@ -1,8 +1,9 @@
 Revisium Enterprise License
 Copyright (c) 2025-2026 Anton Kashirov. All rights reserved.
 
-This license applies to the source code in this directory and all its
-subdirectories (the "Enterprise Software").
+This license applies to all source code in any directory named "ee/" within
+this repository, including all subdirectories of such directories
+(the "Enterprise Software").
 
 1. GRANT OF LICENSE
 
@@ -13,8 +14,11 @@ subdirectories (the "Enterprise Software").
 2. PRODUCTION USE
 
    Use of the Enterprise Software in a production environment requires a
-   valid Revisium subscription with the appropriate number of users. You
-   may obtain a subscription at https://revisium.io or by contacting
+   valid Revisium subscription. A "production environment" means any
+   deployment that serves end users or processes live business or customer
+   data, excluding development, testing, or evaluation instances. Permitted
+   user counts and usage limits are governed by the subscription agreement.
+   You may obtain a subscription at https://revisium.io or by contacting
    sales@revisium.io.
 
 3. RESTRICTIONS
@@ -29,7 +33,10 @@ subdirectories (the "Enterprise Software").
        Enterprise Software;
 
    (c) use the Enterprise Software to provide a competing hosted or managed
-       service.
+       service, regardless of subscription status. A "competing hosted or
+       managed service" means a service that offers substantially similar
+       functionality to Revisium's commercial offerings as its primary
+       value proposition.
 
 4. OWNERSHIP
 
