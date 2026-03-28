@@ -67,9 +67,13 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
+        const maxFirst =
+          includeSchema || includeRowCount
+            ? Math.min(first ?? 50, 50)
+            : (first ?? 100);
         const result = await this.tableApi.getTables({
           revisionId,
-          first: first ?? 100,
+          first: maxFirst,
           after,
         });
 
@@ -333,14 +337,23 @@ FOREIGN KEY RULES:
           this.uriResolver,
           { mutation: true },
         );
+        const permissions = [
+          {
+            action: PermissionAction.create,
+            subject: PermissionSubject.Table,
+          },
+          ...(rows?.length
+            ? [
+                {
+                  action: PermissionAction.create,
+                  subject: PermissionSubject.Row,
+                },
+              ]
+            : []),
+        ];
         await auth.checkPermissionByRevision(
           revisionId,
-          [
-            {
-              action: PermissionAction.create,
-              subject: PermissionSubject.Table,
-            },
-          ],
+          permissions,
           auth.userId,
         );
         const tableResult = await this.draftApi.apiCreateTable({
@@ -354,15 +367,20 @@ FOREIGN KEY RULES:
         };
 
         if (rows?.length) {
-          const rowsResult = await this.draftApi.apiCreateRows({
-            revisionId,
-            tableId,
-            rows: rows.map((r) => ({
-              rowId: r.rowId,
-              data: r.data as Prisma.InputJsonValue,
-            })),
-          });
-          response.rowsCreated = rowsResult.rows.length;
+          try {
+            const rowsResult = await this.draftApi.apiCreateRows({
+              revisionId,
+              tableId,
+              rows: rows.map((r) => ({
+                rowId: r.rowId,
+                data: r.data as Prisma.InputJsonValue,
+              })),
+            });
+            response.rowsCreated = rowsResult.rows.length;
+          } catch (error) {
+            response.rowsError =
+              error instanceof Error ? error.message : String(error);
+          }
         }
 
         return {
