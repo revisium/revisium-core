@@ -186,4 +186,19 @@ describe('resolveBranchParams', () => {
       'Either "uri" or all of "organizationId", "projectName", "branchName" are required',
     );
   });
+
+  it('throws when URI has revision suffix', () => {
+    expect(() => resolveBranchParams({ uri: 'org/proj/master:head' })).toThrow(
+      'URI for branch operations must not include a revision suffix',
+    );
+  });
+
+  it('allows URI with explicit :draft', () => {
+    const result = resolveBranchParams({ uri: 'org/proj/master:draft' });
+    expect(result).toEqual({
+      organizationId: 'org',
+      projectName: 'proj',
+      branchName: 'master',
+    });
+  });
 });

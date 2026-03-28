@@ -64,6 +64,11 @@ export function resolveBranchParams(input: BranchParamsInput): BranchParams {
 
   if (uri) {
     const parsed = parseRevisiumUri(uri);
+    if (parsed.revision !== 'draft') {
+      throw new Error(
+        `URI for branch operations must not include a revision suffix. Got "${parsed.revision}".`,
+      );
+    }
     return {
       organizationId: parsed.organizationId,
       projectName: parsed.projectName,
