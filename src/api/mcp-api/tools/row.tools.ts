@@ -26,22 +26,12 @@ export function compactMatch(m: {
   return { path: m.path, highlight: m.highlight };
 }
 
-interface RowResult {
-  id?: string;
-  formulaErrors?: { fieldPath: string; error: string }[];
-  [key: string]: unknown;
-}
-
-interface MutationResult {
-  row?: RowResult;
-  rows?: RowResult[];
-  [key: string]: unknown;
-}
-
-function compactMutationResult(result: MutationResult) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function compactMutationResult(result: any) {
   if (result.rows) {
     return {
-      rows: result.rows.map((r) => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      rows: result.rows.map((r: any) => ({
         id: r.id,
         ...(r.formulaErrors?.length ? { formulaErrors: r.formulaErrors } : {}),
       })),
