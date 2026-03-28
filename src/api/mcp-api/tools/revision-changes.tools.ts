@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
-import { UriRevisionResolver, resolveRevisionId, revisionIdOrUri } from '../uri';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  revisionIdOrUri,
+} from '../uri';
 
 export class RevisionChangesTools implements McpToolRegistrar {
   constructor(
@@ -29,7 +33,10 @@ export class RevisionChangesTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, compareWithRevisionId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -71,8 +78,17 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId: rawRevisionId, uri, compareWithRevisionId, first, after }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        compareWithRevisionId,
+        first,
+        after,
+      }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -116,8 +132,17 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId: rawRevisionId, uri, compareWithRevisionId, first, after }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        compareWithRevisionId,
+        first,
+        after,
+      }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [

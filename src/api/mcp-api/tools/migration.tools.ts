@@ -31,7 +31,10 @@ export class MigrationTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -67,7 +70,11 @@ export class MigrationTools implements McpToolRegistrar {
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, migrations }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [

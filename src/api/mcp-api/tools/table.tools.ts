@@ -33,7 +33,10 @@ export class TableTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, first, after }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -68,7 +71,10 @@ export class TableTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -99,7 +105,10 @@ export class TableTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -136,7 +145,10 @@ export class TableTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -250,7 +262,11 @@ FOREIGN KEY RULES:
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, schema }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -291,7 +307,11 @@ FOREIGN KEY RULES:
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, patches }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -327,7 +347,11 @@ FOREIGN KEY RULES:
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, nextTableId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -362,7 +386,11 @@ FOREIGN KEY RULES:
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [

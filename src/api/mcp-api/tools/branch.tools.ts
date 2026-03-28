@@ -248,10 +248,20 @@ export class BranchTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ organizationId: rawOrgId, projectName: rawProjName, branchName: rawBranchName, uri }) => {
-        const { organizationId, projectName, branchName } = resolveBranchParams({
-          organizationId: rawOrgId, projectName: rawProjName, branchName: rawBranchName, uri,
-        });
+      async ({
+        organizationId: rawOrgId,
+        projectName: rawProjName,
+        branchName: rawBranchName,
+        uri,
+      }) => {
+        const { organizationId, projectName, branchName } = resolveBranchParams(
+          {
+            organizationId: rawOrgId,
+            projectName: rawProjName,
+            branchName: rawBranchName,
+            uri,
+          },
+        );
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,

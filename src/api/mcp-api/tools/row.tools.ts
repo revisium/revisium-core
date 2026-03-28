@@ -145,8 +145,19 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId: rawRevisionId, uri, tableId, first, after, where, orderBy }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        tableId,
+        first,
+        after,
+        where,
+        orderBy,
+      }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -200,8 +211,18 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId: rawRevisionId, uri, query, first, after, includeRowData }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        query,
+        first,
+        after,
+        includeRowData,
+      }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -249,7 +270,10 @@ RESPONSE may include:
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -301,7 +325,11 @@ FILE FIELDS:
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowId, data }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
@@ -335,7 +363,11 @@ FILE FIELDS:
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowId, data }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -373,7 +405,11 @@ FILE FIELDS:
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowId, patches }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -423,7 +459,11 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rows }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
@@ -468,7 +508,11 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rows }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -513,7 +557,11 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rows }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -550,7 +598,11 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowIds }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
@@ -598,7 +650,10 @@ IMPORTANT for tables with computed fields (x-formula):
         first,
         after,
       }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -638,7 +693,11 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowId, nextRowId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -670,7 +729,11 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
       async ({ revisionId: rawRevisionId, uri, tableId, rowId }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],

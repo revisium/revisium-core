@@ -3,7 +3,9 @@ import { BranchApiService } from 'src/features/branch/branch-api.service';
 
 describe('UriRevisionResolver', () => {
   let resolver: UriRevisionResolver;
-  let branchApi: jest.Mocked<Pick<BranchApiService, 'getBranch' | 'getDraftRevision' | 'getHeadRevision'>>;
+  let branchApi: jest.Mocked<
+    Pick<BranchApiService, 'getBranch' | 'getDraftRevision' | 'getHeadRevision'>
+  >;
 
   beforeEach(() => {
     branchApi = {
@@ -11,7 +13,9 @@ describe('UriRevisionResolver', () => {
       getDraftRevision: jest.fn().mockResolvedValue({ id: 'draft-rev-id' }),
       getHeadRevision: jest.fn().mockResolvedValue({ id: 'head-rev-id' }),
     };
-    resolver = new UriRevisionResolver(branchApi as unknown as BranchApiService);
+    resolver = new UriRevisionResolver(
+      branchApi as unknown as BranchApiService,
+    );
   });
 
   it('resolves draft revision', async () => {

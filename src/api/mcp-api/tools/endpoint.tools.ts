@@ -4,7 +4,11 @@ import { z } from 'zod';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
-import { UriRevisionResolver, resolveRevisionId, revisionIdOrUri } from '../uri';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  revisionIdOrUri,
+} from '../uri';
 
 const EndpointTypeEnum = z.enum(['GRAPHQL', 'REST_API']);
 
@@ -212,7 +216,10 @@ export class EndpointTools implements McpToolRegistrar {
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
       async ({ revisionId: rawRevisionId, uri, type }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [

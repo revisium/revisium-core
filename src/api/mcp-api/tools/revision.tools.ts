@@ -30,7 +30,10 @@ export class RevisionTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -61,7 +64,10 @@ export class RevisionTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ revisionId: rawRevisionId, uri }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -96,10 +102,21 @@ export class RevisionTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ organizationId: rawOrgId, projectName: rawProjName, branchName: rawBranchName, uri, comment }) => {
-        const { organizationId, projectName, branchName } = resolveBranchParams({
-          organizationId: rawOrgId, projectName: rawProjName, branchName: rawBranchName, uri,
-        });
+      async ({
+        organizationId: rawOrgId,
+        projectName: rawProjName,
+        branchName: rawBranchName,
+        uri,
+        comment,
+      }) => {
+        const { organizationId, projectName, branchName } = resolveBranchParams(
+          {
+            organizationId: rawOrgId,
+            projectName: rawProjName,
+            branchName: rawBranchName,
+            uri,
+          },
+        );
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,

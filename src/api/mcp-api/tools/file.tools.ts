@@ -3,7 +3,11 @@ import { z } from 'zod';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
-import { UriRevisionResolver, resolveRevisionId, draftRevisionIdOrUri } from '../uri';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  draftRevisionIdOrUri,
+} from '../uri';
 
 export class FileTools implements McpToolRegistrar {
   constructor(
@@ -58,7 +62,11 @@ If you get "Storage is not configured" error, the server needs S3 or local stora
         mimeType,
         fileData,
       }) => {
-        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver, { mutation: true });
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],

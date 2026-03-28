@@ -103,21 +103,17 @@ describe('resolveRevisionId', () => {
 
     it('throws for mutation with :head URI', async () => {
       await expect(
-        resolveRevisionId(
-          { uri: 'org/proj/master:head' },
-          resolver,
-          { mutation: true },
-        ),
+        resolveRevisionId({ uri: 'org/proj/master:head' }, resolver, {
+          mutation: true,
+        }),
       ).rejects.toThrow('Mutations are only allowed on draft revision');
     });
 
     it('throws for mutation with specific revisionId URI', async () => {
       await expect(
-        resolveRevisionId(
-          { uri: 'org/proj/master:abc-123' },
-          resolver,
-          { mutation: true },
-        ),
+        resolveRevisionId({ uri: 'org/proj/master:abc-123' }, resolver, {
+          mutation: true,
+        }),
       ).rejects.toThrow('Mutations are only allowed on draft revision');
     });
 
@@ -172,7 +168,9 @@ describe('resolveBranchParams', () => {
         uri: 'org/proj/master',
         organizationId: 'org',
       }),
-    ).toThrow('Provide either "uri" or "organizationId/projectName/branchName", not both');
+    ).toThrow(
+      'Provide either "uri" or "organizationId/projectName/branchName", not both',
+    );
   });
 
   it('throws when neither provided', () => {
