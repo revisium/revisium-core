@@ -1,8 +1,9 @@
-import { CommandHandler } from '@nestjs/cqrs';
+import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import {
   InternalCreateRowCommand,
   InternalCreateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-create-row.command';
+import { RowCreatedEvent } from 'src/infrastructure/cache';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
@@ -16,9 +17,16 @@ export class InternalCreateRowHandler extends DraftHandler<
   constructor(
     protected readonly transactionService: TransactionPrismaService,
     protected readonly draftContext: DraftContextService,
+    protected readonly eventBus: EventBus,
     protected readonly draftRevisionApi: DraftRevisionApiService,
   ) {
     super(transactionService, draftContext);
+  }
+
+  protected async postActions({ data }: InternalCreateRowCommand) {
+    await this.eventBus.publishAll([
+      new RowCreatedEvent(data.revisionId, data.tableId, data.rowId),
+    ]);
   }
 
   protected async handler({
