@@ -4,6 +4,7 @@ import { Interval } from '@nestjs/schedule';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { LicensePayload } from './license-payload.interface';
 
+const LICENSING_URL = 'https://licensing.revisium.io';
 const GRACE_PERIOD_DAYS = 7;
 const REVALIDATION_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
 const FETCH_TIMEOUT_MS = 5000;
@@ -36,35 +37,29 @@ export class LicenseService implements OnModuleInit {
   }
 
   async validate(key: string): Promise<void> {
-    const licensingUrl = this.configService.get<string>(
-      'REVISIUM_LICENSING_URL',
-    );
+    try {
+      const response = await fetch(`${LICENSING_URL}/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+      });
 
-    if (licensingUrl) {
-      try {
-        const response = await fetch(`${licensingUrl}/validate`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key }),
-          signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        });
-
-        if (!response.ok) {
-          throw new Error(`License server returned ${response.status}`);
-        }
-
-        const payload: LicensePayload = await response.json();
-        this.license = payload;
-        await this.persistToDb(payload);
-        this.logger.log(
-          `License validated: features=[${payload.features.join(', ')}], expires=${new Date(payload.exp * 1000).toISOString()}`,
-        );
-        return;
-      } catch (error) {
-        this.logger.warn(
-          `License server unreachable: ${error instanceof Error ? error.message : error}`,
-        );
+      if (!response.ok) {
+        throw new Error(`License server returned ${response.status}`);
       }
+
+      const payload: LicensePayload = await response.json();
+      this.license = payload;
+      await this.persistToDb(payload);
+      this.logger.log(
+        `License validated: features=[${payload.features.join(', ')}], expires=${new Date(payload.exp * 1000).toISOString()}`,
+      );
+      return;
+    } catch (error) {
+      this.logger.warn(
+        `License server unreachable: ${error instanceof Error ? error.message : error}`,
+      );
     }
 
     // Fallback: load from database
