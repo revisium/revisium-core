@@ -15,6 +15,7 @@ import { UserApiService } from 'src/features/user/user-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { McpUserContext } from './mcp-auth.service';
 import { McpAuthHelpers, McpPermissionCheck } from './types';
+import { UriRevisionResolver } from './uri';
 
 import {
   SchemaResource,
@@ -57,6 +58,7 @@ export class McpServerService {
   private readonly userTools: UserTools;
   private readonly endpointTools: EndpointTools;
   private readonly fileTools: FileTools;
+  private readonly uriResolver: UriRevisionResolver;
 
   constructor(
     private readonly configService: ConfigService,
@@ -94,20 +96,28 @@ Organization → Project → Branch → Revision → Table → Row
 - Table: has schema (JSON Schema) and rows within a revision
 - Row: data record identified by rowId within a table
 
+URI PARAMETER:
+Most tools accept a "uri" parameter as an alternative to "revisionId". The server resolves it internally — no need to call get_branch first.
+- Format: "org/project/branch[:revision]" or full "revisium://host/org/project/branch[:revision]"
+- Revision values: "draft" (default if omitted), "head" (committed), or specific revision ID
+- Mutations only allow draft — :head or :specificId will error
+- Provide either "uri" or "revisionId", not both
+
 TYPICAL WORKFLOW:
-1. get_project(organizationId, projectName) - returns project with rootBranch info
-2. get_branch(organizationId, projectName, branchName) - get branch details including draftRevisionId
-3. Use draftRevisionId for: get_tables, get_rows, create_row, update_row, etc.
-4. get_revision_changes(draftRevisionId) - review pending changes before commit
-5. create_revision() - only after user approval
+1. Use uri parameter directly: get_rows(uri: "org/project/branch", tableId: "...")
+2. For mutations: create_row(uri: "org/project/branch", tableId: "...", rowId: "...", data: {...})
+3. Review changes: get_revision_changes(uri: "org/project/branch")
+4. Commit: create_revision(organizationId, projectName, branchName, comment) - only after user approval
+5. Read committed state: get_rows(uri: "org/project/branch:head", tableId: "...")
+
+Legacy: revisionId parameter still works for all tools.
 
 SEARCHING DATA:
-- search_rows(revisionId, query) - full-text search across ALL tables and ALL fields in a revision
+- search_rows(uri: "org/project/branch", query: "keyword") - full-text search across ALL tables and ALL fields
 - No tableId needed - searches everything
 - By default returns compact results: rowId, tableId, and matches (field path, value, highlight) - saves tokens
 - Set includeRowData=true to get full row data in results (use sparingly for large datasets)
 - Recommended workflow: search_rows to find rows, then get_row for full data of specific rows
-- Example: search_rows(revisionId, "TableEditor") finds all rows mentioning "TableEditor"
 
 UPDATING DATA — patch_row vs update_row:
 - update_row REPLACES all row data — you must send the complete object with ALL fields
@@ -117,9 +127,9 @@ UPDATING DATA — patch_row vs update_row:
 - Same applies to batch operations: patch_rows vs update_rows
 
 IMPORTANT:
-- Project.rootBranch contains the default branch info
-- Always use branch.draftRevisionId for modifications
-- branch.headRevisionId is the last committed state (read-only)
+- Prefer using "uri" parameter over "revisionId" — it avoids the extra get_branch step
+- Project.rootBranch contains the default branch info (when using legacy revisionId flow)
+- Mutations require draft revision — use uri without :revision suffix or with :draft
 
 GRAPHQL ENDPOINTS:
 When working with GraphQL endpoints, use dot notation for path in where filters:
@@ -139,22 +149,26 @@ PERMISSIONS:
     this.migrationResource = new MigrationResource();
     this.fileResource = new FileResource();
 
+    this.uriResolver = new UriRevisionResolver(this.branchApi);
+
     this.organizationTools = new OrganizationTools(this.organizationApi);
     this.projectTools = new ProjectTools(this.projectApi, this.branchApi);
     this.branchTools = new BranchTools(this.branchApi);
-    this.tableTools = new TableTools(this.tableApi, this.draftApi);
-    this.rowTools = new RowTools(this.rowApi, this.draftApi);
-    this.revisionTools = new RevisionTools(this.revisionsApi, this.draftApi);
+    this.tableTools = new TableTools(this.tableApi, this.draftApi, this.uriResolver);
+    this.rowTools = new RowTools(this.rowApi, this.draftApi, this.uriResolver);
+    this.revisionTools = new RevisionTools(this.revisionsApi, this.draftApi, this.uriResolver);
     this.revisionChangesTools = new RevisionChangesTools(
       this.revisionChangesApi,
+      this.uriResolver,
     );
-    this.migrationTools = new MigrationTools(this.revisionsApi, this.draftApi);
+    this.migrationTools = new MigrationTools(this.revisionsApi, this.draftApi, this.uriResolver);
     this.userTools = new UserTools(this.userApi);
     this.endpointTools = new EndpointTools(
       this.endpointApi,
       this.configService.get<string>('ENDPOINT_SERVICE_URL'),
+      this.uriResolver,
     );
-    this.fileTools = new FileTools(this.draftApi);
+    this.fileTools = new FileTools(this.draftApi, this.uriResolver);
   }
 
   public getInstructions(): string {

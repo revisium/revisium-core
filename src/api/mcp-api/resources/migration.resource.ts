@@ -48,14 +48,14 @@ export class MigrationResource implements McpResourceRegistrar {
           description: 'Create a new table with schema',
           fields: {
             changeType: '"init"',
-            id: 'Unique migration ID',
+            id: 'Unique migration ID (MUST be ISO-8601 datetime string, e.g. "2026-03-28T10:00:00.000Z"). IDs are compared chronologically against existing migrations — non-datetime IDs will cause errors.',
             tableId: 'Table name to create',
             hash: 'Schema hash for integrity',
             schema: 'Full JSON Schema for the table',
           },
           example: {
             changeType: 'init',
-            id: 'mig_001_create_products',
+            id: '2026-03-28T10:00:00.000Z',
             tableId: 'products',
             hash: 'abc123...',
             schema: {
@@ -81,14 +81,14 @@ export class MigrationResource implements McpResourceRegistrar {
           description: 'Update existing table schema using JSON Patch',
           fields: {
             changeType: '"update"',
-            id: 'Unique migration ID',
+            id: 'Unique migration ID (ISO-8601 datetime)',
             tableId: 'Table name to update',
             hash: 'Expected schema hash before update',
             patches: 'Array of JSON Patch operations',
           },
           example: {
             changeType: 'update',
-            id: 'mig_002_add_description',
+            id: '2026-03-28T10:01:00.000Z',
             tableId: 'products',
             hash: 'abc123...',
             patches: [
@@ -109,13 +109,13 @@ export class MigrationResource implements McpResourceRegistrar {
           description: 'Rename a table',
           fields: {
             changeType: '"rename"',
-            id: 'Unique migration ID',
+            id: 'Unique migration ID (ISO-8601 datetime)',
             tableId: 'Current table name',
             nextTableId: 'New table name',
           },
           example: {
             changeType: 'rename',
-            id: 'mig_003_rename_products',
+            id: '2026-03-28T10:02:00.000Z',
             tableId: 'products',
             nextTableId: 'catalog_items',
           },
@@ -124,12 +124,12 @@ export class MigrationResource implements McpResourceRegistrar {
           description: 'Remove a table',
           fields: {
             changeType: '"remove"',
-            id: 'Unique migration ID',
+            id: 'Unique migration ID (ISO-8601 datetime)',
             tableId: 'Table name to remove',
           },
           example: {
             changeType: 'remove',
-            id: 'mig_004_remove_legacy',
+            id: '2026-03-28T10:03:00.000Z',
             tableId: 'legacy_products',
           },
         },
@@ -158,14 +158,14 @@ export class MigrationResource implements McpResourceRegistrar {
           failed: 'Migration failed - check error field',
         },
         example: [
-          { id: 'mig_001', status: 'applied' },
-          { id: 'mig_002', status: 'applied' },
-          { id: 'mig_003', status: 'skipped' },
-          { id: 'mig_004', status: 'failed', error: 'Table not found' },
+          { id: '2026-03-28T10:00:00.000Z', status: 'applied' },
+          { id: '2026-03-28T10:01:00.000Z', status: 'applied' },
+          { id: '2026-03-28T10:02:00.000Z', status: 'skipped' },
+          { id: '2026-03-28T10:03:00.000Z', status: 'failed', error: 'Table not found' },
         ],
       },
       bestPractices: [
-        'Use descriptive migration IDs (e.g., "mig_001_create_users")',
+        'Migration IDs MUST be ISO-8601 datetime strings (e.g., "2026-03-28T10:00:00.000Z"). Use incrementing timestamps for ordering.',
         'Apply migrations in order - init before update',
         'Test migrations on staging before production',
         'Keep migrations immutable once applied to any environment',

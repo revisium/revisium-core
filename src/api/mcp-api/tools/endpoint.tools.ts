@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import { UriRevisionResolver, resolveRevisionId, revisionIdOrUri } from '../uri';
 
 const EndpointTypeEnum = z.enum(['GRAPHQL', 'REST_API']);
 
@@ -80,7 +81,8 @@ export class EndpointTools implements McpToolRegistrar {
 
   constructor(
     private readonly endpointApi: EndpointApiService,
-    private readonly endpointServiceUrl?: string,
+    private readonly endpointServiceUrl: string | undefined,
+    private readonly uriResolver: UriRevisionResolver,
   ) {}
 
   private getEndpointServiceUrl(): string {
@@ -202,14 +204,15 @@ export class EndpointTools implements McpToolRegistrar {
         description:
           'Create a new endpoint for a revision. Endpoints expose revision data via GraphQL or REST API.',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID to expose'),
+          ...revisionIdOrUri,
           type: EndpointTypeEnum.describe(
             'Endpoint type: GRAPHQL for GraphQL API, REST_API for REST/OpenAPI',
           ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, type }) => {
+      async ({ revisionId: rawRevisionId, uri, type }) => {
+        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -344,7 +347,7 @@ export class EndpointTools implements McpToolRegistrar {
                 type: 'text' as const,
                 text: JSON.stringify(
                   {
-                    error: `Failed to fetch GraphQL schema: ${message}`,
+                    error: `Failed to fetch GraphQL schema: ${message}. Make sure the endpoint service is running and accessible.`,
                     url,
                   },
                   null,
@@ -432,7 +435,7 @@ export class EndpointTools implements McpToolRegistrar {
                 type: 'text' as const,
                 text: JSON.stringify(
                   {
-                    error: `Failed to fetch OpenAPI spec: ${message}`,
+                    error: `Failed to fetch OpenAPI spec: ${message}. Make sure the endpoint service is running and accessible.`,
                     url,
                   },
                   null,

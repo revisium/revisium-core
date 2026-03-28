@@ -3,9 +3,13 @@ import { z } from 'zod';
 import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import { UriRevisionResolver, resolveRevisionId, revisionIdOrUri } from '../uri';
 
 export class RevisionChangesTools implements McpToolRegistrar {
-  constructor(private readonly revisionChangesApi: RevisionChangesApiService) {}
+  constructor(
+    private readonly revisionChangesApi: RevisionChangesApiService,
+    private readonly uriResolver: UriRevisionResolver,
+  ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
@@ -14,11 +18,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         description:
           'Get summary of all changes in a revision (tables and rows added/modified/removed). Use this to see what changed in draft vs head.',
         inputSchema: {
-          revisionId: z
-            .string()
-            .describe(
-              'Revision ID (use draftRevisionId to see uncommitted changes)',
-            ),
+          ...revisionIdOrUri,
           compareWithRevisionId: z
             .string()
             .optional()
@@ -28,7 +28,8 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, compareWithRevisionId }) => {
+      async ({ revisionId: rawRevisionId, uri, compareWithRevisionId }) => {
+        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -57,7 +58,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         description:
           'Get detailed list of changed tables in a revision, including schema changes.',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           compareWithRevisionId: z
             .string()
             .optional()
@@ -70,7 +71,8 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, compareWithRevisionId, first, after }) => {
+      async ({ revisionId: rawRevisionId, uri, compareWithRevisionId, first, after }) => {
+        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -101,7 +103,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
         description:
           'Get detailed list of changed rows in a revision, including field-level diffs.',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           compareWithRevisionId: z
             .string()
             .optional()
@@ -114,7 +116,8 @@ export class RevisionChangesTools implements McpToolRegistrar {
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, compareWithRevisionId, first, after }) => {
+      async ({ revisionId: rawRevisionId, uri, compareWithRevisionId, first, after }) => {
+        const revisionId = await resolveRevisionId({ revisionId: rawRevisionId, uri }, this.uriResolver);
         await auth.checkPermissionByRevision(
           revisionId,
           [
