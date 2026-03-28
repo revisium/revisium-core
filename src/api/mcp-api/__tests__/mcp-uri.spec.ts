@@ -297,4 +297,161 @@ describe('MCP URI parameter', () => {
       expect(data.result.isError).toBeFalsy();
     });
   });
+
+  describe('compact mutation responses', () => {
+    it('create_row returns compact { id }', async () => {
+      const data = await callTool(app, token, 'create_row', {
+        uri: shortUri(),
+        tableId: fixture.project.tableId,
+        rowId: 'compact-test',
+        data: { ver: 42 },
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.id).toBe('compact-test');
+      expect(content.versionId).toBeUndefined();
+      expect(content.hash).toBeUndefined();
+      expect(content.data).toBeUndefined();
+    });
+
+    it('create_rows returns compact { rows: [{ id }] }', async () => {
+      const data = await callTool(app, token, 'create_rows', {
+        uri: shortUri(),
+        tableId: fixture.project.tableId,
+        rows: [
+          { rowId: 'compact-bulk-1', data: { ver: 1 } },
+          { rowId: 'compact-bulk-2', data: { ver: 2 } },
+        ],
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.rows).toHaveLength(2);
+      expect(content.rows[0].id).toBe('compact-bulk-1');
+      expect(content.rows[0].versionId).toBeUndefined();
+      expect(content.rows[0].data).toBeUndefined();
+    });
+
+    it('patch_row returns compact { id }', async () => {
+      await callTool(app, token, 'create_row', {
+        uri: shortUri(),
+        tableId: fixture.project.tableId,
+        rowId: 'patch-compact',
+        data: { ver: 1 },
+      });
+
+      const data = await callTool(app, token, 'patch_row', {
+        uri: shortUri(),
+        tableId: fixture.project.tableId,
+        rowId: 'patch-compact',
+        patches: [{ op: 'replace', path: 'ver', value: 99 }],
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.id).toBe('patch-compact');
+      expect(content.data).toBeUndefined();
+    });
+  });
+
+  describe('get_tables enrichment', () => {
+    it('get_tables with includeSchema returns schemas', async () => {
+      const data = await callTool(app, token, 'get_tables', {
+        uri: shortUri(),
+        includeSchema: true,
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges.length).toBeGreaterThan(0);
+      const table = content.edges[0].node;
+      expect(table.schema).toBeDefined();
+      expect(table.schema.type).toBe('object');
+      expect(table.schema.properties).toBeDefined();
+    });
+
+    it('get_tables with includeRowCount returns counts', async () => {
+      const data = await callTool(app, token, 'get_tables', {
+        uri: shortUri(),
+        includeRowCount: true,
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.edges.length).toBeGreaterThan(0);
+      expect(typeof content.edges[0].node.rowCount).toBe('number');
+    });
+
+    it('get_tables with both includeSchema and includeRowCount', async () => {
+      const data = await callTool(app, token, 'get_tables', {
+        uri: shortUri(),
+        includeSchema: true,
+        includeRowCount: true,
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      const table = content.edges[0].node;
+      expect(table.schema).toBeDefined();
+      expect(typeof table.rowCount).toBe('number');
+    });
+  });
+
+  describe('create_table with rows', () => {
+    it('creates table and rows in one call', async () => {
+      const tableId = `table-with-rows-${Date.now()}`;
+      const data = await callTool(app, token, 'create_table', {
+        uri: shortUri(),
+        tableId,
+        schema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: '' },
+          },
+          additionalProperties: false,
+          required: ['name'],
+        },
+        rows: [
+          { rowId: 'row-1', data: { name: 'First' } },
+          { rowId: 'row-2', data: { name: 'Second' } },
+        ],
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.tableId).toBe(tableId);
+      expect(content.rowsCreated).toBe(2);
+
+      // Verify rows exist
+      const rowsData = await callTool(app, token, 'get_rows', {
+        uri: shortUri(),
+        tableId,
+      });
+      const rowsContent = JSON.parse(rowsData.result.content[0].text);
+      expect(rowsContent.totalCount).toBe(2);
+    });
+
+    it('returns table even if rows fail', async () => {
+      const tableId = `table-rows-fail-${Date.now()}`;
+      const data = await callTool(app, token, 'create_table', {
+        uri: shortUri(),
+        tableId,
+        schema: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', default: '' },
+          },
+          additionalProperties: false,
+          required: ['name'],
+        },
+        rows: [{ rowId: 'bad-row', data: { nonexistent: 'field' } }],
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.tableId).toBe(tableId);
+      expect(content.rowsError).toBeDefined();
+    });
+  });
 });
