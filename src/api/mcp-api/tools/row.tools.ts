@@ -26,12 +26,13 @@ export function compactMatch(m: {
   return { path: m.path, highlight: m.highlight };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function compactMutationResult(result: any) {
+function compactMutationResult(result: {
+  row?: { id: string; formulaErrors?: unknown[] } | null;
+  rows?: { id: string; formulaErrors?: unknown[] }[];
+}) {
   if (result.rows) {
     return {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      rows: result.rows.map((r: any) => ({
+      rows: result.rows.map((r) => ({
         id: r.id,
         ...(r.formulaErrors?.length ? { formulaErrors: r.formulaErrors } : {}),
       })),
