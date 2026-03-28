@@ -454,4 +454,98 @@ describe('MCP URI parameter', () => {
       expect(content.rowsError).toBeDefined();
     });
   });
+
+  describe('auto-fill formula defaults', () => {
+    it('create_row without formula field succeeds', async () => {
+      const tableId = `formula-auto-${Date.now()}`;
+      await callTool(app, token, 'create_table', {
+        uri: shortUri(),
+        tableId,
+        schema: {
+          type: 'object',
+          properties: {
+            price: { type: 'number', default: 0 },
+            quantity: { type: 'number', default: 0 },
+            total: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'price * quantity' },
+            },
+          },
+          additionalProperties: false,
+          required: ['price', 'quantity', 'total'],
+        },
+      });
+
+      // Create row WITHOUT passing "total" — should auto-fill
+      const data = await callTool(app, token, 'create_row', {
+        uri: shortUri(),
+        tableId,
+        rowId: 'auto-fill-test',
+        data: { price: 25, quantity: 4 },
+      });
+
+      expect(data.result.isError).toBeFalsy();
+
+      // Verify formula computed correctly
+      const rowData = await callTool(app, token, 'get_row', {
+        uri: shortUri(),
+        tableId,
+        rowId: 'auto-fill-test',
+      });
+      const row = JSON.parse(rowData.result.content[0].text);
+      expect(row.data.total).toBe(100);
+      expect(row.data.price).toBe(25);
+      expect(row.data.quantity).toBe(4);
+    });
+
+    it('create_rows without formula fields succeeds', async () => {
+      const tableId = `formula-auto-bulk-${Date.now()}`;
+      await callTool(app, token, 'create_table', {
+        uri: shortUri(),
+        tableId,
+        schema: {
+          type: 'object',
+          properties: {
+            a: { type: 'number', default: 0 },
+            b: { type: 'number', default: 0 },
+            sum: {
+              type: 'number',
+              default: 0,
+              readOnly: true,
+              'x-formula': { version: 1, expression: 'a + b' },
+            },
+          },
+          additionalProperties: false,
+          required: ['a', 'b', 'sum'],
+        },
+      });
+
+      const data = await callTool(app, token, 'create_rows', {
+        uri: shortUri(),
+        tableId,
+        rows: [
+          { rowId: 'r1', data: { a: 10, b: 20 } },
+          { rowId: 'r2', data: { a: 3, b: 7 } },
+        ],
+      });
+
+      expect(data.result.isError).toBeFalsy();
+
+      const r1 = await callTool(app, token, 'get_row', {
+        uri: shortUri(),
+        tableId,
+        rowId: 'r1',
+      });
+      expect(JSON.parse(r1.result.content[0].text).data.sum).toBe(30);
+
+      const r2 = await callTool(app, token, 'get_row', {
+        uri: shortUri(),
+        tableId,
+        rowId: 'r2',
+      });
+      expect(JSON.parse(r2.result.content[0].text).data.sum).toBe(10);
+    });
+  });
 });

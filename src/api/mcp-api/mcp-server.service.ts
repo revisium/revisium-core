@@ -161,7 +161,12 @@ PERMISSIONS:
       this.draftApi,
       this.uriResolver,
     );
-    this.rowTools = new RowTools(this.rowApi, this.draftApi, this.uriResolver);
+    this.rowTools = new RowTools(
+      this.rowApi,
+      this.draftApi,
+      this.uriResolver,
+      this.tableApi,
+    );
     this.revisionTools = new RevisionTools(
       this.revisionsApi,
       this.draftApi,
