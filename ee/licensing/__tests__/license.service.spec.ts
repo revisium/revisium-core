@@ -20,7 +20,7 @@ describe('LicenseService', () => {
 
   const expiredPayload: LicensePayload = {
     ...validPayload,
-    exp: Math.floor(Date.now() / 1000) - 86400, // 1 day ago
+    exp: Math.floor(Date.now() / 1000) - 8 * 86400, // 8 days ago (beyond 7-day grace)
   };
 
   const createService = async (
@@ -53,12 +53,15 @@ describe('LicenseService', () => {
     return module.get(LicenseService);
   };
 
+  const originalFetch = global.fetch;
+
   beforeEach(async () => {
     service = await createService();
     global.fetch = jest.fn();
   });
 
   afterEach(() => {
+    global.fetch = originalFetch;
     jest.restoreAllMocks();
   });
 
@@ -75,7 +78,6 @@ describe('LicenseService', () => {
 
       service = await createService({
         REVISIUM_LICENSE_KEY: 'rev_lic_test',
-        REVISIUM_LICENSING_URL: 'http://licensing:3000',
       });
       await service.onModuleInit();
 
@@ -91,7 +93,6 @@ describe('LicenseService', () => {
 
       service = await createService({
         REVISIUM_LICENSE_KEY: 'rev_lic_test',
-        REVISIUM_LICENSING_URL: 'http://licensing:3000',
       });
       await service.onModuleInit();
 
@@ -100,7 +101,7 @@ describe('LicenseService', () => {
   });
 
   describe('expired license', () => {
-    it('should return false when license is expired (degrade to noop)', async () => {
+    it('should return false when license is expired beyond grace period', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(expiredPayload),
@@ -108,11 +109,29 @@ describe('LicenseService', () => {
 
       service = await createService({
         REVISIUM_LICENSE_KEY: 'rev_lic_test',
-        REVISIUM_LICENSING_URL: 'http://licensing:3000',
       });
       await service.onModuleInit();
 
       expect(service.hasFeature('billing')).toBe(false);
+    });
+
+    it('should return true when license is expired but within grace period', async () => {
+      const recentlyExpired: LicensePayload = {
+        ...validPayload,
+        exp: Math.floor(Date.now() / 1000) - 86400, // 1 day ago (within 7-day grace)
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(recentlyExpired),
+      });
+
+      service = await createService({
+        REVISIUM_LICENSE_KEY: 'rev_lic_test',
+      });
+      await service.onModuleInit();
+
+      expect(service.hasFeature('billing')).toBe(true);
     });
   });
 
@@ -125,7 +144,6 @@ describe('LicenseService', () => {
 
       service = await createService({
         REVISIUM_LICENSE_KEY: 'rev_lic_test',
-        REVISIUM_LICENSING_URL: 'http://licensing:3000',
       });
       await service.onModuleInit();
 

@@ -49,7 +49,10 @@ export class LicenseService implements OnModuleInit {
         throw new Error(`License server returned ${response.status}`);
       }
 
-      const payload: LicensePayload = await response.json();
+      const payload: unknown = await response.json();
+      if (!this.isValidPayload(payload)) {
+        throw new Error('Invalid license payload format');
+      }
       this.license = payload;
       await this.persistToDb(payload);
       this.logger.log(
@@ -78,7 +81,7 @@ export class LicenseService implements OnModuleInit {
 
   hasFeature(feature: string): boolean {
     if (!this.license) return false;
-    if (this.isExpired()) return false;
+    if (!this.isWithinGracePeriod(this.license)) return false;
     return this.license.features.includes(feature);
   }
 
@@ -86,8 +89,17 @@ export class LicenseService implements OnModuleInit {
     return this.license;
   }
 
-  private isExpired(): boolean {
-    return this.license ? this.license.exp < Date.now() / 1000 : true;
+  private isValidPayload(value: unknown): value is LicensePayload {
+    if (!value || typeof value !== 'object') return false;
+    const v = value as Record<string, unknown>;
+    return (
+      typeof v.sub === 'string' &&
+      Array.isArray(v.features) &&
+      v.features.every((f) => typeof f === 'string') &&
+      typeof v.exp === 'number' &&
+      typeof v.iat === 'number' &&
+      typeof v.iss === 'string'
+    );
   }
 
   private isWithinGracePeriod(payload: LicensePayload): boolean {
@@ -122,7 +134,11 @@ export class LicenseService implements OnModuleInit {
         where: { id: 'current' },
       });
       if (!cached) return null;
-      return cached.payload as unknown as LicensePayload;
+      if (!this.isValidPayload(cached.payload)) {
+        this.logger.warn('Cached license payload is invalid');
+        return null;
+      }
+      return cached.payload;
     } catch (error) {
       this.logger.warn(
         `Failed to load license from database: ${error instanceof Error ? error.message : error}`,

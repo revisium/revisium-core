@@ -27,7 +27,7 @@ MCP server: `revisium-cloud-io`
 
 ### Connecting
 
-```
+```text
 get_branch("revisium-kb", "kb-revisium-core", "master")
 → returns headRevisionId (committed) and draftRevisionId (working state)
 ```
