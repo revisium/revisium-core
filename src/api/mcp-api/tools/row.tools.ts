@@ -352,7 +352,7 @@ FILE FIELDS:
           data: z
             .record(z.string(), z.unknown())
             .describe(
-              'Row data matching table schema. For foreignKey fields, use a valid rowId from the referenced table. Empty string is NOT valid and will cause an error. For computed (x-formula) fields, include with default value.',
+              'Row data matching table schema. For foreignKey fields, use a valid rowId from the referenced table. Empty string is NOT valid and will cause an error. Computed (x-formula) fields can be omitted — auto-filled.',
             ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
@@ -497,7 +497,7 @@ COMPUTED FIELDS (x-formula):
                 data: z
                   .record(z.string(), z.unknown())
                   .describe(
-                    'Row data matching table schema. For computed (x-formula) fields, include with default value.',
+                    'Row data matching table schema. Computed (x-formula) fields can be omitted — auto-filled.',
                   ),
               }),
             )
