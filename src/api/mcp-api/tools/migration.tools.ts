@@ -5,11 +5,18 @@ import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  revisionIdOrUri,
+  draftRevisionIdOrUri,
+} from '../uri';
 
 export class MigrationTools implements McpToolRegistrar {
   constructor(
     private readonly revisionsApi: RevisionsApiService,
     private readonly draftApi: DraftApiService,
+    private readonly uriResolver: UriRevisionResolver,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -19,15 +26,15 @@ export class MigrationTools implements McpToolRegistrar {
         description:
           'Get all migrations from a revision. Migrations are schema change records that can be applied to other Revisium instances. Read revisium://specs/migration resource for migration format details.',
         inputSchema: {
-          revisionId: z
-            .string()
-            .describe(
-              'Revision ID to get migrations from. Use headRevisionId for stable migrations.',
-            ),
+          ...revisionIdOrUri,
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId }) => {
+      async ({ revisionId: rawRevisionId, uri }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -51,20 +58,23 @@ export class MigrationTools implements McpToolRegistrar {
       'apply_migrations',
       {
         description:
-          'Apply migrations to a draft revision. Use this to sync schema changes from another Revisium instance. Read revisium://specs/migration resource first.',
+          'Apply migrations to a draft revision. Use this to sync schema changes from another Revisium instance. Migration IDs MUST be ISO-8601 datetime strings. Use the exact same format returned by get_migrations.',
         inputSchema: {
-          revisionId: z
-            .string()
-            .describe('Draft revision ID to apply migrations to'),
+          ...draftRevisionIdOrUri,
           migrations: z
             .array(z.record(z.string(), z.unknown()))
             .describe(
-              'Array of migration objects. Each migration has changeType (init/update/rename/remove), id, tableId, and type-specific fields.',
+              'Array of migration objects from get_migrations. Each has: changeType (init/update/rename/remove), id (ISO-8601 datetime), tableId, and type-specific fields (schema for init, patches for update, nextTableId for rename). Pass the objects exactly as returned by get_migrations.',
             ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, migrations }) => {
+      async ({ revisionId: rawRevisionId, uri, migrations }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [

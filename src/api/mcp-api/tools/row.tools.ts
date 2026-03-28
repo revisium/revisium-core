@@ -8,6 +8,12 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { SearchRowsResponse } from 'src/features/row/queries/impl';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  revisionIdOrUri,
+  draftRevisionIdOrUri,
+} from '../uri';
 
 export function compactMatch(m: {
   path: string;
@@ -41,6 +47,7 @@ export class RowTools implements McpToolRegistrar {
   constructor(
     private readonly rowApi: RowApiService,
     private readonly draftApi: DraftApiService,
+    private readonly uriResolver: UriRevisionResolver,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -80,7 +87,7 @@ RESPONSE may include:
   - fieldPath: Path to the field that failed
   - error: Error message describing the failure`,
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           first: z.number().optional().describe('Number of items'),
           after: z.string().optional().describe('Cursor'),
@@ -138,7 +145,19 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId, first, after, where, orderBy }) => {
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        tableId,
+        first,
+        after,
+        where,
+        orderBy,
+      }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -172,7 +191,7 @@ RESPONSE may include:
         description:
           'Full-text search across all fields of all rows in a revision. Searches across ALL tables - no tableId needed. By default returns compact results: rowId, tableId, and matches (field path and either highlight or value, not both) - saves tokens. Set includeRowData=true to get full row data in results (use sparingly for large datasets). Recommended workflow: search_rows to find rows, then get_row for full data of specific rows.',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           query: z
             .string()
             .min(1)
@@ -192,7 +211,18 @@ RESPONSE may include:
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, query, first, after, includeRowData }) => {
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        query,
+        first,
+        after,
+        includeRowData,
+      }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -233,13 +263,17 @@ RESPONSE may include:
   - fieldPath: Path to the field that failed (e.g., "total" or "items[0].subtotal")
   - error: Error message describing the failure`,
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowId: z.string().describe('Row ID'),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId, rowId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -272,9 +306,14 @@ IMPORTANT for tables with computed fields (x-formula):
 
 Example:
 - Schema: { "price": {...}, "quantity": {...}, "total": { "type": "number", "default": 0, "readOnly": true, "x-formula": {...} } }
-- Row data: { "price": 100, "quantity": 5, "total": 0 }  // total will be computed as 500`,
+- Row data: { "price": 100, "quantity": 5, "total": 0 }  // total will be computed as 500
+
+FILE FIELDS:
+- For file fields ($ref in schema), pass an empty file object: { "status": "", "fileId": "", "url": "", "fileName": "", "hash": "", "extension": "", "mimeType": "", "size": 0, "width": 0, "height": 0 }
+- The server will auto-set status to "ready" and generate a fileId
+- After row creation, use upload_file with the generated fileId to upload actual file data`,
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowId: z.string().describe('Row ID (URL-friendly)'),
           data: z
@@ -285,7 +324,12 @@ Example:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, data }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowId, data }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
@@ -311,14 +355,19 @@ Example:
         description:
           'Update a row by REPLACING all data. You must send the complete object with ALL fields. If you only need to change a few fields, use patch_row instead — it is more efficient and avoids accidentally overwriting other fields.',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowId: z.string().describe('Row ID'),
           data: z.record(z.string(), z.unknown()).describe('New row data'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, data }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowId, data }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -344,7 +393,7 @@ Example:
         description:
           'Partially update a row — change only specific fields without touching the rest. Preferred over update_row when modifying 1-2 fields. Uses JSON Patch format with ONLY "replace" operation. Path is field name WITHOUT leading slash.',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowId: z.string().describe('Row ID'),
           patches: z
@@ -355,7 +404,12 @@ Example:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, patches }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowId, patches }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -386,7 +440,7 @@ IMPORTANT for tables with computed fields (x-formula):
 - The server will overwrite with the computed result
 - Example: If schema has "total" with x-formula and default: 0, pass "total": 0 in each row's data`,
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rows: z
             .array(
@@ -404,7 +458,12 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rows }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rows }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
@@ -432,7 +491,7 @@ IMPORTANT for tables with computed fields (x-formula):
         description:
           'Update multiple rows by REPLACING all data for each row. If you only need to change a few fields, use patch_rows instead.',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rows: z
             .array(
@@ -448,7 +507,12 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rows }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rows }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -476,7 +540,7 @@ IMPORTANT for tables with computed fields (x-formula):
         description:
           'Partially update multiple rows — change only specific fields. Preferred over update_rows when modifying a few fields per row. Uses JSON Patch with ONLY "replace" operation.',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rows: z
             .array(
@@ -492,7 +556,12 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rows }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rows }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -519,7 +588,7 @@ IMPORTANT for tables with computed fields (x-formula):
       {
         description: 'Remove multiple rows',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowIds: z
             .array(z.string())
@@ -528,7 +597,12 @@ IMPORTANT for tables with computed fields (x-formula):
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ revisionId, tableId, rowIds }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowIds }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
@@ -553,7 +627,7 @@ IMPORTANT for tables with computed fields (x-formula):
         description:
           'Get rows that reference a specific row via foreign key. Returns rows from a specified table that have a foreign key pointing to the given row.',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           tableId: z.string().describe('Table ID of the referenced row'),
           rowId: z.string().describe('Row ID being referenced'),
           foreignKeyByTableId: z
@@ -568,13 +642,18 @@ IMPORTANT for tables with computed fields (x-formula):
         annotations: { readOnlyHint: true },
       },
       async ({
-        revisionId,
+        revisionId: rawRevisionId,
+        uri,
         tableId,
         rowId,
         foreignKeyByTableId,
         first,
         after,
       }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -606,14 +685,19 @@ IMPORTANT for tables with computed fields (x-formula):
       {
         description: 'Rename a row (change row ID)',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowId: z.string().describe('Current row ID'),
           nextRowId: z.string().describe('New row ID'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, rowId, nextRowId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowId, nextRowId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
@@ -638,13 +722,18 @@ IMPORTANT for tables with computed fields (x-formula):
       {
         description: 'Remove a row',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           rowId: z.string().describe('Row ID to remove'),
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ revisionId, tableId, rowId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, rowId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],

@@ -6,11 +6,18 @@ import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonPatch } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  revisionIdOrUri,
+  draftRevisionIdOrUri,
+} from '../uri';
 
 export class TableTools implements McpToolRegistrar {
   constructor(
     private readonly tableApi: TableApiService,
     private readonly draftApi: DraftApiService,
+    private readonly uriResolver: UriRevisionResolver,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -19,13 +26,17 @@ export class TableTools implements McpToolRegistrar {
       {
         description: 'Get all tables in a revision',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           first: z.number().optional().describe('Number of items'),
           after: z.string().optional().describe('Cursor'),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, first, after }) => {
+      async ({ revisionId: rawRevisionId, uri, first, after }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -54,12 +65,16 @@ export class TableTools implements McpToolRegistrar {
       {
         description: 'Get a specific table',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           tableId: z.string().describe('Table ID'),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -84,12 +99,16 @@ export class TableTools implements McpToolRegistrar {
       {
         description: 'Count rows in a table',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           tableId: z.string().describe('Table ID'),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -120,12 +139,16 @@ export class TableTools implements McpToolRegistrar {
       {
         description: 'Get schema of a table',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
           tableId: z.string().describe('Table ID'),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId, tableId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -209,16 +232,24 @@ DEFAULT VALUE RULES:
 - boolean: "default": false (REQUIRED)
 - array: NO default (not allowed, only "type" and "items")
 - object: NO default (not allowed, will cause validation error)
-- $ref (File): NO default (not allowed, only $ref and description)
+- $ref (File): NO default. Use { "$ref": "urn:jsonschema:io:revisium:file-schema:1.0.0" } — this is the ONLY valid $ref value
+
+FILE FIELD RULES:
+- File fields use $ref with exact value: "urn:jsonschema:io:revisium:file-schema:1.0.0"
+- Single file: { "$ref": "urn:jsonschema:io:revisium:file-schema:1.0.0", "description": "Photo" }
+- Array of files: { "type": "array", "items": { "$ref": "urn:jsonschema:io:revisium:file-schema:1.0.0" } }
+- Do NOT use $ref: "File" or any other value
 
 FOREIGN KEY RULES:
-- foreignKey can be on any string field: root level, inside nested objects, inside array items (both object and string items)
-- Array of string foreignKeys example: { "type": "array", "items": { "type": "string", "default": "", "foreignKey": "other-table" } }
+- Add "foreignKey" property to any string field: { "type": "string", "default": "", "foreignKey": "target-table-id" }
+- Root level example: { "authorRef": { "type": "string", "default": "", "foreignKey": "users" } }
+- Inside nested objects: same syntax on any string field
+- Array of string foreignKeys: { "type": "array", "items": { "type": "string", "default": "", "foreignKey": "other-table" } }
 - foreignKey value MUST be a valid rowId — empty string is NOT allowed
 - foreignKey and x-formula CANNOT coexist on the same field
 - Self-references (foreignKey pointing to same table) are NOT supported`,
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z
             .string()
             .describe('Table ID (URL-friendly, e.g., "posts", "categories")'),
@@ -230,7 +261,12 @@ FOREIGN KEY RULES:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, schema }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, schema }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -260,7 +296,7 @@ FOREIGN KEY RULES:
         description:
           'Update table schema using JSON Patch. IMPORTANT: Always call get_table_schema first to understand current structure before updating. Do NOT manually add/remove/replace the "required" array or its elements — the system manages "required" automatically based on field defaults.',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
           patches: z
             .array(z.record(z.string(), z.unknown()))
@@ -270,7 +306,12 @@ FOREIGN KEY RULES:
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, patches }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, patches }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -299,13 +340,18 @@ FOREIGN KEY RULES:
       {
         description: 'Rename a table',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Current table ID'),
           nextTableId: z.string().describe('New table ID'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId, tableId, nextTableId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, nextTableId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -334,12 +380,17 @@ FOREIGN KEY RULES:
       {
         description: 'Remove a table',
         inputSchema: {
-          revisionId: z.string().describe('Draft revision ID'),
+          ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID to remove'),
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ revisionId, tableId }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+          { mutation: true },
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import { resolveBranchParams, branchParamsOrUri } from '../uri';
 
 export class BranchTools implements McpToolRegistrar {
   constructor(private readonly branchApi: BranchApiService) {}
@@ -243,13 +244,24 @@ export class BranchTools implements McpToolRegistrar {
       {
         description: 'Revert all uncommitted changes in a branch',
         inputSchema: {
-          organizationId: z.string().describe('Organization ID'),
-          projectName: z.string().describe('Project name'),
-          branchName: z.string().describe('Branch name'),
+          ...branchParamsOrUri,
         },
         annotations: { readOnlyHint: false, destructiveHint: true },
       },
-      async ({ organizationId, projectName, branchName }) => {
+      async ({
+        organizationId: rawOrgId,
+        projectName: rawProjName,
+        branchName: rawBranchName,
+        uri,
+      }) => {
+        const { organizationId, projectName, branchName } = resolveBranchParams(
+          {
+            organizationId: rawOrgId,
+            projectName: rawProjName,
+            branchName: rawBranchName,
+            uri,
+          },
+        );
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,

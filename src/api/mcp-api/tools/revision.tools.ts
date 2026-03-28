@@ -4,11 +4,19 @@ import { RevisionsApiService } from 'src/features/revision/revisions-api.service
 import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
+import {
+  UriRevisionResolver,
+  resolveRevisionId,
+  revisionIdOrUri,
+  resolveBranchParams,
+  branchParamsOrUri,
+} from '../uri';
 
 export class RevisionTools implements McpToolRegistrar {
   constructor(
     private readonly revisionsApi: RevisionsApiService,
     private readonly draftApi: DraftApiService,
+    private readonly uriResolver: UriRevisionResolver,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -17,11 +25,15 @@ export class RevisionTools implements McpToolRegistrar {
       {
         description: 'Get revision details',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId }) => {
+      async ({ revisionId: rawRevisionId, uri }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -47,11 +59,15 @@ export class RevisionTools implements McpToolRegistrar {
         description:
           'Get the parent revision of a given revision. Returns null if the revision is the root (first) revision.',
         inputSchema: {
-          revisionId: z.string().describe('Revision ID'),
+          ...revisionIdOrUri,
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId }) => {
+      async ({ revisionId: rawRevisionId, uri }) => {
+        const revisionId = await resolveRevisionId(
+          { revisionId: rawRevisionId, uri },
+          this.uriResolver,
+        );
         await auth.checkPermissionByRevision(
           revisionId,
           [
@@ -81,14 +97,26 @@ export class RevisionTools implements McpToolRegistrar {
         description:
           'Commit changes in a draft revision. CRITICAL: ALWAYS ask user for permission before committing. Never commit automatically - head/draft may point to different environments and committing without permission can break production.',
         inputSchema: {
-          organizationId: z.string().describe('Organization ID'),
-          projectName: z.string().describe('Project name'),
-          branchName: z.string().describe('Branch name'),
+          ...branchParamsOrUri,
           comment: z.string().optional().describe('Commit comment'),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ organizationId, projectName, branchName, comment }) => {
+      async ({
+        organizationId: rawOrgId,
+        projectName: rawProjName,
+        branchName: rawBranchName,
+        uri,
+        comment,
+      }) => {
+        const { organizationId, projectName, branchName } = resolveBranchParams(
+          {
+            organizationId: rawOrgId,
+            projectName: rawProjName,
+            branchName: rawBranchName,
+            uri,
+          },
+        );
         await auth.checkPermissionByOrganizationProject(
           organizationId,
           projectName,
