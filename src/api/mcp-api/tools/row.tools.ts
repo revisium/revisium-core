@@ -46,7 +46,9 @@ function compactMutationResult(result: {
         : {}),
     };
   }
-  return { ok: true };
+  throw new Error(
+    'Unexpected mutation result shape: missing both "row" and "rows"',
+  );
 }
 
 export function toCompactSearchResult(result: SearchRowsResponse) {
