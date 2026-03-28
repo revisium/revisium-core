@@ -136,7 +136,18 @@ export class RevisionTools implements McpToolRegistrar {
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(
+                {
+                  committed: true,
+                  revisionId: result.id,
+                  comment: result.comment,
+                },
+                null,
+                2,
+              ),
+            },
           ],
         };
       },

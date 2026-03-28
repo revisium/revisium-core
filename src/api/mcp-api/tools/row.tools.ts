@@ -9,6 +9,12 @@ import { SearchRowsResponse } from 'src/features/row/queries/impl';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 import {
+  compactRow,
+  compactRowEdges,
+  fillFormulaDefaults,
+} from './mcp-helpers';
+import { TableApiService } from 'src/features/table/table-api.service';
+import {
   UriRevisionResolver,
   resolveRevisionId,
   revisionIdOrUri,
@@ -73,6 +79,7 @@ export class RowTools implements McpToolRegistrar {
     private readonly rowApi: RowApiService,
     private readonly draftApi: DraftApiService,
     private readonly uriResolver: UriRevisionResolver,
+    private readonly tableApi: TableApiService,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -204,7 +211,10 @@ RESPONSE may include:
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactRowEdges(result), null, 2),
+            },
           ],
         };
       },
@@ -312,7 +322,10 @@ RESPONSE may include:
         const result = await this.rowApi.getRow({ revisionId, tableId, rowId });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(result ? compactRow(result) : null, null, 2),
+            },
           ],
         };
       },
@@ -360,11 +373,19 @@ FILE FIELDS:
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
           auth.userId,
         );
+        const schema = await this.tableApi.resolveTableSchema({
+          revisionId,
+          tableId,
+        });
+        const filledData = fillFormulaDefaults(
+          schema as Record<string, unknown>,
+          data as Record<string, unknown>,
+        );
         const result = await this.draftApi.apiCreateRow({
           revisionId,
           tableId,
           rowId,
-          data: data as Prisma.InputJsonValue,
+          data: filledData as Prisma.InputJsonValue,
         });
         return {
           content: [
@@ -503,12 +524,19 @@ IMPORTANT for tables with computed fields (x-formula):
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
           auth.userId,
         );
+        const schema = await this.tableApi.resolveTableSchema({
+          revisionId,
+          tableId,
+        });
         const result = await this.draftApi.apiCreateRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
             rowId: r.rowId,
-            data: r.data as Prisma.InputJsonValue,
+            data: fillFormulaDefaults(
+              schema as Record<string, unknown>,
+              r.data as Record<string, unknown>,
+            ) as Prisma.InputJsonValue,
           })),
         });
         return {
@@ -717,7 +745,10 @@ IMPORTANT for tables with computed fields (x-formula):
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactRowEdges(result), null, 2),
+            },
           ],
         };
       },

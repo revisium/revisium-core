@@ -423,14 +423,17 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        const result = await this.draftApi.apiUpdateTable({
+        await this.draftApi.apiUpdateTable({
           revisionId,
           tableId,
           patches: patches as JsonPatch[],
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ tableId }, null, 2),
+            },
           ],
         };
       },
@@ -463,14 +466,17 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        const result = await this.draftApi.apiRenameTable({
+        await this.draftApi.apiRenameTable({
           revisionId,
           tableId,
           nextTableId,
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ tableId: nextTableId }, null, 2),
+            },
           ],
         };
       },
@@ -502,13 +508,16 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        const result = await this.draftApi.apiRemoveTable({
+        await this.draftApi.apiRemoveTable({
           revisionId,
           tableId,
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ tableId }, null, 2),
+            },
           ],
         };
       },

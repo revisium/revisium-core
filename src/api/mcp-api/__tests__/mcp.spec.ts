@@ -328,8 +328,8 @@ describe('MCP API', () => {
       const data = parseResponse(res);
       expect(data.result.isError).toBeFalsy();
       const content = JSON.parse(data.result.content[0].text);
-      expect(content.isHead).toBe(true);
-      expect(content.isDraft).toBe(false);
+      expect(content.committed).toBe(true);
+      expect(content.revisionId).toBeDefined();
       expect(content.comment).toBe('test commit');
     });
 
@@ -791,7 +791,7 @@ describe('MCP API', () => {
           method: 'tools/call',
           params: {
             name: 'get_parent_revision',
-            arguments: { revisionId: newRevision.id },
+            arguments: { revisionId: newRevision.revisionId },
           },
         },
         token,
