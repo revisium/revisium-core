@@ -24,15 +24,35 @@ export class TableTools implements McpToolRegistrar {
     server.registerTool(
       'get_tables',
       {
-        description: 'Get all tables in a revision',
+        description:
+          'Get all tables in a revision. Use includeSchema=true to get schemas inline (saves N extra get_table_schema calls). Use includeRowCount=true to get row counts.',
         inputSchema: {
           ...revisionIdOrUri,
           first: z.number().optional().describe('Number of items'),
           after: z.string().optional().describe('Cursor'),
+          includeSchema: z
+            .boolean()
+            .optional()
+            .describe(
+              'Include JSON Schema for each table (default false). Saves extra get_table_schema calls.',
+            ),
+          includeRowCount: z
+            .boolean()
+            .optional()
+            .describe(
+              'Include row count for each table (default false). Saves extra count_rows calls.',
+            ),
         },
         annotations: { readOnlyHint: true },
       },
-      async ({ revisionId: rawRevisionId, uri, first, after }) => {
+      async ({
+        revisionId: rawRevisionId,
+        uri,
+        first,
+        after,
+        includeSchema,
+        includeRowCount,
+      }) => {
         const revisionId = await resolveRevisionId(
           { revisionId: rawRevisionId, uri },
           this.uriResolver,
@@ -52,6 +72,38 @@ export class TableTools implements McpToolRegistrar {
           first: first ?? 100,
           after,
         });
+
+        if (includeSchema || includeRowCount) {
+          const enriched = await Promise.all(
+            result.edges.map(async (edge) => {
+              const enrichments: Record<string, unknown> = {};
+              if (includeSchema) {
+                enrichments.schema = await this.tableApi.resolveTableSchema({
+                  revisionId,
+                  tableId: edge.node.id,
+                });
+              }
+              if (includeRowCount) {
+                enrichments.rowCount = await this.tableApi.getCountRowsInTable({
+                  tableVersionId: edge.node.versionId,
+                });
+              }
+              return {
+                ...edge,
+                node: { ...edge.node, ...enrichments },
+              };
+            }),
+          );
+          return {
+            content: [
+              {
+                type: 'text' as const,
+                text: JSON.stringify({ ...result, edges: enriched }, null, 2),
+              },
+            ],
+          };
+        }
+
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -258,10 +310,24 @@ FOREIGN KEY RULES:
             .describe(
               'JSON Schema for the table. Must have type:object, properties with defaults, additionalProperties:false, required array. Computed fields MUST be in required array. See schema-specification resource for examples.',
             ),
+          rows: z
+            .array(
+              z.object({
+                rowId: z.string().describe('Row ID (URL-friendly)'),
+                data: z
+                  .record(z.string(), z.unknown())
+                  .describe('Row data matching table schema'),
+              }),
+            )
+            .max(1000)
+            .optional()
+            .describe(
+              'Optional: create rows immediately after table creation (max 1000). Saves a separate create_rows call.',
+            ),
         },
         annotations: { readOnlyHint: false, destructiveHint: false },
       },
-      async ({ revisionId: rawRevisionId, uri, tableId, schema }) => {
+      async ({ revisionId: rawRevisionId, uri, tableId, schema, rows }) => {
         const revisionId = await resolveRevisionId(
           { revisionId: rawRevisionId, uri },
           this.uriResolver,
@@ -277,14 +343,31 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        const result = await this.draftApi.apiCreateTable({
+        const tableResult = await this.draftApi.apiCreateTable({
           revisionId,
           tableId,
           schema: schema as Prisma.InputJsonValue,
         });
+
+        const response: Record<string, unknown> = {
+          tableId: tableResult.table.id,
+        };
+
+        if (rows?.length) {
+          const rowsResult = await this.draftApi.apiCreateRows({
+            revisionId,
+            tableId,
+            rows: rows.map((r) => ({
+              rowId: r.rowId,
+              data: r.data as Prisma.InputJsonValue,
+            })),
+          });
+          response.rowsCreated = rowsResult.rows.length;
+        }
+
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            { type: 'text' as const, text: JSON.stringify(response, null, 2) },
           ],
         };
       },

@@ -26,6 +26,38 @@ export function compactMatch(m: {
   return { path: m.path, highlight: m.highlight };
 }
 
+interface RowResult {
+  id?: string;
+  formulaErrors?: { fieldPath: string; error: string }[];
+  [key: string]: unknown;
+}
+
+interface MutationResult {
+  row?: RowResult;
+  rows?: RowResult[];
+  [key: string]: unknown;
+}
+
+function compactMutationResult(result: MutationResult) {
+  if (result.rows) {
+    return {
+      rows: result.rows.map((r) => ({
+        id: r.id,
+        ...(r.formulaErrors?.length ? { formulaErrors: r.formulaErrors } : {}),
+      })),
+    };
+  }
+  if (result.row) {
+    return {
+      id: result.row.id,
+      ...(result.row.formulaErrors?.length
+        ? { formulaErrors: result.row.formulaErrors }
+        : {}),
+    };
+  }
+  return { ok: true };
+}
+
 export function toCompactSearchResult(result: SearchRowsResponse) {
   return {
     ...result,
@@ -343,7 +375,10 @@ FILE FIELDS:
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },
@@ -381,7 +416,10 @@ FILE FIELDS:
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },
@@ -423,7 +461,10 @@ FILE FIELDS:
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },
@@ -479,7 +520,10 @@ IMPORTANT for tables with computed fields (x-formula):
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },
@@ -528,7 +572,10 @@ IMPORTANT for tables with computed fields (x-formula):
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },
@@ -577,7 +624,10 @@ IMPORTANT for tables with computed fields (x-formula):
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },
@@ -711,7 +761,10 @@ IMPORTANT for tables with computed fields (x-formula):
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify(compactMutationResult(result), null, 2),
+            },
           ],
         };
       },

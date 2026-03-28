@@ -104,11 +104,13 @@ Most tools accept a "uri" parameter as an alternative to "revisionId". The serve
 - Provide either "uri" or "revisionId", not both
 
 TYPICAL WORKFLOW:
-1. Use uri parameter directly: get_rows(uri: "org/project/branch", tableId: "...")
-2. For mutations: create_row(uri: "org/project/branch", tableId: "...", rowId: "...", data: {...})
-3. Review changes: get_revision_changes(uri: "org/project/branch")
-4. Commit: create_revision(organizationId, projectName, branchName, comment) - only after user approval
-5. Read committed state: get_rows(uri: "org/project/branch:head", tableId: "...")
+1. Explore: get_tables(uri: "org/project/branch", includeSchema: true, includeRowCount: true) — get all tables with schemas and counts in one call
+2. Read: get_rows(uri: "org/project/branch", tableId: "...")
+3. Create: create_table(uri: "...", tableId: "...", schema: {...}, rows: [...]) — create table with initial rows in one call
+4. Mutate: create_row/patch_row(uri: "org/project/branch", ...) — mutations return compact { id } response
+5. Review: get_revision_changes(uri: "org/project/branch")
+6. Commit: create_revision(uri: "org/project/branch", comment: "...") — only after user approval
+7. Read committed: get_rows(uri: "org/project/branch:head", tableId: "...")
 
 Legacy: revisionId parameter still works for all tools.
 
