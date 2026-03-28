@@ -336,15 +336,10 @@ RESPONSE may include:
       {
         description: `Create a new row in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first. Create rows in dependency order.
 
-IMPORTANT for tables with computed fields (x-formula):
-- Computed fields are marked as readOnly in schema
-- When creating rows, you MUST still include computed fields in data with their default value
-- The server will overwrite with the computed result
-- Example: If schema has "total" with x-formula and default: 0, pass "total": 0 in row data
-
-Example:
-- Schema: { "price": {...}, "quantity": {...}, "total": { "type": "number", "default": 0, "readOnly": true, "x-formula": {...} } }
-- Row data: { "price": 100, "quantity": 5, "total": 0 }  // total will be computed as 500
+COMPUTED FIELDS (x-formula):
+- Computed fields are auto-filled — you can omit them from row data
+- The server fills default values and computes the result automatically
+- Example: schema has "total" with x-formula, just pass { "price": 100, "quantity": 5 } — total is computed
 
 FILE FIELDS:
 - For file fields ($ref in schema), pass an empty file object: { "status": "", "fileId": "", "url": "", "fileName": "", "hash": "", "extension": "", "mimeType": "", "size": 0, "width": 0, "height": 0 }
@@ -489,11 +484,9 @@ FILE FIELDS:
       {
         description: `Create multiple rows in a table. IMPORTANT: If table has foreignKey fields, referenced rows MUST exist first.
 
-IMPORTANT for tables with computed fields (x-formula):
-- Computed fields are marked as readOnly in schema
-- When creating rows, you MUST still include computed fields in data with their default value
-- The server will overwrite with the computed result
-- Example: If schema has "total" with x-formula and default: 0, pass "total": 0 in each row's data`,
+COMPUTED FIELDS (x-formula):
+- Computed fields are auto-filled — you can omit them from row data
+- The server fills default values and computes the result automatically`,
         inputSchema: {
           ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
