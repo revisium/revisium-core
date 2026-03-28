@@ -672,14 +672,17 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiRemoveRows({
+        await this.draftApi.apiRemoveRows({
           revisionId,
           tableId,
           rowIds,
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ removedRowIds: rowIds }, null, 2),
+            },
           ],
         };
       },
@@ -809,14 +812,17 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiRemoveRow({
+        await this.draftApi.apiRemoveRow({
           revisionId,
           tableId,
           rowId,
         });
         return {
           content: [
-            { type: 'text' as const, text: JSON.stringify(result, null, 2) },
+            {
+              type: 'text' as const,
+              text: JSON.stringify({ removedRowId: rowId }, null, 2),
+            },
           ],
         };
       },
