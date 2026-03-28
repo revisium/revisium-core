@@ -12,6 +12,7 @@ import {
   revisionIdOrUri,
   draftRevisionIdOrUri,
 } from '../uri';
+import { fillFormulaDefaults } from './mcp-helpers';
 
 export class TableTools implements McpToolRegistrar {
   constructor(
@@ -368,12 +369,16 @@ FOREIGN KEY RULES:
 
         if (rows?.length) {
           try {
+            const schemaObj = schema as Record<string, unknown>;
             const rowsResult = await this.draftApi.apiCreateRows({
               revisionId,
               tableId,
               rows: rows.map((r) => ({
                 rowId: r.rowId,
-                data: r.data as Prisma.InputJsonValue,
+                data: fillFormulaDefaults(
+                  schemaObj,
+                  r.data,
+                ) as Prisma.InputJsonValue,
               })),
             });
             response.rowsCreated = rowsResult.rows.length;
