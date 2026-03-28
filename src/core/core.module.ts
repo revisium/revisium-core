@@ -1,4 +1,4 @@
-import { DynamicModule, Module } from '@nestjs/common';
+import { DynamicModule, Module, Type } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -6,6 +6,7 @@ import { AppOptions } from 'src/app-mode';
 import { AppOptionsModule } from 'src/core/app-options.module';
 
 import { AuthModule } from 'src/features/auth/auth.module';
+import { BillingModule } from 'src/features/billing/billing.module';
 import { BranchModule } from 'src/features/branch/branch.module';
 import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { CleanModule } from 'src/infrastructure/clean/clean.module';
@@ -32,11 +33,23 @@ import { UserModule } from 'src/features/user/user.module';
 @Module({})
 export class CoreModule {
   static forRoot(options: AppOptions): DynamicModule {
+    const eeImports: (DynamicModule | Type)[] = [];
+
+    if (process.env.REVISIUM_LICENSE_KEY) {
+      const { EeLicensingModule } = require('ee/licensing/licensing.module');
+      eeImports.push(EeLicensingModule);
+    }
+    if (process.env.REVISIUM_BILLING_ENABLED === 'true') {
+      const { EeBillingModule } = require('ee/billing/ee-billing.module');
+      eeImports.push(EeBillingModule.register());
+    }
+
     return {
       module: CoreModule,
       imports: [
         AppOptionsModule.forRoot(options),
         AuthModule,
+        BillingModule,
         ConfigModule.forRoot({
           ...(process.env.REVISIUM_STANDALONE ? { ignoreEnvFile: true } : {}),
         }),
@@ -69,6 +82,7 @@ export class CoreModule {
         McpModule,
         StorageModule,
         RevisiumCacheModule.forRootAsync(),
+        ...eeImports,
       ],
     };
   }

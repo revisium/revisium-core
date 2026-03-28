@@ -292,3 +292,11 @@ model OAuthRefreshToken {
   @@index([userId])
   @@index([expiresAt])
 }
+
+model LicenseCache {
+  id          String   @id @default("current")
+  payload     Json
+  validatedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
