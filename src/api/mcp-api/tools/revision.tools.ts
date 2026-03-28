@@ -142,7 +142,11 @@ export class RevisionTools implements McpToolRegistrar {
                 {
                   committed: true,
                   revisionId: result.id,
-                  comment: result.comment,
+                  ...(result.comment
+                    ? { comment: result.comment }
+                    : comment
+                      ? { comment }
+                      : {}),
                 },
                 null,
                 2,
