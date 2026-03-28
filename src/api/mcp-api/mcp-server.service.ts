@@ -154,14 +154,26 @@ PERMISSIONS:
     this.organizationTools = new OrganizationTools(this.organizationApi);
     this.projectTools = new ProjectTools(this.projectApi, this.branchApi);
     this.branchTools = new BranchTools(this.branchApi);
-    this.tableTools = new TableTools(this.tableApi, this.draftApi, this.uriResolver);
+    this.tableTools = new TableTools(
+      this.tableApi,
+      this.draftApi,
+      this.uriResolver,
+    );
     this.rowTools = new RowTools(this.rowApi, this.draftApi, this.uriResolver);
-    this.revisionTools = new RevisionTools(this.revisionsApi, this.draftApi, this.uriResolver);
+    this.revisionTools = new RevisionTools(
+      this.revisionsApi,
+      this.draftApi,
+      this.uriResolver,
+    );
     this.revisionChangesTools = new RevisionChangesTools(
       this.revisionChangesApi,
       this.uriResolver,
     );
-    this.migrationTools = new MigrationTools(this.revisionsApi, this.draftApi, this.uriResolver);
+    this.migrationTools = new MigrationTools(
+      this.revisionsApi,
+      this.draftApi,
+      this.uriResolver,
+    );
     this.userTools = new UserTools(this.userApi);
     this.endpointTools = new EndpointTools(
       this.endpointApi,

@@ -161,7 +161,11 @@ export class MigrationResource implements McpResourceRegistrar {
           { id: '2026-03-28T10:00:00.000Z', status: 'applied' },
           { id: '2026-03-28T10:01:00.000Z', status: 'applied' },
           { id: '2026-03-28T10:02:00.000Z', status: 'skipped' },
-          { id: '2026-03-28T10:03:00.000Z', status: 'failed', error: 'Table not found' },
+          {
+            id: '2026-03-28T10:03:00.000Z',
+            status: 'failed',
+            error: 'Table not found',
+          },
         ],
       },
       bestPractices: [
