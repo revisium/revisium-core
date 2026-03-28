@@ -379,7 +379,7 @@ FILE FIELDS:
         });
         const filledData = fillFormulaDefaults(
           schema as Record<string, unknown>,
-          data as Record<string, unknown>,
+          data,
         );
         const result = await this.draftApi.apiCreateRow({
           revisionId,
@@ -535,7 +535,7 @@ IMPORTANT for tables with computed fields (x-formula):
             rowId: r.rowId,
             data: fillFormulaDefaults(
               schema as Record<string, unknown>,
-              r.data as Record<string, unknown>,
+              r.data,
             ) as Prisma.InputJsonValue,
           })),
         });

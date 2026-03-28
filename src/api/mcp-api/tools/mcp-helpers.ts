@@ -68,7 +68,7 @@ export function fillFormulaDefaults(
       !Array.isArray(filled[key])
     ) {
       filled[key] = fillFormulaDefaults(
-        fieldSchema as Record<string, unknown>,
+        fieldSchema,
         filled[key] as Record<string, unknown>,
       );
     }
@@ -82,8 +82,13 @@ export function fillFormulaDefaults(
       typeof fieldSchema.items === 'object' &&
       (fieldSchema.items as Record<string, unknown>).type === 'object'
     ) {
-      filled[key] = (filled[key] as Record<string, unknown>[]).map((item) =>
-        fillFormulaDefaults(fieldSchema.items as Record<string, unknown>, item),
+      filled[key] = (filled[key] as unknown[]).map((item) =>
+        item && typeof item === 'object' && !Array.isArray(item)
+          ? fillFormulaDefaults(
+              fieldSchema.items as Record<string, unknown>,
+              item as Record<string, unknown>,
+            )
+          : item,
       );
     }
   }
