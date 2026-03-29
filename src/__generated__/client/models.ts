@@ -25,4 +25,5 @@ export type * from './models/OAuthClient';
 export type * from './models/OAuthAuthorizationCode';
 export type * from './models/OAuthAccessToken';
 export type * from './models/OAuthRefreshToken';
+export type * from './models/LicenseCache';
 export type * from './commonInputTypes';

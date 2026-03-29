@@ -1714,6 +1714,11 @@ export type OAuthClientFindManyArgs<
    * Skip the first `n` OAuthClients.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of OAuthClients.
+   */
   distinct?:
     | Prisma.OAuthClientScalarFieldEnum
     | Prisma.OAuthClientScalarFieldEnum[];

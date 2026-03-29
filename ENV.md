@@ -131,6 +131,17 @@ cp .env.example .env
 
 ---
 
+## Enterprise / Licensing
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `REVISIUM_LICENSE_KEY` | - | License key for `/ee/` features. If not set, all limits are disabled (unlimited). Validated against `https://licensing.revisium.io` |
+| `REVISIUM_BILLING_ENABLED` | `false` | Enable billing/tariffs module (requires valid license with `billing` feature) |
+| `REVISIUM_SSO_ENABLED` | `false` | Enable SSO module (requires valid license with `sso` feature) |
+| `REVISIUM_AUDIT_ENABLED` | `false` | Enable audit log module (requires valid license with `audit` feature) |
+
+---
+
 ## Deprecated Variables
 
 The following variables are deprecated and will be removed in **v3.0.0**:

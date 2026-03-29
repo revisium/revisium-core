@@ -93,12 +93,12 @@ export type PrismaVersion = {
 };
 
 /**
- * Prisma Client JS version: 7.4.1
- * Query Engine version: 55ae170b1ced7fc6ed07a15f110549408c501bb3
+ * Prisma Client JS version: 7.5.0
+ * Query Engine version: 280c870be64f457428992c43c1f6d557fab6e29e
  */
 export const prismaVersion: PrismaVersion = {
-  client: '7.4.1',
-  engine: '55ae170b1ced7fc6ed07a15f110549408c501bb3',
+  client: '7.5.0',
+  engine: '280c870be64f457428992c43c1f6d557fab6e29e',
 };
 
 /**
@@ -430,6 +430,7 @@ export const ModelName = {
   OAuthAuthorizationCode: 'OAuthAuthorizationCode',
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
+  LicenseCache: 'LicenseCache',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -469,7 +470,8 @@ export type TypeMap<
       | 'oAuthClient'
       | 'oAuthAuthorizationCode'
       | 'oAuthAccessToken'
-      | 'oAuthRefreshToken';
+      | 'oAuthRefreshToken'
+      | 'licenseCache';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
@@ -1841,6 +1843,82 @@ export type TypeMap<
         };
       };
     };
+    LicenseCache: {
+      payload: Prisma.$LicenseCachePayload<ExtArgs>;
+      fields: Prisma.LicenseCacheFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.LicenseCacheFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.LicenseCacheFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>;
+        };
+        findFirst: {
+          args: Prisma.LicenseCacheFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.LicenseCacheFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>;
+        };
+        findMany: {
+          args: Prisma.LicenseCacheFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>[];
+        };
+        create: {
+          args: Prisma.LicenseCacheCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>;
+        };
+        createMany: {
+          args: Prisma.LicenseCacheCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.LicenseCacheCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>[];
+        };
+        delete: {
+          args: Prisma.LicenseCacheDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>;
+        };
+        update: {
+          args: Prisma.LicenseCacheUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>;
+        };
+        deleteMany: {
+          args: Prisma.LicenseCacheDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.LicenseCacheUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.LicenseCacheUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>[];
+        };
+        upsert: {
+          args: Prisma.LicenseCacheUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$LicenseCachePayload>;
+        };
+        aggregate: {
+          args: Prisma.LicenseCacheAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateLicenseCache>;
+        };
+        groupBy: {
+          args: Prisma.LicenseCacheGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.LicenseCacheGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.LicenseCacheCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.LicenseCacheCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
   };
 } & {
   other: {
@@ -2104,6 +2182,17 @@ export const OAuthRefreshTokenScalarFieldEnum = {
 export type OAuthRefreshTokenScalarFieldEnum =
   (typeof OAuthRefreshTokenScalarFieldEnum)[keyof typeof OAuthRefreshTokenScalarFieldEnum];
 
+export const LicenseCacheScalarFieldEnum = {
+  id: 'id',
+  payload: 'payload',
+  validatedAt: 'validatedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+} as const;
+
+export type LicenseCacheScalarFieldEnum =
+  (typeof LicenseCacheScalarFieldEnum)[keyof typeof LicenseCacheScalarFieldEnum];
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc',
@@ -2322,6 +2411,13 @@ export const OAuthRefreshTokenOrderByRelevanceFieldEnum = {
 
 export type OAuthRefreshTokenOrderByRelevanceFieldEnum =
   (typeof OAuthRefreshTokenOrderByRelevanceFieldEnum)[keyof typeof OAuthRefreshTokenOrderByRelevanceFieldEnum];
+
+export const LicenseCacheOrderByRelevanceFieldEnum = {
+  id: 'id',
+} as const;
+
+export type LicenseCacheOrderByRelevanceFieldEnum =
+  (typeof LicenseCacheOrderByRelevanceFieldEnum)[keyof typeof LicenseCacheOrderByRelevanceFieldEnum];
 
 /**
  * Field references
@@ -2568,6 +2664,7 @@ export type GlobalOmitConfig = {
   oAuthAuthorizationCode?: Prisma.OAuthAuthorizationCodeOmit;
   oAuthAccessToken?: Prisma.OAuthAccessTokenOmit;
   oAuthRefreshToken?: Prisma.OAuthRefreshTokenOmit;
+  licenseCache?: Prisma.LicenseCacheOmit;
 };
 
 /* Types for Logging */

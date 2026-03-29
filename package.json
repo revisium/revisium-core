@@ -180,11 +180,14 @@
     },
     "collectCoverageFrom": [
       "<rootDir>/src/**/*.(t|j)s",
+      "<rootDir>/ee/**/*.(t|j)s",
       "!<rootDir>/src/main.ts",
       "!<rootDir>/src/__generated__/**",
       "!<rootDir>/src/**/__tests__/**",
+      "!<rootDir>/ee/**/__tests__/**",
       "!<rootDir>/src/**/index.ts",
       "!<rootDir>/src/**/*.module.ts",
+      "!<rootDir>/ee/**/*.module.ts",
       "!<rootDir>/src/infrastructure/cache"
     ],
     "coverageReporters": [

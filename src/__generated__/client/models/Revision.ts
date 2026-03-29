@@ -2513,6 +2513,11 @@ export type RevisionFindManyArgs<
    * Skip the first `n` Revisions.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of Revisions.
+   */
   distinct?: Prisma.RevisionScalarFieldEnum | Prisma.RevisionScalarFieldEnum[];
 };
 

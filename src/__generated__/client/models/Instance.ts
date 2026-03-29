@@ -1078,6 +1078,11 @@ export type InstanceFindManyArgs<
    * Skip the first `n` Instances.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of Instances.
+   */
   distinct?: Prisma.InstanceScalarFieldEnum | Prisma.InstanceScalarFieldEnum[];
 };
 

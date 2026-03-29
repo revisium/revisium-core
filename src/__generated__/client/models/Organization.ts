@@ -1413,6 +1413,11 @@ export type OrganizationFindManyArgs<
    * Skip the first `n` Organizations.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of Organizations.
+   */
   distinct?:
     | Prisma.OrganizationScalarFieldEnum
     | Prisma.OrganizationScalarFieldEnum[];

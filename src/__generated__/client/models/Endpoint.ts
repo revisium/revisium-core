@@ -1731,6 +1731,11 @@ export type EndpointFindManyArgs<
    * Skip the first `n` Endpoints.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of Endpoints.
+   */
   distinct?: Prisma.EndpointScalarFieldEnum | Prisma.EndpointScalarFieldEnum[];
 };
 

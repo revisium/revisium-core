@@ -106,3 +106,8 @@ export type OAuthAccessToken = Prisma.OAuthAccessTokenModel;
  *
  */
 export type OAuthRefreshToken = Prisma.OAuthRefreshTokenModel;
+/**
+ * Model LicenseCache
+ *
+ */
+export type LicenseCache = Prisma.LicenseCacheModel;

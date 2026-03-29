@@ -72,6 +72,7 @@ export const ModelName = {
   OAuthAuthorizationCode: 'OAuthAuthorizationCode',
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
+  LicenseCache: 'LicenseCache',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -310,6 +311,17 @@ export const OAuthRefreshTokenScalarFieldEnum = {
 export type OAuthRefreshTokenScalarFieldEnum =
   (typeof OAuthRefreshTokenScalarFieldEnum)[keyof typeof OAuthRefreshTokenScalarFieldEnum];
 
+export const LicenseCacheScalarFieldEnum = {
+  id: 'id',
+  payload: 'payload',
+  validatedAt: 'validatedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+} as const;
+
+export type LicenseCacheScalarFieldEnum =
+  (typeof LicenseCacheScalarFieldEnum)[keyof typeof LicenseCacheScalarFieldEnum];
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc',
@@ -528,3 +540,10 @@ export const OAuthRefreshTokenOrderByRelevanceFieldEnum = {
 
 export type OAuthRefreshTokenOrderByRelevanceFieldEnum =
   (typeof OAuthRefreshTokenOrderByRelevanceFieldEnum)[keyof typeof OAuthRefreshTokenOrderByRelevanceFieldEnum];
+
+export const LicenseCacheOrderByRelevanceFieldEnum = {
+  id: 'id',
+} as const;
+
+export type LicenseCacheOrderByRelevanceFieldEnum =
+  (typeof LicenseCacheOrderByRelevanceFieldEnum)[keyof typeof LicenseCacheOrderByRelevanceFieldEnum];

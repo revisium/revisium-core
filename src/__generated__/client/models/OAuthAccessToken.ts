@@ -1922,6 +1922,11 @@ export type OAuthAccessTokenFindManyArgs<
    * Skip the first `n` OAuthAccessTokens.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of OAuthAccessTokens.
+   */
   distinct?:
     | Prisma.OAuthAccessTokenScalarFieldEnum
     | Prisma.OAuthAccessTokenScalarFieldEnum[];

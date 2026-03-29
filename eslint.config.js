@@ -54,7 +54,7 @@ module.exports = [
     },
   },
   {
-    files: ['eslint.config.js'],
+    files: ['eslint.config.js', 'src/core/core.module.ts'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
     },

@@ -2040,6 +2040,11 @@ export type OAuthAuthorizationCodeFindManyArgs<
    * Skip the first `n` OAuthAuthorizationCodes.
    */
   skip?: number;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+   *
+   * Filter by unique combinations of OAuthAuthorizationCodes.
+   */
   distinct?:
     | Prisma.OAuthAuthorizationCodeScalarFieldEnum
     | Prisma.OAuthAuthorizationCodeScalarFieldEnum[];
