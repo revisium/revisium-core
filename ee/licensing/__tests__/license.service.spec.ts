@@ -180,7 +180,6 @@ describe('LicenseService', () => {
       service = await createService(
         {
           REVISIUM_LICENSE_KEY: 'rev_lic_test',
-          REVISIUM_LICENSING_URL: 'http://licensing:3000',
         },
         prismaMock,
       );
@@ -213,7 +212,6 @@ describe('LicenseService', () => {
       service = await createService(
         {
           REVISIUM_LICENSE_KEY: 'rev_lic_test',
-          REVISIUM_LICENSING_URL: 'http://licensing:3000',
         },
         prismaMock,
       );
@@ -229,6 +227,155 @@ describe('LicenseService', () => {
       await service.onModuleInit();
 
       expect(global.fetch).not.toHaveBeenCalled();
+      expect(service.hasFeature('billing')).toBe(false);
+    });
+  });
+
+  describe('getLicense', () => {
+    it('should return null when no license loaded', () => {
+      expect(service.getLicense()).toBeNull();
+    });
+
+    it('should return payload after validation', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(validPayload),
+      });
+
+      service = await createService({
+        REVISIUM_LICENSE_KEY: 'rev_lic_test',
+      });
+      await service.onModuleInit();
+
+      expect(service.getLicense()).toEqual(validPayload);
+    });
+  });
+
+  describe('revalidate', () => {
+    it('should revalidate when key is set', async () => {
+      (global.fetch as jest.Mock)
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(validPayload),
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: () => Promise.resolve(validPayload),
+        });
+
+      service = await createService({
+        REVISIUM_LICENSE_KEY: 'rev_lic_test',
+      });
+      await service.onModuleInit();
+      await service.revalidate();
+
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('should skip revalidation when no key', async () => {
+      service = await createService();
+      await service.revalidate();
+
+      expect(global.fetch).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('server error responses', () => {
+    it('should fall back when server returns non-ok status', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+      });
+
+      service = await createService({
+        REVISIUM_LICENSE_KEY: 'rev_lic_test',
+      });
+      await service.onModuleInit();
+
+      expect(service.hasFeature('billing')).toBe(false);
+    });
+
+    it('should reject invalid payload from server', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({ invalid: 'data' }),
+      });
+
+      service = await createService({
+        REVISIUM_LICENSE_KEY: 'rev_lic_test',
+      });
+      await service.onModuleInit();
+
+      expect(service.hasFeature('billing')).toBe(false);
+    });
+  });
+
+  describe('DB error handling', () => {
+    it('should handle DB persist failure gracefully', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(validPayload),
+      });
+
+      const prismaMock = {
+        licenseCache: {
+          upsert: jest.fn().mockRejectedValue(new Error('DB error')),
+          findUnique: jest.fn().mockResolvedValue(null),
+        },
+      };
+
+      service = await createService(
+        { REVISIUM_LICENSE_KEY: 'rev_lic_test' },
+        prismaMock,
+      );
+      await service.onModuleInit();
+
+      expect(service.hasFeature('billing')).toBe(true);
+    });
+
+    it('should handle DB load failure gracefully', async () => {
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error('Connection refused'),
+      );
+
+      const prismaMock = {
+        licenseCache: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findUnique: jest.fn().mockRejectedValue(new Error('DB error')),
+        },
+      };
+
+      service = await createService(
+        { REVISIUM_LICENSE_KEY: 'rev_lic_test' },
+        prismaMock,
+      );
+      await service.onModuleInit();
+
+      expect(service.hasFeature('billing')).toBe(false);
+    });
+
+    it('should reject invalid payload from DB cache', async () => {
+      (global.fetch as jest.Mock).mockRejectedValueOnce(
+        new Error('Connection refused'),
+      );
+
+      const prismaMock = {
+        licenseCache: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'current',
+            payload: { invalid: 'data' },
+            validatedAt: new Date(),
+          }),
+        },
+      };
+
+      service = await createService(
+        { REVISIUM_LICENSE_KEY: 'rev_lic_test' },
+        prismaMock,
+      );
+      await service.onModuleInit();
+
       expect(service.hasFeature('billing')).toBe(false);
     });
   });
