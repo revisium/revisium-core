@@ -281,18 +281,57 @@ describe('LicenseService', () => {
   });
 
   describe('server error responses', () => {
-    it('should fall back when server returns non-ok status', async () => {
+    it('should disable immediately on 4xx rejection (no grace fallback)', async () => {
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: false,
         status: 403,
       });
 
-      service = await createService({
-        REVISIUM_LICENSE_KEY: 'rev_lic_test',
-      });
+      const prismaMock = {
+        licenseCache: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'current',
+            payload: validPayload,
+            validatedAt: new Date(),
+          }),
+        },
+      };
+
+      service = await createService(
+        { REVISIUM_LICENSE_KEY: 'rev_lic_test' },
+        prismaMock,
+      );
       await service.onModuleInit();
 
       expect(service.hasFeature('billing')).toBe(false);
+      expect(prismaMock.licenseCache.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('should fall back to DB cache on 5xx server error', async () => {
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: false,
+        status: 502,
+      });
+
+      const prismaMock = {
+        licenseCache: {
+          upsert: jest.fn().mockResolvedValue({}),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'current',
+            payload: validPayload,
+            validatedAt: new Date(),
+          }),
+        },
+      };
+
+      service = await createService(
+        { REVISIUM_LICENSE_KEY: 'rev_lic_test' },
+        prismaMock,
+      );
+      await service.onModuleInit();
+
+      expect(service.hasFeature('billing')).toBe(true);
     });
 
     it('should reject invalid payload from server', async () => {

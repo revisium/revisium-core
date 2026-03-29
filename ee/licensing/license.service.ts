@@ -46,6 +46,13 @@ export class LicenseService implements OnModuleInit {
       });
 
       if (!response.ok) {
+        if (response.status >= 400 && response.status < 500) {
+          this.license = null;
+          this.logger.error(
+            `License rejected by server (${response.status}) — /ee/ features disabled`,
+          );
+          return;
+        }
         throw new Error(`License server returned ${response.status}`);
       }
 
