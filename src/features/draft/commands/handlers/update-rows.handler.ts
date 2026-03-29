@@ -1,6 +1,12 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Inject } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { JsonValue } from '@revisium/schema-toolkit/types';
+import {
+  ILimitsService,
+  LimitMetric,
+  LIMITS_SERVICE_TOKEN,
+} from 'src/features/billing/limits.interface';
+import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import {
   UpdateRowsCommand,
   UpdateRowsRowInput,
@@ -32,6 +38,8 @@ export class UpdateRowsHandler extends DraftHandler<
     protected readonly draftRevisionApi: DraftRevisionApiService,
     protected readonly pluginService: PluginService,
     protected readonly rowPublishedAtPlugin: RowPublishedAtPlugin,
+    @Inject(LIMITS_SERVICE_TOKEN)
+    protected readonly limitsService: ILimitsService,
   ) {
     super(transactionService, draftContext);
   }
@@ -53,6 +61,16 @@ export class UpdateRowsHandler extends DraftHandler<
     }
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
+
+    const limitResult = await this.limitsService.checkLimit(
+      this.revisionRequestDto.organizationId,
+      LimitMetric.ROW_VERSIONS,
+      rows.length,
+    );
+    if (!limitResult.allowed) {
+      throw new LimitExceededException(limitResult);
+    }
+
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
     const { schemaHash } = await this.draftTransactionalCommands.validateData({
       revisionId,

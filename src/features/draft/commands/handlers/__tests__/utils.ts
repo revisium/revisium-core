@@ -59,6 +59,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { AppOptionsModule } from 'src/core/app-options.module';
+import { BillingModule } from 'src/features/billing/billing.module';
 
 export const testSchema: JsonObjectSchema = getObjectSchema({
   ver: getNumberSchema(),
@@ -136,6 +137,7 @@ export const createTestingModule = async (
       ShareModule,
       PluginModule,
       AppOptionsModule.forRoot({ mode: 'monolith' }),
+      BillingModule,
       NotificationModule,
       CacheModule.register(),
       RevisionModule,

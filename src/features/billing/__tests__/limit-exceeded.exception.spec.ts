@@ -3,33 +3,42 @@ import { LimitMetric } from '../limits.interface';
 
 describe('LimitExceededException', () => {
   it('should format message with current and limit', () => {
-    const exception = new LimitExceededException(LimitMetric.PROJECTS, {
+    const exception = new LimitExceededException({
       allowed: false,
       current: 5,
       limit: 3,
       metric: LimitMetric.PROJECTS,
     });
 
-    expect(exception.message).toBe('Limit exceeded for projects: 5/3');
-    expect(exception.metric).toBe(LimitMetric.PROJECTS);
-    expect(exception.result.allowed).toBe(false);
+    const response = exception.getResponse() as any;
+    expect(response.code).toBe('LIMIT_EXCEEDED');
+    expect(response.metric).toBe(LimitMetric.PROJECTS);
+    expect(response.current).toBe(5);
+    expect(response.limit).toBe(3);
   });
 
   it('should handle missing current and limit', () => {
-    const exception = new LimitExceededException(LimitMetric.SEATS, {
+    const exception = new LimitExceededException({
       allowed: false,
+      metric: LimitMetric.SEATS,
     });
 
-    expect(exception.message).toBe('Limit exceeded for seats: 0/unknown');
+    const response = exception.getResponse() as any;
+    expect(response.code).toBe('LIMIT_EXCEEDED');
+    expect(response.metric).toBe(LimitMetric.SEATS);
   });
 
-  it('should handle null limit (unlimited)', () => {
-    const exception = new LimitExceededException(LimitMetric.API_CALLS, {
+  it('should include message in response', () => {
+    const exception = new LimitExceededException({
       allowed: false,
       current: 100,
-      limit: null,
+      limit: 50,
+      metric: LimitMetric.API_CALLS,
     });
 
-    expect(exception.message).toBe('Limit exceeded for api_calls: 100/unknown');
+    const response = exception.getResponse() as any;
+    expect(response.message).toBe(
+      'Plan limit exceeded for api_calls. Current: 100, Limit: 50',
+    );
   });
 });

@@ -1,6 +1,12 @@
 import { Inject, NotFoundException } from '@nestjs/common';
 import { CommandBus, CommandHandler } from '@nestjs/cqrs';
 import {
+  ILimitsService,
+  LimitMetric,
+  LIMITS_SERVICE_TOKEN,
+} from 'src/features/billing/limits.interface';
+import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
+import {
   InternalUpdateRowCommand,
   InternalUpdateRowCommandReturnType,
 } from 'src/features/draft/commands/impl/transactional/internal-update-row.command';
@@ -12,6 +18,7 @@ import {
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
@@ -40,6 +47,9 @@ export class UploadFileHandler extends DraftHandler<
     @Inject(STORAGE_SERVICE)
     protected readonly storageService: IStorageService,
     protected readonly rowApiService: RowApiService,
+    protected readonly revisionRequestDto: DraftRevisionRequestDto,
+    @Inject(LIMITS_SERVICE_TOKEN)
+    protected readonly limitsService: ILimitsService,
   ) {
     super(transactionService, draftContext);
   }
@@ -50,6 +60,16 @@ export class UploadFileHandler extends DraftHandler<
     const { revisionId, tableId, rowId } = input;
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
+
+    const limitResult = await this.limitsService.checkLimit(
+      this.revisionRequestDto.organizationId,
+      LimitMetric.STORAGE_BYTES,
+      input.file.size,
+    );
+    if (!limitResult.allowed) {
+      throw new LimitExceededException(limitResult);
+    }
+
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
 
     const schema = await this.shareTransactionalQueries.getTableSchema(

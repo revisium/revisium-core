@@ -3,6 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { nanoid } from 'nanoid';
 import { AppOptionsModule } from 'src/core/app-options.module';
+import { BillingModule } from 'src/features/billing/billing.module';
 import { PROJECT_HANDLERS } from 'src/features/project/commands/handlers/index';
 import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
@@ -21,6 +22,7 @@ export const createTestingModule = async () => {
       CqrsModule,
       ShareModule,
       AppOptionsModule.forRoot({ mode: 'monolith' }),
+      BillingModule,
       NotificationModule,
     ],
     providers: [

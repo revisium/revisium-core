@@ -139,6 +139,7 @@ cp .env.example .env
 | `REVISIUM_BILLING_ENABLED` | `false` | Enable billing/tariffs module (requires valid license with `billing` feature) |
 | `REVISIUM_SSO_ENABLED` | `false` | Enable SSO module (requires valid license with `sso` feature) |
 | `REVISIUM_AUDIT_ENABLED` | `false` | Enable audit log module (requires valid license with `audit` feature) |
+| `REVISIUM_STANDALONE` | `false` | Self-hosted mode. Bypasses all plan limits even if billing module is loaded. Set to `true` for on-premises deployments |
 
 ---
 

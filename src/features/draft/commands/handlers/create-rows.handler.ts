@@ -1,6 +1,12 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Inject } from '@nestjs/common';
 import { CommandHandler, EventBus } from '@nestjs/cqrs';
 import { JsonValue } from '@revisium/schema-toolkit/types';
+import {
+  ILimitsService,
+  LimitMetric,
+  LIMITS_SERVICE_TOKEN,
+} from 'src/features/billing/limits.interface';
+import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import {
   CreateRowsCommand,
   CreateRowsRowInput,
@@ -9,6 +15,7 @@ import { CreateRowsHandlerReturnType } from 'src/features/draft/commands/types/c
 import { DraftContextService } from 'src/features/draft/draft-context.service';
 import { DraftHandler } from 'src/features/draft/draft.handler';
 import { DraftTransactionalCommands } from 'src/features/draft/draft.transactional.commands';
+import { DraftRevisionRequestDto } from 'src/features/draft/draft-request-dto/draft-revision-request.dto';
 import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 import { PluginService } from 'src/features/plugin/plugin.service';
 import { RowPublishedAtPlugin } from 'src/features/plugin/row-published-at/row-published-at.plugin';
@@ -31,6 +38,9 @@ export class CreateRowsHandler extends DraftHandler<
     protected readonly draftRevisionApi: DraftRevisionApiService,
     protected readonly pluginService: PluginService,
     protected readonly rowPublishedAtPlugin: RowPublishedAtPlugin,
+    protected readonly revisionRequestDto: DraftRevisionRequestDto,
+    @Inject(LIMITS_SERVICE_TOKEN)
+    protected readonly limitsService: ILimitsService,
   ) {
     super(transactionService, draftContext);
   }
@@ -56,6 +66,16 @@ export class CreateRowsHandler extends DraftHandler<
     }
 
     await this.draftTransactionalCommands.resolveDraftRevision(revisionId);
+
+    const limitResult = await this.limitsService.checkLimit(
+      this.revisionRequestDto.organizationId,
+      LimitMetric.ROW_VERSIONS,
+      rows.length,
+    );
+    if (!limitResult.allowed) {
+      throw new LimitExceededException(limitResult);
+    }
+
     await this.draftTransactionalCommands.validateNotSystemTable(tableId);
     const { schemaHash } = await this.draftTransactionalCommands.validateData({
       revisionId,

@@ -22,3 +22,21 @@ export const EndpointType = {
 } as const;
 
 export type EndpointType = (typeof EndpointType)[keyof typeof EndpointType];
+
+export const BillingStatus = {
+  free: 'free',
+  early_adopter: 'early_adopter',
+  active: 'active',
+  past_due: 'past_due',
+  cancelled: 'cancelled',
+} as const;
+
+export type BillingStatus = (typeof BillingStatus)[keyof typeof BillingStatus];
+
+export const BillingInterval = {
+  monthly: 'monthly',
+  yearly: 'yearly',
+} as const;
+
+export type BillingInterval =
+  (typeof BillingInterval)[keyof typeof BillingInterval];

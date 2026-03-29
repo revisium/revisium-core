@@ -73,6 +73,7 @@ model Organization {
   projects  Project[]
 
   userOrganizations UserOrganization[]
+  subscription      Subscription?
 }
 
 model UserOrganization {
@@ -299,4 +300,63 @@ model LicenseCache {
   validatedAt DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// Billing (EE)
+
+enum BillingStatus {
+  free
+  early_adopter
+  active
+  past_due
+  cancelled
+}
+
+enum BillingInterval {
+  monthly
+  yearly
+}
+
+model Subscription {
+  id        String   @id @default(nanoid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id])
+
+  planId   String
+  status   BillingStatus   @default(free)
+  interval BillingInterval?
+
+  // Payment provider fields
+  provider               String? // "stripe", "cloudpayments", "btcpay", "manual"
+  externalCustomerId     String? // Provider's customer ID
+  externalSubscriptionId String? // Provider's subscription ID
+
+  // Billing period
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAt           DateTime? // Scheduled cancellation date
+
+  usageRecords UsageRecord[]
+
+  @@index([status])
+  @@index([provider])
+}
+
+model UsageRecord {
+  id        String   @id @default(nanoid())
+  createdAt DateTime @default(now())
+
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id])
+
+  metric      String // "row_versions", "storage_bytes", "seats", "projects"
+  value       BigInt
+  periodStart DateTime
+  periodEnd   DateTime
+
+  @@unique([subscriptionId, metric, periodStart])
+  @@index([subscriptionId, metric, periodStart])
 }
