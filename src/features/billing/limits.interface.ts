@@ -1,11 +1,14 @@
 export const LIMITS_SERVICE_TOKEN = Symbol('LIMITS_SERVICE');
 
 export enum LimitMetric {
+  // Absolute metrics — total count across the org, never resets
   ROW_VERSIONS = 'row_versions',
   PROJECTS = 'projects',
   SEATS = 'seats',
   STORAGE_BYTES = 'storage_bytes',
-  API_CALLS = 'api_calls',
+
+  // Rate metrics — resets per time window
+  API_CALLS = 'api_calls', // per day
 }
 
 export interface LimitCheckResult {

@@ -431,6 +431,8 @@ export const ModelName = {
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
   LicenseCache: 'LicenseCache',
+  Subscription: 'Subscription',
+  UsageRecord: 'UsageRecord',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -471,7 +473,9 @@ export type TypeMap<
       | 'oAuthAuthorizationCode'
       | 'oAuthAccessToken'
       | 'oAuthRefreshToken'
-      | 'licenseCache';
+      | 'licenseCache'
+      | 'subscription'
+      | 'usageRecord';
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
@@ -1919,6 +1923,158 @@ export type TypeMap<
         };
       };
     };
+    Subscription: {
+      payload: Prisma.$SubscriptionPayload<ExtArgs>;
+      fields: Prisma.SubscriptionFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.SubscriptionFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.SubscriptionFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>;
+        };
+        findFirst: {
+          args: Prisma.SubscriptionFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.SubscriptionFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>;
+        };
+        findMany: {
+          args: Prisma.SubscriptionFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>[];
+        };
+        create: {
+          args: Prisma.SubscriptionCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>;
+        };
+        createMany: {
+          args: Prisma.SubscriptionCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.SubscriptionCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>[];
+        };
+        delete: {
+          args: Prisma.SubscriptionDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>;
+        };
+        update: {
+          args: Prisma.SubscriptionUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>;
+        };
+        deleteMany: {
+          args: Prisma.SubscriptionDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.SubscriptionUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.SubscriptionUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>[];
+        };
+        upsert: {
+          args: Prisma.SubscriptionUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SubscriptionPayload>;
+        };
+        aggregate: {
+          args: Prisma.SubscriptionAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSubscription>;
+        };
+        groupBy: {
+          args: Prisma.SubscriptionGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.SubscriptionGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.SubscriptionCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.SubscriptionCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
+    UsageRecord: {
+      payload: Prisma.$UsageRecordPayload<ExtArgs>;
+      fields: Prisma.UsageRecordFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.UsageRecordFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.UsageRecordFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>;
+        };
+        findFirst: {
+          args: Prisma.UsageRecordFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.UsageRecordFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>;
+        };
+        findMany: {
+          args: Prisma.UsageRecordFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>[];
+        };
+        create: {
+          args: Prisma.UsageRecordCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>;
+        };
+        createMany: {
+          args: Prisma.UsageRecordCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.UsageRecordCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>[];
+        };
+        delete: {
+          args: Prisma.UsageRecordDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>;
+        };
+        update: {
+          args: Prisma.UsageRecordUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>;
+        };
+        deleteMany: {
+          args: Prisma.UsageRecordDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.UsageRecordUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.UsageRecordUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>[];
+        };
+        upsert: {
+          args: Prisma.UsageRecordUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$UsageRecordPayload>;
+        };
+        aggregate: {
+          args: Prisma.UsageRecordAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateUsageRecord>;
+        };
+        groupBy: {
+          args: Prisma.UsageRecordGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.UsageRecordGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.UsageRecordCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.UsageRecordCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
   };
 } & {
   other: {
@@ -2193,6 +2349,38 @@ export const LicenseCacheScalarFieldEnum = {
 export type LicenseCacheScalarFieldEnum =
   (typeof LicenseCacheScalarFieldEnum)[keyof typeof LicenseCacheScalarFieldEnum];
 
+export const SubscriptionScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  organizationId: 'organizationId',
+  planId: 'planId',
+  status: 'status',
+  interval: 'interval',
+  provider: 'provider',
+  externalCustomerId: 'externalCustomerId',
+  externalSubscriptionId: 'externalSubscriptionId',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  cancelAt: 'cancelAt',
+} as const;
+
+export type SubscriptionScalarFieldEnum =
+  (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum];
+
+export const UsageRecordScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  subscriptionId: 'subscriptionId',
+  metric: 'metric',
+  value: 'value',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+} as const;
+
+export type UsageRecordScalarFieldEnum =
+  (typeof UsageRecordScalarFieldEnum)[keyof typeof UsageRecordScalarFieldEnum];
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc',
@@ -2419,6 +2607,27 @@ export const LicenseCacheOrderByRelevanceFieldEnum = {
 export type LicenseCacheOrderByRelevanceFieldEnum =
   (typeof LicenseCacheOrderByRelevanceFieldEnum)[keyof typeof LicenseCacheOrderByRelevanceFieldEnum];
 
+export const SubscriptionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  planId: 'planId',
+  provider: 'provider',
+  externalCustomerId: 'externalCustomerId',
+  externalSubscriptionId: 'externalSubscriptionId',
+} as const;
+
+export type SubscriptionOrderByRelevanceFieldEnum =
+  (typeof SubscriptionOrderByRelevanceFieldEnum)[keyof typeof SubscriptionOrderByRelevanceFieldEnum];
+
+export const UsageRecordOrderByRelevanceFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  metric: 'metric',
+} as const;
+
+export type UsageRecordOrderByRelevanceFieldEnum =
+  (typeof UsageRecordOrderByRelevanceFieldEnum)[keyof typeof UsageRecordOrderByRelevanceFieldEnum];
+
 /**
  * Field references
  */
@@ -2525,6 +2734,50 @@ export type EnumEndpointTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
 export type ListEnumEndpointTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
   $PrismaModel,
   'EndpointType[]'
+>;
+
+/**
+ * Reference to a field of type 'BillingStatus'
+ */
+export type EnumBillingStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'BillingStatus'
+>;
+
+/**
+ * Reference to a field of type 'BillingStatus[]'
+ */
+export type ListEnumBillingStatusFieldRefInput<$PrismaModel> =
+  FieldRefInputType<$PrismaModel, 'BillingStatus[]'>;
+
+/**
+ * Reference to a field of type 'BillingInterval'
+ */
+export type EnumBillingIntervalFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'BillingInterval'
+>;
+
+/**
+ * Reference to a field of type 'BillingInterval[]'
+ */
+export type ListEnumBillingIntervalFieldRefInput<$PrismaModel> =
+  FieldRefInputType<$PrismaModel, 'BillingInterval[]'>;
+
+/**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'BigInt'
+>;
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  'BigInt[]'
 >;
 
 /**
@@ -2665,6 +2918,8 @@ export type GlobalOmitConfig = {
   oAuthAccessToken?: Prisma.OAuthAccessTokenOmit;
   oAuthRefreshToken?: Prisma.OAuthRefreshTokenOmit;
   licenseCache?: Prisma.LicenseCacheOmit;
+  subscription?: Prisma.SubscriptionOmit;
+  usageRecord?: Prisma.UsageRecordOmit;
 };
 
 /* Types for Logging */

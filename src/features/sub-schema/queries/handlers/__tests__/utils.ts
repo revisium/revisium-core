@@ -3,6 +3,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { AppOptionsModule } from 'src/core/app-options.module';
+import { BillingModule } from 'src/features/billing/billing.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -128,6 +129,7 @@ export const createSubSchemaTestingModule = async () => {
       CacheModule.register(),
       RevisiumCacheModule.forRootAsync(),
       AppOptionsModule.forRoot({ mode: 'monolith' }),
+      BillingModule,
       ShareModule,
       PluginModule,
       NotificationModule,

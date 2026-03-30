@@ -1,5 +1,11 @@
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, Inject } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import {
+  ILimitsService,
+  LimitMetric,
+  LIMITS_SERVICE_TOKEN,
+} from 'src/features/billing/limits.interface';
+import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import { isValidOrganizationRole } from 'src/features/auth/consts';
 import { IdService } from 'src/infrastructure/database/id.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -16,6 +22,8 @@ export class AddUserToOrganizationHandler implements ICommandHandler<
   constructor(
     private readonly prisma: PrismaService,
     private readonly idService: IdService,
+    @Inject(LIMITS_SERVICE_TOKEN)
+    private readonly limitsService: ILimitsService,
   ) {}
 
   public async execute({ data }: AddUserToOrganizationCommand) {
@@ -23,7 +31,21 @@ export class AddUserToOrganizationHandler implements ICommandHandler<
       throw new BadRequestException('Invalid OrganizationRole');
     }
 
-    const userOrganizationId = await this.getUserOrganizationId(data);
+    const existing = await this.getExistingUserOrganization(data);
+
+    // Only check seat limit when adding a new user, not updating role
+    if (!existing) {
+      const limitResult = await this.limitsService.checkLimit(
+        data.organizationId,
+        LimitMetric.SEATS,
+        1,
+      );
+      if (!limitResult.allowed) {
+        throw new LimitExceededException(limitResult);
+      }
+    }
+
+    const userOrganizationId = existing?.id ?? this.idService.generate();
 
     await this.upsertUserOrganization(data, userOrganizationId);
 
@@ -50,10 +72,10 @@ export class AddUserToOrganizationHandler implements ICommandHandler<
     });
   }
 
-  private async getUserOrganizationId(
+  private async getExistingUserOrganization(
     data: AddUserToOrganizationCommand['data'],
   ) {
-    const result = await this.prisma.userOrganization.findFirst({
+    return this.prisma.userOrganization.findFirst({
       where: {
         userId: data.userId,
         organizationId: data.organizationId,
@@ -62,7 +84,5 @@ export class AddUserToOrganizationHandler implements ICommandHandler<
         id: true,
       },
     });
-
-    return result?.id || this.idService.generate();
   }
 }

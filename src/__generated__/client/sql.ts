@@ -4,6 +4,8 @@
 // @ts-nocheck
 export { type $DbEnums } from './sql/$DbEnums';
 
+export * from './sql/countOrgRowVersions';
+
 export * from './sql/countRowChangesBetweenRevisions';
 
 export * from './sql/countTableDiffsBetweenRevisions';

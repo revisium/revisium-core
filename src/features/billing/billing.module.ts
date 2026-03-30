@@ -1,7 +1,8 @@
-import { Module } from '@nestjs/common';
+import { Global, Module } from '@nestjs/common';
 import { LIMITS_SERVICE_TOKEN } from './limits.interface';
 import { NoopLimitsService } from './noop-limits.service';
 
+@Global()
 @Module({
   providers: [
     {

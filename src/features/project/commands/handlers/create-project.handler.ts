@@ -1,10 +1,17 @@
 import {
   BadRequestException,
+  Inject,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { Prisma } from 'src/__generated__/client';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import {
+  ILimitsService,
+  LimitMetric,
+  LIMITS_SERVICE_TOKEN,
+} from 'src/features/billing/limits.interface';
+import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import { validateBranchName } from 'src/features/share/utils/validateUrlLikeId/validateBranchName';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { IdService } from 'src/infrastructure/database/id.service';
@@ -42,6 +49,8 @@ export class CreateProjectHandler implements ICommandHandler<
     private readonly transactionService: TransactionPrismaService,
     private readonly idService: IdService,
     private readonly asyncLocalStorage: AsyncLocalStorage<CreateProjectHandlerContext>,
+    @Inject(LIMITS_SERVICE_TOKEN)
+    private readonly limitsService: ILimitsService,
   ) {}
 
   private get transaction() {
@@ -67,6 +76,15 @@ export class CreateProjectHandler implements ICommandHandler<
 
     if (command.data.branchName) {
       validateBranchName(command.data.branchName);
+    }
+
+    const limitResult = await this.limitsService.checkLimit(
+      command.data.organizationId,
+      LimitMetric.PROJECTS,
+      1,
+    );
+    if (!limitResult.allowed) {
+      throw new LimitExceededException(limitResult);
     }
 
     return this.transactionService.run(() => this.transactionHandler(command), {

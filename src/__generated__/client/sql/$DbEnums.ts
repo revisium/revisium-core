@@ -5,4 +5,6 @@
 export interface $DbEnums {
   RoleLevel: 'System' | 'Organization' | 'Project';
   EndpointType: 'GRAPHQL' | 'REST_API';
+  BillingStatus: 'free' | 'early_adopter' | 'active' | 'past_due' | 'cancelled';
+  BillingInterval: 'monthly' | 'yearly';
 }

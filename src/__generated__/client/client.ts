@@ -139,3 +139,13 @@ export type OAuthRefreshToken = Prisma.OAuthRefreshTokenModel;
  *
  */
 export type LicenseCache = Prisma.LicenseCacheModel;
+/**
+ * Model Subscription
+ *
+ */
+export type Subscription = Prisma.SubscriptionModel;
+/**
+ * Model UsageRecord
+ *
+ */
+export type UsageRecord = Prisma.UsageRecordModel;

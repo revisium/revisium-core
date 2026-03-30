@@ -444,6 +444,109 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>;
 };
 
+export type EnumBillingStatusFilter<$PrismaModel = never> = {
+  equals?:
+    | $Enums.BillingStatus
+    | Prisma.EnumBillingStatusFieldRefInput<$PrismaModel>;
+  in?:
+    | $Enums.BillingStatus[]
+    | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+  notIn?:
+    | $Enums.BillingStatus[]
+    | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+  not?:
+    | Prisma.NestedEnumBillingStatusFilter<$PrismaModel>
+    | $Enums.BillingStatus;
+};
+
+export type EnumBillingIntervalNullableFilter<$PrismaModel = never> = {
+  equals?:
+    | $Enums.BillingInterval
+    | Prisma.EnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  in?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  notIn?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  not?:
+    | Prisma.NestedEnumBillingIntervalNullableFilter<$PrismaModel>
+    | $Enums.BillingInterval
+    | null;
+};
+
+export type EnumBillingStatusWithAggregatesFilter<$PrismaModel = never> = {
+  equals?:
+    | $Enums.BillingStatus
+    | Prisma.EnumBillingStatusFieldRefInput<$PrismaModel>;
+  in?:
+    | $Enums.BillingStatus[]
+    | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+  notIn?:
+    | $Enums.BillingStatus[]
+    | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+  not?:
+    | Prisma.NestedEnumBillingStatusWithAggregatesFilter<$PrismaModel>
+    | $Enums.BillingStatus;
+  _count?: Prisma.NestedIntFilter<$PrismaModel>;
+  _min?: Prisma.NestedEnumBillingStatusFilter<$PrismaModel>;
+  _max?: Prisma.NestedEnumBillingStatusFilter<$PrismaModel>;
+};
+
+export type EnumBillingIntervalNullableWithAggregatesFilter<
+  $PrismaModel = never,
+> = {
+  equals?:
+    | $Enums.BillingInterval
+    | Prisma.EnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  in?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  notIn?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  not?:
+    | Prisma.NestedEnumBillingIntervalNullableWithAggregatesFilter<$PrismaModel>
+    | $Enums.BillingInterval
+    | null;
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>;
+  _min?: Prisma.NestedEnumBillingIntervalNullableFilter<$PrismaModel>;
+  _max?: Prisma.NestedEnumBillingIntervalNullableFilter<$PrismaModel>;
+};
+
+export type BigIntFilter<$PrismaModel = never> = {
+  equals?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  in?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  notIn?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  lt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  lte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBigIntFilter<$PrismaModel> | bigint | number;
+};
+
+export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  in?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  notIn?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  lt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  lte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number;
+  _count?: Prisma.NestedIntFilter<$PrismaModel>;
+  _avg?: Prisma.NestedFloatFilter<$PrismaModel>;
+  _sum?: Prisma.NestedBigIntFilter<$PrismaModel>;
+  _min?: Prisma.NestedBigIntFilter<$PrismaModel>;
+  _max?: Prisma.NestedBigIntFilter<$PrismaModel>;
+};
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>;
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
@@ -792,4 +895,108 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>;
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>;
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>;
+};
+
+export type NestedEnumBillingStatusFilter<$PrismaModel = never> = {
+  equals?:
+    | $Enums.BillingStatus
+    | Prisma.EnumBillingStatusFieldRefInput<$PrismaModel>;
+  in?:
+    | $Enums.BillingStatus[]
+    | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+  notIn?:
+    | $Enums.BillingStatus[]
+    | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+  not?:
+    | Prisma.NestedEnumBillingStatusFilter<$PrismaModel>
+    | $Enums.BillingStatus;
+};
+
+export type NestedEnumBillingIntervalNullableFilter<$PrismaModel = never> = {
+  equals?:
+    | $Enums.BillingInterval
+    | Prisma.EnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  in?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  notIn?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  not?:
+    | Prisma.NestedEnumBillingIntervalNullableFilter<$PrismaModel>
+    | $Enums.BillingInterval
+    | null;
+};
+
+export type NestedEnumBillingStatusWithAggregatesFilter<$PrismaModel = never> =
+  {
+    equals?:
+      | $Enums.BillingStatus
+      | Prisma.EnumBillingStatusFieldRefInput<$PrismaModel>;
+    in?:
+      | $Enums.BillingStatus[]
+      | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+    notIn?:
+      | $Enums.BillingStatus[]
+      | Prisma.ListEnumBillingStatusFieldRefInput<$PrismaModel>;
+    not?:
+      | Prisma.NestedEnumBillingStatusWithAggregatesFilter<$PrismaModel>
+      | $Enums.BillingStatus;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumBillingStatusFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumBillingStatusFilter<$PrismaModel>;
+  };
+
+export type NestedEnumBillingIntervalNullableWithAggregatesFilter<
+  $PrismaModel = never,
+> = {
+  equals?:
+    | $Enums.BillingInterval
+    | Prisma.EnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  in?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  notIn?:
+    | $Enums.BillingInterval[]
+    | Prisma.ListEnumBillingIntervalFieldRefInput<$PrismaModel>
+    | null;
+  not?:
+    | Prisma.NestedEnumBillingIntervalNullableWithAggregatesFilter<$PrismaModel>
+    | $Enums.BillingInterval
+    | null;
+  _count?: Prisma.NestedIntNullableFilter<$PrismaModel>;
+  _min?: Prisma.NestedEnumBillingIntervalNullableFilter<$PrismaModel>;
+  _max?: Prisma.NestedEnumBillingIntervalNullableFilter<$PrismaModel>;
+};
+
+export type NestedBigIntFilter<$PrismaModel = never> = {
+  equals?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  in?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  notIn?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  lt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  lte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBigIntFilter<$PrismaModel> | bigint | number;
+};
+
+export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  in?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  notIn?: bigint[] | number[] | Prisma.ListBigIntFieldRefInput<$PrismaModel>;
+  lt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  lte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gt?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  gte?: bigint | number | Prisma.BigIntFieldRefInput<$PrismaModel>;
+  not?: Prisma.NestedBigIntWithAggregatesFilter<$PrismaModel> | bigint | number;
+  _count?: Prisma.NestedIntFilter<$PrismaModel>;
+  _avg?: Prisma.NestedFloatFilter<$PrismaModel>;
+  _sum?: Prisma.NestedBigIntFilter<$PrismaModel>;
+  _min?: Prisma.NestedBigIntFilter<$PrismaModel>;
+  _max?: Prisma.NestedBigIntFilter<$PrismaModel>;
 };

@@ -73,6 +73,8 @@ export const ModelName = {
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
   LicenseCache: 'LicenseCache',
+  Subscription: 'Subscription',
+  UsageRecord: 'UsageRecord',
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -322,6 +324,38 @@ export const LicenseCacheScalarFieldEnum = {
 export type LicenseCacheScalarFieldEnum =
   (typeof LicenseCacheScalarFieldEnum)[keyof typeof LicenseCacheScalarFieldEnum];
 
+export const SubscriptionScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  organizationId: 'organizationId',
+  planId: 'planId',
+  status: 'status',
+  interval: 'interval',
+  provider: 'provider',
+  externalCustomerId: 'externalCustomerId',
+  externalSubscriptionId: 'externalSubscriptionId',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  cancelAt: 'cancelAt',
+} as const;
+
+export type SubscriptionScalarFieldEnum =
+  (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum];
+
+export const UsageRecordScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  subscriptionId: 'subscriptionId',
+  metric: 'metric',
+  value: 'value',
+  periodStart: 'periodStart',
+  periodEnd: 'periodEnd',
+} as const;
+
+export type UsageRecordScalarFieldEnum =
+  (typeof UsageRecordScalarFieldEnum)[keyof typeof UsageRecordScalarFieldEnum];
+
 export const SortOrder = {
   asc: 'asc',
   desc: 'desc',
@@ -547,3 +581,24 @@ export const LicenseCacheOrderByRelevanceFieldEnum = {
 
 export type LicenseCacheOrderByRelevanceFieldEnum =
   (typeof LicenseCacheOrderByRelevanceFieldEnum)[keyof typeof LicenseCacheOrderByRelevanceFieldEnum];
+
+export const SubscriptionOrderByRelevanceFieldEnum = {
+  id: 'id',
+  organizationId: 'organizationId',
+  planId: 'planId',
+  provider: 'provider',
+  externalCustomerId: 'externalCustomerId',
+  externalSubscriptionId: 'externalSubscriptionId',
+} as const;
+
+export type SubscriptionOrderByRelevanceFieldEnum =
+  (typeof SubscriptionOrderByRelevanceFieldEnum)[keyof typeof SubscriptionOrderByRelevanceFieldEnum];
+
+export const UsageRecordOrderByRelevanceFieldEnum = {
+  id: 'id',
+  subscriptionId: 'subscriptionId',
+  metric: 'metric',
+} as const;
+
+export type UsageRecordOrderByRelevanceFieldEnum =
+  (typeof UsageRecordOrderByRelevanceFieldEnum)[keyof typeof UsageRecordOrderByRelevanceFieldEnum];
