@@ -35,6 +35,7 @@ Request → Handler → checkLimit() → Cache hit? → Allow/Deny
 - [Data Models](./billing/data-models.md) — Subscription, UsageRecord, Prisma schema
 - [Usage Tracking](./billing/usage-tracking.md) — row-version counting, daily snapshots, TypedSQL
 - [Subscription Lifecycle](./billing/subscription-lifecycle.md) — status transitions, payment providers
+- [Early Adopter Program](./billing/early-access.md) — free Pro features, transition to paid
 - [Developer Guide](./billing/developer-guide.md) — adding metrics, extending plans, testing
 
 ## Architecture Overview

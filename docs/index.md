@@ -14,4 +14,5 @@ Technical documentation for the Revisium Core backend.
   - [Data Models](./billing/data-models.md) - Subscription, UsageRecord, Prisma schema
   - [Usage Tracking](./billing/usage-tracking.md) - Row-version counting, daily snapshots
   - [Subscription Lifecycle](./billing/subscription-lifecycle.md) - Status transitions, payments
+  - [Early Adopter Program](./billing/early-access.md) - Free Pro features, transition to paid
   - [Developer Guide](./billing/developer-guide.md) - Adding metrics, testing, deployment
