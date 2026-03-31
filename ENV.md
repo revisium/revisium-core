@@ -140,6 +140,8 @@ cp .env.example .env
 | `REVISIUM_SSO_ENABLED` | `false` | Enable SSO module (requires valid license with `sso` feature) |
 | `REVISIUM_AUDIT_ENABLED` | `false` | Enable audit log module (requires valid license with `audit` feature) |
 | `REVISIUM_STANDALONE` | `false` | Self-hosted mode. Bypasses all plan limits even if billing module is loaded. Set to `true` for on-premises deployments |
+| `EARLY_ACCESS_ENABLED` | `false` | Enable early access program. When `true`, users can activate Pro features for free via "Get Early Access" |
+| `EARLY_ACCESS_TRANSITION_DATE` | - | Date (YYYY-MM-DD) when early access ends. On this date, early adopters without payment are downgraded to free |
 
 ---
 
