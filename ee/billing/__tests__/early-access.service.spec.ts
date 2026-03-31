@@ -129,15 +129,18 @@ describe('EarlyAccessService', () => {
       expect(result.planId).toBe('free');
     });
 
-    it('should reject when no subscription exists', async () => {
+    it('should create subscription when none exists', async () => {
       const orgId = await createOrg();
 
-      await expect(
-        service.updateSubscriptionStatus({
-          organizationId: orgId,
-          status: BillingStatus.active,
-        }),
-      ).rejects.toThrow('No subscription found');
+      const result = await service.updateSubscriptionStatus({
+        organizationId: orgId,
+        status: BillingStatus.active,
+        planId: 'pro',
+      });
+
+      expect(result.organizationId).toBe(orgId);
+      expect(result.status).toBe(BillingStatus.active);
+      expect(result.planId).toBe('pro');
     });
   });
 
