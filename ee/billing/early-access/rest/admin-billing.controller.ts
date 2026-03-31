@@ -5,7 +5,12 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeController,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { HTTPSystemGuard } from 'src/features/auth/guards/system.guard';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
@@ -20,7 +25,8 @@ import { AdminUpdateSubscriptionDto } from './dto/admin-update-subscription.dto'
   action: PermissionAction.update,
   subject: PermissionSubject.Organization,
 })
-@Controller('admin/billing')
+@ApiExcludeController()
+@Controller('api/admin/billing')
 @ApiBearerAuth('access-token')
 @ApiTags('Admin Billing')
 export class AdminBillingController {

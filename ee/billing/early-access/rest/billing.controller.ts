@@ -9,7 +9,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiExcludeController,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
 import { HTTPOrganizationGuard } from 'src/features/auth/guards/organization.guard';
@@ -19,7 +24,8 @@ import { EarlyAccessService } from '../early-access.service';
 import { ActivateEarlyAccessDto } from './dto/activate-early-access.dto';
 
 @UseInterceptors(RestMetricsInterceptor)
-@Controller('billing')
+@ApiExcludeController()
+@Controller('api/billing')
 @ApiTags('Billing')
 export class BillingController {
   constructor(

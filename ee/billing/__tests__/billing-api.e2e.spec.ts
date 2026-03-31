@@ -16,7 +16,7 @@ describe('Billing REST API (e2e)', () => {
   beforeAll(async () => {
     process.env.REVISIUM_BILLING_ENABLED = 'true';
     process.env.REVISIUM_LICENSE_KEY = 'test-key';
-    delete process.env.EARLY_ACCESS_ENABLED;
+    process.env.EARLY_ACCESS_ENABLED = 'false';
     registerGraphqlEnums();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -34,7 +34,7 @@ describe('Billing REST API (e2e)', () => {
   afterAll(async () => {
     delete process.env.REVISIUM_BILLING_ENABLED;
     delete process.env.REVISIUM_LICENSE_KEY;
-    delete process.env.EARLY_ACCESS_ENABLED;
+    process.env.EARLY_ACCESS_ENABLED = '';
     await app.close();
   });
 
@@ -72,7 +72,7 @@ describe('Billing REST API (e2e)', () => {
   describe('GET /billing/plans', () => {
     it('should return plans without auth', async () => {
       const res = await request(app.getHttpServer())
-        .get('/billing/plans')
+        .get('/api/billing/plans')
         .expect(200);
 
       expect(res.body.plans).toBeDefined();
@@ -88,7 +88,7 @@ describe('Billing REST API (e2e)', () => {
     it('should return null when no subscription', async () => {
       const { orgId, token } = await createOrgWithOwner();
       const res = await request(app.getHttpServer())
-        .get(`/billing/${orgId}/subscription`)
+        .get(`/api/billing/${orgId}/subscription`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -108,7 +108,7 @@ describe('Billing REST API (e2e)', () => {
       });
 
       const res = await request(app.getHttpServer())
-        .get(`/billing/${orgId}/subscription`)
+        .get(`/api/billing/${orgId}/subscription`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -121,7 +121,7 @@ describe('Billing REST API (e2e)', () => {
     it('should return usage summary', async () => {
       const { orgId, token } = await createOrgWithOwner();
       const res = await request(app.getHttpServer())
-        .get(`/billing/${orgId}/usage`)
+        .get(`/api/billing/${orgId}/usage`)
         .set('Authorization', `Bearer ${token}`)
         .expect(200);
 
@@ -135,10 +135,10 @@ describe('Billing REST API (e2e)', () => {
   });
 
   describe('POST /billing/:orgId/early-access', () => {
-    it('should reject when EARLY_ACCESS_ENABLED is not set', async () => {
+    it('should reject when EARLY_ACCESS_ENABLED is false', async () => {
       const { orgId, token } = await createOrgWithOwner();
       const res = await request(app.getHttpServer())
-        .post(`/billing/${orgId}/early-access`)
+        .post(`/api/billing/${orgId}/early-access`)
         .set('Authorization', `Bearer ${token}`)
         .send({ planId: 'pro' })
         .expect(400);
