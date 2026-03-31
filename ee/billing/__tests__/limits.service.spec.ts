@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { nanoid } from 'nanoid';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
@@ -17,11 +16,8 @@ describe('LimitsService (EE)', () => {
   let module: TestingModule;
   let service: LimitsService;
   let prisma: PrismaService;
-  let configValues: Record<string, string>;
 
   beforeAll(async () => {
-    configValues = {};
-
     module = await Test.createTestingModule({
       imports: [DatabaseModule],
       providers: [
@@ -31,12 +27,6 @@ describe('LimitsService (EE)', () => {
         CacheService,
         { provide: CACHE_SERVICE, useClass: NoopCacheService },
         { provide: PLAN_PROVIDER_TOKEN, useClass: HardcodedPlanProvider },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: (key: string) => configValues[key] ?? undefined,
-          },
-        },
       ],
     }).compile();
 
@@ -75,16 +65,6 @@ describe('LimitsService (EE)', () => {
       });
     }
   };
-
-  it('should allow when standalone mode', async () => {
-    configValues = { REVISIUM_STANDALONE: 'true' };
-    const orgId = await createOrgWithSubscription('free');
-
-    const result = await service.checkLimit(orgId, LimitMetric.PROJECTS, 1);
-    expect(result.allowed).toBe(true);
-
-    configValues = {};
-  });
 
   it('should allow when no subscription exists', async () => {
     const orgId = await createOrg();

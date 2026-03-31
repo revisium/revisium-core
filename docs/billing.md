@@ -70,5 +70,4 @@ Request → Handler → checkLimit() → Cache hit? → Allow/Deny
 | Variable                   | Default | Description                            |
 | -------------------------- | ------- | -------------------------------------- |
 | `REVISIUM_BILLING_ENABLED` | `false` | Load the billing module                |
-| `REVISIUM_STANDALONE`      | `false` | Self-hosted mode — bypasses all limits |
 | `REVISIUM_LICENSE_KEY`     | —       | Required for any enterprise features   |
