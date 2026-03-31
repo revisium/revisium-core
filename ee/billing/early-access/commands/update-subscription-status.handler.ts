@@ -20,19 +20,24 @@ export class UpdateSubscriptionStatusHandler implements ICommandHandler<UpdateSu
       );
     }
 
-    const existing = await this.prisma.subscription.findUnique({
-      where: { organizationId },
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { id: true },
     });
-
-    if (!existing) {
+    if (!org) {
       throw new BadRequestException(
-        `No subscription found for organization ${organizationId}`,
+        `Organization ${organizationId} not found`,
       );
     }
 
-    const subscription = await this.prisma.subscription.update({
+    const subscription = await this.prisma.subscription.upsert({
       where: { organizationId },
-      data: {
+      create: {
+        organizationId,
+        planId: planId ?? 'free',
+        ...(status !== undefined && { status }),
+      },
+      update: {
         ...(status !== undefined && { status }),
         ...(planId !== undefined && { planId }),
       },
