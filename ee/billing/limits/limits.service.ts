@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ILimitsService,
   LimitCheckResult,
@@ -22,7 +21,6 @@ export class LimitsService implements ILimitsService {
     private readonly usageService: UsageService,
     @Inject(PLAN_PROVIDER_TOKEN)
     private readonly planProvider: IPlanProvider,
-    private readonly configService: ConfigService,
   ) {}
 
   async checkLimit(
@@ -30,10 +28,6 @@ export class LimitsService implements ILimitsService {
     metric: LimitMetric,
     increment: number = 1,
   ): Promise<LimitCheckResult> {
-    if (this.configService.get('REVISIUM_STANDALONE') === 'true') {
-      return { allowed: true };
-    }
-
     const subscription = await this.billingCache.subscription(
       organizationId,
       () => this.usageService.findSubscription(organizationId),

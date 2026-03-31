@@ -88,15 +88,14 @@ See [Cache Architecture](./cache.md) for details on TTLs and invalidation.
 
 `UsageTrackingService` runs a cron at midnight to record **historical snapshots** of absolute values:
 
-```
+```text
 @Cron(EVERY_DAY_AT_MIDNIGHT)
 snapshotUsage():
-  1. Skip if REVISIUM_STANDALONE=true
-  2. Find all subscriptions with status 'active' or 'early_adopter'
-  3. For each subscription, for each metric:
+  1. Find all subscriptions with status 'active' or 'early_adopter'
+  2. For each subscription, for each metric:
      - Compute current absolute usage via UsageService.computeUsage()
      - Upsert into UsageRecord with yesterday's date as period
-  4. Log completion
+  3. Log completion
 ```
 
 ### What Snapshots Record

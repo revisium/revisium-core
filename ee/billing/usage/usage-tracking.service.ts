@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { BillingStatus } from 'src/__generated__/client';
 import { LimitMetric } from 'src/features/billing/limits.interface';
@@ -13,13 +12,10 @@ export class UsageTrackingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly usageService: UsageService,
-    private readonly configService: ConfigService,
   ) {}
 
   @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
   async snapshotUsage(): Promise<void> {
-    if (this.configService.get('REVISIUM_STANDALONE') === 'true') return;
-
     const subscriptions = await this.prisma.subscription.findMany({
       where: {
         status: { in: [BillingStatus.active, BillingStatus.early_adopter] },

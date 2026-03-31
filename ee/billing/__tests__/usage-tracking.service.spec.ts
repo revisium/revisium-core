@@ -1,5 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { nanoid } from 'nanoid';
 import { BillingStatus } from 'src/__generated__/client';
@@ -13,23 +12,11 @@ describe('UsageTrackingService', () => {
   let module: TestingModule;
   let service: UsageTrackingService;
   let prisma: PrismaService;
-  let configValues: Record<string, string>;
 
   beforeAll(async () => {
-    configValues = {};
-
     module = await Test.createTestingModule({
       imports: [DatabaseModule, ScheduleModule.forRoot()],
-      providers: [
-        UsageTrackingService,
-        UsageService,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: (key: string) => configValues[key] ?? undefined,
-          },
-        },
-      ],
+      providers: [UsageTrackingService, UsageService],
     }).compile();
 
     service = module.get(UsageTrackingService);
@@ -50,23 +37,6 @@ describe('UsageTrackingService', () => {
     });
     return { orgId, subscriptionId: sub.id };
   };
-
-  it('should skip when standalone mode', async () => {
-    configValues = { REVISIUM_STANDALONE: 'true' };
-    const { subscriptionId } = await createOrgWithSubscription(
-      BillingStatus.active,
-    );
-
-    await service.snapshotUsage();
-
-    // No usage records created even though an active subscription exists
-    const records = await prisma.usageRecord.findMany({
-      where: { subscriptionId },
-    });
-    expect(records).toHaveLength(0);
-
-    configValues = {};
-  });
 
   it('should create usage records for active subscriptions', async () => {
     const { subscriptionId } = await createOrgWithSubscription(

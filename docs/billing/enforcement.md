@@ -12,29 +12,26 @@ How and where plan limits are checked.
 
 ```typescript
 async checkLimit(organizationId, metric, increment):
-  // 1. Self-hosted bypass (zero cost)
-  if REVISIUM_STANDALONE === 'true' → { allowed: true }
-
-  // 2. Subscription lookup (cached 5 min)
+  // 1. Subscription lookup (cached 5 min)
   subscription = billingCache.subscription(orgId, () => db.findUnique())
   if !subscription → { allowed: true }
 
-  // 3. Plan resolution (in-memory, no I/O)
+  // 2. Plan resolution (in-memory, no I/O)
   plan = planProvider.getPlan(subscription.planId)
   if !plan → { allowed: true }
 
-  // 4. Limit check (skip usage query if unlimited)
+  // 3. Limit check (skip usage query if unlimited)
   limit = plan[metric]
   if limit === null → { allowed: true }
 
-  // 5. Usage computation (cached 2 min, invalidated on events)
+  // 4. Usage computation (cached 2 min, invalidated on events)
   current = billingCache.usage(orgId, metric, () => usageService.compute())
   if current + increment > limit → { allowed: false, current, limit, metric }
 
   → { allowed: true, current, limit }
 ```
 
-Steps 1-4 are cache reads or in-memory lookups. Step 5 only executes when the org has a subscription with a finite limit for this metric.
+Steps 1-3 are cache reads or in-memory lookups. Step 4 only executes when the org has a subscription with a finite limit for this metric.
 
 ## Enforcement Points
 
