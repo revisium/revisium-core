@@ -5,40 +5,16 @@ Plan limits and usage tracking for Revisium Cloud. Enterprise feature — self-h
 ## Quick Start
 
 - Self-hosted: nothing to configure, everything is unlimited
-- Cloud: set `REVISIUM_BILLING_ENABLED=true` + `REVISIUM_LICENSE_KEY` to enable billing
+- Cloud: set `REVISIUM_BILLING_ENABLED=true` + `REVISIUM_LICENSE_KEY` + `PAYMENT_SERVICE_URL` + `PAYMENT_SERVICE_SECRET`
 
-## Key Concepts
+## Architecture
 
-- **Absolute limits** (`row_versions`, `projects`, `seats`, `storage_bytes`) — total count across the org, never resets. An org on the Free plan can have up to 10,000 row versions total, not per day.
-- **Rate limits** (`api_calls`) — resets per time window (daily). An org on the Free plan can make up to 1,000 API calls per day.
-- **Daily snapshots** — historical records of absolute values for billing/analytics. Not used for enforcement.
+Core is an **ultra-thin client** — zero billing Prisma models. All billing state (subscriptions, plans, payment intents) lives in the **revisium-payment** service. Core only:
 
-## How It Works
-
-Every mutation that creates or modifies data checks the organization's plan limits before executing. The check is fast (cached reads, sub-millisecond) and fails open — if anything is misconfigured, the operation is allowed.
-
-```
-Request → Handler → checkLimit() → Cache hit? → Allow/Deny
-                         ↓ cache miss
-                    Subscription lookup (DB, cached 5 min)
-                         ↓
-                    Plan resolution (in-memory)
-                         ↓
-                    Usage computation (DB, cached 2 min)
-```
-
-## Contents
-
-- [Enforcement](./billing/enforcement.md) — which operations are checked, when, and how
-- [Plans & Limits](./billing/plans.md) — plan definitions, metrics, how to add new plans
-- [Cache Architecture](./billing/cache.md) — caching strategy, invalidation, multi-pod behavior
-- [Data Models](./billing/data-models.md) — Subscription, UsageRecord, Prisma schema
-- [Usage Tracking](./billing/usage-tracking.md) — row-version counting, daily snapshots, TypedSQL
-- [Subscription Lifecycle](./billing/subscription-lifecycle.md) — status transitions, payment providers
-- [Early Adopter Program](./billing/early-access.md) — free Pro features, transition to paid
-- [Developer Guide](./billing/developer-guide.md) — adding metrics, extending plans, testing
-
-## Architecture Overview
+1. **Fetches limits** from the payment service via HMAC-signed HTTP
+2. **Counts usage locally** (row versions, projects, seats) via Prisma
+3. **Compares** projected usage vs limits
+4. **Reports usage** hourly to the payment service
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -52,22 +28,62 @@ Request → Handler → checkLimit() → Cache hit? → Allow/Deny
                           │ DI override when REVISIUM_BILLING_ENABLED=true
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  /ee/billing/ (proprietary)                                 │
+│  /ee/billing/ (proprietary) — ultra-thin client             │
 │                                                             │
-│  LimitsService ── BillingCacheService ── UsageService       │
-│       │                  │                    │             │
-│       │            event-driven          TypedSQL queries   │
-│       │            invalidation          (row versions,     │
-│       │            (7 handlers)           projects, seats)  │
+│  BillingClient ──── HMAC HTTP ────► revisium-payment        │
+│       │                              (plans, subscriptions, │
+│       │                               limits, checkout)     │
+│  LimitsService (cached proxy, fail-open)                    │
 │       │                                                     │
-│  HardcodedPlanProvider                                      │
-│  UsageTrackingService (daily cron)                          │
+│  UsageService ── local Prisma queries (row versions,        │
+│       │          projects, seats, storage)                   │
+│       │                                                     │
+│  BillingCacheService ── event-driven invalidation           │
+│                         (7 handlers)                        │
+│                                                             │
+│  CallbackController ── receives payment-callback from       │
+│                        payment service, invalidates cache   │
+│                                                             │
+│  UsageReporterService ── hourly cron, reports usage         │
+│                          to payment service                 │
 └─────────────────────────────────────────────────────────────┘
 ```
 
+## How Limit Checks Work
+
+```text
+Request → Handler → checkLimit() → Limits cache hit? → Compare → Allow/Deny
+                         ↓ cache miss
+                    BillingClient.getOrgLimits() (HMAC HTTP → payment service)
+                         ↓
+                    Cache result (in-memory Map, 5-min TTL)
+                         ↓
+                    UsageService.computeUsage() (local Prisma, cached 2 min)
+```
+
+Fail-open: if payment service is unreachable and cache is cold, operations are allowed.
+
+## Key Concepts
+
+- **Absolute limits** (`row_versions`, `projects`, `seats`, `storage_bytes`) — total count across the org, never resets
+- **Rate limits** (`api_calls`) — resets per time window (daily)
+- **No billing tables in core** — plans, subscriptions, payment intents all live in revisium-payment
+
+## Contents
+
+- [Enforcement](./billing/enforcement.md) — which operations are checked, when, and how
+- [Plans & Limits](./billing/plans.md) — plan definitions, metrics
+- [Cache Architecture](./billing/cache.md) — caching strategy, invalidation, multi-pod behavior
+- [Usage Counting](./billing/usage-tracking.md) — row-version counting, hourly reporting
+- [Early Adopter Program](./billing/early-access.md) — free Pro features, transition to paid
+- [Developer Guide](./billing/developer-guide.md) — adding metrics, testing
+
 ## Environment Variables
 
-| Variable                   | Default | Description                            |
-| -------------------------- | ------- | -------------------------------------- |
-| `REVISIUM_BILLING_ENABLED` | `false` | Load the billing module                |
-| `REVISIUM_LICENSE_KEY`     | —       | Required for any enterprise features   |
+| Variable                   | Default | Description                                       |
+| -------------------------- | ------- | ------------------------------------------------- |
+| `REVISIUM_BILLING_ENABLED` | `false` | Load the billing module                           |
+| `REVISIUM_LICENSE_KEY`     | —       | Required for any enterprise features              |
+| `PAYMENT_SERVICE_URL`      | —       | Payment service base URL (e.g. `http://payment:8082`) |
+| `PAYMENT_SERVICE_SECRET`   | —       | Shared HMAC secret for service-to-service auth    |
+| `EARLY_ACCESS_ENABLED`     | `false` | Enable early access self-serve activation         |

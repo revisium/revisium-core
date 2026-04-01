@@ -12,26 +12,22 @@ How and where plan limits are checked.
 
 ```typescript
 async checkLimit(organizationId, metric, increment):
-  // 1. Subscription lookup (cached 5 min)
-  subscription = billingCache.subscription(orgId, () => db.findUnique())
-  if !subscription → { allowed: true }
+  // 1. Org limits from payment service (in-memory Map cache, 5-min TTL)
+  orgLimits = limitsCache.get(organizationId) ?? billingClient.getOrgLimits(organizationId)
+  if !orgLimits → { allowed: true }  // fail-open
 
-  // 2. Plan resolution (in-memory, no I/O)
-  plan = planProvider.getPlan(subscription.planId)
-  if !plan → { allowed: true }
-
-  // 3. Limit check (skip usage query if unlimited)
-  limit = plan[metric]
+  // 2. Limit lookup (skip usage query if unlimited)
+  limit = orgLimits.limits[metric]
   if limit === null → { allowed: true }
 
-  // 4. Usage computation (cached 2 min, invalidated on events)
-  current = billingCache.usage(orgId, metric, () => usageService.compute())
+  // 3. Usage computation (cached 2 min via BillingCacheService)
+  current = billingCache.usage(organizationId, metric, () => usageService.compute())
   if current + increment > limit → { allowed: false, current, limit, metric }
 
   → { allowed: true, current, limit }
 ```
 
-Steps 1-3 are cache reads or in-memory lookups. Step 4 only executes when the org has a subscription with a finite limit for this metric.
+Step 1 is an in-memory cache hit or HMAC-signed HTTP call to the payment service. Step 3 only executes when the org has a finite limit for this metric.
 
 ## Enforcement Points
 

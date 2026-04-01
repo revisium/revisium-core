@@ -18,11 +18,23 @@ Request → BillingCacheService → CacheService → BentoCache
 - **Bus (Redis or pg-bus):** Propagates invalidation across pods.
 - **Noop mode:** When `CACHE_ENABLED=0`, factory is called on every request. Billing still works, just no caching.
 
-## Keys and Tags
+## Two Cache Layers
 
+### 1. LimitsService in-memory Map (org limits from payment service)
+
+```text
+Key: organizationId → OrgLimits { planId, status, limits }
+TTL: 5 minutes
+Invalidation: CallbackController calls limitsService.invalidateCache(orgId)
+Scope: per-process (not shared across pods)
 ```
+
+This is a simple `Map<string, { data, expiresAt }>` — not BentoCache. Fast, local, invalidated by payment service callbacks.
+
+### 2. BillingCacheService (local usage counts via BentoCache)
+
+```text
 Keys:
-  billing:sub:{orgId}              → Subscription record    (TTL: 5 min)
   billing:usage:{orgId}:{metric}   → Usage count number     (TTL: 2 min)
   billing:rev-org:{revisionId}     → Organization ID string (TTL: 1 day)
 
@@ -35,12 +47,9 @@ Tags enable bulk invalidation: `deleteByTag('billing-usage-org-123')` clears all
 
 ## BillingCacheService
 
-Wraps `CacheService` with billing-specific methods, following the same pattern as `RowCacheService`:
+Wraps `CacheService` with billing-specific methods:
 
 ```typescript
-// Cache a subscription lookup
-billingCache.subscription(orgId, () => prisma.subscription.findUnique(...))
-
 // Cache a usage computation
 billingCache.usage(orgId, metric, () => usageService.computeUsage(...))
 
