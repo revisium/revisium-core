@@ -1,112 +1,29 @@
 # Data Models
 
-Prisma models for billing, defined in `prisma/schema.prisma`.
+## Core Has No Billing Tables
 
-## Entity Relationship
+All billing data (subscriptions, plans, usage reports, payment intents) lives in **revisium-payment**. Core's Prisma schema has no billing models.
 
-```
-Organization (core)
-    │
-    │ organizationId (FK, unique, 1:1)
-    ▼
-Subscription
-    │
-    │ subscriptionId (FK)
-    ▼
-UsageRecord (1:N)
-```
+Core fetches billing data via `BillingClient` — an HMAC-signed HTTP client that talks to the payment service REST API.
 
-## Subscription
+## What Core Queries Locally
 
-One per organization. Created when an org signs up for a plan.
+`UsageService` counts current usage from core's own Prisma models:
 
-```prisma
-model Subscription {
-  id                       String          @id @default(nanoid())
-  createdAt                DateTime        @default(now())
-  updatedAt                DateTime        @updatedAt
+| Metric | Query | Source |
+|---|---|---|
+| `row_versions` | TypedSQL: `countOrgRowVersions.sql` | Row → Table → Revision → Branch → Project → Organization |
+| `projects` | `prisma.project.count()` | Project (non-deleted) |
+| `seats` | `prisma.userOrganization.count()` | UserOrganization |
+| `storage_bytes` | TODO (returns 0) | File plugin storage |
+| `api_calls` | TODO (returns 0) | API request tracking |
 
-  organizationId           String          @unique
-  organization             Organization    @relation(fields: [organizationId], references: [id])
-  planId                   String
-  status                   BillingStatus   @default(free)
-  interval                 BillingInterval?
+## What Lives in Payment Service
 
-  // Payment provider
-  provider                 String?         // "stripe", "cloudpayments", "btcpay", "manual"
-  externalCustomerId       String?
-  externalSubscriptionId   String?
+See the revisium-payment repository `docs/billing.md` for:
 
-  // Billing period
-  currentPeriodStart       DateTime?
-  currentPeriodEnd         DateTime?
-  cancelAt                 DateTime?
-
-  usageRecords             UsageRecord[]
-
-  @@index([status])
-  @@index([provider])
-}
-```
-
-### Key Design Decisions
-
-- **FK to Organization** — `organizationId` references `Organization.id` with `ON DELETE RESTRICT`. Deleting an org with an active subscription requires removing the subscription first.
-- **planId is a string** — Plans live in `HardcodedPlanProvider` (or future revisium-billing), not in the database. No FK constraint.
-- **organizationId is unique** — One subscription per org. Enforced at the database level.
-
-## UsageRecord
-
-Daily usage snapshots. One record per subscription per metric per day.
-
-```prisma
-model UsageRecord {
-  id              String       @id @default(nanoid())
-  createdAt       DateTime     @default(now())
-
-  subscriptionId  String
-  subscription    Subscription @relation(fields: [subscriptionId], references: [id])
-
-  metric          String       // "row_versions", "projects", "seats", etc.
-  value           BigInt
-  periodStart     DateTime
-  periodEnd       DateTime
-
-  @@unique([subscriptionId, metric, periodStart])
-  @@index([subscriptionId, metric, periodStart])
-}
-```
-
-### Key Design Decisions
-
-- **BigInt for value** — Row version counts can exceed 2^31 for large organizations.
-- **Unique constraint** — `(subscriptionId, metric, periodStart)` ensures idempotent writes. Running the snapshot cron twice on the same day upserts instead of duplicating.
-- **Period covers yesterday** — The midnight cron records usage for the completed day (yesterday 00:00 → 23:59:59.999), not the day starting.
-
-## Enums
-
-```prisma
-enum BillingStatus {
-  free            // Default, no payment
-  early_adopter   // Beta users with special terms
-  active          // Paying customer
-  past_due        // Payment failed, grace period
-  cancelled       // Subscription ended
-}
-
-enum BillingInterval {
-  monthly
-  yearly
-}
-```
-
-## Migration
-
-The migration `20260329093749_add_billing_models` creates:
-
-- `BillingStatus` and `BillingInterval` enums
-- `Subscription` table with unique `organizationId` index
-- `UsageRecord` table with composite unique + index
-- FK from `UsageRecord.subscriptionId` to `Subscription.id`
-
-This migration is additive — it creates new tables and does not modify existing ones.
+- `Subscription` model (one per org, status lifecycle)
+- `UsageReport` model (periodic snapshots from core)
+- `PaymentIntent` / `PaymentAttempt` models
+- `Notification` model
+- `BillingStatus` / `BillingInterval` enums

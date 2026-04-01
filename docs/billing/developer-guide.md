@@ -13,31 +13,30 @@ src/features/billing/               # Core (Apache 2.0)
 
 ee/billing/                         # Enterprise (proprietary)
   ee-billing.module.ts              # Registers all providers, overrides noop
+  billing-client.interface.ts       # IBillingClient, OrgLimits, PlanInfo, etc.
+  billing-client.ts                 # HMAC-signed HTTP client → payment service
+  hmac.ts                           # signRequest / verifyRequest
+  callback.controller.ts            # POST /billing/payment-callback (cache invalidation)
+  usage-reporter.service.ts         # Hourly cron → payment service usage/report
   cache/
     billing-cache.constants.ts      # Cache keys, tags, TTL config
-    billing-cache.service.ts        # Subscription + usage caching with tags
+    billing-cache.service.ts        # Usage caching with tags
     billing-cache-invalidation.handler.ts  # 7 event-driven invalidation handlers
   limits/
-    limits.service.ts               # Real limit checking with cached lookups
-  plan/
-    plan.interface.ts               # Plan type, IPlanProvider, PLAN_PROVIDER_TOKEN
-    hardcoded-plan-provider.ts      # Free/Pro/Enterprise constants
+    limits.service.ts               # Cached proxy: fetches limits from payment service
   usage/
-    usage.service.ts                # Raw usage computation (DB queries)
-    usage-tracking.service.ts       # Daily cron snapshots
+    usage.service.ts                # Local Prisma queries (row versions, projects, seats)
+  early-access/                     # REST + GraphQL endpoints for billing UI
 
-ee/billing/__tests__/               # Tests (real Prisma, no mocks)
-  limits.service.spec.ts
-  usage.service.spec.ts
-  usage-tracking.service.spec.ts
-  hardcoded-plan-provider.spec.ts
+ee/billing/__tests__/
+  limits.service.spec.ts            # Mocked BillingClient, real Prisma for usage
+  callback.controller.spec.ts       # HMAC verification
+  billing-client.spec.ts            # Mocked fetch
+  usage-reporter.service.spec.ts    # Mocked BillingClient + UsageService
+  usage.service.spec.ts             # Real Prisma
   billing-cache.service.spec.ts
   billing-cache-invalidation.handler.spec.ts
-
-prisma/
-  schema.prisma                     # Subscription, UsageRecord models
-  sql/countOrgRowVersions.sql       # TypedSQL for row-version counting
-  migrations/..._add_billing_models/
+  billing-api.e2e.spec.ts           # Full app with mocked BillingClient
 ```
 
 ## Adding a New Metric
@@ -54,26 +53,7 @@ export enum LimitMetric {
 }
 ```
 
-### Step 2: Add to Plan interface
-
-```typescript
-// ee/billing/plan/plan.interface.ts
-export interface Plan {
-  // ... existing
-  maxBranches: number | null;
-}
-```
-
-### Step 3: Update HardcodedPlanProvider
-
-```typescript
-// ee/billing/plan/hardcoded-plan-provider.ts
-{ id: 'free', ..., maxBranches: 5 },
-{ id: 'pro', ..., maxBranches: 50 },
-{ id: 'enterprise', ..., maxBranches: null },
-```
-
-### Step 4: Add counting method to UsageService
+### Step 2: Add counting method to UsageService
 
 ```typescript
 // ee/billing/usage/usage.service.ts
@@ -82,24 +62,26 @@ case LimitMetric.BRANCHES:
 
 private async countBranches(organizationId: string): Promise<number> {
   return this.prisma.branch.count({
-    where: {
-      project: { organizationId, isDeleted: false },
-    },
+    where: { project: { organizationId, isDeleted: false } },
   });
 }
 ```
 
-### Step 5: Add metric mapping to LimitsService
+### Step 3: Map metric to limits response in LimitsService
 
 ```typescript
-// ee/billing/limits/limits.service.ts
-case LimitMetric.BRANCHES: return plan.maxBranches;
+// ee/billing/limits/limits.service.ts — getLimitForMetric()
+case LimitMetric.BRANCHES:
+  return l.branches;  // must match the field name in OrgLimits.limits
 ```
 
-### Step 6: Add checkLimit to the handler
+### Step 4: Add limit field to payment service
+
+In revisium-payment, add `branches` to the `OrgLimits.limits` response and the plan configuration.
+
+### Step 5: Add checkLimit to the handler
 
 ```typescript
-// src/features/branch/commands/handlers/create-branch.handler.ts
 const limitResult = await this.limitsService.checkLimit(
   organizationId,
   LimitMetric.BRANCHES,
@@ -110,17 +92,11 @@ if (!limitResult.allowed) {
 }
 ```
 
-### Step 7: Add tests
-
-Add a test case in `ee/billing/__tests__/limits.service.spec.ts` and `ee/billing/__tests__/usage.service.spec.ts`.
-
-## Adding a New Plan
-
-Just add a plan object to `HARDCODED_PLANS` in `ee/billing/plan/hardcoded-plan-provider.ts`. No migration needed.
+### Step 6: Add tests
 
 ## Testing Strategy
 
-All billing tests use real Prisma against the test database — no mocks.
+Tests use mocked `BillingClient` for payment service calls and real Prisma for local usage counting.
 
 ### Test Module Pattern
 
@@ -133,39 +109,13 @@ const module = await Test.createTestingModule({
     UsageService,
     CacheService,
     { provide: CACHE_SERVICE, useClass: NoopCacheService },
-    { provide: PLAN_PROVIDER_TOKEN, useClass: HardcodedPlanProvider },
-    { provide: ConfigService, useValue: { get: (key) => configValues[key] } },
+    { provide: BILLING_CLIENT_TOKEN, useValue: mockBillingClient },
   ],
 }).compile();
 ```
 
-- `DatabaseModule` provides real `PrismaService` connected to test DB
-- `NoopCacheService` makes cache transparent (always calls factory)
-- `ConfigService` is mocked to control env vars per test
-- Each test creates its own org/subscription/data via `prisma.*` calls
-
 ### Running Tests
 
 ```bash
-# Run all billing tests
-npx jest ee/billing/__tests__/ src/features/billing/__tests__/
-
-# Run with coverage
-npx jest ee/billing/__tests__/ --coverage --collectCoverageFrom='ee/billing/**/*.ts'
+npx jest ee/billing/__tests__/
 ```
-
-### Test Database Setup
-
-Tests require the test DB to have billing tables:
-
-```bash
-npx dotenv -e .env.test -- npx prisma migrate deploy
-```
-
-## Deployment Checklist
-
-1. Run `prisma migrate deploy` to create Subscription/UsageRecord tables
-2. Set `REVISIUM_BILLING_ENABLED=true` in cloud environment
-3. Set `REVISIUM_LICENSE_KEY` to a valid license
-4. Create Subscription records for existing organizations (or they'll be unlimited)
-5. Verify cache is working (`CACHE_ENABLED=1`) for optimal performance

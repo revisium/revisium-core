@@ -141,7 +141,17 @@ cp .env.example .env
 | `REVISIUM_AUDIT_ENABLED` | `false` | Enable audit log module (requires valid license with `audit` feature) |
 | `REVISIUM_STANDALONE` | `false` | Self-hosted mode. Disables `.env` file loading (for Docker deployments where env vars come from the container runtime) |
 | `EARLY_ACCESS_ENABLED` | `false` | Enable early access program. When `true`, users can activate Pro features for free via "Get Early Access" |
-| `EARLY_ACCESS_TRANSITION_DATE` | - | Date (YYYY-MM-DD) when early access ends. On this date, early adopters without payment are downgraded to free |
+
+---
+
+## Payment Service (Billing)
+
+Required when `REVISIUM_BILLING_ENABLED=true`. Core communicates with the payment service (revisium-payment) via HMAC-signed HTTP.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `PAYMENT_SERVICE_URL` | - | Payment service base URL (e.g. `http://payment:8082`). Core sends HMAC-signed requests to this URL for limits, plans, subscriptions, checkout, and usage reporting |
+| `PAYMENT_SERVICE_SECRET` | - | Shared HMAC secret for service-to-service auth. Must match `CORE_CALLBACK_SECRET` on the payment service side. Used for both outgoing requests (core → payment) and incoming callbacks (payment → core) |
 
 ---
 
