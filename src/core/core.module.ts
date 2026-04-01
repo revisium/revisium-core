@@ -1,7 +1,9 @@
-import { DynamicModule, Module, Type } from '@nestjs/common';
+import { DynamicModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { EeBillingModule } from 'ee/billing/ee-billing.module';
+import { EeLicensingModule } from 'ee/licensing/licensing.module';
 import { AppOptions } from 'src/app-mode';
 import { AppOptionsModule } from 'src/core/app-options.module';
 
@@ -33,17 +35,6 @@ import { UserModule } from 'src/features/user/user.module';
 @Module({})
 export class CoreModule {
   static forRoot(options: AppOptions): DynamicModule {
-    const eeImports: (DynamicModule | Type)[] = [];
-
-    if (process.env.REVISIUM_LICENSE_KEY) {
-      const { EeLicensingModule } = require('ee/licensing/licensing.module');
-      eeImports.push(EeLicensingModule);
-    }
-    if (process.env.REVISIUM_BILLING_ENABLED === 'true') {
-      const { EeBillingModule } = require('ee/billing/ee-billing.module');
-      eeImports.push(EeBillingModule.register());
-    }
-
     return {
       module: CoreModule,
       imports: [
@@ -82,7 +73,8 @@ export class CoreModule {
         McpModule,
         StorageModule,
         RevisiumCacheModule.forRootAsync(),
-        ...eeImports,
+        EeLicensingModule,
+        EeBillingModule.register(),
       ],
     };
   }

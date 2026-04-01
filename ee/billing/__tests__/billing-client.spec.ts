@@ -6,10 +6,10 @@ const SECRET = 'test-secret';
 
 function createClient() {
   const configService = {
-    getOrThrow: (key: string) => {
+    get: (key: string, defaultValue?: string) => {
       if (key === 'PAYMENT_SERVICE_URL') return BASE_URL;
       if (key === 'PAYMENT_SERVICE_SECRET') return SECRET;
-      throw new Error(`Unknown: ${key}`);
+      return defaultValue;
     },
   } as ConfigService;
   return new BillingClient(configService);

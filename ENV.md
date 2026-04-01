@@ -136,17 +136,15 @@ cp .env.example .env
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `REVISIUM_LICENSE_KEY` | - | License key for `/ee/` features. If not set, all limits are disabled (unlimited). Validated against `https://licensing.revisium.io` |
-| `REVISIUM_BILLING_ENABLED` | `false` | Enable billing/tariffs module (requires valid license with `billing` feature) |
 | `REVISIUM_SSO_ENABLED` | `false` | Enable SSO module (requires valid license with `sso` feature) |
 | `REVISIUM_AUDIT_ENABLED` | `false` | Enable audit log module (requires valid license with `audit` feature) |
 | `REVISIUM_STANDALONE` | `false` | Self-hosted mode. Disables `.env` file loading (for Docker deployments where env vars come from the container runtime) |
-| `EARLY_ACCESS_ENABLED` | `false` | Enable early access program. When `true`, users can activate Pro features for free via "Get Early Access" |
 
 ---
 
 ## Payment Service (Billing)
 
-Required when `REVISIUM_BILLING_ENABLED=true`. Core communicates with the payment service (revisium-payment) via HMAC-signed HTTP.
+Billing is enabled automatically when `PAYMENT_SERVICE_URL` is set. When not set, billing GraphQL queries return disabled/empty defaults and mutations return "Billing is not enabled".
 
 | Variable | Default | Description |
 |----------|---------|-------------|

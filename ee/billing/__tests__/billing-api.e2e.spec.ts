@@ -13,6 +13,7 @@ import {
 } from '../billing-client.interface';
 
 const mockBillingClient: jest.Mocked<IBillingClient> = {
+  configured: true,
   getOrgLimits: jest.fn().mockResolvedValue({
     planId: 'free',
     status: 'free',
@@ -72,7 +73,6 @@ describe('Billing REST API (e2e)', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
-    process.env.EARLY_ACCESS_ENABLED = 'false';
     registerGraphqlEnums();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -91,7 +91,6 @@ describe('Billing REST API (e2e)', () => {
   });
 
   afterAll(async () => {
-    delete process.env.EARLY_ACCESS_ENABLED;
     await app.close();
   });
 
@@ -136,7 +135,6 @@ describe('Billing REST API (e2e)', () => {
       expect(res.body.plans.length).toBeGreaterThan(0);
       expect(res.body.plans[0]).toHaveProperty('id');
       expect(res.body.plans[0]).toHaveProperty('name');
-      expect(res.body.earlyAccess).toBe(false);
     });
   });
 
@@ -195,21 +193,6 @@ describe('Billing REST API (e2e)', () => {
     });
   });
 
-  describe('POST /billing/:orgId/early-access', () => {
-    it('should reject when EARLY_ACCESS_ENABLED is false', async () => {
-      const { orgId, token } = await createOrgWithOwner();
-      const res = await request(app.getHttpServer())
-        .post(`/api/billing/${orgId}/early-access`)
-        .set('Authorization', `Bearer ${token}`)
-        .send({ planId: 'pro' })
-        .expect(400);
-
-      expect(res.body.message).toContain(
-        'Early access is not currently available',
-      );
-    });
-  });
-
   describe('GraphQL: plans query', () => {
     it('should return plans', async () => {
       const res = await request(app.getHttpServer())
@@ -224,25 +207,4 @@ describe('Billing REST API (e2e)', () => {
     });
   });
 
-  describe('GraphQL: activateEarlyAccess mutation', () => {
-    it('should reject when early access is disabled', async () => {
-      const { orgId, token } = await createOrgWithOwner();
-
-      const res = await request(app.getHttpServer())
-        .post('/graphql')
-        .set('Authorization', `Bearer ${token}`)
-        .send({
-          query: `mutation($data: ActivateEarlyAccessInput!) {
-            activateEarlyAccess(data: $data) { planId status }
-          }`,
-          variables: { data: { organizationId: orgId, planId: 'pro' } },
-        })
-        .expect(200);
-
-      expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].message).toContain(
-        'Early access is not currently available',
-      );
-    });
-  });
 });

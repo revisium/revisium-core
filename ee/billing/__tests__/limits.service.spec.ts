@@ -46,6 +46,7 @@ describe('LimitsService (Ultra-Thin)', () => {
 
   beforeAll(async () => {
     mockBillingClient = {
+      configured: true,
       getOrgLimits: jest.fn(),
       createCheckout: jest.fn(),
       cancelSubscription: jest.fn(),

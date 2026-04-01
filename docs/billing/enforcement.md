@@ -91,7 +91,7 @@ When a limit is exceeded, `LimitExceededException` returns HTTP 403:
 
 ## Noop Mode
 
-When billing is not enabled (`REVISIUM_BILLING_ENABLED` unset), `NoopLimitsService` is injected everywhere. It always returns `{ allowed: true }` with zero overhead — no cache reads, no DB queries, no conditional logic.
+When the payment service is not configured (`PAYMENT_SERVICE_URL` unset), `NoopLimitsService` is injected everywhere. It always returns `{ allowed: true }` with zero overhead — no cache reads, no DB queries, no conditional logic.
 
 ```typescript
 // src/features/billing/noop-limits.service.ts

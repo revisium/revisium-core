@@ -4,7 +4,4 @@ import { Field, ObjectType } from '@nestjs/graphql';
 export class BillingConfigurationModel {
   @Field(() => Boolean)
   enabled: boolean;
-
-  @Field(() => Boolean)
-  earlyAccess: boolean;
 }

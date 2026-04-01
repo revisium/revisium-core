@@ -12,7 +12,7 @@ import {
 @Injectable()
 export class NoopBillingGraphqlService implements IBillingGraphqlService {
   getBillingConfiguration(): BillingConfigurationResult {
-    return { enabled: false, earlyAccess: false };
+    return { enabled: false };
   }
 
   async getPlans(): Promise<PlanResult[]> {

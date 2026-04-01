@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
@@ -8,7 +7,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import {
   ApiBearerAuth,
   ApiExcludeController,
@@ -28,20 +26,13 @@ import { ActivateEarlyAccessDto } from './dto/activate-early-access.dto';
 @Controller('api/billing')
 @ApiTags('Billing')
 export class BillingController {
-  constructor(
-    private readonly earlyAccessService: EarlyAccessService,
-    private readonly configService: ConfigService,
-  ) {}
-
-  private get isEarlyAccessEnabled(): boolean {
-    return this.configService.get('EARLY_ACCESS_ENABLED') === 'true';
-  }
+  constructor(private readonly earlyAccessService: EarlyAccessService) {}
 
   @Get('plans')
   @ApiOperation({ operationId: 'getPlans', summary: 'List available plans' })
   async getPlans() {
     const plans = await this.earlyAccessService.getPlans();
-    return { plans, earlyAccess: this.isEarlyAccessEnabled };
+    return { plans };
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPOrganizationGuard)
@@ -59,9 +50,6 @@ export class BillingController {
     @Param('organizationId') organizationId: string,
     @Body() body: ActivateEarlyAccessDto,
   ) {
-    if (!this.isEarlyAccessEnabled) {
-      throw new BadRequestException('Early access is not currently available');
-    }
     return this.earlyAccessService.activateEarlyAccess(
       organizationId,
       body.planId,

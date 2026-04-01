@@ -16,6 +16,7 @@ describe('UsageReporterService', () => {
 
   beforeAll(async () => {
     mockBillingClient = {
+      configured: true,
       getOrgLimits: jest.fn(),
       createCheckout: jest.fn(),
       cancelSubscription: jest.fn(),

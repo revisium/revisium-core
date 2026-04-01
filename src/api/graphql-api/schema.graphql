@@ -46,7 +46,6 @@ input ApplyMigrationsInput {
 }
 
 type BillingConfigurationModel {
-  earlyAccess: Boolean!
   enabled: Boolean!
 }
 

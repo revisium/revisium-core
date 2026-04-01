@@ -7,7 +7,6 @@ describe('NoopBillingGraphqlService', () => {
   it('getBillingConfiguration returns disabled', () => {
     expect(service.getBillingConfiguration()).toEqual({
       enabled: false,
-      earlyAccess: false,
     });
   });
 
