@@ -1,14 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
-import { DateTimeResolver } from 'graphql-scalars';
 
 @ObjectType()
 export class SubscriptionModel {
-  @Field()
-  id: string;
-
-  @Field()
-  organizationId: string;
-
   @Field()
   planId: string;
 
@@ -16,14 +9,14 @@ export class SubscriptionModel {
   status: string;
 
   @Field(() => String, { nullable: true })
-  interval?: string | null;
+  provider?: string | null;
 
-  @Field(() => DateTimeResolver, { nullable: true })
-  currentPeriodStart?: Date | null;
+  @Field(() => String, { nullable: true })
+  currentPeriodStart?: string | null;
 
-  @Field(() => DateTimeResolver, { nullable: true })
-  currentPeriodEnd?: Date | null;
+  @Field(() => String, { nullable: true })
+  currentPeriodEnd?: string | null;
 
-  @Field(() => DateTimeResolver, { nullable: true })
-  cancelAt?: Date | null;
+  @Field(() => String, { nullable: true })
+  cancelAt?: string | null;
 }

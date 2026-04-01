@@ -1,13 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { CqrsModule } from '@nestjs/cqrs';
-import { AuthModule } from 'src/features/auth/auth.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
+import { AuthModule } from 'src/features/auth/auth.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
-import { ActivateEarlyAccessHandler } from './commands/activate-early-access.handler';
-import { UpdateSubscriptionStatusHandler } from './commands/update-subscription-status.handler';
-import { AutoDowngradeCronService } from './crons/auto-downgrade.cron';
 import { EarlyAccessService } from './early-access.service';
+import { AutoDowngradeCronService } from './crons/auto-downgrade.cron';
 import {
   BillingMutationResolver,
   BillingOrganizationResolver,
@@ -15,11 +12,6 @@ import {
 } from './graphql/billing.resolver';
 import { AdminBillingController } from './rest/admin-billing.controller';
 import { BillingController } from './rest/billing.controller';
-
-const COMMAND_HANDLERS = [
-  ActivateEarlyAccessHandler,
-  UpdateSubscriptionStatusHandler,
-];
 
 const RESOLVERS = [
   BillingOrganizationResolver,
@@ -30,20 +22,9 @@ const RESOLVERS = [
 const CONTROLLERS = [BillingController, AdminBillingController];
 
 @Module({
-  imports: [
-    ConfigModule,
-    DatabaseModule,
-    CqrsModule,
-    AuthModule,
-    MetricsModule,
-  ],
+  imports: [ConfigModule, DatabaseModule, AuthModule, MetricsModule],
   controllers: [...CONTROLLERS],
-  providers: [
-    EarlyAccessService,
-    AutoDowngradeCronService,
-    ...COMMAND_HANDLERS,
-    ...RESOLVERS,
-  ],
+  providers: [EarlyAccessService, AutoDowngradeCronService, ...RESOLVERS],
   exports: [EarlyAccessService],
 })
 export class EarlyAccessModule {}

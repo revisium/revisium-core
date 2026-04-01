@@ -32,12 +32,15 @@ import { AdminUpdateSubscriptionDto } from './dto/admin-update-subscription.dto'
 export class AdminBillingController {
   constructor(private readonly earlyAccessService: EarlyAccessService) {}
 
-  @Post('subscription')
+  @Post('early-access')
   @ApiOperation({
-    operationId: 'adminUpdateSubscription',
-    summary: 'Create or update subscription for an organization',
+    operationId: 'adminActivateEarlyAccess',
+    summary: 'Activate early access for an organization (admin)',
   })
-  async updateSubscription(@Body() body: AdminUpdateSubscriptionDto) {
-    return this.earlyAccessService.updateSubscriptionStatus(body);
+  async activateEarlyAccess(@Body() body: AdminUpdateSubscriptionDto) {
+    return this.earlyAccessService.activateEarlyAccess(
+      body.organizationId,
+      body.planId ?? 'pro',
+    );
   }
 }

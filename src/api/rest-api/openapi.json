@@ -6857,6 +6857,37 @@
           "Storage"
         ]
       }
+    },
+    "/billing/payment-callback": {
+      "post": {
+        "operationId": "BillingCallbackController_handleCallback",
+        "parameters": [
+          {
+            "name": "x-signature",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-timestamp",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "BillingCallback"
+        ]
+      }
     }
   },
   "info": {
