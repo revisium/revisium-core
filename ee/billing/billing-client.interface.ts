@@ -16,6 +16,7 @@ export interface SubscriptionInfo {
   planId: string;
   status: string;
   provider: string | null;
+  interval: string | null;
   currentPeriodStart: string | null;
   currentPeriodEnd: string | null;
   cancelAt: string | null;
@@ -28,6 +29,7 @@ export interface PlanInfo {
   monthlyPriceUsd: number;
   yearlyPriceUsd: number;
   limits: OrgLimits['limits'];
+  features: Record<string, boolean>;
 }
 
 export interface CreateCheckoutParams {

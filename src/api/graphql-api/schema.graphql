@@ -1,6 +1,6 @@
 input ActivateEarlyAccessInput {
-  organizationId: String!
-  planId: String!
+  organizationId: ID!
+  planId: ID!
 }
 
 input AddUserToOrganizationInput {
@@ -45,6 +45,19 @@ input ApplyMigrationsInput {
   revisionId: String!
 }
 
+type BillingConfigurationModel {
+  earlyAccess: Boolean!
+  enabled: Boolean!
+}
+
+enum BillingStatus {
+  active
+  cancelled
+  early_adopter
+  free
+  past_due
+}
+
 input BooleanFilter {
   equals: Boolean
   not: Boolean
@@ -76,12 +89,21 @@ type BranchesConnection {
   totalCount: Int!
 }
 
+input CancelSubscriptionInput {
+  cancelAtPeriodEnd: Boolean
+  organizationId: ID!
+}
+
 enum ChangeType {
   ADDED
   MODIFIED
   REMOVED
   RENAMED
   RENAMED_AND_MODIFIED
+}
+
+type CheckoutResultModel {
+  checkoutUrl: String!
 }
 
 type ChildBranchModel {
@@ -91,6 +113,7 @@ type ChildBranchModel {
 
 type ConfigurationModel {
   availableEmailSignUp: Boolean!
+  billing: BillingConfigurationModel!
   github: GithubOauth!
   google: GoogleOauth!
   noAuth: Boolean!
@@ -104,6 +127,17 @@ input ConfirmEmailCodeInput {
 input CreateBranchInput {
   branchName: String!
   revisionId: String!
+}
+
+input CreateCheckoutInput {
+  cancelUrl: String!
+  country: String
+  interval: String
+  method: String
+  organizationId: ID!
+  planId: ID!
+  providerId: String
+  successUrl: String!
 }
 
 input CreateEndpointInput {
@@ -542,8 +576,10 @@ type Mutation {
   addUserToOrganization(data: AddUserToOrganizationInput!): Boolean!
   addUserToProject(data: AddUserToProjectInput!): Boolean!
   applyMigrations(data: ApplyMigrationsInput!): [ApplyMigrationResultModel!]!
+  cancelSubscription(data: CancelSubscriptionInput!): Boolean!
   confirmEmailCode(data: ConfirmEmailCodeInput!): LoginModel!
   createBranch(data: CreateBranchInput!): BranchModel!
+  createCheckout(data: CreateCheckoutInput!): CheckoutResultModel!
   createEndpoint(data: CreateEndpointInput!): EndpointModel!
   createProject(data: CreateProjectInput!): ProjectModel!
   createRevision(data: CreateRevisionInput!): RevisionModel!
@@ -677,6 +713,13 @@ input PatchRowsRowInput {
   rowId: String!
 }
 
+type PaymentProviderModel {
+  id: ID!
+  methods: [String!]!
+  name: String!
+  supportsRecurring: Boolean!
+}
+
 type PermissionModel {
   action: String!
   condition: JSON
@@ -685,15 +728,16 @@ type PermissionModel {
 }
 
 type PlanLimitsModel {
-  api_calls_per_day: Int
+  apiCallsPerDay: Int
   projects: Int
-  row_versions: Int
+  rowVersions: Int
   seats: Int
-  storage_bytes: Float
+  storageBytes: Float
 }
 
 type PlanModel {
-  id: String!
+  features: JSON!
+  id: ID!
   isPublic: Boolean!
   limits: PlanLimitsModel!
   monthlyPriceUsd: Float!
@@ -731,6 +775,7 @@ type ProjectsConnection {
 type Query {
   adminUser(data: AdminUserInput!): UserModel
   adminUsers(data: SearchUsersInput!): UsersConnection!
+  availableProviders(country: String, method: String): [PaymentProviderModel!]!
   branch(data: GetBranchInput!): BranchModel!
   branches(data: GetBranchesInput!): BranchesConnection!
   configuration: ConfigurationModel!
@@ -1171,12 +1216,13 @@ input SubSchemaWhereInput {
 }
 
 type SubscriptionModel {
-  cancelAt: String
-  currentPeriodEnd: String
-  currentPeriodStart: String
+  cancelAt: DateTime
+  currentPeriodEnd: DateTime
+  currentPeriodStart: DateTime
+  interval: String
   planId: String!
   provider: String
-  status: String!
+  status: BillingStatus!
 }
 
 type TableChangeModel {

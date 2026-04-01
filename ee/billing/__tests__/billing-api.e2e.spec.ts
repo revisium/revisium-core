@@ -43,6 +43,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         storage_bytes: 500_000_000,
         api_calls_per_day: 1_000,
       },
+      features: {},
     },
     {
       id: 'pro',
@@ -57,6 +58,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         storage_bytes: 10_000_000_000,
         api_calls_per_day: 50_000,
       },
+      features: { sso: true, audit: true },
     },
   ]),
   getPlan: jest.fn(),
@@ -158,6 +160,7 @@ describe('Billing REST API (e2e)', () => {
         planId: 'pro',
         status: 'early_adopter',
         provider: null,
+        interval: null,
         currentPeriodStart: null,
         currentPeriodEnd: null,
         cancelAt: null,
