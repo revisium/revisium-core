@@ -4,23 +4,29 @@ import {
   LimitCheckResult,
   LimitMetric,
 } from 'src/features/billing/limits.interface';
-import { BillingCacheService } from '../cache/billing-cache.service';
 import {
-  IPlanProvider,
-  Plan,
-  PLAN_PROVIDER_TOKEN,
-} from '../plan/plan.interface';
+  BILLING_CLIENT_TOKEN,
+  IBillingClient,
+  OrgLimits,
+} from '../billing-client.interface';
 import { UsageService } from '../usage/usage.service';
+import { BillingCacheService } from '../cache/billing-cache.service';
+
+const LIMITS_CACHE_TTL_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class LimitsService implements ILimitsService {
   private readonly logger = new Logger(LimitsService.name);
+  private readonly limitsCache = new Map<
+    string,
+    { data: OrgLimits; expiresAt: number }
+  >();
 
   constructor(
-    private readonly billingCache: BillingCacheService,
+    @Inject(BILLING_CLIENT_TOKEN)
+    private readonly billingClient: IBillingClient,
     private readonly usageService: UsageService,
-    @Inject(PLAN_PROVIDER_TOKEN)
-    private readonly planProvider: IPlanProvider,
+    private readonly billingCache: BillingCacheService,
   ) {}
 
   async checkLimit(
@@ -28,24 +34,11 @@ export class LimitsService implements ILimitsService {
     metric: LimitMetric,
     increment: number = 1,
   ): Promise<LimitCheckResult> {
-    const subscription = await this.billingCache.subscription(
-      organizationId,
-      () => this.usageService.findSubscription(organizationId),
-    );
+    const orgLimits = await this.getOrgLimits(organizationId);
+    if (!orgLimits) return { allowed: true };
 
-    if (!subscription) {
-      return { allowed: true };
-    }
-
-    const plan = await this.planProvider.getPlan(subscription.planId);
-    if (!plan) {
-      return { allowed: true };
-    }
-
-    const limit = this.getLimitForMetric(plan, metric);
-    if (limit === null) {
-      return { allowed: true };
-    }
+    const limit = this.getLimitForMetric(orgLimits, metric);
+    if (limit === null || limit === undefined) return { allowed: true };
 
     const current = await this.billingCache.usage(organizationId, metric, () =>
       this.usageService.computeUsage(organizationId, metric),
@@ -54,7 +47,7 @@ export class LimitsService implements ILimitsService {
 
     if (projected > limit) {
       this.logger.debug(
-        `Limit exceeded: org=${organizationId}, metric=${metric}, current=${current}, limit=${limit}, increment=${increment}`,
+        `Limit exceeded: org=${organizationId}, metric=${metric}, current=${current}, limit=${limit}`,
       );
       return { allowed: false, current, limit, metric };
     }
@@ -62,20 +55,49 @@ export class LimitsService implements ILimitsService {
     return { allowed: true, current, limit };
   }
 
-  private getLimitForMetric(plan: Plan, metric: LimitMetric): number | null {
+  invalidateCache(organizationId: string): void {
+    this.limitsCache.delete(organizationId);
+  }
+
+  private getLimitForMetric(
+    orgLimits: OrgLimits,
+    metric: LimitMetric,
+  ): number | null {
+    const l = orgLimits.limits;
     switch (metric) {
       case LimitMetric.ROW_VERSIONS:
-        return plan.maxRowVersions;
+        return l.row_versions;
       case LimitMetric.PROJECTS:
-        return plan.maxProjects;
+        return l.projects;
       case LimitMetric.SEATS:
-        return plan.maxSeats;
+        return l.seats;
       case LimitMetric.STORAGE_BYTES:
-        return plan.maxStorageBytes;
+        return l.storage_bytes;
       case LimitMetric.API_CALLS:
-        return plan.maxApiCallsPerDay;
+        return l.api_calls_per_day;
       default:
         return null;
+    }
+  }
+
+  private async getOrgLimits(
+    organizationId: string,
+  ): Promise<OrgLimits | null> {
+    const cached = this.limitsCache.get(organizationId);
+    if (cached && cached.expiresAt > Date.now()) return cached.data;
+
+    try {
+      const limits = await this.billingClient.getOrgLimits(organizationId);
+      this.limitsCache.set(organizationId, {
+        data: limits,
+        expiresAt: Date.now() + LIMITS_CACHE_TTL_MS,
+      });
+      return limits;
+    } catch (error) {
+      this.logger.warn(
+        `Failed to fetch limits for org=${organizationId}: ${error instanceof Error ? error.message : error}${cached ? ' (using stale cache)' : ' (fail-open)'}`,
+      );
+      return cached?.data ?? null;
     }
   }
 }

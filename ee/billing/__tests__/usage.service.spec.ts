@@ -166,24 +166,4 @@ describe('UsageService', () => {
       expect(result).toBe(0);
     });
   });
-
-  describe('findSubscription', () => {
-    it('should return subscription when exists', async () => {
-      const orgId = await createOrg();
-      await prisma.subscription.create({
-        data: { organizationId: orgId, planId: 'free' },
-      });
-
-      const result = await service.findSubscription(orgId);
-      expect(result).toBeDefined();
-      expect(result!.planId).toBe('free');
-    });
-
-    it('should return null when no subscription', async () => {
-      const orgId = await createOrg();
-
-      const result = await service.findSubscription(orgId);
-      expect(result).toBeNull();
-    });
-  });
 });

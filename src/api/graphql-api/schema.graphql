@@ -1,3 +1,8 @@
+input ActivateEarlyAccessInput {
+  organizationId: String!
+  planId: String!
+}
+
 input AddUserToOrganizationInput {
   organizationId: String!
   roleId: UserOrganizationRoles!
@@ -533,6 +538,7 @@ type ModifiedRowChangeModel {
 }
 
 type Mutation {
+  activateEarlyAccess(data: ActivateEarlyAccessInput!): SubscriptionModel!
   addUserToOrganization(data: AddUserToOrganizationInput!): Boolean!
   addUserToProject(data: AddUserToProjectInput!): Boolean!
   applyMigrations(data: ApplyMigrationsInput!): [ApplyMigrationResultModel!]!
@@ -613,6 +619,8 @@ enum OrderDataType {
 type OrganizationModel {
   createdId: String!
   id: String!
+  subscription: SubscriptionModel
+  usage: UsageSummaryModel
   userOrganization: UsersOrganizationModel
 }
 
@@ -676,6 +684,23 @@ type PermissionModel {
   subject: String!
 }
 
+type PlanLimitsModel {
+  api_calls_per_day: Int
+  projects: Int
+  row_versions: Int
+  seats: Int
+  storage_bytes: Float
+}
+
+type PlanModel {
+  id: String!
+  isPublic: Boolean!
+  limits: PlanLimitsModel!
+  monthlyPriceUsd: Float!
+  name: String!
+  yearlyPriceUsd: Float!
+}
+
 type PluginsModel {
   file: Boolean!
 }
@@ -712,6 +737,7 @@ type Query {
   getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int! @deprecated(reason: "use RowModel.rowForeignKeysBy.totalCount")
   me: MeModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
+  plans: [PlanModel!]!
   project(data: GetProjectInput!): ProjectModel!
   projectEndpoints(data: GetProjectEndpointsInput!): EndpointsConnection!
   projects(data: GetProjectsInput!): ProjectsConnection!
@@ -1144,6 +1170,15 @@ input SubSchemaWhereInput {
   tableId: SubSchemaStringFilterInput
 }
 
+type SubscriptionModel {
+  cancelAt: String
+  currentPeriodEnd: String
+  currentPeriodStart: String
+  planId: String!
+  provider: String
+  status: String!
+}
+
 type TableChangeModel {
   addedRowsCount: Int!
   changeType: ChangeType!
@@ -1283,6 +1318,19 @@ input UpdateUserProjectRoleInput {
   projectName: String!
   roleId: UserProjectRoles!
   userId: String!
+}
+
+type UsageMetricModel {
+  current: Float!
+  limit: Float
+  percentage: Float
+}
+
+type UsageSummaryModel {
+  projects: UsageMetricModel!
+  rowVersions: UsageMetricModel!
+  seats: UsageMetricModel!
+  storageBytes: UsageMetricModel!
 }
 
 type UserModel {

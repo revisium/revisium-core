@@ -3,14 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { LIMITS_SERVICE_TOKEN } from 'src/features/billing/limits.interface';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
+import { BILLING_CLIENT_TOKEN } from './billing-client.interface';
+import { BillingClient } from './billing-client';
 import { BILLING_CACHE_INVALIDATION_HANDLERS } from './cache/billing-cache-invalidation.handler';
 import { BillingCacheService } from './cache/billing-cache.service';
+import { BillingCallbackController } from './callback.controller';
 import { EarlyAccessModule } from './early-access/early-access.module';
 import { LimitsService } from './limits/limits.service';
-import { HardcodedPlanProvider } from './plan/hardcoded-plan-provider';
-import { PLAN_PROVIDER_TOKEN } from './plan/plan.interface';
+import { UsageReporterService } from './usage-reporter.service';
 import { UsageService } from './usage/usage.service';
-import { UsageTrackingService } from './usage/usage-tracking.service';
 
 @Module({})
 export class EeBillingModule {
@@ -19,23 +20,25 @@ export class EeBillingModule {
       module: EeBillingModule,
       global: true,
       imports: [ConfigModule, DatabaseModule, CqrsModule, EarlyAccessModule],
+      controllers: [BillingCallbackController],
       providers: [
+        LimitsService,
         {
           provide: LIMITS_SERVICE_TOKEN,
-          useClass: LimitsService,
+          useExisting: LimitsService,
         },
         {
-          provide: PLAN_PROVIDER_TOKEN,
-          useClass: HardcodedPlanProvider,
+          provide: BILLING_CLIENT_TOKEN,
+          useClass: BillingClient,
         },
         BillingCacheService,
         UsageService,
-        UsageTrackingService,
+        UsageReporterService,
         ...BILLING_CACHE_INVALIDATION_HANDLERS,
       ],
       exports: [
         LIMITS_SERVICE_TOKEN,
-        PLAN_PROVIDER_TOKEN,
+        BILLING_CLIENT_TOKEN,
         BillingCacheService,
         UsageService,
       ],

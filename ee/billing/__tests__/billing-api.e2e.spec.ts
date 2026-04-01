@@ -7,6 +7,62 @@ import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
 import { hashedPassword } from 'src/__tests__/utils/prepareProject';
+import {
+  BILLING_CLIENT_TOKEN,
+  IBillingClient,
+} from '../billing-client.interface';
+
+const mockBillingClient: jest.Mocked<IBillingClient> = {
+  getOrgLimits: jest.fn().mockResolvedValue({
+    planId: 'free',
+    status: 'free',
+    limits: {
+      row_versions: 10_000,
+      projects: 3,
+      seats: 1,
+      storage_bytes: 500_000_000,
+      api_calls_per_day: 1_000,
+    },
+  }),
+  createCheckout: jest.fn(),
+  cancelSubscription: jest.fn(),
+  getSubscription: jest.fn().mockResolvedValue(null),
+  getProviders: jest.fn().mockResolvedValue([]),
+  getPortalUrl: jest.fn(),
+  getPlans: jest.fn().mockResolvedValue([
+    {
+      id: 'free',
+      name: 'Free',
+      isPublic: true,
+      monthlyPriceUsd: 0,
+      yearlyPriceUsd: 0,
+      limits: {
+        row_versions: 10_000,
+        projects: 3,
+        seats: 1,
+        storage_bytes: 500_000_000,
+        api_calls_per_day: 1_000,
+      },
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      isPublic: true,
+      monthlyPriceUsd: 29,
+      yearlyPriceUsd: 290,
+      limits: {
+        row_versions: 500_000,
+        projects: 20,
+        seats: 10,
+        storage_bytes: 10_000_000_000,
+        api_calls_per_day: 50_000,
+      },
+    },
+  ]),
+  getPlan: jest.fn(),
+  activateEarlyAccess: jest.fn(),
+  reportUsage: jest.fn(),
+};
 
 describe('Billing REST API (e2e)', () => {
   let app: INestApplication;
@@ -14,14 +70,15 @@ describe('Billing REST API (e2e)', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
-    process.env.REVISIUM_BILLING_ENABLED = 'true';
-    process.env.REVISIUM_LICENSE_KEY = 'test-key';
     process.env.EARLY_ACCESS_ENABLED = 'false';
     registerGraphqlEnums();
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
+    })
+      .overrideProvider(BILLING_CLIENT_TOKEN)
+      .useValue(mockBillingClient)
+      .compile();
 
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -32,9 +89,7 @@ describe('Billing REST API (e2e)', () => {
   });
 
   afterAll(async () => {
-    delete process.env.REVISIUM_BILLING_ENABLED;
-    delete process.env.REVISIUM_LICENSE_KEY;
-    process.env.EARLY_ACCESS_ENABLED = '';
+    delete process.env.EARLY_ACCESS_ENABLED;
     await app.close();
   });
 
@@ -79,13 +134,13 @@ describe('Billing REST API (e2e)', () => {
       expect(res.body.plans.length).toBeGreaterThan(0);
       expect(res.body.plans[0]).toHaveProperty('id');
       expect(res.body.plans[0]).toHaveProperty('name');
-      expect(res.body.plans[0]).toHaveProperty('maxRowVersions');
       expect(res.body.earlyAccess).toBe(false);
     });
   });
 
   describe('GET /billing/:orgId/subscription', () => {
     it('should return null when no subscription', async () => {
+      mockBillingClient.getSubscription.mockResolvedValueOnce(null);
       const { orgId, token } = await createOrgWithOwner();
       const res = await request(app.getHttpServer())
         .get(`/api/billing/${orgId}/subscription`)
@@ -99,12 +154,13 @@ describe('Billing REST API (e2e)', () => {
 
     it('should return subscription when exists', async () => {
       const { orgId, token } = await createOrgWithOwner();
-      await prisma.subscription.create({
-        data: {
-          organizationId: orgId,
-          planId: 'pro',
-          status: 'early_adopter',
-        },
+      mockBillingClient.getSubscription.mockResolvedValueOnce({
+        planId: 'pro',
+        status: 'early_adopter',
+        provider: null,
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        cancelAt: null,
       });
 
       const res = await request(app.getHttpServer())
@@ -119,6 +175,8 @@ describe('Billing REST API (e2e)', () => {
 
   describe('GET /billing/:orgId/usage', () => {
     it('should return usage summary', async () => {
+      mockBillingClient.getSubscription.mockResolvedValue(null);
+      mockBillingClient.getPlan.mockResolvedValue(null);
       const { orgId, token } = await createOrgWithOwner();
       const res = await request(app.getHttpServer())
         .get(`/api/billing/${orgId}/usage`)
@@ -154,7 +212,7 @@ describe('Billing REST API (e2e)', () => {
       const res = await request(app.getHttpServer())
         .post('/graphql')
         .send({
-          query: `{ plans { id name maxRowVersions maxProjects maxSeats monthlyPriceUsd } }`,
+          query: `{ plans { id name monthlyPriceUsd } }`,
         })
         .expect(200);
 
@@ -172,7 +230,7 @@ describe('Billing REST API (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .send({
           query: `mutation($data: ActivateEarlyAccessInput!) {
-            activateEarlyAccess(data: $data) { id status planId }
+            activateEarlyAccess(data: $data) { planId status }
           }`,
           variables: { data: { organizationId: orgId, planId: 'pro' } },
         })

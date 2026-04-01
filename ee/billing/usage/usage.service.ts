@@ -7,12 +7,6 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 export class UsageService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findSubscription(organizationId: string) {
-    return this.prisma.subscription.findUnique({
-      where: { organizationId },
-    });
-  }
-
   async computeUsage(
     organizationId: string,
     metric: LimitMetric,

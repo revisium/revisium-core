@@ -1,55 +1,40 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import { BillingStatus } from 'src/__generated__/client';
 import { LimitMetric } from 'src/features/billing/limits.interface';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
-  IPlanProvider,
-  Plan,
-  PLAN_PROVIDER_TOKEN,
-} from '../plan/plan.interface';
+  BILLING_CLIENT_TOKEN,
+  IBillingClient,
+  PlanInfo,
+  SubscriptionInfo,
+} from '../billing-client.interface';
 import { UsageService } from '../usage/usage.service';
-import { ActivateEarlyAccessCommand } from './commands/activate-early-access.command';
-import { UpdateSubscriptionStatusCommand } from './commands/update-subscription-status.command';
 
 @Injectable()
 export class EarlyAccessService {
   constructor(
-    private readonly commandBus: CommandBus,
-    private readonly prisma: PrismaService,
     private readonly usageService: UsageService,
-    @Inject(PLAN_PROVIDER_TOKEN)
-    private readonly planProvider: IPlanProvider,
+    @Inject(BILLING_CLIENT_TOKEN)
+    private readonly billingClient: IBillingClient,
   ) {}
 
   async activateEarlyAccess(organizationId: string, planId: string) {
-    return this.commandBus.execute(
-      new ActivateEarlyAccessCommand({ organizationId, planId }),
-    );
+    return this.billingClient.activateEarlyAccess(organizationId, planId);
   }
 
-  async updateSubscriptionStatus(data: {
-    organizationId: string;
-    status?: BillingStatus;
-    planId?: string;
-  }) {
-    return this.commandBus.execute(new UpdateSubscriptionStatusCommand(data));
+  async getPlans(): Promise<PlanInfo[]> {
+    return this.billingClient.getPlans();
   }
 
-  async getPlans(): Promise<Plan[]> {
-    return this.planProvider.getPlans();
-  }
-
-  async getOrgSubscription(organizationId: string) {
-    return this.prisma.subscription.findUnique({
-      where: { organizationId },
-    });
+  async getOrgSubscription(
+    organizationId: string,
+  ): Promise<SubscriptionInfo | null> {
+    return this.billingClient.getSubscription(organizationId);
   }
 
   async getOrgUsageSummary(organizationId: string) {
-    const subscription = await this.getOrgSubscription(organizationId);
+    const subscription =
+      await this.billingClient.getSubscription(organizationId);
     const plan = subscription
-      ? await this.planProvider.getPlan(subscription.planId)
+      ? await this.billingClient.getPlan(subscription.planId)
       : null;
 
     const [rowVersions, projects, seats, storageBytes] = await Promise.all([
@@ -60,10 +45,10 @@ export class EarlyAccessService {
     ]);
 
     return {
-      rowVersions: this.buildMetric(rowVersions, plan?.maxRowVersions),
-      projects: this.buildMetric(projects, plan?.maxProjects),
-      seats: this.buildMetric(seats, plan?.maxSeats),
-      storageBytes: this.buildMetric(storageBytes, plan?.maxStorageBytes),
+      rowVersions: this.buildMetric(rowVersions, plan?.limits.row_versions),
+      projects: this.buildMetric(projects, plan?.limits.projects),
+      seats: this.buildMetric(seats, plan?.limits.seats),
+      storageBytes: this.buildMetric(storageBytes, plan?.limits.storage_bytes),
     };
   }
 
