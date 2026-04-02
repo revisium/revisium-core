@@ -2,6 +2,10 @@ import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
 import { Module } from '@nestjs/common';
 import { GraphQLModule } from '@nestjs/graphql';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
+import { BillingConfigurationResolver } from 'src/api/graphql-api/billing/billing-configuration.resolver';
+import { BillingMutationResolver } from 'src/api/graphql-api/billing/billing-mutation.resolver';
+import { BillingOrganizationResolver } from 'src/api/graphql-api/billing/billing-organization.resolver';
+import { BillingQueryResolver } from 'src/api/graphql-api/billing/billing-query.resolver';
 import { UsersOrganizationResolver } from 'src/api/graphql-api/organization/users-organization.resolver';
 import { UsersProjectResolver } from 'src/api/graphql-api/project/users-project.resolver';
 import { RevisionChangesResolver } from 'src/api/graphql-api/revision-changes/revision-changes.resolver';
@@ -76,6 +80,10 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
     SubSchemaModule,
   ],
   providers: [
+    BillingConfigurationResolver,
+    BillingOrganizationResolver,
+    BillingQueryResolver,
+    BillingMutationResolver,
     ConfigurationResolver,
     AuthResolver,
     MeResolver,

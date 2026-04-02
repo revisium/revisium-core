@@ -1,5 +1,6 @@
 import { registerEnumType } from '@nestjs/graphql';
 import { Prisma } from 'src/__generated__/client';
+import { BillingStatus } from 'src/api/graphql-api/billing/models/billing-status.enum';
 import { PatchRowOp } from 'src/api/graphql-api/draft/input/patch-row.input';
 import {
   OrderByField,
@@ -33,4 +34,5 @@ export const registerGraphqlEnums = () => {
   registerEnumType(UserOrganizationRoles, { name: 'UserOrganizationRoles' });
   registerEnumType(UserProjectRoles, { name: 'UserProjectRoles' });
   registerEnumType(EndpointType, { name: 'EndpointType' });
+  registerEnumType(BillingStatus, { name: 'BillingStatus' });
 };

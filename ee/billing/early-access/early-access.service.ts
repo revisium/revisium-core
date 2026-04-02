@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { LimitMetric } from 'src/features/billing/limits.interface';
 import {
   BILLING_CLIENT_TOKEN,
   IBillingClient,
@@ -37,32 +36,9 @@ export class EarlyAccessService {
       ? await this.billingClient.getPlan(subscription.planId)
       : null;
 
-    const [rowVersions, projects, seats, storageBytes] = await Promise.all([
-      this.usageService.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
-      this.usageService.computeUsage(organizationId, LimitMetric.PROJECTS),
-      this.usageService.computeUsage(organizationId, LimitMetric.SEATS),
-      this.usageService.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
-    ]);
-
-    return {
-      rowVersions: this.buildMetric(rowVersions, plan?.limits.row_versions),
-      projects: this.buildMetric(projects, plan?.limits.projects),
-      seats: this.buildMetric(seats, plan?.limits.seats),
-      storageBytes: this.buildMetric(storageBytes, plan?.limits.storage_bytes),
-    };
-  }
-
-  private buildMetric(
-    current: number,
-    limit: number | null = null,
-  ): { current: number; limit: number | null; percentage: number | null } {
-    return {
-      current,
-      limit,
-      percentage:
-        limit !== null && limit > 0
-          ? Math.round((current / limit) * 10000) / 100
-          : null,
-    };
+    return this.usageService.computeUsageSummary(
+      organizationId,
+      plan?.limits,
+    );
   }
 }

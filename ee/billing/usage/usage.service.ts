@@ -2,10 +2,42 @@ import { Injectable } from '@nestjs/common';
 import { countOrgRowVersions } from 'src/__generated__/client/sql';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { buildMetric } from './build-metric';
+
+export interface UsageSummary {
+  rowVersions: { current: number; limit: number | null; percentage: number | null };
+  projects: { current: number; limit: number | null; percentage: number | null };
+  seats: { current: number; limit: number | null; percentage: number | null };
+  storageBytes: { current: number; limit: number | null; percentage: number | null };
+}
 
 @Injectable()
 export class UsageService {
   constructor(private readonly prisma: PrismaService) {}
+
+  async computeUsageSummary(
+    organizationId: string,
+    planLimits?: {
+      row_versions: number | null;
+      projects: number | null;
+      seats: number | null;
+      storage_bytes: number | null;
+    } | null,
+  ): Promise<UsageSummary> {
+    const [rowVersions, projects, seats, storageBytes] = await Promise.all([
+      this.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
+      this.computeUsage(organizationId, LimitMetric.PROJECTS),
+      this.computeUsage(organizationId, LimitMetric.SEATS),
+      this.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
+    ]);
+
+    return {
+      rowVersions: buildMetric(rowVersions, planLimits?.row_versions),
+      projects: buildMetric(projects, planLimits?.projects),
+      seats: buildMetric(seats, planLimits?.seats),
+      storageBytes: buildMetric(storageBytes, planLimits?.storage_bytes),
+    };
+  }
 
   async computeUsage(
     organizationId: string,
