@@ -59,6 +59,7 @@ export interface UsageReport {
 }
 
 export interface IBillingClient {
+  readonly configured: boolean;
   getOrgLimits(organizationId: string): Promise<OrgLimits>;
   createCheckout(
     params: CreateCheckoutParams,

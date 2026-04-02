@@ -18,10 +18,17 @@ export class BillingClient implements IBillingClient {
   private readonly logger = new Logger(BillingClient.name);
   private readonly baseUrl: string;
   private readonly secret: string;
+  readonly configured: boolean;
 
   constructor(configService: ConfigService) {
-    this.baseUrl = configService.getOrThrow<string>('PAYMENT_SERVICE_URL');
-    this.secret = configService.getOrThrow<string>('PAYMENT_SERVICE_SECRET');
+    this.baseUrl = configService.get<string>('PAYMENT_SERVICE_URL', '');
+    this.secret = configService.get<string>('PAYMENT_SERVICE_SECRET', '');
+    this.configured = !!this.baseUrl;
+    if (!this.configured) {
+      this.logger.warn(
+        'PAYMENT_SERVICE_URL not configured — billing disabled',
+      );
+    }
   }
 
   async getOrgLimits(organizationId: string): Promise<OrgLimits> {

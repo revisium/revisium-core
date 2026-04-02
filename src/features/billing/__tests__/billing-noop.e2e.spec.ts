@@ -3,19 +3,37 @@ import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import {
+  BILLING_CLIENT_TOKEN,
+  IBillingClient,
+} from 'ee/billing/billing-client.interface';
 
-describe('Billing GraphQL — noop (ee disabled)', () => {
+const unconfiguredBillingClient: IBillingClient = {
+  configured: false,
+  getOrgLimits: jest.fn(),
+  createCheckout: jest.fn(),
+  cancelSubscription: jest.fn(),
+  getSubscription: jest.fn(),
+  getProviders: jest.fn(),
+  getPortalUrl: jest.fn(),
+  getPlans: jest.fn(),
+  getPlan: jest.fn(),
+  activateEarlyAccess: jest.fn(),
+  reportUsage: jest.fn(),
+};
+
+describe('Billing GraphQL — unconfigured payment service', () => {
   let app: INestApplication;
-  let originalBillingEnabled: string | undefined;
 
   beforeAll(async () => {
-    originalBillingEnabled = process.env.REVISIUM_BILLING_ENABLED;
-    delete process.env.REVISIUM_BILLING_ENABLED;
     registerGraphqlEnums();
 
     const module: TestingModule = await Test.createTestingModule({
       imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
+    })
+      .overrideProvider(BILLING_CLIENT_TOKEN)
+      .useValue(unconfiguredBillingClient)
+      .compile();
 
     app = module.createNestApplication();
     app.useGlobalPipes(new ValidationPipe({ transform: true }));
@@ -23,9 +41,6 @@ describe('Billing GraphQL — noop (ee disabled)', () => {
   });
 
   afterAll(async () => {
-    if (originalBillingEnabled !== undefined) {
-      process.env.REVISIUM_BILLING_ENABLED = originalBillingEnabled;
-    }
     await app.close();
   });
 
@@ -35,13 +50,12 @@ describe('Billing GraphQL — noop (ee disabled)', () => {
   it('configuration.billing returns enabled=false', async () => {
     const res = await gql(`{
       configuration {
-        billing { enabled earlyAccess }
+        billing { enabled }
       }
     }`).expect(200);
 
     expect(res.body.data.configuration.billing).toEqual({
       enabled: false,
-      earlyAccess: false,
     });
   });
 

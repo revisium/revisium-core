@@ -1,5 +1,4 @@
 import { BadRequestException, Inject, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { BillingStatus } from 'src/api/graphql-api/billing/models/billing-status.enum';
 import {
   BillingConfigurationResult,
@@ -25,17 +24,14 @@ export class BillingGraphqlService implements IBillingGraphqlService {
     @Inject(BILLING_CLIENT_TOKEN)
     private readonly billingClient: IBillingClient,
     private readonly usageService: UsageService,
-    private readonly configService: ConfigService,
   ) {}
 
   getBillingConfiguration(): BillingConfigurationResult {
-    return {
-      enabled: true,
-      earlyAccess: this.configService.get('BILLING_EARLY_ACCESS') === 'true',
-    };
+    return { enabled: this.billingClient.configured };
   }
 
   async getPlans(): Promise<PlanResult[]> {
+    if (!this.billingClient.configured) return [];
     const plans = await this.billingClient.getPlans();
     return plans.map((p) => ({
       id: p.id,
@@ -58,12 +54,14 @@ export class BillingGraphqlService implements IBillingGraphqlService {
     country?: string,
     method?: string,
   ): Promise<PaymentProviderResult[]> {
+    if (!this.billingClient.configured) return [];
     return this.billingClient.getProviders({ country, method });
   }
 
   async getSubscription(
     organizationId: string,
   ): Promise<SubscriptionResult | null> {
+    if (!this.billingClient.configured) return null;
     const sub = await this.billingClient.getSubscription(organizationId);
     if (!sub) return null;
     return {
@@ -78,6 +76,7 @@ export class BillingGraphqlService implements IBillingGraphqlService {
   }
 
   async getUsage(organizationId: string): Promise<UsageSummaryResult | null> {
+    if (!this.billingClient.configured) return null;
     const subscription =
       await this.billingClient.getSubscription(organizationId);
     const plan = subscription
@@ -94,8 +93,8 @@ export class BillingGraphqlService implements IBillingGraphqlService {
     organizationId: string,
     planId: string,
   ): Promise<SubscriptionResult> {
-    if (this.configService.get('BILLING_EARLY_ACCESS') !== 'true') {
-      throw new BadRequestException('Early access is not currently available');
+    if (!this.billingClient.configured) {
+      throw new BadRequestException('Billing is not enabled');
     }
     const result = await this.billingClient.activateEarlyAccess(
       organizationId,
@@ -115,6 +114,9 @@ export class BillingGraphqlService implements IBillingGraphqlService {
   async createCheckout(
     params: CreateCheckoutParams,
   ): Promise<{ checkoutUrl: string }> {
+    if (!this.billingClient.configured) {
+      throw new BadRequestException('Billing is not enabled');
+    }
     if (params.interval && !VALID_INTERVALS.has(params.interval)) {
       throw new BadRequestException('interval must be monthly or yearly');
     }
@@ -131,6 +133,9 @@ export class BillingGraphqlService implements IBillingGraphqlService {
     organizationId: string,
     cancelAtPeriodEnd?: boolean,
   ): Promise<boolean> {
+    if (!this.billingClient.configured) {
+      throw new BadRequestException('Billing is not enabled');
+    }
     await this.billingClient.cancelSubscription(
       organizationId,
       cancelAtPeriodEnd,

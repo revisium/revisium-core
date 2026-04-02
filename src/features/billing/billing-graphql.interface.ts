@@ -2,7 +2,6 @@ export const BILLING_GRAPHQL_SERVICE_TOKEN = Symbol('BILLING_GRAPHQL_SERVICE');
 
 export interface BillingConfigurationResult {
   enabled: boolean;
-  earlyAccess: boolean;
 }
 
 export interface PlanLimitsResult {

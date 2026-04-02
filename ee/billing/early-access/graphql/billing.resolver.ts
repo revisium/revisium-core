@@ -1,5 +1,4 @@
-import { BadRequestException, UseGuards } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { UseGuards } from '@nestjs/common';
 import {
   Args,
   Mutation,
@@ -46,10 +45,7 @@ export class BillingQueryResolver {
 
 @Resolver()
 export class BillingMutationResolver {
-  constructor(
-    private readonly earlyAccessService: EarlyAccessService,
-    private readonly configService: ConfigService,
-  ) {}
+  constructor(private readonly earlyAccessService: EarlyAccessService) {}
 
   @UseGuards(GqlJwtAuthGuard, GQLOrganizationGuard)
   @PermissionParams({
@@ -58,9 +54,6 @@ export class BillingMutationResolver {
   })
   @Mutation(() => SubscriptionModel)
   activateEarlyAccess(@Args('data') data: ActivateEarlyAccessInput) {
-    if (this.configService.get('EARLY_ACCESS_ENABLED') !== 'true') {
-      throw new BadRequestException('Early access is not currently available');
-    }
     return this.earlyAccessService.activateEarlyAccess(
       data.organizationId,
       data.planId,

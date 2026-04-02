@@ -5,7 +5,7 @@ Plan limits and usage tracking for Revisium Cloud. Enterprise feature — self-h
 ## Quick Start
 
 - Self-hosted: nothing to configure, everything is unlimited
-- Cloud: set `REVISIUM_BILLING_ENABLED=true` + `REVISIUM_LICENSE_KEY` + `PAYMENT_SERVICE_URL` + `PAYMENT_SERVICE_SECRET`
+- Cloud: set `PAYMENT_SERVICE_URL` + `PAYMENT_SERVICE_SECRET` (+ `REVISIUM_LICENSE_KEY` for enterprise features)
 
 ## Architecture
 
@@ -25,7 +25,7 @@ Core is an **ultra-thin client** — zero billing Prisma models. All billing sta
 │  LimitExceededException (HTTP 403)                          │
 └─────────────────────────────────────────────────────────────┘
                           │
-                          │ DI override when REVISIUM_BILLING_ENABLED=true
+                          │ DI override (always loaded, active when PAYMENT_SERVICE_URL set)
                           ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  /ee/billing/ (proprietary) — ultra-thin client             │
@@ -82,8 +82,6 @@ Fail-open: if payment service is unreachable and cache is cold, operations are a
 
 | Variable                   | Default | Description                                       |
 | -------------------------- | ------- | ------------------------------------------------- |
-| `REVISIUM_BILLING_ENABLED` | `false` | Load the billing module                           |
-| `REVISIUM_LICENSE_KEY`     | —       | Required for any enterprise features              |
-| `PAYMENT_SERVICE_URL`      | —       | Payment service base URL (e.g. `http://payment:8082`) |
+| `PAYMENT_SERVICE_URL`      | —       | Payment service base URL (e.g. `http://payment:8082`). Billing is enabled when this is set |
 | `PAYMENT_SERVICE_SECRET`   | —       | Shared HMAC secret for service-to-service auth    |
-| `EARLY_ACCESS_ENABLED`     | `false` | Enable early access self-serve activation         |
+| `REVISIUM_LICENSE_KEY`     | —       | Required for any enterprise features              |

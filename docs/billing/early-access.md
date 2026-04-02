@@ -52,7 +52,7 @@ GET /api/billing/plans
 Auth: none (public)
 
 → Fetches from payment service via BillingClient.getPlans()
-→ { plans: [...], earlyAccess: true|false }
+→ { plans: [...] }
 ```
 
 ### Organization Subscription & Usage
@@ -65,12 +65,6 @@ GET /api/billing/:organizationId/usage
 → Counts locally via UsageService, resolves limits from payment service
 → { rowVersions: { current, limit, percentage }, projects: {...}, ... }
 ```
-
-## Environment Variables
-
-| Variable | Default | Description |
-|---|---|---|
-| `EARLY_ACCESS_ENABLED` | `false` | Enable self-serve early access activation |
 
 ## File Structure
 

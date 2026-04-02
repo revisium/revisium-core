@@ -13,6 +13,7 @@ import {
 } from '../billing-client.interface';
 
 const mockBillingClient: jest.Mocked<IBillingClient> = {
+  configured: true,
   getOrgLimits: jest.fn().mockResolvedValue({
     planId: 'free',
     status: 'free',
@@ -103,7 +104,6 @@ describe('Billing GraphQL API (e2e)', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
-    process.env.BILLING_EARLY_ACCESS = 'true';
     registerGraphqlEnums();
 
     const module: TestingModule = await Test.createTestingModule({
@@ -122,7 +122,6 @@ describe('Billing GraphQL API (e2e)', () => {
   });
 
   afterAll(async () => {
-    delete process.env.BILLING_EARLY_ACCESS;
     await app.close();
   });
 
@@ -173,13 +172,12 @@ describe('Billing GraphQL API (e2e)', () => {
     it('should return billing configuration', async () => {
       const res = await gql(`{
         configuration {
-          billing { enabled earlyAccess }
+          billing { enabled }
         }
       }`).expect(200);
 
       expect(res.body.data.configuration.billing).toEqual({
         enabled: true,
-        earlyAccess: true,
       });
     });
   });
