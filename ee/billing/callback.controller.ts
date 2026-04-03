@@ -24,7 +24,7 @@ export class BillingCallbackController {
     private readonly billingCache: BillingCacheService,
     configService: ConfigService,
   ) {
-    this.secret = configService.getOrThrow<string>('PAYMENT_SERVICE_SECRET');
+    this.secret = configService.get<string>('PAYMENT_SERVICE_SECRET', '');
   }
 
   @Post('payment-callback')
