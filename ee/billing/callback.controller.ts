@@ -24,7 +24,7 @@ export class BillingCallbackController {
     private readonly billingCache: BillingCacheService,
     configService: ConfigService,
   ) {
-    this.secret = configService.getOrThrow<string>('PAYMENT_SERVICE_SECRET');
+    this.secret = configService.get<string>('PAYMENT_SERVICE_SECRET', '');
   }
 
   @Post('payment-callback')
@@ -34,6 +34,10 @@ export class BillingCallbackController {
     @Headers('x-signature') signature: string,
     @Headers('x-timestamp') timestamp: string,
   ): Promise<void> {
+    if (!this.secret) {
+      throw new UnauthorizedException('Billing callbacks not configured');
+    }
+
     const rawBody =
       typeof req.body === 'string' ? req.body : JSON.stringify(req.body);
 

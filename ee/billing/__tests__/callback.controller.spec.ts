@@ -41,9 +41,9 @@ describe('BillingCallbackController', () => {
         {
           provide: ConfigService,
           useValue: {
-            getOrThrow: (key: string) => {
+            get: (key: string, defaultValue?: string) => {
               if (key === 'PAYMENT_SERVICE_SECRET') return TEST_SECRET;
-              throw new Error(`Unknown key: ${key}`);
+              return defaultValue;
             },
           },
         },
