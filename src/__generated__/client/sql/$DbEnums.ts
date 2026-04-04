@@ -6,4 +6,5 @@
 export interface $DbEnums {
   RoleLevel: "System" | "Organization" | "Project"
   EndpointType: "GRAPHQL" | "REST_API"
+  ApiKeyType: "PERSONAL" | "SERVICE" | "INTERNAL"
 }

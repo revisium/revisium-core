@@ -7,6 +7,7 @@ import { EeLicensingModule } from 'ee/licensing/licensing.module';
 import { AppOptions } from 'src/app-mode';
 import { AppOptionsModule } from 'src/core/app-options.module';
 
+import { ApiKeyModule } from 'src/features/api-key/api-key.module';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BillingModule } from 'src/features/billing/billing.module';
 import { BranchModule } from 'src/features/branch/branch.module';
@@ -39,6 +40,7 @@ export class CoreModule {
       module: CoreModule,
       imports: [
         AppOptionsModule.forRoot(options),
+        ApiKeyModule,
         AuthModule,
         BillingModule,
         ConfigModule.forRoot({

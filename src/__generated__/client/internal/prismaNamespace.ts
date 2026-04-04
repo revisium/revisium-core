@@ -402,6 +402,7 @@ export const ModelName = {
   OAuthAuthorizationCode: 'OAuthAuthorizationCode',
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
+  ApiKey: 'ApiKey',
   LicenseCache: 'LicenseCache'
 } as const
 
@@ -418,7 +419,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "instance" | "user" | "role" | "permission" | "organization" | "userOrganization" | "project" | "userProject" | "branch" | "revision" | "endpointVersion" | "endpoint" | "table" | "row" | "oAuthClient" | "oAuthAuthorizationCode" | "oAuthAccessToken" | "oAuthRefreshToken" | "licenseCache"
+    modelProps: "instance" | "user" | "role" | "permission" | "organization" | "userOrganization" | "project" | "userProject" | "branch" | "revision" | "endpointVersion" | "endpoint" | "table" | "row" | "oAuthClient" | "oAuthAuthorizationCode" | "oAuthAccessToken" | "oAuthRefreshToken" | "apiKey" | "licenseCache"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1754,6 +1755,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    ApiKey: {
+      payload: Prisma.$ApiKeyPayload<ExtArgs>
+      fields: Prisma.ApiKeyFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ApiKeyFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ApiKeyFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>
+        }
+        findFirst: {
+          args: Prisma.ApiKeyFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ApiKeyFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>
+        }
+        findMany: {
+          args: Prisma.ApiKeyFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>[]
+        }
+        create: {
+          args: Prisma.ApiKeyCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>
+        }
+        createMany: {
+          args: Prisma.ApiKeyCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ApiKeyCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>[]
+        }
+        delete: {
+          args: Prisma.ApiKeyDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>
+        }
+        update: {
+          args: Prisma.ApiKeyUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>
+        }
+        deleteMany: {
+          args: Prisma.ApiKeyDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ApiKeyUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ApiKeyUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>[]
+        }
+        upsert: {
+          args: Prisma.ApiKeyUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ApiKeyPayload>
+        }
+        aggregate: {
+          args: Prisma.ApiKeyAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateApiKey>
+        }
+        groupBy: {
+          args: Prisma.ApiKeyGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiKeyGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ApiKeyCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ApiKeyCountAggregateOutputType> | number
+        }
+      }
+    }
     LicenseCache: {
       payload: Prisma.$LicenseCachePayload<ExtArgs>
       fields: Prisma.LicenseCacheFieldRefs
@@ -2091,6 +2166,33 @@ export const OAuthRefreshTokenScalarFieldEnum = {
 export type OAuthRefreshTokenScalarFieldEnum = (typeof OAuthRefreshTokenScalarFieldEnum)[keyof typeof OAuthRefreshTokenScalarFieldEnum]
 
 
+export const ApiKeyScalarFieldEnum = {
+  id: 'id',
+  prefix: 'prefix',
+  keyHash: 'keyHash',
+  type: 'type',
+  name: 'name',
+  userId: 'userId',
+  serviceId: 'serviceId',
+  internalServiceName: 'internalServiceName',
+  organizationId: 'organizationId',
+  projectIds: 'projectIds',
+  branchNames: 'branchNames',
+  tableIds: 'tableIds',
+  permissions: 'permissions',
+  readOnly: 'readOnly',
+  allowedIps: 'allowedIps',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  replacedById: 'replacedById',
+  lastUsedAt: 'lastUsedAt',
+  lastUsedIp: 'lastUsedIp',
+  createdAt: 'createdAt'
+} as const
+
+export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof ApiKeyScalarFieldEnum]
+
+
 export const LicenseCacheScalarFieldEnum = {
   id: 'id',
   payload: 'payload',
@@ -2324,6 +2426,26 @@ export const OAuthRefreshTokenOrderByRelevanceFieldEnum = {
 export type OAuthRefreshTokenOrderByRelevanceFieldEnum = (typeof OAuthRefreshTokenOrderByRelevanceFieldEnum)[keyof typeof OAuthRefreshTokenOrderByRelevanceFieldEnum]
 
 
+export const ApiKeyOrderByRelevanceFieldEnum = {
+  id: 'id',
+  prefix: 'prefix',
+  keyHash: 'keyHash',
+  name: 'name',
+  userId: 'userId',
+  serviceId: 'serviceId',
+  internalServiceName: 'internalServiceName',
+  organizationId: 'organizationId',
+  projectIds: 'projectIds',
+  branchNames: 'branchNames',
+  tableIds: 'tableIds',
+  allowedIps: 'allowedIps',
+  replacedById: 'replacedById',
+  lastUsedIp: 'lastUsedIp'
+} as const
+
+export type ApiKeyOrderByRelevanceFieldEnum = (typeof ApiKeyOrderByRelevanceFieldEnum)[keyof typeof ApiKeyOrderByRelevanceFieldEnum]
+
+
 export const LicenseCacheOrderByRelevanceFieldEnum = {
   id: 'id'
 } as const
@@ -2425,6 +2547,20 @@ export type EnumEndpointTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'EndpointType[]'
  */
 export type ListEnumEndpointTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EndpointType[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ApiKeyType'
+ */
+export type EnumApiKeyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApiKeyType'>
+    
+
+
+/**
+ * Reference to a field of type 'ApiKeyType[]'
+ */
+export type ListEnumApiKeyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApiKeyType[]'>
     
 
 
@@ -2554,6 +2690,7 @@ export type GlobalOmitConfig = {
   oAuthAuthorizationCode?: Prisma.OAuthAuthorizationCodeOmit
   oAuthAccessToken?: Prisma.OAuthAccessTokenOmit
   oAuthRefreshToken?: Prisma.OAuthRefreshTokenOmit
+  apiKey?: Prisma.ApiKeyOmit
   licenseCache?: Prisma.LicenseCacheOmit
 }
 

@@ -108,6 +108,11 @@ export type OAuthAccessToken = Prisma.OAuthAccessTokenModel
  */
 export type OAuthRefreshToken = Prisma.OAuthRefreshTokenModel
 /**
+ * Model ApiKey
+ * 
+ */
+export type ApiKey = Prisma.ApiKeyModel
+/**
  * Model LicenseCache
  * 
  */

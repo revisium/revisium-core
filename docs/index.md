@@ -7,6 +7,7 @@ Technical documentation for the Revisium Core backend.
 - [OAuth 2.1 & MCP Authentication](./oauth.md) - OAuth 2.1 Provider, PKCE, token lifecycle, stateless MCP transport
 - [Versioning System](./versioning.md) - Data model, draft operations, revert rules, hasChanges system, invariants
 - [File Storage](./file-storage.md) - Storage providers, file plugin, upload workflow, file serving, configuration
+- [API Keys](./api-keys.md) - Key types, scoping, generation, rotation, tracking, database schema
 - [Billing & Limits](./billing.md) - Plan limits, usage tracking, enforcement, caching, data models
   - [Enforcement](./billing/enforcement.md) - Which operations are checked, when, and how
   - [Plans & Limits](./billing/plans.md) - Plan definitions, metrics, extensibility
