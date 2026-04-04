@@ -17,4 +17,5 @@ export type GetUsersOrganizationQueryReturnType = IPaginatedType<{
   id: string;
   user: User;
   role: Role;
+  roleId: string;
 }>;
