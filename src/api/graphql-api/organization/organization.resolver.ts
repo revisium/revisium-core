@@ -17,6 +17,7 @@ import { IOptionalAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import {
   AddUserToOrganizationInput,
+  GetOrganizationInput,
   GetUsersOrganizationInput,
   RemoveUserFromOrganizationInput,
 } from 'src/api/graphql-api/organization/inputs';
@@ -40,6 +41,16 @@ export class OrganizationResolver {
     private readonly projectApi: ProjectApiService,
     private readonly userApi: UserApiService,
   ) {}
+
+  @UseGuards(GqlJwtAuthGuard, GQLOrganizationGuard)
+  @PermissionParams({
+    action: PermissionAction.read,
+    subject: PermissionSubject.User,
+  })
+  @Query(() => OrganizationModel)
+  organization(@Args('data') data: GetOrganizationInput) {
+    return this.organizationApi.organization(data);
+  }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLOrganizationGuard)
   @PermissionParams({

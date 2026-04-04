@@ -338,6 +338,10 @@ input GetMeProjectsInput {
   first: Int!
 }
 
+input GetOrganizationInput {
+  organizationId: String!
+}
+
 input GetProjectBranchesInput {
   after: String
   first: Int!
@@ -781,6 +785,7 @@ type Query {
   getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int! @deprecated(reason: "use RowModel.rowForeignKeysBy.totalCount")
   me: MeModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
+  organization(data: GetOrganizationInput!): OrganizationModel!
   plans: [PlanModel!]!
   project(data: GetProjectInput!): ProjectModel!
   projectEndpoints(data: GetProjectEndpointsInput!): EndpointsConnection!
