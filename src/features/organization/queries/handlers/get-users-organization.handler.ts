@@ -37,7 +37,6 @@ export class GetUsersOrganizationHandler implements IQueryHandler<
         id: true,
         user: true,
         role: true,
-        roleId: true,
       },
     });
   }
