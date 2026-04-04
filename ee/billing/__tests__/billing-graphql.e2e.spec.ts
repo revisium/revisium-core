@@ -306,6 +306,55 @@ describe('Billing GraphQL API (e2e)', () => {
     });
   });
 
+  describe('organization.usage', () => {
+    it('should return limits from getOrgLimits even without subscription', async () => {
+      const { orgId, token } = await createOrgWithOwner();
+
+      const res = await gql(
+        `query($data: GetOrganizationInput!) {
+          organization(data: $data) {
+            usage {
+              rowVersions { current limit percentage }
+              projects { current limit percentage }
+              seats { current limit percentage }
+              storageBytes { current limit percentage }
+            }
+          }
+        }`,
+        { data: { organizationId: orgId } },
+        token,
+      ).expect(200);
+
+      const usage = res.body.data.organization.usage;
+      expect(usage.rowVersions.limit).toBe(10_000);
+      expect(usage.projects.limit).toBe(3);
+      expect(usage.seats.limit).toBe(1);
+      expect(usage.storageBytes.limit).toBe(500_000_000);
+      expect(mockBillingClient.getOrgLimits).toHaveBeenCalledWith(orgId);
+    });
+
+    it('should compute percentage when limit is set', async () => {
+      const { orgId, token } = await createOrgWithOwner();
+
+      const res = await gql(
+        `query($data: GetOrganizationInput!) {
+          organization(data: $data) {
+            usage {
+              seats { current limit percentage }
+            }
+          }
+        }`,
+        { data: { organizationId: orgId } },
+        token,
+      ).expect(200);
+
+      const seats = res.body.data.organization.usage.seats;
+      expect(seats.current).toBe(1);
+      expect(seats.limit).toBe(1);
+      expect(seats.percentage).toBe(100);
+    });
+  });
+
   describe('cancelSubscription mutation', () => {
     it('should cancel subscription', async () => {
       const { orgId, token } = await createOrgWithOwner();

@@ -77,15 +77,12 @@ export class BillingGraphqlService implements IBillingGraphqlService {
 
   async getUsage(organizationId: string): Promise<UsageSummaryResult | null> {
     if (!this.billingClient.configured) return null;
-    const subscription =
-      await this.billingClient.getSubscription(organizationId);
-    const plan = subscription
-      ? await this.billingClient.getPlan(subscription.planId)
-      : null;
+    const orgLimits =
+      await this.billingClient.getOrgLimits(organizationId);
 
     return this.usageService.computeUsageSummary(
       organizationId,
-      plan?.limits,
+      orgLimits.limits,
     );
   }
 
