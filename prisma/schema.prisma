@@ -35,6 +35,8 @@ model User {
   oauthAuthorizationCodes OAuthAuthorizationCode[]
   oauthAccessTokens       OAuthAccessToken[]
   oauthRefreshTokens      OAuthRefreshToken[]
+
+  apiKeys ApiKey[]
 }
 
 enum RoleLevel {
@@ -290,6 +292,49 @@ model OAuthRefreshToken {
 
   @@index([clientId])
   @@index([userId])
+  @@index([expiresAt])
+}
+
+enum ApiKeyType {
+  PERSONAL
+  SERVICE
+  INTERNAL
+}
+
+model ApiKey {
+  id                  String         @id @default(nanoid())
+  prefix              String
+  keyHash             String         @unique
+  type                ApiKeyType
+  name                String
+
+  userId              String?
+  user                User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId           String?        @unique
+  internalServiceName String?
+
+  organizationId      String?
+  projectIds          String[]       @default([])
+  branchNames         String[]       @default([])
+  tableIds            String[]       @default([])
+
+  permissions         Json?
+  readOnly            Boolean        @default(false)
+
+  allowedIps          String[]       @default([])
+
+  expiresAt           DateTime?
+  revokedAt           DateTime?
+  replacedById        String?
+  replacedBy          ApiKey?        @relation("ApiKeyRotation", fields: [replacedById], references: [id], onDelete: SetNull)
+  replacements        ApiKey[]       @relation("ApiKeyRotation")
+
+  lastUsedAt          DateTime?
+  lastUsedIp          String?
+  createdAt           DateTime       @default(now())
+
+  @@index([userId])
+  @@index([type])
   @@index([expiresAt])
 }
 

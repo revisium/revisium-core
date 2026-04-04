@@ -24,3 +24,12 @@ export const EndpointType = {
 } as const
 
 export type EndpointType = (typeof EndpointType)[keyof typeof EndpointType]
+
+
+export const ApiKeyType = {
+  PERSONAL: 'PERSONAL',
+  SERVICE: 'SERVICE',
+  INTERNAL: 'INTERNAL'
+} as const
+
+export type ApiKeyType = (typeof ApiKeyType)[keyof typeof ApiKeyType]

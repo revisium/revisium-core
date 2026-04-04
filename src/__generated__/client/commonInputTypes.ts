@@ -315,6 +315,23 @@ export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
 }
 
+export type EnumApiKeyTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.ApiKeyType | Prisma.EnumApiKeyTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumApiKeyTypeFilter<$PrismaModel> | $Enums.ApiKeyType
+}
+
+export type EnumApiKeyTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ApiKeyType | Prisma.EnumApiKeyTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumApiKeyTypeWithAggregatesFilter<$PrismaModel> | $Enums.ApiKeyType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumApiKeyTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumApiKeyTypeFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -573,6 +590,23 @@ export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
   _max?: Prisma.NestedDateTimeNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumApiKeyTypeFilter<$PrismaModel = never> = {
+  equals?: $Enums.ApiKeyType | Prisma.EnumApiKeyTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumApiKeyTypeFilter<$PrismaModel> | $Enums.ApiKeyType
+}
+
+export type NestedEnumApiKeyTypeWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ApiKeyType | Prisma.EnumApiKeyTypeFieldRefInput<$PrismaModel>
+  in?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ApiKeyType[] | Prisma.ListEnumApiKeyTypeFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumApiKeyTypeWithAggregatesFilter<$PrismaModel> | $Enums.ApiKeyType
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumApiKeyTypeFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumApiKeyTypeFilter<$PrismaModel>
 }
 
 

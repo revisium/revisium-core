@@ -69,6 +69,7 @@ export const ModelName = {
   OAuthAuthorizationCode: 'OAuthAuthorizationCode',
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
+  ApiKey: 'ApiKey',
   LicenseCache: 'LicenseCache'
 } as const
 
@@ -308,6 +309,33 @@ export const OAuthRefreshTokenScalarFieldEnum = {
 export type OAuthRefreshTokenScalarFieldEnum = (typeof OAuthRefreshTokenScalarFieldEnum)[keyof typeof OAuthRefreshTokenScalarFieldEnum]
 
 
+export const ApiKeyScalarFieldEnum = {
+  id: 'id',
+  prefix: 'prefix',
+  keyHash: 'keyHash',
+  type: 'type',
+  name: 'name',
+  userId: 'userId',
+  serviceId: 'serviceId',
+  internalServiceName: 'internalServiceName',
+  organizationId: 'organizationId',
+  projectIds: 'projectIds',
+  branchNames: 'branchNames',
+  tableIds: 'tableIds',
+  permissions: 'permissions',
+  readOnly: 'readOnly',
+  allowedIps: 'allowedIps',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  replacedById: 'replacedById',
+  lastUsedAt: 'lastUsedAt',
+  lastUsedIp: 'lastUsedIp',
+  createdAt: 'createdAt'
+} as const
+
+export type ApiKeyScalarFieldEnum = (typeof ApiKeyScalarFieldEnum)[keyof typeof ApiKeyScalarFieldEnum]
+
+
 export const LicenseCacheScalarFieldEnum = {
   id: 'id',
   payload: 'payload',
@@ -539,6 +567,26 @@ export const OAuthRefreshTokenOrderByRelevanceFieldEnum = {
 } as const
 
 export type OAuthRefreshTokenOrderByRelevanceFieldEnum = (typeof OAuthRefreshTokenOrderByRelevanceFieldEnum)[keyof typeof OAuthRefreshTokenOrderByRelevanceFieldEnum]
+
+
+export const ApiKeyOrderByRelevanceFieldEnum = {
+  id: 'id',
+  prefix: 'prefix',
+  keyHash: 'keyHash',
+  name: 'name',
+  userId: 'userId',
+  serviceId: 'serviceId',
+  internalServiceName: 'internalServiceName',
+  organizationId: 'organizationId',
+  projectIds: 'projectIds',
+  branchNames: 'branchNames',
+  tableIds: 'tableIds',
+  allowedIps: 'allowedIps',
+  replacedById: 'replacedById',
+  lastUsedIp: 'lastUsedIp'
+} as const
+
+export type ApiKeyOrderByRelevanceFieldEnum = (typeof ApiKeyOrderByRelevanceFieldEnum)[keyof typeof ApiKeyOrderByRelevanceFieldEnum]
 
 
 export const LicenseCacheOrderByRelevanceFieldEnum = {
