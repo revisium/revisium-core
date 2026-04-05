@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { EngineApiService } from '@revisium/engine';
 import {
+  EngineApiService,
   GetCountRowsInTableQueryData,
   GetTableQueryData,
   GetTablesQueryData,
@@ -9,7 +9,7 @@ import {
   ResolveTableForeignKeysByQueryData,
   ResolveTableForeignKeysToQueryData,
   ResolveTableSchemaQueryData,
-} from 'src/features/table/queries/impl';
+} from '@revisium/engine';
 
 @Injectable()
 export class TableApiService {

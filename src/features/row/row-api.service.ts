@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { EngineApiService } from '@revisium/engine';
 import {
+  EngineApiService,
   GetRowByIdQueryData,
   GetRowQueryData,
   GetRowsQueryData,
@@ -9,7 +9,7 @@ import {
   ResolveRowForeignKeysByQueryData,
   ResolveRowForeignKeysToQueryData,
   SearchRowsQueryData,
-} from 'src/features/row/queries/impl';
+} from '@revisium/engine';
 import { RowWithContext } from 'src/features/share/types/row-with-context.types';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 
