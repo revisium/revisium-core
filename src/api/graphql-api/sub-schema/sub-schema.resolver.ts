@@ -4,7 +4,7 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { SubSchemaApiService } from 'src/features/sub-schema';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { GetSubSchemaItemsInput } from './inputs/get-sub-schema-items.input';
 import {
   SubSchemaItemModel,
@@ -17,11 +17,11 @@ import {
 })
 @Resolver(() => SubSchemaItemModel)
 export class SubSchemaResolver {
-  constructor(private readonly subSchemaApi: SubSchemaApiService) {}
+  constructor(private readonly engine: CoreEngineApiService) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => SubSchemaItemsConnection)
   subSchemaItems(@Args('data') data: GetSubSchemaItemsInput) {
-    return this.subSchemaApi.getSubSchemaItems(data);
+    return this.engine.getSubSchemaItems(data);
   }
 }

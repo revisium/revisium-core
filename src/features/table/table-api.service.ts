@@ -1,91 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
+import { EngineApiService } from '@revisium/engine';
 import {
-  GetCountRowsInTableQuery,
   GetCountRowsInTableQueryData,
-  GetCountRowsInTableQueryReturnType,
-  GetTableQuery,
   GetTableQueryData,
-  GetTableQueryReturnType,
-  GetTablesQuery,
   GetTablesQueryData,
-  GetTablesQueryReturnType,
-  ResolveTableCountForeignKeysByQuery,
   ResolveTableCountForeignKeysByQueryData,
-  ResolveTableCountForeignKeysByQueryReturnType,
-  ResolveTableCountForeignKeysToQuery,
   ResolveTableCountForeignKeysToQueryData,
-  ResolveTableCountForeignKeysToQueryReturnType,
-  ResolveTableForeignKeysByQuery,
   ResolveTableForeignKeysByQueryData,
-  ResolveTableForeignKeysByQueryReturnType,
-  ResolveTableForeignKeysToQuery,
   ResolveTableForeignKeysToQueryData,
-  ResolveTableForeignKeysToQueryReturnType,
-  ResolveTableSchemaQuery,
   ResolveTableSchemaQueryData,
-  ResolveTableSchemaQueryReturnType,
 } from 'src/features/table/queries/impl';
 
 @Injectable()
 export class TableApiService {
-  constructor(private readonly queryBus: QueryBus) {}
+  constructor(private readonly engine: EngineApiService) {}
 
   public getTable(data: GetTableQueryData) {
-    return this.queryBus.execute<GetTableQuery, GetTableQueryReturnType>(
-      new GetTableQuery(data),
-    );
+    return this.engine.getTable(data);
   }
 
   public getCountRowsInTable(data: GetCountRowsInTableQueryData) {
-    return this.queryBus.execute<
-      GetCountRowsInTableQuery,
-      GetCountRowsInTableQueryReturnType
-    >(new GetCountRowsInTableQuery(data));
+    return this.engine.getCountRowsInTable(data);
   }
 
   public resolveTableSchema(data: ResolveTableSchemaQueryData) {
-    return this.queryBus.execute<
-      ResolveTableSchemaQuery,
-      ResolveTableSchemaQueryReturnType
-    >(new ResolveTableSchemaQuery(data));
+    return this.engine.resolveTableSchema(data);
   }
 
   public resolveTableCountForeignKeysBy(
     data: ResolveTableCountForeignKeysByQueryData,
   ) {
-    return this.queryBus.execute<
-      ResolveTableCountForeignKeysByQuery,
-      ResolveTableCountForeignKeysByQueryReturnType
-    >(new ResolveTableCountForeignKeysByQuery(data));
+    return this.engine.resolveTableCountForeignKeysBy(data);
   }
 
   public resolveTableCountForeignKeysTo(
     data: ResolveTableCountForeignKeysToQueryData,
   ) {
-    return this.queryBus.execute<
-      ResolveTableCountForeignKeysToQuery,
-      ResolveTableCountForeignKeysToQueryReturnType
-    >(new ResolveTableCountForeignKeysToQuery(data));
+    return this.engine.resolveTableCountForeignKeysTo(data);
   }
 
   public resolveTableForeignKeysBy(data: ResolveTableForeignKeysByQueryData) {
-    return this.queryBus.execute<
-      ResolveTableForeignKeysByQuery,
-      ResolveTableForeignKeysByQueryReturnType
-    >(new ResolveTableForeignKeysByQuery(data));
+    return this.engine.resolveTableForeignKeysBy(data);
   }
 
   public resolveTableForeignKeysTo(data: ResolveTableForeignKeysToQueryData) {
-    return this.queryBus.execute<
-      ResolveTableForeignKeysToQuery,
-      ResolveTableForeignKeysToQueryReturnType
-    >(new ResolveTableForeignKeysToQuery(data));
+    return this.engine.resolveTableForeignKeysTo(data);
   }
 
   public getTables(data: GetTablesQueryData) {
-    return this.queryBus.execute<GetTablesQuery, GetTablesQueryReturnType>(
-      new GetTablesQuery(data),
-    );
+    return this.engine.getTables(data);
   }
 }

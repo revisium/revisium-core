@@ -36,8 +36,7 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
-import { RowApiService } from 'src/features/row/row-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   GetRowForeignKeysByDto,
@@ -72,10 +71,7 @@ import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/tr
 @ApiBearerAuth('access-token')
 @ApiTags('Row')
 export class RowByIdController {
-  constructor(
-    private readonly draftApi: DraftApiService,
-    private readonly rowApi: RowApiService,
-  ) {}
+  constructor(private readonly engine: CoreEngineApiService) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
@@ -114,7 +110,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
   ): Promise<CountModelDto> {
     return {
-      count: await this.rowApi.resolveRowCountForeignKeysBy({
+      count: await this.engine.resolveRowCountForeignKeysBy({
         revisionId,
         tableId,
         rowId,
@@ -139,7 +135,7 @@ export class RowByIdController {
     @Query() data: GetRowForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
-      await this.rowApi.resolveRowForeignKeysBy({
+      await this.engine.resolveRowForeignKeysBy({
         revisionId,
         tableId,
         rowId,
@@ -166,7 +162,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
   ): Promise<CountModelDto> {
     return {
-      count: await this.rowApi.resolveRowCountForeignKeysTo({
+      count: await this.engine.resolveRowCountForeignKeysTo({
         revisionId,
         tableId,
         rowId,
@@ -191,7 +187,7 @@ export class RowByIdController {
     @Query() data: GetRowForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
-      await this.rowApi.resolveRowForeignKeysTo({
+      await this.engine.resolveRowForeignKeysTo({
         revisionId,
         tableId,
         rowId,
@@ -218,7 +214,7 @@ export class RowByIdController {
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ): Promise<RemoveRowResponse> {
-    const result = await this.draftApi.apiRemoveRow({
+    const result = await this.engine.removeRow({
       revisionId,
       tableId,
       rowId,
@@ -251,7 +247,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: UpdateRowDto,
   ): Promise<UpdateRowResponse> {
-    const result = await this.draftApi.apiUpdateRow({
+    const result = await this.engine.updateRow({
       revisionId,
       tableId,
       rowId,
@@ -289,7 +285,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: PatchRowDto,
   ): Promise<PatchRowResponse> {
-    const result = await this.draftApi.apiPatchRow({
+    const result = await this.engine.patchRow({
       revisionId,
       tableId,
       rowId,
@@ -324,7 +320,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: RenameRowDto,
   ): Promise<RenameRowResponse> {
-    const result = await this.draftApi.apiRenameRow({
+    const result = await this.engine.renameRow({
       revisionId,
       tableId,
       rowId,
@@ -383,7 +379,7 @@ export class RowByIdController {
     )
     file: Express.Multer.File,
   ) {
-    const result = await this.draftApi.apiUploadFile({
+    const result = await this.engine.uploadFile({
       revisionId,
       tableId,
       rowId,
@@ -402,6 +398,6 @@ export class RowByIdController {
   }
 
   private resolveRow(revisionId: string, tableId: string, rowId: string) {
-    return this.rowApi.getRow({ revisionId, tableId, rowId });
+    return this.engine.getRow({ revisionId, tableId, rowId });
   }
 }

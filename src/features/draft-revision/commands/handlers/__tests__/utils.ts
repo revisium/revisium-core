@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CommandBus, CqrsModule } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
+import { EngineModule } from '@revisium/engine';
 import { AppOptionsModule } from 'src/core/app-options.module';
 import { BranchModule } from 'src/features/branch/branch.module';
 import { DRAFT_REVISION_COMMANDS_HANDLERS } from 'src/features/draft-revision/commands/handlers';
@@ -84,6 +85,7 @@ export const createDraftRevisionTestingModule = async () => {
     imports: [
       DatabaseModule,
       CqrsModule,
+      { ...EngineModule.forRoot({}), global: true },
       RevisiumCacheModule.forRootAsync(),
       AppOptionsModule.forRoot({ mode: 'monolith' }),
       RevisionModule,

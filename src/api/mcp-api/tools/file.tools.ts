@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
   UriRevisionResolver,
@@ -11,7 +11,7 @@ import {
 
 export class FileTools implements McpToolRegistrar {
   constructor(
-    private readonly draftApi: DraftApiService,
+    private readonly engine: CoreEngineApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -95,7 +95,7 @@ If you get "Storage is not configured" error, the server needs S3 or local stora
           path: '',
         };
 
-        const result = await this.draftApi.apiUploadFile({
+        const result = await this.engine.uploadFile({
           revisionId,
           tableId,
           rowId,

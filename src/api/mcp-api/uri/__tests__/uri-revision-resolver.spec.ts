@@ -1,20 +1,29 @@
 import { UriRevisionResolver } from '../uri-revision-resolver';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { ProjectApiService } from 'src/features/project/project-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 describe('UriRevisionResolver', () => {
   let resolver: UriRevisionResolver;
-  let branchApi: jest.Mocked<
-    Pick<BranchApiService, 'getBranch' | 'getDraftRevision' | 'getHeadRevision'>
+  let projectApi: jest.Mocked<Pick<ProjectApiService, 'getProject'>>;
+  let engine: jest.Mocked<
+    Pick<
+      CoreEngineApiService,
+      'getBranch' | 'getDraftRevision' | 'getHeadRevision'
+    >
   >;
 
   beforeEach(() => {
-    branchApi = {
+    projectApi = {
+      getProject: jest.fn().mockResolvedValue({ id: 'project-id-1' }),
+    };
+    engine = {
       getBranch: jest.fn().mockResolvedValue({ id: 'branch-id-1' }),
       getDraftRevision: jest.fn().mockResolvedValue({ id: 'draft-rev-id' }),
       getHeadRevision: jest.fn().mockResolvedValue({ id: 'head-rev-id' }),
     };
     resolver = new UriRevisionResolver(
-      branchApi as unknown as BranchApiService,
+      projectApi as unknown as ProjectApiService,
+      engine as unknown as CoreEngineApiService,
     );
   });
 
@@ -27,13 +36,16 @@ describe('UriRevisionResolver', () => {
     });
 
     expect(result).toBe('draft-rev-id');
-    expect(branchApi.getBranch).toHaveBeenCalledWith({
+    expect(projectApi.getProject).toHaveBeenCalledWith({
       organizationId: 'org',
       projectName: 'proj',
+    });
+    expect(engine.getBranch).toHaveBeenCalledWith({
+      projectId: 'project-id-1',
       branchName: 'master',
     });
-    expect(branchApi.getDraftRevision).toHaveBeenCalledWith('branch-id-1');
-    expect(branchApi.getHeadRevision).not.toHaveBeenCalled();
+    expect(engine.getDraftRevision).toHaveBeenCalledWith('branch-id-1');
+    expect(engine.getHeadRevision).not.toHaveBeenCalled();
   });
 
   it('resolves head revision', async () => {
@@ -45,16 +57,11 @@ describe('UriRevisionResolver', () => {
     });
 
     expect(result).toBe('head-rev-id');
-    expect(branchApi.getBranch).toHaveBeenCalledWith({
-      organizationId: 'org',
-      projectName: 'proj',
-      branchName: 'master',
-    });
-    expect(branchApi.getHeadRevision).toHaveBeenCalledWith('branch-id-1');
-    expect(branchApi.getDraftRevision).not.toHaveBeenCalled();
+    expect(engine.getHeadRevision).toHaveBeenCalledWith('branch-id-1');
+    expect(engine.getDraftRevision).not.toHaveBeenCalled();
   });
 
-  it('passes through specific revisionId without calling branch API', async () => {
+  it('passes through specific revisionId without calling any API', async () => {
     const result = await resolver.resolve({
       organizationId: 'org',
       projectName: 'proj',
@@ -63,21 +70,20 @@ describe('UriRevisionResolver', () => {
     });
 
     expect(result).toBe('specific-uuid-123');
-    expect(branchApi.getBranch).not.toHaveBeenCalled();
-    expect(branchApi.getDraftRevision).not.toHaveBeenCalled();
-    expect(branchApi.getHeadRevision).not.toHaveBeenCalled();
+    expect(projectApi.getProject).not.toHaveBeenCalled();
+    expect(engine.getBranch).not.toHaveBeenCalled();
   });
 
-  it('propagates error when branch not found', async () => {
-    branchApi.getBranch.mockRejectedValue(new Error('Branch not found'));
+  it('propagates error when project not found', async () => {
+    projectApi.getProject.mockRejectedValue(new Error('Project not found'));
 
     await expect(
       resolver.resolve({
         organizationId: 'org',
-        projectName: 'proj',
-        branchName: 'nonexistent',
+        projectName: 'nonexistent',
+        branchName: 'master',
         revision: 'draft',
       }),
-    ).rejects.toThrow('Branch not found');
+    ).rejects.toThrow('Project not found');
   });
 });

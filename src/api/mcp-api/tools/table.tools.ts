@@ -1,8 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { Prisma } from 'src/__generated__/client';
-import { TableApiService } from 'src/features/table/table-api.service';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { JsonPatch } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
@@ -16,8 +15,7 @@ import { fillFormulaDefaults } from './mcp-helpers';
 
 export class TableTools implements McpToolRegistrar {
   constructor(
-    private readonly tableApi: TableApiService,
-    private readonly draftApi: DraftApiService,
+    private readonly engine: CoreEngineApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -72,7 +70,7 @@ export class TableTools implements McpToolRegistrar {
           includeSchema || includeRowCount
             ? Math.min(first ?? 50, 50)
             : (first ?? 100);
-        const result = await this.tableApi.getTables({
+        const result = await this.engine.getTables({
           revisionId,
           first: maxFirst,
           after,
@@ -83,13 +81,13 @@ export class TableTools implements McpToolRegistrar {
             result.edges.map(async (edge) => {
               const enrichments: Record<string, unknown> = {};
               if (includeSchema) {
-                enrichments.schema = await this.tableApi.resolveTableSchema({
+                enrichments.schema = await this.engine.resolveTableSchema({
                   revisionId,
                   tableId: edge.node.id,
                 });
               }
               if (includeRowCount) {
-                enrichments.rowCount = await this.tableApi.getCountRowsInTable({
+                enrichments.rowCount = await this.engine.getCountRowsInTable({
                   tableVersionId: edge.node.versionId,
                 });
               }
@@ -142,7 +140,7 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.tableApi.getTable({ revisionId, tableId });
+        const result = await this.engine.getTable({ revisionId, tableId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -176,8 +174,8 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const table = await this.tableApi.getTable({ revisionId, tableId });
-        const count = await this.tableApi.getCountRowsInTable({
+        const table = await this.engine.getTable({ revisionId, tableId });
+        const count = await this.engine.getCountRowsInTable({
           tableVersionId: table.versionId,
         });
         return {
@@ -216,7 +214,7 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.tableApi.resolveTableSchema({
+        const result = await this.engine.resolveTableSchema({
           revisionId,
           tableId,
         });
@@ -357,7 +355,7 @@ FOREIGN KEY RULES:
           permissions,
           auth.userId,
         );
-        const tableResult = await this.draftApi.apiCreateTable({
+        const tableResult = await this.engine.createTable({
           revisionId,
           tableId,
           schema: schema as Prisma.InputJsonValue,
@@ -370,7 +368,7 @@ FOREIGN KEY RULES:
         if (rows?.length) {
           try {
             const schemaObj = schema as Record<string, unknown>;
-            const rowsResult = await this.draftApi.apiCreateRows({
+            const rowsResult = await this.engine.createRows({
               revisionId,
               tableId,
               rows: rows.map((r) => ({
@@ -428,7 +426,7 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        await this.draftApi.apiUpdateTable({
+        await this.engine.updateTable({
           revisionId,
           tableId,
           patches: patches as JsonPatch[],
@@ -471,7 +469,7 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        await this.draftApi.apiRenameTable({
+        await this.engine.renameTable({
           revisionId,
           tableId,
           nextTableId,
@@ -513,7 +511,7 @@ FOREIGN KEY RULES:
           ],
           auth.userId,
         );
-        await this.draftApi.apiRemoveTable({
+        await this.engine.removeTable({
           revisionId,
           tableId,
         });

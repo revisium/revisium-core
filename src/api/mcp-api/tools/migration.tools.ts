@@ -1,7 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
@@ -14,8 +13,7 @@ import {
 
 export class MigrationTools implements McpToolRegistrar {
   constructor(
-    private readonly revisionsApi: RevisionsApiService,
-    private readonly draftApi: DraftApiService,
+    private readonly engine: CoreEngineApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -45,7 +43,7 @@ export class MigrationTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.revisionsApi.migrations({ revisionId });
+        const result = await this.engine.getMigrations({ revisionId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -85,7 +83,7 @@ export class MigrationTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.draftApi.applyMigrations({
+        const result = await this.engine.applyMigrations({
           revisionId,
           migrations: migrations as Migration[],
         });

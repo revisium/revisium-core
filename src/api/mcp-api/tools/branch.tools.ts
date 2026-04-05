@@ -1,12 +1,27 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { resolveBranchParams, branchParamsOrUri } from '../uri';
 
 export class BranchTools implements McpToolRegistrar {
-  constructor(private readonly branchApi: BranchApiService) {}
+  constructor(
+    private readonly projectApi: ProjectApiService,
+    private readonly engine: CoreEngineApiService,
+  ) {}
+
+  private async resolveProjectId(
+    organizationId: string,
+    projectName: string,
+  ): Promise<string> {
+    const project = await this.projectApi.getProject({
+      organizationId,
+      projectName,
+    });
+    return project.id;
+  }
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
@@ -32,14 +47,17 @@ export class BranchTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const branch = await this.branchApi.getBranch({
+        const projectId = await this.resolveProjectId(
           organizationId,
           projectName,
+        );
+        const branch = await this.engine.getBranch({
+          projectId,
           branchName,
         });
         const [headRevision, draftRevision] = await Promise.all([
-          this.branchApi.getHeadRevision(branch.id),
-          this.branchApi.getDraftRevision(branch.id),
+          this.engine.getHeadRevision(branch.id),
+          this.engine.getDraftRevision(branch.id),
         ]);
         const result = {
           ...branch,
@@ -64,7 +82,7 @@ export class BranchTools implements McpToolRegistrar {
         annotations: { readOnlyHint: true },
       },
       async ({ branchId }) => {
-        const result = await this.branchApi.getDraftRevision(branchId);
+        const result = await this.engine.getDraftRevision(branchId);
         await auth.checkPermissionByRevision(
           result.id,
           [
@@ -104,7 +122,7 @@ export class BranchTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.branchApi.apiCreateBranchByRevisionId({
+        const result = await this.engine.createBranch({
           revisionId,
           branchName,
         });
@@ -143,9 +161,12 @@ export class BranchTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.branchApi.getBranches({
+        const projectId = await this.resolveProjectId(
           organizationId,
           projectName,
+        );
+        const result = await this.engine.getBranches({
+          projectId,
           first: first ?? 100,
           after,
         });
@@ -185,12 +206,15 @@ export class BranchTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const branch = await this.branchApi.getBranch({
+        const projectId = await this.resolveProjectId(
           organizationId,
           projectName,
+        );
+        const branch = await this.engine.getBranch({
+          projectId,
           branchName,
         });
-        const result = await this.branchApi.getRevisionsByBranchId({
+        const result = await this.engine.getRevisionsByBranchId({
           branchId: branch.id,
           first: first ?? 100,
           after,
@@ -226,9 +250,12 @@ export class BranchTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.branchApi.deleteBranch({
+        const projectId = await this.resolveProjectId(
           organizationId,
           projectName,
+        );
+        const result = await this.engine.deleteBranch({
+          projectId,
           branchName,
         });
         return {
@@ -273,9 +300,12 @@ export class BranchTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.branchApi.apiRevertChanges({
+        const projectId = await this.resolveProjectId(
           organizationId,
           projectName,
+        );
+        const result = await this.engine.revertChanges({
+          projectId,
           branchName,
         });
         return {

@@ -6,7 +6,7 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { RowApiService } from 'src/features/row/row-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -15,11 +15,11 @@ import { RowApiService } from 'src/features/row/row-api.service';
 @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
 @Resolver()
 export class SearchRowsResolver {
-  constructor(private readonly rowApiService: RowApiService) {}
+  constructor(private readonly engine: CoreEngineApiService) {}
 
   @Query(() => SearchResultsConnection, { name: 'searchRows' })
   async searchRows(@Args('data') data: SearchRowsInput) {
-    return this.rowApiService.searchRows({
+    return this.engine.searchRows({
       revisionId: data.revisionId,
       query: data.query,
       first: data.first,

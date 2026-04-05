@@ -60,6 +60,8 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { AppOptionsModule } from 'src/core/app-options.module';
 import { BillingModule } from 'src/features/billing/billing.module';
+import { EngineModule } from '@revisium/engine';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 export const testSchema: JsonObjectSchema = getObjectSchema({
   ver: getNumberSchema(),
@@ -140,6 +142,7 @@ export const createTestingModule = async (
       BillingModule,
       NotificationModule,
       CacheModule.register(),
+      { ...EngineModule.forRoot({ storage: mockS3 as any }), global: true },
       RevisionModule,
       ViewsModule,
       DraftRevisionModule,
@@ -147,6 +150,7 @@ export const createTestingModule = async (
       RevisiumCacheModule.forRootAsync(),
     ],
     providers: [
+      CoreEngineApiService,
       DraftTransactionalCommands,
       DraftApiService,
       RowApiService,

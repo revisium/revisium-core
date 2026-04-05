@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EngineApiService } from '@revisium/engine';
 import { InternalRevisionsApiService } from 'src/features/revision/internal-revisions-api.service';
 import {
   GetChildrenByRevisionQueryData,
@@ -16,26 +17,28 @@ import { RevisionCacheService } from 'src/infrastructure/cache/services/revision
 @Injectable()
 export class RevisionsApiService {
   constructor(
+    private readonly engine: EngineApiService,
     private readonly api: InternalRevisionsApiService,
     private readonly cache: RevisionCacheService,
   ) {}
 
   public revision(data: GetRevisionQueryData) {
-    return this.cache.revision(data, () => this.api.revision(data));
+    return this.cache.revision(data, () => this.engine.getRevision(data));
   }
 
   public migrations(data: GetMigrationsQueryData) {
-    return this.api.migrations(data);
+    return this.engine.getMigrations(data);
   }
 
   public resolveParentByRevision(data: ResolveParentByRevisionQueryData) {
-    return this.api.resolveParentByRevision(data);
+    return this.engine.getRevisionParent(data);
   }
 
   public resolveChildByRevision(data: ResolveChildByRevisionQueryData) {
-    return this.api.resolveChildByRevision(data);
+    return this.engine.getRevisionChild(data);
   }
 
+  // Core-specific: not in engine
   public resolveChildBranchesByRevision(
     data: ResolveChildBranchesByRevisionQueryData,
   ) {
@@ -43,17 +46,19 @@ export class RevisionsApiService {
   }
 
   public getTablesByRevisionId(data: GetTablesByRevisionIdQueryData) {
-    return this.api.getTablesByRevisionId(data);
+    return this.engine.getTablesByRevisionId(data);
   }
 
+  // Core-specific: not in engine
   public getEndpointsByRevisionId(data: GetEndpointsByRevisionIdQueryData) {
     return this.api.getEndpointsByRevisionId(data);
   }
 
   public getChildrenByRevision(data: GetChildrenByRevisionQueryData) {
-    return this.api.getChildrenByRevision(data);
+    return this.engine.getRevisionChildren(data);
   }
 
+  // Core-specific: not in engine
   public resolveBranchByRevision(data: ResolveBranchByRevisionQueryData) {
     return this.api.resolveBranchByRevision(data);
   }

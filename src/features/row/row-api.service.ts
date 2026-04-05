@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { InternalRowApiService } from 'src/features/row/internal-row-api.service';
+import { EngineApiService } from '@revisium/engine';
 import {
   GetRowByIdQueryData,
   GetRowQueryData,
@@ -18,16 +18,16 @@ export class RowApiService {
   private readonly logger = new Logger(RowApiService.name);
 
   constructor(
-    private readonly api: InternalRowApiService,
+    private readonly engine: EngineApiService,
     private readonly rowCache: RowCacheService,
   ) {}
 
   public getRow(data: GetRowQueryData) {
-    return this.rowCache.row(data, () => this.api.getRow(data));
+    return this.rowCache.row(data, () => this.engine.getRow(data));
   }
 
   public getRowById(data: GetRowByIdQueryData) {
-    return this.rowCache.row(data, () => this.api.getRowById(data));
+    return this.rowCache.row(data, () => this.engine.getRowById(data));
   }
 
   public getRows(data: GetRowsQueryData) {
@@ -36,7 +36,7 @@ export class RowApiService {
       data.tableId,
       data,
       async () => {
-        const result = await this.api.getRows(data);
+        const result = await this.engine.getRows(data as any);
         void this.warmRowCache(result.edges.map((edge) => edge.node)).catch(
           (e) => {
             this.logger.warn(`Row cache warming failed (non-critical)`, e);
@@ -50,25 +50,25 @@ export class RowApiService {
   public resolveRowCountForeignKeysBy(
     data: ResolveRowCountForeignKeysByQueryData,
   ) {
-    return this.api.resolveRowCountForeignKeysBy(data);
+    return this.engine.resolveRowCountForeignKeysBy(data);
   }
 
   public resolveRowCountForeignKeysTo(
     data: ResolveRowCountForeignKeysToQueryData,
   ) {
-    return this.api.resolveRowCountForeignKeysTo(data);
+    return this.engine.resolveRowCountForeignKeysTo(data);
   }
 
   public resolveRowForeignKeysBy(data: ResolveRowForeignKeysByQueryData) {
-    return this.api.resolveRowForeignKeysBy(data);
+    return this.engine.resolveRowForeignKeysBy(data);
   }
 
   public resolveRowForeignKeysTo(data: ResolveRowForeignKeysToQueryData) {
-    return this.api.resolveRowForeignKeysTo(data);
+    return this.engine.resolveRowForeignKeysTo(data);
   }
 
   public searchRows(data: SearchRowsQueryData) {
-    return this.api.searchRows(data);
+    return this.engine.searchRows(data);
   }
 
   private async warmRowCache(rows: RowWithContext[]) {

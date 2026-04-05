@@ -14,6 +14,7 @@ import { DraftTransactionalCommands } from 'src/features/draft/draft.transaction
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
 import { ShareModule } from 'src/features/share/share.module';
 import { StorageModule } from 'src/infrastructure/storage/storage.module';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { StorageModule } from 'src/infrastructure/storage/storage.module';
     StorageModule,
   ],
   providers: [
+    CoreEngineApiService,
     DraftTransactionalCommands,
     DraftApiService,
     DraftContextService,

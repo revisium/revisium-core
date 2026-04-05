@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
@@ -11,7 +11,7 @@ import {
 
 export class RevisionChangesTools implements McpToolRegistrar {
   constructor(
-    private readonly revisionChangesApi: RevisionChangesApiService,
+    private readonly engine: CoreEngineApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -47,7 +47,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.revisionChangesApi.revisionChanges({
+        const result = await this.engine.revisionChanges({
           revisionId,
           compareWithRevisionId,
         });
@@ -99,7 +99,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.revisionChangesApi.tableChanges({
+        const result = await this.engine.tableChanges({
           revisionId,
           compareWithRevisionId,
           first: first ?? 50,
@@ -153,7 +153,7 @@ export class RevisionChangesTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.revisionChangesApi.rowChanges({
+        const result = await this.engine.rowChanges({
           revisionId,
           compareWithRevisionId,
           first: first ?? 50,
