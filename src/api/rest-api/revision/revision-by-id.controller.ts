@@ -28,10 +28,8 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
-import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
@@ -87,9 +85,7 @@ import { TablesConnection } from 'src/api/rest-api/table/model/table.model';
 export class RevisionByIdController {
   constructor(
     private readonly revisionApi: RevisionsApiService,
-    private readonly revisionChangesApi: RevisionChangesApiService,
-    private readonly draftApi: DraftApiService,
-    private readonly branchApi: BranchApiService,
+    private readonly engine: CoreEngineApiService,
     private readonly endpointApi: EndpointApiService,
   ) {}
 
@@ -102,7 +98,7 @@ export class RevisionByIdController {
   @ApiNotFoundError('Revision')
   async revisionById(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.revisionApi.revision({ revisionId }),
+      await this.engine.getRevision({ revisionId }),
     );
   }
 
@@ -117,9 +113,8 @@ export class RevisionByIdController {
   @ApiCommonErrors()
   @ApiNotFoundError('Revision')
   async parent(@Param('revisionId') revisionId: string) {
-    return transformFromPrismaToRevisionModel(
-      await this.revisionApi.resolveParentByRevision(revisionId),
-    );
+    const parent = await this.engine.getRevisionParent(revisionId);
+    return parent ? transformFromPrismaToRevisionModel(parent) : null;
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -131,7 +126,7 @@ export class RevisionByIdController {
   @ApiNotFoundError('Revision')
   async child(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.revisionApi.resolveChildByRevision(revisionId),
+      await this.engine.getRevisionChild(revisionId),
     );
   }
 
@@ -161,7 +156,7 @@ export class RevisionByIdController {
     @Query() data: GetRevisionTablesDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
-      await this.revisionApi.getTablesByRevisionId({
+      await this.engine.getTablesByRevisionId({
         ...data,
         revisionId,
       }),
@@ -212,7 +207,7 @@ export class RevisionByIdController {
   async getMigrations(
     @Param('revisionId') revisionId: string,
   ): Promise<Migration[]> {
-    return this.revisionApi.migrations({ revisionId });
+    return this.engine.getMigrations({ revisionId });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -229,7 +224,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Query() data: GetRevisionChangesDto,
   ): Promise<RevisionChangesResponse> {
-    return this.revisionChangesApi.revisionChanges({
+    return this.engine.revisionChanges({
       revisionId,
       compareWithRevisionId: data.compareWithRevisionId,
       includeSystem: data.includeSystem,
@@ -250,7 +245,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Query() data: GetTableChangesDto,
   ) {
-    return this.revisionChangesApi.tableChanges({
+    return this.engine.tableChanges({
       revisionId,
       first: data.first,
       after: data.after,
@@ -273,7 +268,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Query() data: GetRowChangesDto,
   ) {
-    return this.revisionChangesApi.rowChanges({
+    return this.engine.rowChanges({
       revisionId,
       first: data.first,
       after: data.after,
@@ -336,7 +331,7 @@ export class RevisionByIdController {
     @Body() data: CreateBranchByRevisionDto,
   ): Promise<BranchModel> {
     return transformFromPrismaToBranchModel(
-      await this.branchApi.apiCreateBranchByRevisionId({
+      await this.engine.createBranch({
         branchName: data.branchName,
         revisionId,
       }),
@@ -386,7 +381,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Body() data: CreateTableDto,
   ): Promise<CreateTableResponse> {
-    const result = await this.draftApi.apiCreateTable({
+    const result = await this.engine.createTable({
       ...data,
       revisionId,
     });
@@ -429,7 +424,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Body() migrations: MigrationDto[],
   ) {
-    return this.draftApi.applyMigrations({
+    return this.engine.applyMigrations({
       revisionId,
       migrations,
     });

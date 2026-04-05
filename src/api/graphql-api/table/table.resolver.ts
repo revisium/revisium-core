@@ -11,9 +11,7 @@ import { GetTablesInput } from 'src/api/graphql-api/table/inputs/get-tables.inpu
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
 import { TableViewsDataModel } from 'src/api/graphql-api/views/model/table-views-data.model';
-import { RowApiService } from 'src/features/row/row-api.service';
-import { TableApiService } from 'src/features/table/table-api.service';
-import { ViewsApiService } from 'src/features/views/views-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -21,27 +19,23 @@ import { ViewsApiService } from 'src/features/views/views-api.service';
 })
 @Resolver(() => TableModel)
 export class TableResolver {
-  constructor(
-    private readonly tableApi: TableApiService,
-    private readonly rowApi: RowApiService,
-    private readonly viewsApi: ViewsApiService,
-  ) {}
+  constructor(private readonly engine: CoreEngineApiService) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TableModel, { nullable: true })
   table(@Args('data') data: GetTableInput) {
-    return this.tableApi.getTable(data);
+    return this.engine.getTable(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TablesConnection)
   tables(@Args('data') data: GetTablesInput) {
-    return this.tableApi.getTables(data);
+    return this.engine.getTables(data);
   }
 
   @ResolveField()
   rows(@Parent() table: TableModel, @Args('data') data: GetTableRowsInput) {
-    return this.rowApi.getRows({
+    return this.engine.getRows({
       ...data,
       revisionId: table.context.revisionId,
       tableId: table.id,
@@ -50,14 +44,14 @@ export class TableResolver {
 
   @ResolveField()
   count(@Parent() table: TableModel) {
-    return this.tableApi.getCountRowsInTable({
+    return this.engine.getCountRowsInTable({
       tableVersionId: table.versionId,
     });
   }
 
   @ResolveField()
   schema(@Parent() table: TableModel) {
-    return this.tableApi.resolveTableSchema({
+    return this.engine.resolveTableSchema({
       revisionId: table.context.revisionId,
       tableId: table.id,
     });
@@ -65,7 +59,7 @@ export class TableResolver {
 
   @ResolveField()
   countForeignKeysBy(@Parent() table: TableModel) {
-    return this.tableApi.resolveTableCountForeignKeysBy({
+    return this.engine.resolveTableCountForeignKeysBy({
       revisionId: table.context.revisionId,
       tableId: table.id,
     });
@@ -76,7 +70,7 @@ export class TableResolver {
     @Parent() table: TableModel,
     @Args('data') data: GetTableForeignKeysInput,
   ) {
-    return this.tableApi.resolveTableForeignKeysBy({
+    return this.engine.resolveTableForeignKeysBy({
       ...data,
       revisionId: table.context.revisionId,
       tableId: table.id,
@@ -85,7 +79,7 @@ export class TableResolver {
 
   @ResolveField()
   countForeignKeysTo(@Parent() table: TableModel) {
-    return this.tableApi.resolveTableCountForeignKeysTo({
+    return this.engine.resolveTableCountForeignKeysTo({
       revisionId: table.context.revisionId,
       tableId: table.id,
     });
@@ -96,7 +90,7 @@ export class TableResolver {
     @Parent() table: TableModel,
     @Args('data') data: GetTableForeignKeysInput,
   ) {
-    return this.tableApi.resolveTableForeignKeysTo({
+    return this.engine.resolveTableForeignKeysTo({
       ...data,
       revisionId: table.context.revisionId,
       tableId: table.id,
@@ -105,7 +99,7 @@ export class TableResolver {
 
   @ResolveField(() => TableViewsDataModel)
   views(@Parent() table: TableModel) {
-    return this.viewsApi.getTableViews({
+    return this.engine.getTableViews({
       revisionId: table.context.revisionId,
       tableId: table.id,
     });

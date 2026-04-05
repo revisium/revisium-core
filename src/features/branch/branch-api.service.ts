@@ -1,29 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { QueryBus } from '@nestjs/cqrs';
+import { EngineApiService } from '@revisium/engine';
 import {
-  ApiCreateBranchByRevisionIdCommand,
-  ApiCreateBranchByRevisionIdCommandData,
-  DeleteBranchCommand,
-  DeleteBranchCommandData,
-  DeleteBranchCommandReturnType,
-} from 'src/features/branch/commands/impl';
-import {
-  GetBranchByIdQuery,
   GetBranchByIdQueryData,
-  GetBranchByIdQueryReturnType,
   GetBranchesQuery,
   GetBranchesQueryData,
   GetBranchesQueryReturnType,
   GetBranchQuery,
   GetBranchQueryData,
-  GetDraftRevisionQuery,
-  GetHeadRevisionQuery,
   GetProjectByBranchQuery,
-  GetRevisionsByBranchIdQuery,
   GetRevisionsByBranchIdQueryData,
   GetRevisionsByBranchIdQueryReturnType,
-  GetStartRevisionQuery,
-  GetTouchedByBranchIdQuery,
   ResolveParentBranchByBranchQuery,
   ResolveParentBranchByBranchQueryData,
 } from 'src/features/branch/quieries/impl';
@@ -34,104 +21,81 @@ import {
   GetStartRevisionReturnType,
 } from 'src/features/branch/quieries/types';
 import { GetBranchByIdReturnType } from 'src/features/branch/quieries/types/get-branch-by-id.types';
-import {
-  ApiRevertChangesCommand,
-  ApiRevertChangesCommandData,
-  ApiRevertChangesCommandReturnType,
-} from 'src/features/draft/commands/impl/api-revert-changes.command';
 
 @Injectable()
 export class BranchApiService {
   constructor(
     private readonly queryBus: QueryBus,
-    private readonly commandBus: CommandBus,
+    private readonly engine: EngineApiService,
   ) {}
 
-  public getBranch(data: GetBranchQueryData) {
-    return this.queryBus.execute<GetBranchQuery, GetBranchReturnType>(
-      new GetBranchQuery(data),
-    );
+  // Core-specific: takes org/project/branch, engine needs projectId
+  public getBranch(data: GetBranchQueryData): Promise<GetBranchReturnType> {
+    return this.queryBus.execute(new GetBranchQuery(data));
   }
 
-  public getBranches(data: GetBranchesQueryData) {
-    return this.queryBus.execute<GetBranchesQuery, GetBranchesQueryReturnType>(
-      new GetBranchesQuery(data),
-    );
+  // Core-specific: takes org/project, engine needs projectId
+  public getBranches(
+    data: GetBranchesQueryData,
+  ): Promise<GetBranchesQueryReturnType> {
+    return this.queryBus.execute(new GetBranchesQuery(data));
   }
 
+  // Core-specific: not in engine
   public resolveParentBranch(data: ResolveParentBranchByBranchQueryData) {
-    return this.queryBus.execute<
-      ResolveParentBranchByBranchQuery,
-      { branch: { id: string }; revision: { id: string } } | undefined
-    >(new ResolveParentBranchByBranchQuery(data));
+    return this.queryBus.execute(new ResolveParentBranchByBranchQuery(data));
   }
 
+  // Core-specific: not in engine
   public getProjectByBranch(branchId: string) {
-    return this.queryBus.execute<GetProjectByBranchQuery, unknown>(
-      new GetProjectByBranchQuery(branchId),
-    );
+    return this.queryBus.execute(new GetProjectByBranchQuery(branchId));
   }
 
-  public getStartRevision(branchId: string) {
-    return this.queryBus.execute<
-      GetStartRevisionQuery,
-      GetStartRevisionReturnType
-    >(new GetStartRevisionQuery(branchId));
+  // Engine delegates
+  public getStartRevision(
+    branchId: string,
+  ): Promise<GetStartRevisionReturnType> {
+    return this.engine.getStartRevision(
+      branchId,
+    ) as Promise<GetStartRevisionReturnType>;
   }
 
-  public getHeadRevision(branchId: string) {
-    return this.queryBus.execute<
-      GetHeadRevisionQuery,
-      GetHeadRevisionReturnType
-    >(new GetHeadRevisionQuery(branchId));
+  public getHeadRevision(branchId: string): Promise<GetHeadRevisionReturnType> {
+    return this.engine.getHeadRevision(
+      branchId,
+    ) as Promise<GetHeadRevisionReturnType>;
   }
 
-  public getDraftRevision(branchId: string) {
-    return this.queryBus.execute<GetDraftRevisionQuery, GetDraftRevisionTypes>(
-      new GetDraftRevisionQuery(branchId),
-    );
+  public getDraftRevision(branchId: string): Promise<GetDraftRevisionTypes> {
+    return this.engine.getDraftRevision(
+      branchId,
+    ) as Promise<GetDraftRevisionTypes>;
   }
 
-  public getRevisionsByBranchId(data: GetRevisionsByBranchIdQueryData) {
-    return this.queryBus.execute<
-      GetRevisionsByBranchIdQuery,
-      GetRevisionsByBranchIdQueryReturnType
-    >(new GetRevisionsByBranchIdQuery(data));
+  public getRevisionsByBranchId(
+    data: GetRevisionsByBranchIdQueryData,
+  ): Promise<GetRevisionsByBranchIdQueryReturnType> {
+    return this.engine.getRevisionsByBranchId(data);
   }
 
-  public getTouchedByBranchId(branchId: string) {
-    return this.queryBus.execute<GetTouchedByBranchIdQuery, boolean>(
-      new GetTouchedByBranchIdQuery(branchId),
-    );
+  public getTouchedByBranchId(branchId: string): Promise<boolean> {
+    return this.engine.getTouchedByBranchId(branchId);
   }
 
-  public apiCreateBranchByRevisionId(
-    data: ApiCreateBranchByRevisionIdCommandData,
-  ) {
-    return this.commandBus.execute<
-      ApiCreateBranchByRevisionIdCommand,
-      GetBranchByIdReturnType
-    >(new ApiCreateBranchByRevisionIdCommand(data));
+  public apiCreateBranchByRevisionId(data: {
+    revisionId: string;
+    branchName: string;
+  }): Promise<GetBranchByIdReturnType> {
+    return this.engine.createBranch(data) as Promise<GetBranchByIdReturnType>;
   }
 
-  public apiRevertChanges(data: ApiRevertChangesCommandData) {
-    return this.commandBus.execute<
-      ApiRevertChangesCommand,
-      ApiRevertChangesCommandReturnType
-    >(new ApiRevertChangesCommand(data));
+  public getBranchById(
+    data: GetBranchByIdQueryData,
+  ): Promise<GetBranchByIdReturnType> {
+    return this.engine.getBranchById(data) as Promise<GetBranchByIdReturnType>;
   }
 
-  public getBranchById(data: GetBranchByIdQueryData) {
-    return this.queryBus.execute<
-      GetBranchByIdQuery,
-      GetBranchByIdQueryReturnType
-    >(new GetBranchByIdQuery(data));
-  }
-
-  public deleteBranch(data: DeleteBranchCommandData) {
-    return this.commandBus.execute<
-      DeleteBranchCommand,
-      DeleteBranchCommandReturnType
-    >(new DeleteBranchCommand(data));
+  public deleteBranch(data: { projectId: string; branchName: string }) {
+    return this.engine.deleteBranch(data);
   }
 }

@@ -2,6 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CacheModule } from '@nestjs/cache-manager';
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
+import { EngineModule } from '@revisium/engine';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { AppOptionsModule } from 'src/core/app-options.module';
 import { BillingModule } from 'src/features/billing/billing.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
@@ -127,6 +129,10 @@ export const createSubSchemaTestingModule = async () => {
       DatabaseModule,
       CqrsModule,
       CacheModule.register(),
+      {
+        ...EngineModule.forRoot({ storage: mockStorage as any }),
+        global: true,
+      },
       RevisiumCacheModule.forRootAsync(),
       AppOptionsModule.forRoot({ mode: 'monolith' }),
       BillingModule,
@@ -137,6 +143,7 @@ export const createSubSchemaTestingModule = async () => {
       DraftModule,
     ],
     providers: [
+      CoreEngineApiService,
       SubSchemaApiService,
       ...SUB_SCHEMA_QUERIES_HANDLERS,
       ...TABLE_QUERIES_HANDLERS,

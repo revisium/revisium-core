@@ -27,7 +27,8 @@ import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
+import { ProjectApiService } from 'src/features/project/project-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   CreateRevisionDto,
@@ -61,8 +62,9 @@ import {
 @ApiTags('Branch')
 export class BranchByNameController {
   constructor(
+    private readonly engine: CoreEngineApiService,
     private readonly branchApi: BranchApiService,
-    private readonly draftApi: DraftApiService,
+    private readonly projectApi: ProjectApiService,
   ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -102,7 +104,7 @@ export class BranchByNameController {
     );
 
     return {
-      touched: await this.branchApi.getTouchedByBranchId(branch.id),
+      touched: await this.engine.getTouchedByBranchId(branch.id),
     };
   }
 
@@ -152,7 +154,7 @@ export class BranchByNameController {
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.branchApi.getStartRevision(branch.id),
+      await this.engine.getStartRevision(branch.id),
     );
   }
 
@@ -178,7 +180,7 @@ export class BranchByNameController {
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.branchApi.getHeadRevision(branch.id),
+      await this.engine.getHeadRevision(branch.id),
     );
   }
 
@@ -204,7 +206,7 @@ export class BranchByNameController {
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.branchApi.getDraftRevision(branch.id),
+      await this.engine.getDraftRevision(branch.id),
     );
   }
 
@@ -231,7 +233,7 @@ export class BranchByNameController {
     );
 
     return transformFromPaginatedPrismaToRevisionModel(
-      await this.branchApi.getRevisionsByBranchId({
+      await this.engine.getRevisionsByBranchId({
         branchId: branch.id,
         ...data,
       }),
@@ -259,10 +261,10 @@ export class BranchByNameController {
     @Param('branchName') branchName: string,
     @Body() data: CreateRevisionDto,
   ): Promise<RevisionModel> {
+    const projectId = await this.resolveProjectId(organizationId, projectName);
     return transformFromPrismaToRevisionModel(
-      await this.draftApi.apiCreateRevision({
-        organizationId,
-        projectName,
+      await this.engine.createRevision({
+        projectId,
         branchName,
         ...data,
       }),
@@ -288,10 +290,10 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ): Promise<BranchModel> {
+    const projectId = await this.resolveProjectId(organizationId, projectName);
     return transformFromPrismaToBranchModel(
-      await this.branchApi.apiRevertChanges({
-        organizationId,
-        projectName,
+      await this.engine.revertChanges({
+        projectId,
         branchName,
       }),
     );
@@ -316,23 +318,34 @@ export class BranchByNameController {
     @Param('projectName') projectName: string,
     @Param('branchName') branchName: string,
   ): Promise<SuccessModelDto> {
-    await this.branchApi.deleteBranch({
-      organizationId,
-      projectName,
+    const projectId = await this.resolveProjectId(organizationId, projectName);
+    await this.engine.deleteBranch({
+      projectId,
       branchName,
     });
 
     return { success: true };
   }
 
-  private resolveBranch(
+  private async resolveProjectId(
+    organizationId: string,
+    projectName: string,
+  ): Promise<string> {
+    const project = await this.projectApi.getProject({
+      organizationId,
+      projectName,
+    });
+    return project.id;
+  }
+
+  private async resolveBranch(
     organizationId: string,
     projectName: string,
     branchName: string,
   ): Promise<BranchModel> {
-    return this.branchApi.getBranch({
-      organizationId,
-      projectName,
+    const projectId = await this.resolveProjectId(organizationId, projectName);
+    return this.engine.getBranch({
+      projectId,
       branchName,
     });
   }

@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import {
   prepareData,
@@ -21,6 +21,7 @@ describe('restapi - table-by-id', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ transform: true }));
     prismaService = app.get(PrismaService);
     await app.init();
   });
@@ -425,7 +426,7 @@ describe('restapi - table-by-id', () => {
       const result = await request(app.getHttpServer())
         .get(getForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .query({ limit: 10, offset: 0 })
+        .query({ first: 10 })
         .expect(200)
         .then((res) => res.body);
 
@@ -437,14 +438,14 @@ describe('restapi - table-by-id', () => {
       return request(app.getHttpServer())
         .get(getForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .query({ limit: 10, offset: 0 })
+        .query({ first: 10 })
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get foreign keys by without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getForeignKeysByUrl())
-        .query({ limit: 10, offset: 0 })
+        .query({ first: 10 })
         .expect(403);
     });
 
@@ -500,7 +501,7 @@ describe('restapi - table-by-id', () => {
       const result = await request(app.getHttpServer())
         .get(getForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .query({ limit: 10, offset: 0 })
+        .query({ first: 10 })
         .expect(200)
         .then((res) => res.body);
 
@@ -512,14 +513,14 @@ describe('restapi - table-by-id', () => {
       return request(app.getHttpServer())
         .get(getForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .query({ limit: 10, offset: 0 })
+        .query({ first: 10 })
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get foreign keys to without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getForeignKeysToUrl())
-        .query({ limit: 10, offset: 0 })
+        .query({ first: 10 })
         .expect(403);
     });
 

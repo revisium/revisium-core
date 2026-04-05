@@ -1,22 +1,18 @@
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
 import { ParentBranchModel } from 'src/api/graphql-api/branch/model/parent-branch.model';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { RevisionsApiService } from 'src/features/revision';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 @Resolver(() => ParentBranchModel)
 export class ParentBranchResolver {
-  constructor(
-    private readonly branchApi: BranchApiService,
-    private readonly revisionApi: RevisionsApiService,
-  ) {}
+  constructor(private readonly engine: CoreEngineApiService) {}
 
   @ResolveField()
   branch(@Parent() parent: ParentBranchModel) {
-    return this.branchApi.getBranchById(parent.branch.id);
+    return this.engine.getBranchById(parent.branch.id);
   }
 
   @ResolveField()
   revision(@Parent() parent: ParentBranchModel) {
-    return this.revisionApi.revision({ revisionId: parent.revision.id });
+    return this.engine.getRevision({ revisionId: parent.revision.id });
   }
 }

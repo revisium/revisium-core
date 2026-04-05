@@ -1,8 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { Prisma } from 'src/__generated__/client';
-import { RowApiService } from 'src/features/row/row-api.service';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { SearchRowsResponse } from 'src/features/row/queries/impl';
@@ -13,7 +11,7 @@ import {
   compactRowEdges,
   fillFormulaDefaults,
 } from './mcp-helpers';
-import { TableApiService } from 'src/features/table/table-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import {
   UriRevisionResolver,
   resolveRevisionId,
@@ -76,10 +74,8 @@ export function toCompactSearchResult(result: SearchRowsResponse) {
 
 export class RowTools implements McpToolRegistrar {
   constructor(
-    private readonly rowApi: RowApiService,
-    private readonly draftApi: DraftApiService,
     private readonly uriResolver: UriRevisionResolver,
-    private readonly tableApi: TableApiService,
+    private readonly engine: CoreEngineApiService,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -201,7 +197,7 @@ RESPONSE may include:
           auth.userId,
         );
         const prismaOrderBy = mapToPrismaOrderBy(orderBy);
-        const result = await this.rowApi.getRows({
+        const result = await this.engine.getRows({
           revisionId,
           tableId,
           first: first ?? 50,
@@ -268,7 +264,7 @@ RESPONSE may include:
           ],
           auth.userId,
         );
-        const result = await this.rowApi.searchRows({
+        const result = await this.engine.searchRows({
           revisionId,
           query,
           first: first ?? 50,
@@ -319,7 +315,7 @@ RESPONSE may include:
           ],
           auth.userId,
         );
-        const result = await this.rowApi.getRow({ revisionId, tableId, rowId });
+        const result = await this.engine.getRow({ revisionId, tableId, rowId });
         return {
           content: [
             {
@@ -368,7 +364,7 @@ FILE FIELDS:
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const schema = await this.tableApi.resolveTableSchema({
+        const schema = await this.engine.resolveTableSchema({
           revisionId,
           tableId,
         });
@@ -376,7 +372,7 @@ FILE FIELDS:
           schema as Record<string, unknown>,
           data,
         );
-        const result = await this.draftApi.apiCreateRow({
+        const result = await this.engine.createRow({
           revisionId,
           tableId,
           rowId,
@@ -417,7 +413,7 @@ FILE FIELDS:
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiUpdateRow({
+        const result = await this.engine.updateRow({
           revisionId,
           tableId,
           rowId,
@@ -462,7 +458,7 @@ FILE FIELDS:
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiPatchRow({
+        const result = await this.engine.patchRow({
           revisionId,
           tableId,
           rowId,
@@ -517,11 +513,11 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const schema = await this.tableApi.resolveTableSchema({
+        const schema = await this.engine.resolveTableSchema({
           revisionId,
           tableId,
         });
-        const result = await this.draftApi.apiCreateRows({
+        const result = await this.engine.createRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
@@ -576,7 +572,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiUpdateRows({
+        const result = await this.engine.updateRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
@@ -628,7 +624,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiPatchRows({
+        const result = await this.engine.patchRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
@@ -672,7 +668,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        await this.draftApi.apiRemoveRows({
+        await this.engine.removeRows({
           revisionId,
           tableId,
           rowIds,
@@ -731,7 +727,7 @@ COMPUTED FIELDS (x-formula):
           ],
           auth.userId,
         );
-        const result = await this.rowApi.resolveRowForeignKeysBy({
+        const result = await this.engine.resolveRowForeignKeysBy({
           revisionId,
           tableId,
           rowId,
@@ -773,7 +769,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.draftApi.apiRenameRow({
+        const result = await this.engine.renameRow({
           revisionId,
           tableId,
           rowId,
@@ -812,7 +808,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        await this.draftApi.apiRemoveRow({
+        await this.engine.removeRow({
           revisionId,
           tableId,
           rowId,

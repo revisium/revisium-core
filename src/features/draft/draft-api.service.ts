@@ -1,75 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
-import {
-  ApiCreateRevisionCommand,
-  ApiCreateRevisionCommandData,
-  ApiCreateRevisionCommandReturnType,
-} from 'src/features/draft/commands/impl/api-create-revision.command';
-import {
-  ApiCreateRowCommand,
-  ApiCreateRowCommandData,
-} from 'src/features/draft/commands/impl/api-create-row.command';
-import {
-  ApiCreateRowsCommand,
-  ApiCreateRowsCommandData,
-} from 'src/features/draft/commands/impl/api-create-rows.command';
-import {
-  ApiCreateTableCommand,
-  ApiCreateTableCommandData,
-} from 'src/features/draft/commands/impl/api-create-table.command';
-import {
-  ApiPatchRowCommand,
-  ApiPatchRowCommandData,
-  ApiPatchRowCommandReturnType,
-} from 'src/features/draft/commands/impl/api-patch-row.command';
-import {
-  ApiPatchRowsCommand,
-  ApiPatchRowsCommandData,
-} from 'src/features/draft/commands/impl/api-patch-rows.command';
-import {
-  ApiRemoveRowCommand,
-  ApiRemoveRowCommandData,
-} from 'src/features/draft/commands/impl/api-remove-row.command';
-import {
-  ApiRemoveRowsCommand,
-  ApiRemoveRowsCommandData,
-} from 'src/features/draft/commands/impl/api-remove-rows.command';
-import {
-  ApiRemoveTableCommand,
-  ApiRemoveTableCommandData,
-} from 'src/features/draft/commands/impl/api-remove-table.command';
-import {
-  ApiRenameRowCommand,
-  ApiRenameRowCommandData,
-  ApiRenameRowCommandReturnType,
-} from 'src/features/draft/commands/impl/api-rename-row.command';
-import {
-  ApiRenameTableCommand,
-  ApiRenameTableCommandData,
-  ApiRenameTableCommandReturnType,
-} from 'src/features/draft/commands/impl/api-rename-table.command';
-import {
-  ApiUpdateRowCommand,
-  ApiUpdateRowCommandData,
-} from 'src/features/draft/commands/impl/api-update-row.command';
-import {
-  ApiUpdateRowsCommand,
-  ApiUpdateRowsCommandData,
-} from 'src/features/draft/commands/impl/api-update-rows.command';
-import {
-  ApiUpdateTableCommand,
-  ApiUpdateTableCommandData,
-} from 'src/features/draft/commands/impl/api-update-table.command';
-import {
-  ApiUploadFileCommand,
-  ApiUploadFileCommandData,
-  ApiUploadFileCommandReturnType,
-} from 'src/features/draft/commands/impl/api-upload-file.command';
-import {
-  ApplyMigrationCommandData,
-  ApplyMigrationCommandReturnType,
-  ApplyMigrationsCommand,
-} from 'src/features/draft/commands/impl/migration';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { ApiCreateRevisionCommandReturnType } from 'src/features/draft/commands/impl/api-create-revision.command';
+import { ApiPatchRowCommandReturnType } from 'src/features/draft/commands/impl/api-patch-row.command';
+import { ApiRenameRowCommandReturnType } from 'src/features/draft/commands/impl/api-rename-row.command';
+import { ApiRenameTableCommandReturnType } from 'src/features/draft/commands/impl/api-rename-table.command';
+import { ApiUploadFileCommandReturnType } from 'src/features/draft/commands/impl/api-upload-file.command';
+import { ApplyMigrationCommandReturnType } from 'src/features/draft/commands/impl/migration';
 import { ApiCreateRowHandlerReturnType } from 'src/features/draft/commands/types/api-create-row.handler.types';
 import { ApiCreateRowsHandlerReturnType } from 'src/features/draft/commands/types/api-create-rows.handler.types';
 import { ApiPatchRowsHandlerReturnType } from 'src/features/draft/commands/types/api-patch-rows.handler.types';
@@ -83,117 +19,135 @@ import { ApiUpdateTableHandlerReturnType } from 'src/features/draft/commands/typ
 
 @Injectable()
 export class DraftApiService {
-  constructor(private readonly commandBus: CommandBus) {}
+  constructor(private readonly coreEngine: CoreEngineApiService) {}
 
-  public apiCreateTable(data: ApiCreateTableCommandData) {
-    return this.commandBus.execute<
-      ApiCreateTableCommand,
-      ApiCreateTableHandlerReturnType
-    >(new ApiCreateTableCommand(data));
+  public apiCreateTable(data: {
+    revisionId: string;
+    tableId: string;
+    schema: any;
+  }): Promise<ApiCreateTableHandlerReturnType> {
+    return this.coreEngine.createTable(data) as any;
   }
 
-  public apiUpdateTable(data: ApiUpdateTableCommandData) {
-    return this.commandBus.execute<
-      ApiUpdateTableCommand,
-      ApiUpdateTableHandlerReturnType
-    >(new ApiUpdateTableCommand(data));
+  public apiUpdateTable(data: {
+    revisionId: string;
+    tableId: string;
+    patches: any;
+  }): Promise<ApiUpdateTableHandlerReturnType> {
+    return this.coreEngine.updateTable(data) as any;
   }
 
-  public apiRenameTable(data: ApiRenameTableCommandData) {
-    return this.commandBus.execute<
-      ApiRenameTableCommand,
-      ApiRenameTableCommandReturnType
-    >(new ApiRenameTableCommand(data));
+  public apiRenameTable(data: {
+    revisionId: string;
+    tableId: string;
+    nextTableId: string;
+  }): Promise<ApiRenameTableCommandReturnType> {
+    return this.coreEngine.renameTable(data) as any;
   }
 
-  public apiRemoveTable(data: ApiRemoveTableCommandData) {
-    return this.commandBus.execute<
-      ApiRemoveTableCommand,
-      ApiRemoveTableHandlerReturnType
-    >(new ApiRemoveTableCommand(data));
+  public apiRemoveTable(data: {
+    revisionId: string;
+    tableId: string;
+  }): Promise<ApiRemoveTableHandlerReturnType> {
+    return this.coreEngine.removeTable(data) as any;
   }
 
-  public applyMigrations(data: ApplyMigrationCommandData) {
-    return this.commandBus.execute<
-      ApplyMigrationsCommand,
-      ApplyMigrationCommandReturnType
-    >(new ApplyMigrationsCommand(data));
+  public applyMigrations(data: {
+    revisionId: string;
+    migrations: any[];
+  }): Promise<ApplyMigrationCommandReturnType> {
+    return this.coreEngine.applyMigrations(data) as any;
   }
 
-  public apiCreateRow(data: ApiCreateRowCommandData) {
-    return this.commandBus.execute<
-      ApiCreateRowCommand,
-      ApiCreateRowHandlerReturnType
-    >(new ApiCreateRowCommand(data));
+  public apiCreateRow(data: {
+    revisionId: string;
+    tableId: string;
+    rowId: string;
+    data: any;
+  }): Promise<ApiCreateRowHandlerReturnType> {
+    return this.coreEngine.createRow(data) as any;
   }
 
-  public apiCreateRows(data: ApiCreateRowsCommandData) {
-    return this.commandBus.execute<
-      ApiCreateRowsCommand,
-      ApiCreateRowsHandlerReturnType
-    >(new ApiCreateRowsCommand(data));
+  public apiCreateRows(data: {
+    revisionId: string;
+    tableId: string;
+    rows: any[];
+    isRestore?: boolean;
+  }): Promise<ApiCreateRowsHandlerReturnType> {
+    return this.coreEngine.createRows(data) as any;
   }
 
-  public apiUpdateRow(data: ApiUpdateRowCommandData) {
-    return this.commandBus.execute<
-      ApiUpdateRowCommand,
-      ApiUpdateRowHandlerReturnType
-    >(new ApiUpdateRowCommand(data));
+  public apiUpdateRow(data: {
+    revisionId: string;
+    tableId: string;
+    rowId: string;
+    data: any;
+  }): Promise<ApiUpdateRowHandlerReturnType> {
+    return this.coreEngine.updateRow(data) as any;
   }
 
-  public apiUpdateRows(data: ApiUpdateRowsCommandData) {
-    return this.commandBus.execute<
-      ApiUpdateRowsCommand,
-      ApiUpdateRowsHandlerReturnType
-    >(new ApiUpdateRowsCommand(data));
+  public apiUpdateRows(data: {
+    revisionId: string;
+    tableId: string;
+    rows: any[];
+    isRestore?: boolean;
+  }): Promise<ApiUpdateRowsHandlerReturnType> {
+    return this.coreEngine.updateRows(data) as any;
   }
 
-  public apiPatchRow(data: ApiPatchRowCommandData) {
-    return this.commandBus.execute<
-      ApiPatchRowCommand,
-      ApiPatchRowCommandReturnType
-    >(new ApiPatchRowCommand(data));
+  public apiPatchRow(data: {
+    revisionId: string;
+    tableId: string;
+    rowId: string;
+    patches: any[];
+  }): Promise<ApiPatchRowCommandReturnType> {
+    return this.coreEngine.patchRow(data) as any;
   }
 
-  public apiPatchRows(data: ApiPatchRowsCommandData) {
-    return this.commandBus.execute<
-      ApiPatchRowsCommand,
-      ApiPatchRowsHandlerReturnType
-    >(new ApiPatchRowsCommand(data));
+  public apiPatchRows(data: {
+    revisionId: string;
+    tableId: string;
+    rows: any[];
+  }): Promise<ApiPatchRowsHandlerReturnType> {
+    return this.coreEngine.patchRows(data) as any;
   }
 
-  public apiRenameRow(data: ApiRenameRowCommandData) {
-    return this.commandBus.execute<
-      ApiRenameRowCommand,
-      ApiRenameRowCommandReturnType
-    >(new ApiRenameRowCommand(data));
+  public apiRenameRow(data: {
+    revisionId: string;
+    tableId: string;
+    rowId: string;
+    nextRowId: string;
+  }): Promise<ApiRenameRowCommandReturnType> {
+    return this.coreEngine.renameRow(data) as any;
   }
 
-  public apiRemoveRow(data: ApiRemoveRowCommandData) {
-    return this.commandBus.execute<
-      ApiRemoveRowCommand,
-      ApiRemoveRowHandlerReturnType
-    >(new ApiRemoveRowCommand(data));
+  public apiRemoveRow(data: {
+    revisionId: string;
+    tableId: string;
+    rowId: string;
+  }): Promise<ApiRemoveRowHandlerReturnType> {
+    return this.coreEngine.removeRow(data) as any;
   }
 
-  public apiRemoveRows(data: ApiRemoveRowsCommandData) {
-    return this.commandBus.execute<
-      ApiRemoveRowsCommand,
-      ApiRemoveRowsHandlerReturnType
-    >(new ApiRemoveRowsCommand(data));
+  public apiRemoveRows(data: {
+    revisionId: string;
+    tableId: string;
+    rowIds: string[];
+  }): Promise<ApiRemoveRowsHandlerReturnType> {
+    return this.coreEngine.removeRows(data) as any;
   }
 
-  public apiCreateRevision(data: ApiCreateRevisionCommandData) {
-    return this.commandBus.execute<
-      ApiCreateRevisionCommand,
-      ApiCreateRevisionCommandReturnType
-    >(new ApiCreateRevisionCommand(data));
+  public apiCreateRevision(data: {
+    projectId: string;
+    branchName: string;
+    comment?: string;
+  }): Promise<ApiCreateRevisionCommandReturnType> {
+    return this.coreEngine.createRevision(data) as any;
   }
 
-  public apiUploadFile(data: ApiUploadFileCommandData) {
-    return this.commandBus.execute<
-      ApiUploadFileCommand,
-      ApiUploadFileCommandReturnType
-    >(new ApiUploadFileCommand(data));
+  public apiUploadFile(
+    data: Parameters<CoreEngineApiService['uploadFile']>[0],
+  ): Promise<ApiUploadFileCommandReturnType> {
+    return this.coreEngine.uploadFile(data) as any;
   }
 }

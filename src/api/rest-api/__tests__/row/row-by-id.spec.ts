@@ -1,4 +1,4 @@
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createExpressImageFile } from 'src/__tests__/utils/file';
 import {
@@ -22,6 +22,7 @@ describe('restapi - row-by-id', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalPipes(new ValidationPipe({ transform: true }));
     prismaService = app.get(PrismaService);
     await app.init();
   });
@@ -129,7 +130,10 @@ describe('restapi - row-by-id', () => {
       const result = await request(app.getHttpServer())
         .get(getForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyByTableId: preparedData.project.tableId,
+        })
         .expect(200)
         .then((res) => res.body);
 
@@ -140,14 +144,20 @@ describe('restapi - row-by-id', () => {
       return request(app.getHttpServer())
         .get(getForeignKeysByUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyByTableId: preparedData.project.tableId,
+        })
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get foreign keys by without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getForeignKeysByUrl())
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyByTableId: preparedData.project.tableId,
+        })
         .expect(403);
     });
 
@@ -202,7 +212,10 @@ describe('restapi - row-by-id', () => {
       const result = await request(app.getHttpServer())
         .get(getForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.owner.token}`)
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyToTableId: preparedData.project.tableId,
+        })
         .expect(200)
         .then((res) => res.body);
 
@@ -213,14 +226,20 @@ describe('restapi - row-by-id', () => {
       return request(app.getHttpServer())
         .get(getForeignKeysToUrl())
         .set('Authorization', `Bearer ${preparedData.anotherOwner.token}`)
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyToTableId: preparedData.project.tableId,
+        })
         .expect(/You are not allowed to read on Project/);
     });
 
     it('cannot get foreign keys to without authentication (private project)', async () => {
       return request(app.getHttpServer())
         .get(getForeignKeysToUrl())
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyToTableId: preparedData.project.tableId,
+        })
         .expect(403);
     });
 
@@ -509,7 +528,10 @@ describe('restapi - row-by-id', () => {
         .get(
           `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows/${preparedData.project.rowId}/foreign-keys-by`,
         )
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyByTableId: preparedData.project.tableId,
+        })
         .expect(200)
         .then((res) => res.body);
 
@@ -522,7 +544,10 @@ describe('restapi - row-by-id', () => {
         .get(
           `/api/revision/${preparedData.project.draftRevisionId}/tables/${preparedData.project.tableId}/rows/${preparedData.project.rowId}/foreign-keys-to`,
         )
-        .query({ first: 10 })
+        .query({
+          first: 10,
+          foreignKeyToTableId: preparedData.project.tableId,
+        })
         .expect(200)
         .then((res) => res.body);
 

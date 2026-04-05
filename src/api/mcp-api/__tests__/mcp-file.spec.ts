@@ -67,7 +67,12 @@ describe('MCP API - File Tools', () => {
     };
 
     const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
+      imports: [
+        CoreModule.forRoot({
+          mode: 'monolith',
+          storage: mockStorage as any,
+        }),
+      ],
     })
       .overrideProvider(STORAGE_SERVICE)
       .useValue(mockStorage)

@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+import { ProjectApiService } from 'src/features/project/project-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
   UriRevisionResolver,
@@ -14,10 +14,21 @@ import {
 
 export class RevisionTools implements McpToolRegistrar {
   constructor(
-    private readonly revisionsApi: RevisionsApiService,
-    private readonly draftApi: DraftApiService,
+    private readonly projectApi: ProjectApiService,
+    private readonly engine: CoreEngineApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
+
+  private async resolveProjectId(
+    organizationId: string,
+    projectName: string,
+  ): Promise<string> {
+    const project = await this.projectApi.getProject({
+      organizationId,
+      projectName,
+    });
+    return project.id;
+  }
 
   register(server: McpServer, auth: McpAuthHelpers): void {
     server.registerTool(
@@ -44,7 +55,7 @@ export class RevisionTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.revisionsApi.revision({ revisionId });
+        const result = await this.engine.getRevision({ revisionId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -78,8 +89,7 @@ export class RevisionTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result =
-          await this.revisionsApi.resolveParentByRevision(revisionId);
+        const result = await this.engine.getRevisionParent(revisionId);
         return {
           content: [
             {
@@ -128,9 +138,12 @@ export class RevisionTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.draftApi.apiCreateRevision({
+        const projectId = await this.resolveProjectId(
           organizationId,
           projectName,
+        );
+        const result = await this.engine.createRevision({
+          projectId,
           branchName,
           comment,
         });

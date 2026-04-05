@@ -4,8 +4,10 @@ import { RouterModule } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { EeBillingModule } from 'ee/billing/ee-billing.module';
 import { EeLicensingModule } from 'ee/licensing/licensing.module';
+import { IStorageService } from '@revisium/engine';
 import { AppOptions } from 'src/app-mode';
 import { AppOptionsModule } from 'src/core/app-options.module';
+import { CoreEngineModule } from 'src/core/core-engine.module';
 
 import { ApiKeyModule } from 'src/features/api-key/api-key.module';
 import { AuthModule } from 'src/features/auth/auth.module';
@@ -35,11 +37,14 @@ import { UserModule } from 'src/features/user/user.module';
 
 @Module({})
 export class CoreModule {
-  static forRoot(options: AppOptions): DynamicModule {
+  static forRoot(
+    options: AppOptions & { storage?: IStorageService },
+  ): DynamicModule {
     return {
       module: CoreModule,
       imports: [
         AppOptionsModule.forRoot(options),
+        CoreEngineModule.forRoot({ storage: options.storage }),
         ApiKeyModule,
         AuthModule,
         BillingModule,

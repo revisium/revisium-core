@@ -13,7 +13,6 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { DraftApiService } from 'src/features/draft/draft-api.service';
 import { ApplyMigrationsInput } from 'src/api/graphql-api/revision/inputs/apply-migrations.input';
 import { CreateRevisionInput } from 'src/api/graphql-api/revision/inputs/create-revision.input';
 import { GetRevisionTablesInput } from 'src/api/graphql-api/revision/inputs/get-revision-tables.input';
@@ -21,7 +20,8 @@ import { GetRevisionInput } from 'src/api/graphql-api/revision/inputs/get-revisi
 import { ApplyMigrationResultModel } from 'src/api/graphql-api/revision/model/apply-migration-result.model';
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
 import { RevisionsApiService } from 'src/features/revision';
-import { RevisionChangesApiService } from 'src/features/revision-changes/revision-changes-api.service';
+import { ProjectApiService } from 'src/features/project/project-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -31,29 +31,29 @@ import { RevisionChangesApiService } from 'src/features/revision-changes/revisio
 export class RevisionResolver {
   constructor(
     private readonly revisionApi: RevisionsApiService,
-    private readonly revisionChangesApi: RevisionChangesApiService,
-    private readonly draftApi: DraftApiService,
+    private readonly projectApi: ProjectApiService,
+    private readonly engine: CoreEngineApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RevisionModel)
   revision(@Args('data') data: GetRevisionInput) {
-    return this.revisionApi.revision(data);
+    return this.engine.getRevision(data);
   }
 
   @ResolveField()
   async children(@Parent() revision: RevisionModel) {
-    return this.revisionApi.getChildrenByRevision(revision.id);
+    return this.engine.getRevisionChildren(revision.id);
   }
 
   @ResolveField()
   async parent(@Parent() revision: RevisionModel) {
-    return this.revisionApi.resolveParentByRevision(revision.id);
+    return this.engine.getRevisionParent(revision.id);
   }
 
   @ResolveField()
   async child(@Parent() revision: RevisionModel) {
-    return this.revisionApi.resolveChildByRevision(revision.id);
+    return this.engine.getRevisionChild(revision.id);
   }
 
   @ResolveField()
@@ -66,7 +66,7 @@ export class RevisionResolver {
     @Parent() revision: RevisionModel,
     @Args('data') data: GetRevisionTablesInput,
   ) {
-    return this.revisionApi.getTablesByRevisionId({
+    return this.engine.getTablesByRevisionId({
       ...data,
       revisionId: revision.id,
     });
@@ -84,12 +84,12 @@ export class RevisionResolver {
 
   @ResolveField()
   async migrations(@Parent() revision: RevisionModel) {
-    return this.revisionApi.migrations({ revisionId: revision.id });
+    return this.engine.getMigrations({ revisionId: revision.id });
   }
 
   @ResolveField()
   async changes(@Parent() revision: RevisionModel) {
-    return this.revisionChangesApi.revisionChanges({
+    return this.engine.revisionChanges({
       revisionId: revision.id,
     });
   }
@@ -101,7 +101,15 @@ export class RevisionResolver {
   })
   @Mutation(() => RevisionModel)
   async createRevision(@Args('data') data: CreateRevisionInput) {
-    return this.draftApi.apiCreateRevision(data);
+    const project = await this.projectApi.getProject({
+      organizationId: data.organizationId,
+      projectName: data.projectName,
+    });
+    return this.engine.createRevision({
+      projectId: project.id,
+      branchName: data.branchName,
+      comment: data.comment,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -111,7 +119,7 @@ export class RevisionResolver {
   })
   @Mutation(() => [ApplyMigrationResultModel])
   async applyMigrations(@Args('data') data: ApplyMigrationsInput) {
-    return this.draftApi.applyMigrations({
+    return this.engine.applyMigrations({
       revisionId: data.revisionId,
       migrations: data.migrations as Migration[],
     });

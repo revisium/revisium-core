@@ -13,6 +13,8 @@ import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-g
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { ProjectApiService } from 'src/features/project/project-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import {
   CreateBranchInput,
   DeleteBranchInput,
@@ -32,18 +34,34 @@ import {
 })
 @Resolver(() => BranchModel)
 export class BranchResolver {
-  constructor(private readonly branchApiService: BranchApiService) {}
+  constructor(
+    private readonly branchApiService: BranchApiService,
+    private readonly projectApi: ProjectApiService,
+    private readonly engine: CoreEngineApiService,
+  ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => BranchModel)
-  branch(@Args('data') data: GetBranchInput) {
-    return this.branchApiService.getBranch(data);
+  async branch(@Args('data') data: GetBranchInput) {
+    const projectId = await this.resolveProjectId(
+      data.organizationId,
+      data.projectName,
+    );
+    return this.engine.getBranch({ projectId, branchName: data.branchName });
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => BranchesConnection)
-  branches(@Args('data') data: GetBranchesInput) {
-    return this.branchApiService.getBranches(data);
+  async branches(@Args('data') data: GetBranchesInput) {
+    const projectId = await this.resolveProjectId(
+      data.organizationId,
+      data.projectName,
+    );
+    return this.engine.getBranches({
+      projectId,
+      first: data.first,
+      after: data.after,
+    });
   }
 
   @ResolveField()
@@ -58,17 +76,17 @@ export class BranchResolver {
 
   @ResolveField()
   start(@Parent() branch: BranchModel) {
-    return this.branchApiService.getStartRevision(branch.id);
+    return this.engine.getStartRevision(branch.id);
   }
 
   @ResolveField()
   head(@Parent() branch: BranchModel) {
-    return this.branchApiService.getHeadRevision(branch.id);
+    return this.engine.getHeadRevision(branch.id);
   }
 
   @ResolveField()
   draft(@Parent() branch: BranchModel) {
-    return this.branchApiService.getDraftRevision(branch.id);
+    return this.engine.getDraftRevision(branch.id);
   }
 
   @ResolveField()
@@ -76,7 +94,7 @@ export class BranchResolver {
     @Parent() branch: BranchModel,
     @Args('data') data: GetBranchRevisionsInput,
   ) {
-    return this.branchApiService.getRevisionsByBranchId({
+    return this.engine.getRevisionsByBranchId({
       ...data,
       branchId: branch.id,
     });
@@ -84,7 +102,7 @@ export class BranchResolver {
 
   @ResolveField()
   touched(@Parent() branch: BranchModel) {
-    return this.branchApiService.getTouchedByBranchId(branch.id);
+    return this.engine.getTouchedByBranchId(branch.id);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -94,7 +112,7 @@ export class BranchResolver {
   })
   @Mutation(() => BranchModel)
   async createBranch(@Args('data') data: CreateBranchInput) {
-    return this.branchApiService.apiCreateBranchByRevisionId(data);
+    return this.engine.createBranch(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -103,8 +121,15 @@ export class BranchResolver {
     subject: PermissionSubject.Revision,
   })
   @Mutation(() => BranchModel)
-  revertChanges(@Args('data') data: RevertChangesInput) {
-    return this.branchApiService.apiRevertChanges(data);
+  async revertChanges(@Args('data') data: RevertChangesInput) {
+    const projectId = await this.resolveProjectId(
+      data.organizationId,
+      data.projectName,
+    );
+    return this.engine.revertChanges({
+      projectId,
+      branchName: data.branchName,
+    });
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -113,7 +138,25 @@ export class BranchResolver {
     subject: PermissionSubject.Branch,
   })
   @Mutation(() => Boolean)
-  deleteBranch(@Args('data') data: DeleteBranchInput) {
-    return this.branchApiService.deleteBranch(data);
+  async deleteBranch(@Args('data') data: DeleteBranchInput) {
+    const projectId = await this.resolveProjectId(
+      data.organizationId,
+      data.projectName,
+    );
+    return this.engine.deleteBranch({
+      projectId,
+      branchName: data.branchName,
+    });
+  }
+
+  private async resolveProjectId(
+    organizationId: string,
+    projectName: string,
+  ): Promise<string> {
+    const project = await this.projectApi.getProject({
+      organizationId,
+      projectName,
+    });
+    return project.id;
   }
 }

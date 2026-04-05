@@ -9,7 +9,7 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { ViewsApiService } from 'src/features/views/views-api.service';
+import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 import { TableViewsData } from 'src/features/views/types';
 
 @UseFilters(GraphQLValidationExceptionFilter)
@@ -19,12 +19,12 @@ import { TableViewsData } from 'src/features/views/types';
 })
 @Resolver()
 export class ViewsResolver {
-  constructor(private readonly viewsApiService: ViewsApiService) {}
+  constructor(private readonly engine: CoreEngineApiService) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TableViewsDataModel)
   tableViews(@Args('data') data: GetTableViewsInput) {
-    return this.viewsApiService.getTableViews(data);
+    return this.engine.getTableViews(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -34,13 +34,13 @@ export class ViewsResolver {
   })
   @Mutation(() => TableViewsDataModel)
   async updateTableViews(@Args('data') data: UpdateTableViewsInput) {
-    await this.viewsApiService.updateTableViews({
+    await this.engine.updateTableViews({
       revisionId: data.revisionId,
       tableId: data.tableId,
       viewsData: data.viewsData as unknown as TableViewsData,
     });
 
-    return this.viewsApiService.getTableViews({
+    return this.engine.getTableViews({
       revisionId: data.revisionId,
       tableId: data.tableId,
     });
