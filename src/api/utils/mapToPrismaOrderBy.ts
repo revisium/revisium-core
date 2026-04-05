@@ -1,4 +1,4 @@
-import { GetRowsQueryData } from 'src/features/row/queries/impl';
+import { GetRowsQueryData } from '@revisium/engine';
 
 interface OrderBy {
   field: 'createdAt' | 'updatedAt' | 'publishedAt' | 'id' | 'data';
