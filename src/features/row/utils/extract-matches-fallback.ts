@@ -1,5 +1,5 @@
 import { Prisma } from 'src/__generated__/client';
-import { SearchMatch } from 'src/features/row/queries/impl';
+import { SearchMatch } from '@revisium/engine';
 
 interface MatchWithRelevance {
   match: SearchMatch;

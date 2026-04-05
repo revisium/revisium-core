@@ -92,6 +92,65 @@ describe('graphql - branch mutations', () => {
     });
   });
 
+  describe('deleteBranch', () => {
+    let fixture: PrepareDataReturnType;
+
+    beforeEach(async () => {
+      fixture = await prepareData(app);
+    });
+
+    const getDeleteMutation = (
+      organizationId: string,
+      projectName: string,
+      branchName: string,
+    ) => ({
+      query: gql`
+        mutation deleteBranch($data: DeleteBranchInput!) {
+          deleteBranch(data: $data)
+        }
+      `,
+      variables: {
+        data: { organizationId, projectName, branchName },
+      },
+    });
+
+    it('owner can delete non-root branch', async () => {
+      // First create a branch to delete
+      const newBranchName = 'branch-to-delete';
+      await gqlQuery({
+        app,
+        token: fixture.owner.token,
+        ...{
+          query: gql`
+            mutation createBranch($data: CreateBranchInput!) {
+              createBranch(data: $data) {
+                id
+              }
+            }
+          `,
+          variables: {
+            data: {
+              revisionId: fixture.project.headRevisionId,
+              branchName: newBranchName,
+            },
+          },
+        },
+      });
+
+      const result = await gqlQuery({
+        app,
+        token: fixture.owner.token,
+        ...getDeleteMutation(
+          fixture.project.organizationId,
+          fixture.project.projectName,
+          newBranchName,
+        ),
+      });
+
+      expect(result.deleteBranch).toBe(true);
+    });
+  });
+
   describe('revertChanges', () => {
     let fixture: PrepareDataReturnType;
 

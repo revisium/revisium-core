@@ -1,18 +1,19 @@
 import { Injectable } from '@nestjs/common';
+import { QueryBus } from '@nestjs/cqrs';
 import {
   EngineApiService,
   GetChildrenByRevisionQueryData,
   GetMigrationsQueryData,
   GetRevisionQueryData,
   GetTablesByRevisionIdQueryData,
+  ResolveBranchByRevisionQueryData,
+  ResolveChildBranchesByRevisionQueryData,
   ResolveChildByRevisionQueryData,
   ResolveParentByRevisionQueryData,
 } from '@revisium/engine';
-import { InternalRevisionsApiService } from 'src/features/revision/internal-revisions-api.service';
 import {
+  GetEndpointsByRevisionIdQuery,
   GetEndpointsByRevisionIdQueryData,
-  ResolveBranchByRevisionQueryData,
-  ResolveChildBranchesByRevisionQueryData,
 } from 'src/features/revision/queries/impl';
 import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
 
@@ -20,7 +21,7 @@ import { RevisionCacheService } from 'src/infrastructure/cache/services/revision
 export class RevisionsApiService {
   constructor(
     private readonly engine: EngineApiService,
-    private readonly api: InternalRevisionsApiService,
+    private readonly queryBus: QueryBus,
     private readonly cache: RevisionCacheService,
   ) {}
 
@@ -40,28 +41,26 @@ export class RevisionsApiService {
     return this.engine.getRevisionChild(data);
   }
 
-  // Core-specific: not in engine
   public resolveChildBranchesByRevision(
     data: ResolveChildBranchesByRevisionQueryData,
   ) {
-    return this.api.resolveChildBranchesByRevision(data);
+    return this.engine.resolveChildBranchesByRevision(data);
   }
 
   public getTablesByRevisionId(data: GetTablesByRevisionIdQueryData) {
     return this.engine.getTablesByRevisionId(data);
   }
 
-  // Core-specific: not in engine
+  // Core-specific: endpoints not in engine
   public getEndpointsByRevisionId(data: GetEndpointsByRevisionIdQueryData) {
-    return this.api.getEndpointsByRevisionId(data);
+    return this.queryBus.execute(new GetEndpointsByRevisionIdQuery(data));
   }
 
   public getChildrenByRevision(data: GetChildrenByRevisionQueryData) {
     return this.engine.getRevisionChildren(data);
   }
 
-  // Core-specific: not in engine
   public resolveBranchByRevision(data: ResolveBranchByRevisionQueryData) {
-    return this.api.resolveBranchByRevision(data);
+    return this.engine.resolveBranchByRevision(data);
   }
 }
