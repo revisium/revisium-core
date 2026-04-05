@@ -253,6 +253,13 @@ export class CoreEngineApiService {
     data: Parameters<EngineApiService['createTable']>[0],
   ) {
     const result = await this.engine.createTable(data);
+    await this.eventBus.publishAll([
+      new RowCreatedEvent(
+        data.revisionId,
+        'revisium_schema_table',
+        data.tableId,
+      ),
+    ]);
     await this.notifyEndpoints(data.revisionId);
     return result;
   }

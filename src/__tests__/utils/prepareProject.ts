@@ -15,7 +15,7 @@ import {
 import {
   getTestLinkedSchema,
   testSchema,
-} from 'src/features/draft/commands/handlers/__tests__/utils';
+} from 'src/__tests__/utils/test-schemas';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
