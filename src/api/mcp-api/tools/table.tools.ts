@@ -314,7 +314,7 @@ All types support: title (display name), description (tooltip/help text), deprec
   - contentMediaType: "text/plain", "text/markdown", "text/html", "application/json", "application/yaml"
   Example: { "type": "string", "default": "", "contentMediaType": "text/markdown" }
   Example: { "type": "string", "default": "", "format": "date-time" }
-  Example: { "type": "string", "default": "", "pattern": "^[A-Z]{2}-\\\\d+$" }
+  Example: { "type": "string", "default": "", "pattern": "^[A-Z]{2}-[0-9]+$" }
 
 - number: type, default (required, 0), readOnly, x-formula
 
@@ -436,7 +436,7 @@ All types support: title (display name), description (tooltip/help text), deprec
   - contentMediaType: "text/plain", "text/markdown", "text/html", "application/json", "application/yaml"
   Example: { "type": "string", "default": "", "contentMediaType": "text/markdown" }
   Example: { "type": "string", "default": "", "format": "date-time" }
-  Example: { "type": "string", "default": "", "pattern": "^[A-Z]{2}-\\\\d+$" }
+  Example: { "type": "string", "default": "", "pattern": "^[A-Z]{2}-[0-9]+$" }
 
 - number: type, default (required, 0), readOnly, x-formula
 
