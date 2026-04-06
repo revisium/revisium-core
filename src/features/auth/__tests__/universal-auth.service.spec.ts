@@ -74,20 +74,49 @@ describe('UniversalAuthService', () => {
     );
   });
 
-  describe('isNoAuthEnabled', () => {
-    it('should return false when NoAuth is disabled', () => {
-      expect(service.isNoAuthEnabled).toBe(false);
-    });
-
-    it('should return true when NoAuth is enabled', () => {
+  describe('authenticateRequest', () => {
+    it('should return authenticated and set admin user when NoAuth enabled', async () => {
       (noAuth as any).enabled = true;
-      expect(service.isNoAuthEnabled).toBe(true);
-    });
-  });
+      const request = { headers: {}, query: {}, ip: '127.0.0.1' } as any;
 
-  describe('adminUser', () => {
-    it('should return the NoAuthService admin user', () => {
-      expect(service.adminUser).toEqual({ userId: 'admin', email: '' });
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('authenticated');
+      expect(request.user).toEqual({ userId: 'admin', email: '' });
+    });
+
+    it('should return authenticated when API key found', async () => {
+      apiKeyService.findByHash.mockResolvedValue(createMockApiKey());
+      const request = {
+        headers: { 'x-api-key': 'rev_1234567890123456789012' },
+        query: {},
+        ip: '127.0.0.1',
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('authenticated');
+      expect(request.user).toMatchObject({ authMethod: 'personal_key' });
+    });
+
+    it('should return jwt when bearer token is not rev_', async () => {
+      const request = {
+        headers: { authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9' },
+        query: {},
+        ip: '127.0.0.1',
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('jwt');
+    });
+
+    it('should return anonymous when no credentials', async () => {
+      const request = { headers: {}, query: {}, ip: '127.0.0.1' } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('anonymous');
     });
   });
 

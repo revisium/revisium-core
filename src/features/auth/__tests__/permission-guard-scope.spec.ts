@@ -1,6 +1,7 @@
 import {
   ExecutionContext,
   ForbiddenException,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
@@ -360,7 +361,9 @@ describe('BasePermissionGuard error handling', () => {
       getHandler: () => ({}),
     } as unknown as ExecutionContext;
 
-    await expect(g.canActivate(ctx)).rejects.toThrow();
+    await expect(g.canActivate(ctx)).rejects.toThrow(
+      InternalServerErrorException,
+    );
   });
 
   it('should merge class and method permission params', async () => {

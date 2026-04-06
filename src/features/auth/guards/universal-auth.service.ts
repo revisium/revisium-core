@@ -15,12 +15,31 @@ export class UniversalAuthService {
     private readonly prisma: PrismaService,
   ) {}
 
-  get isNoAuthEnabled(): boolean {
-    return this.noAuth.enabled;
-  }
+  authenticateRequest(request: {
+    headers: Record<string, string | string[] | undefined>;
+    query: Record<string, string | undefined>;
+    ip: string;
+    user?: IAuthUser;
+  }): Promise<'authenticated' | 'jwt' | 'anonymous'> {
+    if (this.noAuth.enabled) {
+      request.user = this.noAuth.adminUser;
+      return Promise.resolve('authenticated');
+    }
 
-  get adminUser(): IAuthUser {
-    return this.noAuth.adminUser;
+    return this.authenticate(request.headers, request.query, request.ip).then(
+      (user) => {
+        if (user) {
+          request.user = user;
+          return 'authenticated' as const;
+        }
+
+        if (request.headers['authorization']) {
+          return 'jwt' as const;
+        }
+
+        return 'anonymous' as const;
+      },
+    );
   }
 
   async authenticate(

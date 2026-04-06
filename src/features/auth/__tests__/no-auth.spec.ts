@@ -61,10 +61,13 @@ describe('NoAuthService', () => {
 });
 
 describe('JWT Guards with NO_AUTH enabled', () => {
+  const adminUser = { userId: 'admin', email: '' };
+
   const noAuthUniversalService = {
-    isNoAuthEnabled: true,
-    adminUser: { userId: 'admin', email: '' },
-    authenticate: jest.fn(),
+    authenticateRequest: jest.fn().mockImplementation(async (request: any) => {
+      request.user = adminUser;
+      return 'authenticated';
+    }),
   } as unknown as UniversalAuthService;
 
   const mockJwtGuard = { canActivate: jest.fn() };
@@ -100,7 +103,7 @@ describe('JWT Guards with NO_AUTH enabled', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 
@@ -116,7 +119,7 @@ describe('JWT Guards with NO_AUTH enabled', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 
@@ -132,7 +135,7 @@ describe('JWT Guards with NO_AUTH enabled', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 
@@ -148,7 +151,7 @@ describe('JWT Guards with NO_AUTH enabled', () => {
       const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 });

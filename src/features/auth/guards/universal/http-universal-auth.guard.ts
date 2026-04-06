@@ -26,28 +26,15 @@ export class HttpUniversalAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    const result = await this.authService.authenticateRequest(request);
 
-    if (this.authService.isNoAuthEnabled) {
-      request.user = this.authService.adminUser;
-      return true;
-    }
-
-    const user = await this.authService.authenticate(
-      request.headers,
-      request.query,
-      request.ip,
-    );
-
-    if (user) {
-      request.user = user;
-      return true;
-    }
-
-    if (request.headers['authorization']) {
+    if (result === 'jwt') {
       return this.jwtGuard.canActivate(context) as Promise<boolean>;
     }
-
-    throw new UnauthorizedException();
+    if (result === 'anonymous') {
+      throw new UnauthorizedException();
+    }
+    return true;
   }
 }
 
@@ -60,27 +47,11 @@ export class OptionalHttpUniversalAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
+    const result = await this.authService.authenticateRequest(request);
 
-    if (this.authService.isNoAuthEnabled) {
-      request.user = this.authService.adminUser;
-      return true;
-    }
-
-    const user = await this.authService.authenticate(
-      request.headers,
-      request.query,
-      request.ip,
-    );
-
-    if (user) {
-      request.user = user;
-      return true;
-    }
-
-    if (request.headers['authorization']) {
+    if (result === 'jwt') {
       return this.jwtGuard.canActivate(context) as Promise<boolean>;
     }
-
     return true;
   }
 }
