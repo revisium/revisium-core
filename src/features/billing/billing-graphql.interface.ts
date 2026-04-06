@@ -10,6 +10,9 @@ export interface PlanLimitsResult {
   seats: number | null;
   storageBytes: number | null;
   apiCallsPerDay: number | null;
+  rowsPerTable: number | null;
+  tablesPerRevision: number | null;
+  branchesPerProject: number | null;
 }
 
 export interface PlanResult {

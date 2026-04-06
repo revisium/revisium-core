@@ -23,6 +23,9 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
       seats: 1,
       storage_bytes: 500_000_000,
       api_calls_per_day: 1_000,
+      rows_per_table: 1_000,
+      tables_per_revision: 10,
+      branches_per_project: 3,
     },
   }),
   createCheckout: jest.fn().mockResolvedValue({
@@ -52,6 +55,9 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         seats: 1,
         storage_bytes: 500_000_000,
         api_calls_per_day: 1_000,
+        rows_per_table: 1_000,
+        tables_per_revision: 10,
+        branches_per_project: 3,
       },
       features: {},
     },
@@ -67,6 +73,9 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         seats: 10,
         storage_bytes: 10_000_000_000,
         api_calls_per_day: 50_000,
+        rows_per_table: 10_000,
+        tables_per_revision: 100,
+        branches_per_project: 20,
       },
       features: { sso: true, audit: true },
     },
@@ -85,6 +94,9 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
           seats: 10,
           storage_bytes: 10_000_000_000,
           api_calls_per_day: 50_000,
+          rows_per_table: 10_000,
+          tables_per_revision: 100,
+          branches_per_project: 20,
         },
         features: { sso: true, audit: true },
       });
@@ -187,7 +199,7 @@ describe('Billing GraphQL API (e2e)', () => {
       const res = await gql(`{
         plans {
           id name isPublic monthlyPriceUsd yearlyPriceUsd
-          limits { rowVersions projects seats storageBytes apiCallsPerDay }
+          limits { rowVersions projects seats storageBytes apiCallsPerDay rowsPerTable tablesPerRevision branchesPerProject }
           features
         }
       }`).expect(200);

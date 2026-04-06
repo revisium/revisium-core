@@ -42,6 +42,7 @@ export class UsageService {
   async computeUsage(
     organizationId: string,
     metric: LimitMetric,
+    context?: { revisionId?: string; tableId?: string; projectId?: string },
   ): Promise<number> {
     switch (metric) {
       case LimitMetric.ROW_VERSIONS:
@@ -54,6 +55,24 @@ export class UsageService {
         return this.countStorageBytes(organizationId);
       case LimitMetric.API_CALLS:
         return this.countApiCalls(organizationId);
+      case LimitMetric.ROWS_PER_TABLE: {
+        if (!context?.revisionId || !context?.tableId) {
+          throw new Error('ROWS_PER_TABLE requires revisionId and tableId in context');
+        }
+        return this.countRowsInTable(context.revisionId, context.tableId);
+      }
+      case LimitMetric.TABLES_PER_REVISION: {
+        if (!context?.projectId) {
+          throw new Error('TABLES_PER_REVISION requires projectId in context');
+        }
+        return this.countTablesInRevision(context.projectId);
+      }
+      case LimitMetric.BRANCHES_PER_PROJECT: {
+        if (!context?.projectId) {
+          throw new Error('BRANCHES_PER_PROJECT requires projectId in context');
+        }
+        return this.countBranchesInProject(context.projectId);
+      }
       default: {
         const _exhaustive: never = metric;
         throw new Error(`Unknown limit metric: ${_exhaustive}`);
@@ -92,5 +111,34 @@ export class UsageService {
   private async countApiCalls(_organizationId: string): Promise<number> {
     // TODO: implement based on API request tracking
     return 0;
+  }
+
+  private async countRowsInTable(
+    revisionId: string,
+    tableId: string,
+  ): Promise<number> {
+    const table = await this.prisma.table.findFirst({
+      where: {
+        id: tableId,
+        revisions: { some: { id: revisionId } },
+      },
+      select: { _count: { select: { rows: true } } },
+    });
+    return table?._count.rows ?? 0;
+  }
+
+  private async countTablesInRevision(projectId: string): Promise<number> {
+    const revision = await this.prisma.revision.findFirst({
+      where: {
+        isDraft: true,
+        branch: { projectId, isRoot: true },
+      },
+      select: { _count: { select: { tables: true } } },
+    });
+    return revision?._count.tables ?? 0;
+  }
+
+  private async countBranchesInProject(projectId: string): Promise<number> {
+    return this.prisma.branch.count({ where: { projectId } });
   }
 }

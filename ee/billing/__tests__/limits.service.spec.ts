@@ -23,6 +23,9 @@ const PRO_LIMITS: OrgLimits = {
     seats: 10,
     storage_bytes: 10_000_000_000,
     api_calls_per_day: 50_000,
+    rows_per_table: 10_000,
+    tables_per_revision: 100,
+    branches_per_project: 20,
   },
 };
 
@@ -35,6 +38,9 @@ const FREE_LIMITS: OrgLimits = {
     seats: 1,
     storage_bytes: 500_000_000,
     api_calls_per_day: 1_000,
+    rows_per_table: 1_000,
+    tables_per_revision: 10,
+    branches_per_project: 3,
   },
 };
 
@@ -132,6 +138,9 @@ describe('LimitsService (Ultra-Thin)', () => {
         seats: null,
         storage_bytes: null,
         api_calls_per_day: null,
+        rows_per_table: null,
+        tables_per_revision: null,
+        branches_per_project: null,
       },
     };
     mockBillingClient.getOrgLimits.mockResolvedValue(unlimited);
@@ -195,5 +204,134 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     expect(result.limit).toBe(3);
     expect(mockBillingClient.getOrgLimits).toHaveBeenCalledTimes(2);
+  });
+
+  it('should deny when rows_per_table limit reached', async () => {
+    const orgId = `limits-rows-${Date.now()}`;
+    await prisma.organization.create({
+      data: { id: orgId, createdId: orgId },
+    });
+    const projectId = `proj-${orgId}`;
+    await prisma.project.create({
+      data: { id: projectId, name: 'p1', organizationId: orgId },
+    });
+    const branchId = `branch-${orgId}`;
+    await prisma.branch.create({
+      data: { id: branchId, name: 'master', projectId, isRoot: true },
+    });
+    const revisionId = `rev-${orgId}`;
+    await prisma.revision.create({
+      data: { id: revisionId, branchId, isDraft: true },
+    });
+    const tableVersionId = `table-ver-${orgId}`;
+    await prisma.table.create({
+      data: {
+        versionId: tableVersionId,
+        createdId: tableVersionId,
+        id: 'test-table',
+        revisions: { connect: { id: revisionId } },
+      },
+    });
+    const rowData = Array.from({ length: 1000 }, (_, i) => ({
+      versionId: `row-${orgId}-${i}`,
+      createdId: `row-${orgId}-${i}`,
+      id: `r${i}`,
+      data: {},
+      hash: 'h',
+      schemaHash: 'sh',
+    }));
+    await prisma.row.createMany({ data: rowData });
+    // A = Row.versionId, B = Table.versionId (alphabetical: Row < Table)
+    await prisma.$executeRaw`
+      INSERT INTO "_RowToTable" ("A", "B")
+      SELECT "versionId", ${tableVersionId} FROM "Row" WHERE "versionId" LIKE ${`row-${orgId}-%`}
+    `;
+
+    mockBillingClient.getOrgLimits.mockResolvedValue(FREE_LIMITS);
+
+    const result = await service.checkLimit(
+      orgId,
+      LimitMetric.ROWS_PER_TABLE,
+      1,
+      { revisionId, tableId: 'test-table' },
+    );
+
+    expect(result.allowed).toBe(false);
+    expect(result.current).toBe(1000);
+    expect(result.limit).toBe(1_000);
+    expect(result.metric).toBe(LimitMetric.ROWS_PER_TABLE);
+  });
+
+  it('should allow tables_per_revision when under limit', async () => {
+    const orgId = `limits-tables-${Date.now()}`;
+    await prisma.organization.create({
+      data: { id: orgId, createdId: orgId },
+    });
+    const projectId = `proj-${orgId}`;
+    await prisma.project.create({
+      data: { id: projectId, name: 'p1', organizationId: orgId },
+    });
+    const branchId = `branch-${orgId}`;
+    await prisma.branch.create({
+      data: { id: branchId, name: 'master', projectId, isRoot: true },
+    });
+    const revisionId = `rev-${orgId}`;
+    await prisma.revision.create({
+      data: { id: revisionId, branchId, isDraft: true },
+    });
+    for (let i = 0; i < 2; i++) {
+      await prisma.table.create({
+        data: {
+          versionId: `tv-${orgId}-${i}`,
+          createdId: `tv-${orgId}-${i}`,
+          id: `t${i}`,
+          revisions: { connect: { id: revisionId } },
+        },
+      });
+    }
+
+    mockBillingClient.getOrgLimits.mockResolvedValue(FREE_LIMITS);
+
+    const result = await service.checkLimit(
+      orgId,
+      LimitMetric.TABLES_PER_REVISION,
+      1,
+      { projectId },
+    );
+
+    expect(result.allowed).toBe(true);
+    expect(result.current).toBe(2);
+    expect(result.limit).toBe(10);
+  });
+
+  it('should deny when branches_per_project limit reached', async () => {
+    const orgId = `limits-branches-${Date.now()}`;
+    await prisma.organization.create({
+      data: { id: orgId, createdId: orgId },
+    });
+    const projectId = `proj-${orgId}`;
+    await prisma.project.create({
+      data: { id: projectId, name: 'p1', organizationId: orgId },
+    });
+    for (let i = 0; i < 3; i++) {
+      const branchId = `branch-${orgId}-${i}`;
+      await prisma.branch.create({
+        data: { id: branchId, name: `b${i}`, projectId, isRoot: i === 0 },
+      });
+    }
+
+    mockBillingClient.getOrgLimits.mockResolvedValue(FREE_LIMITS);
+
+    const result = await service.checkLimit(
+      orgId,
+      LimitMetric.BRANCHES_PER_PROJECT,
+      1,
+      { projectId },
+    );
+
+    expect(result.allowed).toBe(false);
+    expect(result.current).toBe(3);
+    expect(result.limit).toBe(3);
+    expect(result.metric).toBe(LimitMetric.BRANCHES_PER_PROJECT);
   });
 });

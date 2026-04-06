@@ -9,6 +9,11 @@ export enum LimitMetric {
 
   // Rate metrics — resets per time window
   API_CALLS = 'api_calls', // per day
+
+  // Resource-level metrics — scoped to a specific entity
+  ROWS_PER_TABLE = 'rows_per_table',
+  TABLES_PER_REVISION = 'tables_per_revision',
+  BRANCHES_PER_PROJECT = 'branches_per_project',
 }
 
 export interface LimitCheckResult {
@@ -23,5 +28,6 @@ export interface ILimitsService {
     organizationId: string,
     metric: LimitMetric,
     increment?: number,
+    context?: { revisionId?: string; tableId?: string; projectId?: string },
   ): Promise<LimitCheckResult>;
 }

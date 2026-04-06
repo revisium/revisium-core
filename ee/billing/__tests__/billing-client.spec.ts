@@ -50,6 +50,9 @@ describe('BillingClient', () => {
         seats: 10,
         storage_bytes: null,
         api_calls_per_day: null,
+        rows_per_table: null,
+        tables_per_revision: null,
+        branches_per_project: null,
       },
     };
     mockFetch(200, limits);

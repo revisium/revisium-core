@@ -9,6 +9,9 @@ export interface OrgLimits {
     seats: number | null;
     storage_bytes: number | null;
     api_calls_per_day: number | null;
+    rows_per_table: number | null;
+    tables_per_revision: number | null;
+    branches_per_project: number | null;
   };
 }
 

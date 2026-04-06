@@ -11,7 +11,7 @@ How and where plan limits are checked.
 ## checkLimit Flow
 
 ```typescript
-async checkLimit(organizationId, metric, increment):
+async checkLimit(organizationId, metric, increment, context?):
   // 1. Org limits from payment service (in-memory Map cache, 5-min TTL)
   orgLimits = limitsCache.get(organizationId) ?? billingClient.getOrgLimits(organizationId)
   if !orgLimits → { allowed: true }  // fail-open
@@ -21,7 +21,8 @@ async checkLimit(organizationId, metric, increment):
   if limit === null → { allowed: true }
 
   // 3. Usage computation (cached 2 min via BillingCacheService)
-  current = billingCache.usage(organizationId, metric, () => usageService.compute())
+  //    For resource-level metrics, context (revisionId/tableId/projectId) is included in cache key
+  current = billingCache.usage(organizationId, cacheKey, () => usageService.computeUsage(organizationId, metric, context))
   if current + increment > limit → { allowed: false, current, limit, metric }
 
   → { allowed: true, current, limit }
@@ -31,14 +32,18 @@ Step 1 is an in-memory cache hit or HMAC-signed HTTP call to the payment service
 
 ## Enforcement Points
 
-| Handler                        | Metric          | Increment     | Notes                                |
-| ------------------------------ | --------------- | ------------- | ------------------------------------ |
-| `CreateRowsHandler`            | `row_versions`  | `rows.length` | New rows = new versions              |
-| `UpdateRowsHandler`            | `row_versions`  | `rows.length` | Copy-on-write creates new versions   |
-| `RenameRowHandler`             | `row_versions`  | `1`           | Rename creates a new version         |
-| `UploadFileHandler`            | `storage_bytes` | `file.size`   | File upload size                     |
-| `CreateProjectHandler`         | `projects`      | `1`           | Synchronous DB count                 |
-| `AddUserToOrganizationHandler` | `seats`         | `1`           | Only for new users, not role updates |
+| Handler                        | Metric                | Increment     | Context         | Notes                                |
+| ------------------------------ | --------------------- | ------------- | --------------- | ------------------------------------ |
+| `CreateRowsHandler`            | `row_versions`        | `rows.length` | -               | New rows = new versions              |
+| `UpdateRowsHandler`            | `row_versions`        | `rows.length` | -               | Copy-on-write creates new versions   |
+| `RenameRowHandler`             | `row_versions`        | `1`           | -               | Rename creates a new version         |
+| `UploadFileHandler`            | `storage_bytes`       | `file.size`   | -               | File upload size                     |
+| `CreateProjectHandler`         | `projects`            | `1`           | -               | Synchronous DB count                 |
+| `AddUserToOrganizationHandler` | `seats`               | `1`           | -               | Only for new users, not role updates |
+| `CreateRowHandler`             | `rows_per_table`      | `1`           | `{ tableId }`   |                                      |
+| `CreateRowsHandler`            | `rows_per_table`      | `rows.length` | `{ tableId }`   |                                      |
+| `CreateTableHandler`           | `tables_per_revision` | `1`           | `{ projectId }` |                                      |
+| `CreateBranchHandler`          | `branches_per_project`| `1`           | `{ projectId }` |                                      |
 
 ### Why These Handlers
 
@@ -49,7 +54,6 @@ Step 1 is an in-memory cache hit or HMAC-signed HTTP call to the payment service
 - `PatchRowsHandler` — delegates to `UpdateRowsHandler` internally, check happens there
 - `RevertChangesHandler` — restores head state, doesn't create new versions
 - `RemoveRowsHandler` / `RemoveTableHandler` — removing data decreases usage, no limit needed
-- `CreateTableHandler` — creating an empty table doesn't create row versions
 
 ### Handler Pattern
 
@@ -73,6 +77,24 @@ if (!limitResult.allowed) {
 ```
 
 For `CreateProjectHandler` and `AddUserToOrganizationHandler`, `organizationId` comes directly from the command data (no revision resolution needed).
+
+### Resource-Level Limits
+
+Resource-level limits use the same `checkLimit` call with an optional `context` parameter:
+
+```typescript
+// CreateRowsHandler — checks both org-level and resource-level
+await this.billingCheck.check(revisionId, LimitMetric.ROW_VERSIONS, rows.length);
+await this.billingCheck.check(revisionId, LimitMetric.ROWS_PER_TABLE, rows.length, { tableId });
+```
+
+`BillingCheckService.check()` automatically resolves `organizationId` and `projectId` from the `revisionId`. For `ROWS_PER_TABLE`, `revisionId` is also passed in context so the counting method can scope the query to the correct draft revision.
+
+| Metric | Scope | What It Counts |
+|---|---|---|
+| `rows_per_table` | Per table in revision | Rows linked to a specific table within a revision |
+| `tables_per_revision` | Per project | Tables in the draft revision of the root branch |
+| `branches_per_project` | Per project | Total branches in the project |
 
 ## Error Response
 

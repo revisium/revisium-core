@@ -11,6 +11,7 @@ export class NoopLimitsService implements ILimitsService {
     _organizationId: string,
     _metric: LimitMetric,
     _increment?: number,
+    _context?: { revisionId?: string; tableId?: string; projectId?: string },
   ): Promise<LimitCheckResult> {
     return { allowed: true };
   }

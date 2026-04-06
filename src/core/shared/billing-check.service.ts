@@ -19,31 +19,49 @@ export class BillingCheckService {
     revisionId: string,
     metric: LimitMetric,
     increment?: number,
+    context?: { tableId?: string; projectId?: string },
   ): Promise<void> {
-    const organizationId = await this.resolveOrganizationId(revisionId);
+    const resolved = await this.resolveContext(revisionId);
+    const needsContext =
+      metric === LimitMetric.ROWS_PER_TABLE ||
+      metric === LimitMetric.TABLES_PER_REVISION ||
+      metric === LimitMetric.BRANCHES_PER_PROJECT;
+    const fullContext = needsContext
+      ? {
+          revisionId,
+          projectId: resolved.projectId,
+          ...context,
+        }
+      : context;
     const result = await this.limitsService.checkLimit(
-      organizationId,
+      resolved.organizationId,
       metric,
       increment,
+      fullContext,
     );
     if (!result.allowed) {
       throw new LimitExceededException(result);
     }
   }
 
-  private async resolveOrganizationId(revisionId: string): Promise<string> {
+  private async resolveContext(
+    revisionId: string,
+  ): Promise<{ organizationId: string; projectId: string }> {
     const revision = await this.prisma.revision.findUniqueOrThrow({
       where: { id: revisionId },
       select: {
         branch: {
           select: {
             project: {
-              select: { organizationId: true },
+              select: { id: true, organizationId: true },
             },
           },
         },
       },
     });
-    return revision.branch.project.organizationId;
+    return {
+      organizationId: revision.branch.project.organizationId,
+      projectId: revision.branch.project.id,
+    };
   }
 }

@@ -33,6 +33,7 @@ export class LimitsService implements ILimitsService {
     organizationId: string,
     metric: LimitMetric,
     increment: number = 1,
+    context?: { revisionId?: string; tableId?: string; projectId?: string },
   ): Promise<LimitCheckResult> {
     const orgLimits = await this.getOrgLimits(organizationId);
     if (!orgLimits) return { allowed: true };
@@ -40,8 +41,14 @@ export class LimitsService implements ILimitsService {
     const limit = this.getLimitForMetric(orgLimits, metric);
     if (limit === null || limit === undefined) return { allowed: true };
 
-    const current = await this.billingCache.usage(organizationId, metric, () =>
-      this.usageService.computeUsage(organizationId, metric),
+    const cacheKey =
+      context?.revisionId || context?.tableId || context?.projectId
+        ? `${metric}:r=${context?.revisionId ?? ''}:t=${context?.tableId ?? ''}:p=${context?.projectId ?? ''}`
+        : metric;
+    const current = await this.billingCache.usage(
+      organizationId,
+      cacheKey,
+      () => this.usageService.computeUsage(organizationId, metric, context),
     );
     const projected = current + increment;
 
@@ -75,6 +82,12 @@ export class LimitsService implements ILimitsService {
         return l.storage_bytes;
       case LimitMetric.API_CALLS:
         return l.api_calls_per_day;
+      case LimitMetric.ROWS_PER_TABLE:
+        return l.rows_per_table;
+      case LimitMetric.TABLES_PER_REVISION:
+        return l.tables_per_revision;
+      case LimitMetric.BRANCHES_PER_PROJECT:
+        return l.branches_per_project;
       default:
         return null;
     }
