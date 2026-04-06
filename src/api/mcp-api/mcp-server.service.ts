@@ -162,7 +162,8 @@ PERMISSIONS:
     this.userTools = new UserTools(this.userApi);
     this.endpointTools = new EndpointTools(
       this.endpointApi,
-      this.configService.get<string>('ENDPOINT_SERVICE_URL'),
+      this.configService.get<string>('ENDPOINT_SERVICE_URL') ||
+        this.configService.get<string>('PUBLIC_URL'),
       this.uriResolver,
     );
     this.fileTools = new FileTools(this.engine, this.uriResolver);

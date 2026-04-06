@@ -518,6 +518,51 @@ describe('MCP API', () => {
       expect(content.rows).toHaveLength(2);
     });
 
+    it('should update a single row with update_row', async () => {
+      await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 3,
+          method: 'tools/call',
+          params: {
+            name: 'create_row',
+            arguments: {
+              revisionId: fixture.project.draftRevisionId,
+              tableId: fixture.project.tableId,
+              rowId: 'update-single-row',
+              data: { ver: 1 },
+            },
+          },
+        },
+        token,
+      );
+
+      const res = await mcpPost(
+        app,
+        {
+          jsonrpc: '2.0',
+          id: 4,
+          method: 'tools/call',
+          params: {
+            name: 'update_row',
+            arguments: {
+              revisionId: fixture.project.draftRevisionId,
+              tableId: fixture.project.tableId,
+              rowId: 'update-single-row',
+              data: { ver: 999 },
+            },
+          },
+        },
+        token,
+      ).expect(200);
+
+      const data = parseResponse(res);
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.id).toBe('update-single-row');
+    });
+
     it('should update multiple rows with update_rows', async () => {
       await mcpPost(
         app,
