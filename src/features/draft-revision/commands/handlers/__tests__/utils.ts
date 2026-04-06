@@ -3,7 +3,8 @@ import { CommandBus, CqrsModule } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { EngineModule } from '@revisium/engine';
 import { AppOptionsModule } from 'src/core/app-options.module';
-import { BranchModule } from 'src/features/branch/branch.module';
+import { BranchModule } from 'src/core/branch/branch.module';
+import { BranchModule as FeatureBranchModule } from 'src/features/branch/branch.module';
 import { DRAFT_REVISION_COMMANDS_HANDLERS } from 'src/features/draft-revision/commands/handlers';
 import { DraftRevisionApiService } from 'src/features/draft-revision/draft-revision-api.service';
 import {
@@ -90,6 +91,7 @@ export const createDraftRevisionTestingModule = async () => {
       AppOptionsModule.forRoot({ mode: 'monolith' }),
       RevisionModule,
       BranchModule,
+      FeatureBranchModule,
     ],
     providers: [
       DraftRevisionApiService,
