@@ -732,10 +732,13 @@ type PermissionModel {
 
 type PlanLimitsModel {
   apiCallsPerDay: Int
+  branchesPerProject: Int
   projects: Int
   rowVersions: Int
+  rowsPerTable: Int
   seats: Int
   storageBytes: Float
+  tablesPerRevision: Int
 }
 
 type PlanModel {
