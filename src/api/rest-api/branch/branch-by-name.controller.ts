@@ -26,7 +26,6 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { BranchApiService as FeatureBranchApiService } from 'src/features/branch/branch-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { BranchApiService } from 'src/core/branch/branch-api.service';
 import { RevisionApiService } from 'src/core/revision/revision-api.service';
@@ -63,9 +62,8 @@ import {
 @ApiTags('Branch')
 export class BranchByNameController {
   constructor(
-    private readonly coreBranches: BranchApiService,
+    private readonly branches: BranchApiService,
     private readonly coreRevisions: RevisionApiService,
-    private readonly branchApi: FeatureBranchApiService,
     private readonly projectApi: ProjectApiService,
   ) {}
 
@@ -106,7 +104,7 @@ export class BranchByNameController {
     );
 
     return {
-      touched: await this.coreBranches.getTouchedByBranchId(branch.id),
+      touched: await this.branches.getTouchedByBranchId(branch.id),
     };
   }
 
@@ -131,7 +129,7 @@ export class BranchByNameController {
       branchName,
     );
 
-    return this.branchApi.resolveParentBranch({ branchId: branch.id });
+    return this.branches.resolveParentBranch({ branchId: branch.id });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -156,7 +154,7 @@ export class BranchByNameController {
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.coreBranches.getStartRevision(branch.id),
+      await this.branches.getStartRevision(branch.id),
     );
   }
 
@@ -182,7 +180,7 @@ export class BranchByNameController {
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.coreBranches.getHeadRevision(branch.id),
+      await this.branches.getHeadRevision(branch.id),
     );
   }
 
@@ -208,7 +206,7 @@ export class BranchByNameController {
     );
 
     return transformFromPrismaToRevisionModel(
-      await this.coreBranches.getDraftRevision(branch.id),
+      await this.branches.getDraftRevision(branch.id),
     );
   }
 
@@ -321,7 +319,7 @@ export class BranchByNameController {
     @Param('branchName') branchName: string,
   ): Promise<SuccessModelDto> {
     const projectId = await this.resolveProjectId(organizationId, projectName);
-    await this.coreBranches.deleteBranch({
+    await this.branches.deleteBranch({
       projectId,
       branchName,
     });
@@ -346,7 +344,7 @@ export class BranchByNameController {
     branchName: string,
   ): Promise<BranchModel> {
     const projectId = await this.resolveProjectId(organizationId, projectName);
-    return this.coreBranches.getBranch({
+    return this.branches.getBranch({
       projectId,
       branchName,
     });

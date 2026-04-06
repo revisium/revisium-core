@@ -1,9 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { EngineApiService } from '@revisium/engine';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @Injectable()
 export class BranchApiService {
-  constructor(private readonly engine: EngineApiService) {}
+  constructor(
+    private readonly engine: EngineApiService,
+    private readonly prisma: PrismaService,
+  ) {}
 
   public getBranch(...args: Parameters<EngineApiService['getBranch']>) {
     return this.engine.getBranch(...args);
@@ -47,6 +51,17 @@ export class BranchApiService {
 
   public deleteBranch(...args: Parameters<EngineApiService['deleteBranch']>) {
     return this.engine.deleteBranch(...args);
+  }
+
+  public resolveParentBranch(
+    ...args: Parameters<EngineApiService['resolveParentBranch']>
+  ) {
+    return this.engine.resolveParentBranch(...args);
+  }
+
+  public async getProjectByBranch(branchId: string) {
+    const { id } = await this.engine.getProjectByBranch(branchId);
+    return this.prisma.project.findUniqueOrThrow({ where: { id } });
   }
 
   public cleanOrphanedData() {

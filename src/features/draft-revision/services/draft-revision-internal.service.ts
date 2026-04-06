@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { BranchApiService } from 'src/core/branch/branch-api.service';
 import {
   DraftRevisionGetOrCreateDraftRowCommand,
   DraftRevisionGetOrCreateDraftRowCommandData,

@@ -12,9 +12,8 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { BranchApiService as CoreBranchApiService } from 'src/core/branch/branch-api.service';
+import { BranchApiService } from 'src/core/branch/branch-api.service';
 import { RevisionApiService } from 'src/core/revision/revision-api.service';
 import {
   CreateBranchInput,
@@ -36,9 +35,8 @@ import {
 @Resolver(() => BranchModel)
 export class BranchResolver {
   constructor(
-    private readonly branchApiService: BranchApiService,
     private readonly projectApi: ProjectApiService,
-    private readonly coreBranches: CoreBranchApiService,
+    private readonly branchApi: BranchApiService,
     private readonly coreRevisions: RevisionApiService,
   ) {}
 
@@ -49,7 +47,7 @@ export class BranchResolver {
       data.organizationId,
       data.projectName,
     );
-    return this.coreBranches.getBranch({
+    return this.branchApi.getBranch({
       projectId,
       branchName: data.branchName,
     });
@@ -62,7 +60,7 @@ export class BranchResolver {
       data.organizationId,
       data.projectName,
     );
-    return this.coreBranches.getBranches({
+    return this.branchApi.getBranches({
       projectId,
       first: data.first,
       after: data.after,
@@ -71,27 +69,27 @@ export class BranchResolver {
 
   @ResolveField()
   parent(@Parent() branch: BranchModel) {
-    return this.branchApiService.resolveParentBranch({ branchId: branch.id });
+    return this.branchApi.resolveParentBranch({ branchId: branch.id });
   }
 
   @ResolveField()
   project(@Parent() branch: BranchModel) {
-    return this.branchApiService.getProjectByBranch(branch.id);
+    return this.branchApi.getProjectByBranch(branch.id);
   }
 
   @ResolveField()
   start(@Parent() branch: BranchModel) {
-    return this.coreBranches.getStartRevision(branch.id);
+    return this.branchApi.getStartRevision(branch.id);
   }
 
   @ResolveField()
   head(@Parent() branch: BranchModel) {
-    return this.coreBranches.getHeadRevision(branch.id);
+    return this.branchApi.getHeadRevision(branch.id);
   }
 
   @ResolveField()
   draft(@Parent() branch: BranchModel) {
-    return this.coreBranches.getDraftRevision(branch.id);
+    return this.branchApi.getDraftRevision(branch.id);
   }
 
   @ResolveField()
@@ -107,7 +105,7 @@ export class BranchResolver {
 
   @ResolveField()
   touched(@Parent() branch: BranchModel) {
-    return this.coreBranches.getTouchedByBranchId(branch.id);
+    return this.branchApi.getTouchedByBranchId(branch.id);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -117,7 +115,7 @@ export class BranchResolver {
   })
   @Mutation(() => BranchModel)
   async createBranch(@Args('data') data: CreateBranchInput) {
-    return this.coreBranches.createBranch(data);
+    return this.branchApi.createBranch(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -148,7 +146,7 @@ export class BranchResolver {
       data.organizationId,
       data.projectName,
     );
-    return this.coreBranches.deleteBranch({
+    return this.branchApi.deleteBranch({
       projectId,
       branchName: data.branchName,
     });
