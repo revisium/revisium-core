@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { Prisma } from 'src/__generated__/client';
 import { JsonValuePatchReplace } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import { SearchRowsResponse } from 'src/features/row/queries/impl';
+import { SearchRowsResponse } from '@revisium/engine';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import { mapToPrismaOrderBy } from 'src/api/utils/mapToPrismaOrderBy';
 import {

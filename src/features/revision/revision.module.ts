@@ -1,19 +1,14 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
-import { InternalRevisionsApiService } from 'src/features/revision/internal-revisions-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
+import { GetEndpointsByRevisionIdHandler } from 'src/features/revision/queries/commands/get-endpoints-by-revision-id.handler';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
-import { REVISION_QUERIES_HANDLERS } from 'src/features/revision/queries/commands';
 import { ShareModule } from 'src/features/share/share.module';
 
 @Module({
   imports: [DatabaseModule, CqrsModule, ShareModule, NotificationModule],
-  providers: [
-    InternalRevisionsApiService,
-    RevisionsApiService,
-    ...REVISION_QUERIES_HANDLERS,
-  ],
+  providers: [RevisionsApiService, GetEndpointsByRevisionIdHandler],
   exports: [RevisionsApiService],
 })
 export class RevisionModule {}
