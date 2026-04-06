@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import {
   DraftRevisionGetOrCreateDraftRowCommand,
   DraftRevisionGetOrCreateDraftRowCommandData,
@@ -60,7 +60,7 @@ export class DraftRevisionInternalService {
 
   public async findRevisionOrThrow(revisionId: string) {
     try {
-      return await this.revisionsApiService.revision({ revisionId });
+      return await this.revisionsApiService.getRevision({ revisionId });
     } catch {
       throw new BadRequestException('Revision not found');
     }

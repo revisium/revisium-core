@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { Prisma } from 'src/__generated__/client';
-import { TableApiService } from 'src/core/table/table-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { JsonPatch } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';

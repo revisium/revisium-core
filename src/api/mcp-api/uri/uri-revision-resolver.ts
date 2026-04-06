@@ -1,4 +1,4 @@
-import { BranchApiService } from 'src/core/branch/branch-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { ParsedUri } from './parse-revisium-uri';
 

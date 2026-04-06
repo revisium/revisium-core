@@ -12,10 +12,9 @@ export class RevertChangesHandler implements ICommandHandler<RevertChangesComman
 
   async execute({ data }: RevertChangesCommand) {
     const result = await this.engine.revertChanges(data);
-    const branchId = (result as { id: string }).id;
-    const draftRevision = await this.engine.getDraftRevision(branchId);
+    const draftRevision = await this.engine.getDraftRevision(result.id);
     await this.eventBus.publishAll([
-      new RevisionRevertedEvent((draftRevision as { id: string }).id),
+      new RevisionRevertedEvent(draftRevision.id),
     ]);
     return result;
   }

@@ -8,10 +8,10 @@ import { NullStorageService } from 'src/infrastructure/storage/null-storage.serv
 import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
-import { RowModule } from 'src/core/row/row.module';
-import { TableModule } from 'src/core/table/table.module';
-import { RevisionModule } from 'src/core/revision/revision.module';
-import { BranchModule } from 'src/core/branch/branch.module';
+import { RowModule } from 'src/features/row/row.module';
+import { TableModule } from 'src/features/table/table.module';
+import { RevisionModule } from 'src/features/revision/revision.module';
+import { BranchModule } from 'src/features/branch/branch.module';
 
 export interface CoreEngineModuleOptions {
   storage?: IStorageService;

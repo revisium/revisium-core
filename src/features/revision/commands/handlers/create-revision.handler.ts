@@ -1,8 +1,8 @@
 import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { EngineApiService } from '@revisium/engine';
 import { RevisionCommittedEvent } from 'src/infrastructure/cache';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { CreateRevisionCommand } from '../impl/create-revision.command';
 
 @CommandHandler(CreateRevisionCommand)
@@ -10,7 +10,7 @@ export class CreateRevisionHandler implements ICommandHandler<CreateRevisionComm
   constructor(
     private readonly engine: EngineApiService,
     private readonly eventBus: EventBus,
-    private readonly prisma: PrismaService,
+    private readonly transactionService: TransactionPrismaService,
     private readonly endpointNotification: EndpointNotificationService,
   ) {}
 
@@ -24,10 +24,12 @@ export class CreateRevisionHandler implements ICommandHandler<CreateRevisionComm
     });
     const newDraft = await this.engine.getDraftRevision(branch.id);
 
-    const movedEndpointIds = await this.moveEndpointsAfterCommit(
-      previousDraftRevisionId,
-      previousHeadRevisionId,
-      newDraft.id,
+    const movedEndpointIds = await this.transactionService.runSerializable(() =>
+      this.moveEndpointsAfterCommit(
+        previousDraftRevisionId,
+        previousHeadRevisionId,
+        newDraft.id,
+      ),
     );
 
     await this.eventBus.publishAll([
@@ -49,37 +51,38 @@ export class CreateRevisionHandler implements ICommandHandler<CreateRevisionComm
     previousHeadRevisionId: string,
     nextDraftRevisionId: string,
   ): Promise<string[]> {
+    const transaction = this.transactionService.getTransaction();
     const allEndpointIds: string[] = [];
 
-    const draftEndpoints = await this.prisma.endpoint.findMany({
+    const draftEndpoints = await transaction.endpoint.findMany({
       where: { revisionId: previousDraftRevisionId, isDeleted: false },
       select: { id: true },
     });
     for (const ep of draftEndpoints) {
-      await this.prisma.endpoint.update({
+      await transaction.endpoint.update({
         where: { id: ep.id },
         data: { revisionId: nextDraftRevisionId, createdAt: new Date() },
       });
       allEndpointIds.push(ep.id);
     }
 
-    await this.prisma.endpoint.deleteMany({
+    await transaction.endpoint.deleteMany({
       where: { revisionId: nextDraftRevisionId, isDeleted: true },
     });
 
-    const headEndpoints = await this.prisma.endpoint.findMany({
+    const headEndpoints = await transaction.endpoint.findMany({
       where: { revisionId: previousHeadRevisionId, isDeleted: false },
       select: { id: true },
     });
     for (const ep of headEndpoints) {
-      await this.prisma.endpoint.update({
+      await transaction.endpoint.update({
         where: { id: ep.id },
         data: { revisionId: previousDraftRevisionId, createdAt: new Date() },
       });
       allEndpointIds.push(ep.id);
     }
 
-    await this.prisma.endpoint.deleteMany({
+    await transaction.endpoint.deleteMany({
       where: { revisionId: previousDraftRevisionId, isDeleted: true },
     });
 

@@ -4,7 +4,7 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { TableApiService } from 'src/core/table/table-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
 import { GetSubSchemaItemsInput } from './inputs/get-sub-schema-items.input';
 import {
   SubSchemaItemModel,

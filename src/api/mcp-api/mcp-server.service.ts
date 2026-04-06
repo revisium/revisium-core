@@ -5,10 +5,10 @@ import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
-import { TableApiService } from 'src/core/table/table-api.service';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { McpUserContext } from './mcp-auth.service';
@@ -67,7 +67,7 @@ export class McpServerService {
 
     private readonly rows: RowApiService,
     private readonly tables: TableApiService,
-    private readonly revisions: RevisionApiService,
+    private readonly revisions: RevisionsApiService,
     private readonly branches: BranchApiService,
     private readonly userApi: UserApiService,
     private readonly endpointApi: EndpointApiService,

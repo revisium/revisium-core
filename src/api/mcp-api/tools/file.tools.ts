@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
   UriRevisionResolver,

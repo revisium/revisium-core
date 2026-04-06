@@ -11,8 +11,8 @@ import { GetTablesInput } from 'src/api/graphql-api/table/inputs/get-tables.inpu
 import { TablesConnection } from 'src/api/graphql-api/table/model/table-connection.model';
 import { TableModel } from 'src/api/graphql-api/table/model/table.model';
 import { TableViewsDataModel } from 'src/api/graphql-api/views/model/table-views-data.model';
-import { TableApiService } from 'src/core/table/table-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,

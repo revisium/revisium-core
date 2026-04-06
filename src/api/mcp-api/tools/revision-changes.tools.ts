@@ -1,8 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
-import { TableApiService } from 'src/core/table/table-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
@@ -13,7 +13,7 @@ import {
 
 export class RevisionChangesTools implements McpToolRegistrar {
   constructor(
-    private readonly revisions: RevisionApiService,
+    private readonly revisions: RevisionsApiService,
     private readonly tables: TableApiService,
     private readonly rows: RowApiService,
     private readonly uriResolver: UriRevisionResolver,

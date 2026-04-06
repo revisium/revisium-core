@@ -1,6 +1,6 @@
 import { UriRevisionResolver } from '../uri-revision-resolver';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 
 describe('UriRevisionResolver', () => {
   let resolver: UriRevisionResolver;

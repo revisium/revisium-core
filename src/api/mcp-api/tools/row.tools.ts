@@ -11,8 +11,8 @@ import {
   compactRowEdges,
   fillFormulaDefaults,
 } from './mcp-helpers';
-import { RowApiService } from 'src/core/row/row-api.service';
-import { TableApiService } from 'src/core/table/table-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
 import {
   UriRevisionResolver,
   resolveRevisionId,
