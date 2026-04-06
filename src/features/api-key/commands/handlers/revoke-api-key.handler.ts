@@ -4,6 +4,7 @@ import {
   RevokeApiKeyCommand,
   RevokeApiKeyCommandReturnType,
 } from 'src/features/api-key/commands/impl';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(RevokeApiKeyCommand)
@@ -11,7 +12,10 @@ export class RevokeApiKeyHandler implements ICommandHandler<
   RevokeApiKeyCommand,
   RevokeApiKeyCommandReturnType
 > {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authCache: AuthCacheService,
+  ) {}
 
   async execute({
     data,
@@ -32,5 +36,7 @@ export class RevokeApiKeyHandler implements ICommandHandler<
       where: { id: data.keyId },
       data: { revokedAt: new Date() },
     });
+
+    await this.authCache.invalidateApiKeyByHash(apiKey.keyHash);
   }
 }

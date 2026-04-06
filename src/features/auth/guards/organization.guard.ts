@@ -26,6 +26,12 @@ abstract class OrganizationGuard extends BasePermissionGuard<Params> {
       userId,
     });
   }
+
+  protected override buildScopeRequest(params: Params) {
+    return {
+      organizationId: params.organizationId,
+    };
+  }
 }
 
 export class HTTPOrganizationGuard extends OrganizationGuard {

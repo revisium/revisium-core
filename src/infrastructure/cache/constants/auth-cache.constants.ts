@@ -4,6 +4,8 @@ export const AUTH_CACHE_KEYS = {
   CHECK_SYSTEM_PERMISSION: 'auth:check-system-permission',
   CHECK_ORGANIZATION_PERMISSION: 'auth:check-organization-permission',
   CHECK_PROJECT_PERMISSION: 'auth:check-project-permission',
+
+  API_KEY_BY_HASH: (keyHash: string) => `auth:api-key:${keyHash}`,
 } as const;
 
 export const AUTH_CACHE_TAGS = {
@@ -24,6 +26,8 @@ export const AUTH_CACHE_CONFIG = {
   ROLE_PERMISSIONS_TTL: '1d' as const,
 
   PERMISSION_CHECK_TTL: '10m' as const,
+
+  API_KEY_TTL: '5m' as const,
 
   KEY_VERSION: 1 as const,
 } as const;

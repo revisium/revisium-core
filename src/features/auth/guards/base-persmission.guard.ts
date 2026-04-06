@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { ApiKeyScopeService } from 'src/features/api-key/api-key-scope.service';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import {
   PERMISSION_PARAMS_KEY,
@@ -22,6 +23,7 @@ export abstract class BasePermissionGuard<
   constructor(
     protected reflector: Reflector,
     protected authApi: AuthApiService,
+    protected apiKeyScopeService: ApiKeyScopeService,
   ) {}
 
   protected getFromHttpContext(context: ExecutionContext) {
@@ -52,7 +54,7 @@ export abstract class BasePermissionGuard<
     params: T,
     permissions: IPermissionParams[],
     userId?: string,
-  ): any;
+  ): Promise<boolean>;
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const permissions: IPermissionParams[] = [];
@@ -94,6 +96,53 @@ export abstract class BasePermissionGuard<
       }
     }
 
+    if (user?.apiKeyId && user.apiKeyScope) {
+      await this.validateApiKeyScope(user, params);
+    }
+
     return true;
+  }
+
+  protected async validateApiKeyScope(
+    user: NonNullable<IOptionalAuthUser>,
+    params: T,
+  ): Promise<void> {
+    const scopeRequest = this.buildScopeRequest(params);
+    if (!scopeRequest) {
+      return;
+    }
+
+    let resolvedBranchNames: string[] | undefined;
+    if (
+      user.apiKeyScope!.branchNames.length > 0 &&
+      scopeRequest.branchName &&
+      scopeRequest.projectId
+    ) {
+      resolvedBranchNames = await this.apiKeyScopeService.resolveBranchNames(
+        user.apiKeyScope!.branchNames,
+        scopeRequest.projectId,
+      );
+    }
+
+    const isValid = this.apiKeyScopeService.validateScope(
+      user.apiKeyScope!,
+      scopeRequest,
+      resolvedBranchNames,
+    );
+
+    if (!isValid) {
+      throw new ForbiddenException(
+        'API key scope does not allow access to this resource',
+      );
+    }
+  }
+
+  protected buildScopeRequest(_params: T): {
+    organizationId?: string;
+    projectId?: string;
+    branchName?: string;
+    tableId?: string;
+  } | null {
+    return null;
   }
 }

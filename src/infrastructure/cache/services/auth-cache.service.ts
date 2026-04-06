@@ -116,6 +116,24 @@ export class AuthCacheService {
     });
   }
 
+  public async apiKeyByHash<T>(
+    keyHash: string,
+    factory: () => Promise<T>,
+  ): Promise<T> {
+    return this.cache.getOrSet({
+      key: AUTH_CACHE_KEYS.API_KEY_BY_HASH(keyHash),
+      ttl: AUTH_CACHE_CONFIG.API_KEY_TTL,
+      tags: [AUTH_CACHE_TAGS.AUTH_RELATIVES],
+      factory,
+    });
+  }
+
+  public async invalidateApiKeyByHash(keyHash: string) {
+    await this.cache.delete({
+      key: AUTH_CACHE_KEYS.API_KEY_BY_HASH(keyHash),
+    });
+  }
+
   public async invalidateAllAuthCaches() {
     await this.cache.deleteByTag({
       tags: [AUTH_CACHE_TAGS.AUTH_RELATIVES],

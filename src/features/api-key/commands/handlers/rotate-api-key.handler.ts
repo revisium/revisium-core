@@ -6,6 +6,7 @@ import {
   RotateApiKeyCommand,
   RotateApiKeyCommandReturnType,
 } from 'src/features/api-key/commands/impl';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @CommandHandler(RotateApiKeyCommand)
@@ -18,6 +19,7 @@ export class RotateApiKeyHandler implements ICommandHandler<
   constructor(
     private readonly prisma: PrismaService,
     private readonly apiKeyService: ApiKeyService,
+    private readonly authCache: AuthCacheService,
   ) {}
 
   async execute({
@@ -76,6 +78,8 @@ export class RotateApiKeyHandler implements ICommandHandler<
         `Failed to set replacedById on key ${data.keyId}: ${error}`,
       );
     }
+
+    await this.authCache.invalidateApiKeyByHash(oldKey.keyHash);
 
     return { id: newApiKey.id, key };
   }

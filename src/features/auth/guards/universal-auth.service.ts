@@ -1,0 +1,185 @@
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ApiKeyType } from 'src/__generated__/client';
+import { ApiKeyTrackingService } from 'src/features/api-key/api-key-tracking.service';
+import { ApiKeyService } from 'src/features/api-key/api-key.service';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
+import { IApiKeyScope, IAuthUser } from 'src/features/auth/types';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
+
+@Injectable()
+export class UniversalAuthService {
+  constructor(
+    private readonly apiKeyService: ApiKeyService,
+    private readonly apiKeyTracking: ApiKeyTrackingService,
+    private readonly noAuth: NoAuthService,
+    private readonly prisma: PrismaService,
+  ) {}
+
+  get isNoAuthEnabled(): boolean {
+    return this.noAuth.enabled;
+  }
+
+  get adminUser(): IAuthUser {
+    return this.noAuth.adminUser;
+  }
+
+  async authenticate(
+    headers: Record<string, string | string[] | undefined>,
+    query: Record<string, string | undefined>,
+    ip: string,
+  ): Promise<IAuthUser | null> {
+    const internalKey = this.getHeader(headers, 'x-internal-api-key');
+    if (internalKey) {
+      return this.validateApiKeyToken(internalKey, 'internal', ip);
+    }
+
+    const apiKey = this.getHeader(headers, 'x-api-key');
+    if (apiKey) {
+      return this.validateApiKeyToken(apiKey, 'external', ip);
+    }
+
+    const authHeader = this.getHeader(headers, 'authorization');
+    if (authHeader) {
+      const bearer = this.extractBearer(authHeader);
+      if (bearer) {
+        if (bearer.startsWith('rev_')) {
+          return this.validateApiKeyToken(bearer, 'external', ip);
+        }
+        return null;
+      }
+    }
+
+    const queryKey = query?.api_key;
+    if (typeof queryKey === 'string' && queryKey) {
+      return this.validateApiKeyToken(queryKey, 'external', ip);
+    }
+
+    return null;
+  }
+
+  private async validateApiKeyToken(
+    rawKey: string,
+    source: 'internal' | 'external',
+    ip: string,
+  ): Promise<IAuthUser> {
+    if (!this.apiKeyService.validateKeyFormat(rawKey)) {
+      throw new UnauthorizedException('Invalid API key format');
+    }
+
+    const keyHash = this.apiKeyService.hashKey(rawKey);
+    const apiKey = await this.apiKeyService.findByHash(keyHash);
+
+    if (!apiKey) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    if (source === 'internal' && apiKey.type !== ApiKeyType.INTERNAL) {
+      throw new UnauthorizedException(
+        'Internal keys must use X-Internal-Api-Key header',
+      );
+    }
+
+    if (source === 'external' && apiKey.type === ApiKeyType.INTERNAL) {
+      throw new UnauthorizedException(
+        'Internal keys must use X-Internal-Api-Key header',
+      );
+    }
+
+    if (apiKey.revokedAt) {
+      throw new UnauthorizedException('API key has been revoked');
+    }
+
+    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+      throw new UnauthorizedException('API key has expired');
+    }
+
+    this.apiKeyTracking.track(apiKey.id, ip);
+
+    const scope: IApiKeyScope = {
+      organizationId: apiKey.organizationId,
+      projectIds: apiKey.projectIds,
+      branchNames: apiKey.branchNames,
+      tableIds: apiKey.tableIds,
+    };
+
+    if (apiKey.type === ApiKeyType.PERSONAL) {
+      return this.buildPersonalKeyUser(apiKey, scope);
+    }
+
+    if (apiKey.type === ApiKeyType.SERVICE) {
+      return this.buildServiceKeyUser(apiKey, scope);
+    }
+
+    return this.buildInternalKeyUser(apiKey);
+  }
+
+  private async buildPersonalKeyUser(
+    apiKey: { id: string; userId: string | null },
+    scope: IApiKeyScope,
+  ): Promise<IAuthUser> {
+    if (!apiKey.userId) {
+      throw new UnauthorizedException('API key has no associated user');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: apiKey.userId },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return {
+      userId: user.id,
+      email: user.email || '',
+      authMethod: 'personal_key',
+      apiKeyId: apiKey.id,
+      apiKeyScope: scope,
+    };
+  }
+
+  private buildServiceKeyUser(
+    apiKey: { id: string; serviceId: string | null },
+    scope: IApiKeyScope,
+  ): IAuthUser {
+    return {
+      userId: apiKey.serviceId || apiKey.id,
+      email: '',
+      authMethod: 'service_key',
+      apiKeyId: apiKey.id,
+      serviceId: apiKey.serviceId || undefined,
+      apiKeyScope: scope,
+    };
+  }
+
+  private buildInternalKeyUser(apiKey: {
+    id: string;
+    internalServiceName: string | null;
+  }): IAuthUser {
+    return {
+      userId: `internal:${apiKey.internalServiceName || 'unknown'}`,
+      email: '',
+      authMethod: 'internal_key',
+      apiKeyId: apiKey.id,
+    };
+  }
+
+  private getHeader(
+    headers: Record<string, string | string[] | undefined>,
+    name: string,
+  ): string | undefined {
+    const value = headers[name];
+    if (Array.isArray(value)) {
+      return value[0];
+    }
+    return value;
+  }
+
+  private extractBearer(authHeader: string): string | undefined {
+    if (authHeader.startsWith('Bearer ')) {
+      return authHeader.slice(7);
+    }
+    return undefined;
+  }
+}

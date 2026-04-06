@@ -4,6 +4,11 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const DEFAULT_BRANCH_TOKEN = '$default';
 
+export type ApiKeyScopeFields = Pick<
+  ApiKey,
+  'organizationId' | 'projectIds' | 'branchNames' | 'tableIds'
+>;
+
 export interface ScopeRequest {
   organizationId?: string;
   projectId?: string;
@@ -36,7 +41,7 @@ export class ApiKeyScopeService {
   }
 
   validateScope(
-    apiKey: ApiKey,
+    apiKey: ApiKeyScopeFields,
     request: ScopeRequest,
     resolvedBranchNames?: string[],
   ): boolean {
@@ -48,7 +53,10 @@ export class ApiKeyScopeService {
     );
   }
 
-  private matchesOrganization(apiKey: ApiKey, request: ScopeRequest): boolean {
+  private matchesOrganization(
+    apiKey: ApiKeyScopeFields,
+    request: ScopeRequest,
+  ): boolean {
     if (!apiKey.organizationId) {
       return true;
     }
@@ -58,7 +66,10 @@ export class ApiKeyScopeService {
     return apiKey.organizationId === request.organizationId;
   }
 
-  private matchesProject(apiKey: ApiKey, request: ScopeRequest): boolean {
+  private matchesProject(
+    apiKey: ApiKeyScopeFields,
+    request: ScopeRequest,
+  ): boolean {
     if (apiKey.projectIds.length === 0) {
       return true;
     }
@@ -78,7 +89,10 @@ export class ApiKeyScopeService {
     return branchNames.includes(request.branchName);
   }
 
-  private matchesTable(apiKey: ApiKey, request: ScopeRequest): boolean {
+  private matchesTable(
+    apiKey: ApiKeyScopeFields,
+    request: ScopeRequest,
+  ): boolean {
     if (apiKey.tableIds.length === 0) {
       return true;
     }
