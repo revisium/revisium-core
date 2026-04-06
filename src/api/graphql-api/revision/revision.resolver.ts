@@ -21,8 +21,7 @@ import { ApplyMigrationResultModel } from 'src/api/graphql-api/revision/model/ap
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
 import { RevisionsApiService } from 'src/features/revision';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
-import { TableApiService } from 'src/core/table/table-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -33,29 +32,28 @@ export class RevisionResolver {
   constructor(
     private readonly revisionApi: RevisionsApiService,
     private readonly projectApi: ProjectApiService,
-    private readonly coreRevisions: RevisionApiService,
     private readonly coreTables: TableApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RevisionModel)
   revision(@Args('data') data: GetRevisionInput) {
-    return this.coreRevisions.getRevision(data);
+    return this.revisionApi.getRevision(data);
   }
 
   @ResolveField()
   async children(@Parent() revision: RevisionModel) {
-    return this.coreRevisions.getRevisionChildren(revision.id);
+    return this.revisionApi.getRevisionChildren(revision.id);
   }
 
   @ResolveField()
   async parent(@Parent() revision: RevisionModel) {
-    return this.coreRevisions.getRevisionParent(revision.id);
+    return this.revisionApi.getRevisionParent(revision.id);
   }
 
   @ResolveField()
   async child(@Parent() revision: RevisionModel) {
-    return this.coreRevisions.getRevisionChild(revision.id);
+    return this.revisionApi.getRevisionChild(revision.id);
   }
 
   @ResolveField()
@@ -91,7 +89,7 @@ export class RevisionResolver {
 
   @ResolveField()
   async changes(@Parent() revision: RevisionModel) {
-    return this.coreRevisions.revisionChanges({
+    return this.revisionApi.revisionChanges({
       revisionId: revision.id,
     });
   }
@@ -107,7 +105,7 @@ export class RevisionResolver {
       organizationId: data.organizationId,
       projectName: data.projectName,
     });
-    return this.coreRevisions.createRevision({
+    return this.revisionApi.createRevision({
       projectId: project.id,
       branchName: data.branchName,
       comment: data.comment,

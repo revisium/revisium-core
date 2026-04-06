@@ -13,8 +13,8 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { TableApiService } from 'src/core/table/table-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 import {
   CreateRowInput,
   CreateRowsInput,

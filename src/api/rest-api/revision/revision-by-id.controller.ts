@@ -30,10 +30,9 @@ import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
-import { TableApiService } from 'src/core/table/table-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto';
@@ -88,7 +87,6 @@ import { TablesConnection } from 'src/api/rest-api/table/model/table.model';
 export class RevisionByIdController {
   constructor(
     private readonly revisionApi: RevisionsApiService,
-    private readonly coreRevisions: RevisionApiService,
     private readonly coreTables: TableApiService,
     private readonly coreRows: RowApiService,
     private readonly coreBranches: BranchApiService,
@@ -104,7 +102,7 @@ export class RevisionByIdController {
   @ApiNotFoundError('Revision')
   async revisionById(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.coreRevisions.getRevision({ revisionId }),
+      await this.revisionApi.getRevision({ revisionId }),
     );
   }
 
@@ -119,7 +117,7 @@ export class RevisionByIdController {
   @ApiCommonErrors()
   @ApiNotFoundError('Revision')
   async parent(@Param('revisionId') revisionId: string) {
-    const parent = await this.coreRevisions.getRevisionParent(revisionId);
+    const parent = await this.revisionApi.getRevisionParent(revisionId);
     return parent ? transformFromPrismaToRevisionModel(parent) : null;
   }
 
@@ -132,7 +130,7 @@ export class RevisionByIdController {
   @ApiNotFoundError('Revision')
   async child(@Param('revisionId') revisionId: string) {
     return transformFromPrismaToRevisionModel(
-      await this.coreRevisions.getRevisionChild(revisionId),
+      await this.revisionApi.getRevisionChild(revisionId),
     );
   }
 
@@ -230,7 +228,7 @@ export class RevisionByIdController {
     @Param('revisionId') revisionId: string,
     @Query() data: GetRevisionChangesDto,
   ): Promise<RevisionChangesResponse> {
-    return this.coreRevisions.revisionChanges({
+    return this.revisionApi.revisionChanges({
       revisionId,
       compareWithRevisionId: data.compareWithRevisionId,
       includeSystem: data.includeSystem,

@@ -6,7 +6,7 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,

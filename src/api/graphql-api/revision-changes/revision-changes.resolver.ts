@@ -14,9 +14,9 @@ import {
   RowChangesConnection,
   TableChangesConnection,
 } from './model';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
-import { RowApiService } from 'src/core/row/row-api.service';
-import { TableApiService } from 'src/core/table/table-api.service';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
+import { TableApiService } from 'src/features/table/table-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -25,7 +25,7 @@ import { TableApiService } from 'src/core/table/table-api.service';
 @Resolver()
 export class RevisionChangesResolver {
   constructor(
-    private readonly revisions: RevisionApiService,
+    private readonly revisions: RevisionsApiService,
     private readonly rows: RowApiService,
     private readonly tables: TableApiService,
   ) {}

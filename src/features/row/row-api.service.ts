@@ -1,17 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import {
-  EngineApiService,
-  GetRowByIdQueryData,
-  GetRowQueryData,
-  GetRowsQueryData,
-  ResolveRowCountForeignKeysByQueryData,
-  ResolveRowCountForeignKeysToQueryData,
-  ResolveRowForeignKeysByQueryData,
-  ResolveRowForeignKeysToQueryData,
-  SearchRowsQueryData,
-} from '@revisium/engine';
-import { RowWithContext } from 'src/features/share/types/row-with-context.types';
+import { CommandBus } from '@nestjs/cqrs';
+import { EngineApiService } from '@revisium/engine';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
+import {
+  CreateRowCommand,
+  CreateRowsCommand,
+  UpdateRowCommand,
+  UpdateRowsCommand,
+  PatchRowCommand,
+  PatchRowsCommand,
+  RenameRowCommand,
+  RemoveRowCommand,
+  RemoveRowsCommand,
+  UploadFileCommand,
+} from './commands/impl';
 
 @Injectable()
 export class RowApiService {
@@ -19,27 +21,30 @@ export class RowApiService {
 
   constructor(
     private readonly engine: EngineApiService,
+    private readonly commandBus: CommandBus,
     private readonly rowCache: RowCacheService,
   ) {}
 
-  public getRow(data: GetRowQueryData) {
+  // ---- Cached reads ----
+
+  public getRow(data: Parameters<EngineApiService['getRow']>[0]) {
     return this.rowCache.row(data, () => this.engine.getRow(data));
   }
 
-  public getRowById(data: GetRowByIdQueryData) {
+  public getRowById(data: Parameters<EngineApiService['getRowById']>[0]) {
     return this.rowCache.row(data, () => this.engine.getRowById(data));
   }
 
-  public getRows(data: GetRowsQueryData) {
+  public getRows(data: Parameters<EngineApiService['getRows']>[0]) {
     return this.rowCache.getRows(
       data.revisionId,
       data.tableId,
       data,
       async () => {
-        const result = await this.engine.getRows(data as any);
+        const result = await this.engine.getRows(data);
         void this.warmRowCache(result.edges.map((edge) => edge.node)).catch(
           (e) => {
-            this.logger.warn(`Row cache warming failed (non-critical)`, e);
+            this.logger.warn('Row cache warming failed (non-critical)', e);
           },
         );
         return result;
@@ -47,31 +52,93 @@ export class RowApiService {
     );
   }
 
-  public resolveRowCountForeignKeysBy(
-    data: ResolveRowCountForeignKeysByQueryData,
+  // ---- Passthrough reads ----
+
+  public searchRows(...args: Parameters<EngineApiService['searchRows']>) {
+    return this.engine.searchRows(...args);
+  }
+
+  public getCountRowsInTable(
+    ...args: Parameters<EngineApiService['getCountRowsInTable']>
   ) {
-    return this.engine.resolveRowCountForeignKeysBy(data);
+    return this.engine.getCountRowsInTable(...args);
+  }
+
+  public resolveRowForeignKeysBy(
+    ...args: Parameters<EngineApiService['resolveRowForeignKeysBy']>
+  ) {
+    return this.engine.resolveRowForeignKeysBy(...args);
+  }
+
+  public resolveRowForeignKeysTo(
+    ...args: Parameters<EngineApiService['resolveRowForeignKeysTo']>
+  ) {
+    return this.engine.resolveRowForeignKeysTo(...args);
+  }
+
+  public resolveRowCountForeignKeysBy(
+    ...args: Parameters<EngineApiService['resolveRowCountForeignKeysBy']>
+  ) {
+    return this.engine.resolveRowCountForeignKeysBy(...args);
   }
 
   public resolveRowCountForeignKeysTo(
-    data: ResolveRowCountForeignKeysToQueryData,
+    ...args: Parameters<EngineApiService['resolveRowCountForeignKeysTo']>
   ) {
-    return this.engine.resolveRowCountForeignKeysTo(data);
+    return this.engine.resolveRowCountForeignKeysTo(...args);
   }
 
-  public resolveRowForeignKeysBy(data: ResolveRowForeignKeysByQueryData) {
-    return this.engine.resolveRowForeignKeysBy(data);
+  public rowChanges(...args: Parameters<EngineApiService['rowChanges']>) {
+    return this.engine.rowChanges(...args);
   }
 
-  public resolveRowForeignKeysTo(data: ResolveRowForeignKeysToQueryData) {
-    return this.engine.resolveRowForeignKeysTo(data);
+  // ---- Commands ----
+
+  public createRow(data: Parameters<EngineApiService['createRow']>[0]) {
+    return this.commandBus.execute(new CreateRowCommand(data));
   }
 
-  public searchRows(data: SearchRowsQueryData) {
-    return this.engine.searchRows(data);
+  public createRows(data: Parameters<EngineApiService['createRows']>[0]) {
+    return this.commandBus.execute(new CreateRowsCommand(data));
   }
 
-  private async warmRowCache(rows: RowWithContext[]) {
+  public updateRow(data: Parameters<EngineApiService['updateRow']>[0]) {
+    return this.commandBus.execute(new UpdateRowCommand(data));
+  }
+
+  public updateRows(data: Parameters<EngineApiService['updateRows']>[0]) {
+    return this.commandBus.execute(new UpdateRowsCommand(data));
+  }
+
+  public patchRow(data: Parameters<EngineApiService['patchRow']>[0]) {
+    return this.commandBus.execute(new PatchRowCommand(data));
+  }
+
+  public patchRows(data: Parameters<EngineApiService['patchRows']>[0]) {
+    return this.commandBus.execute(new PatchRowsCommand(data));
+  }
+
+  public renameRow(data: Parameters<EngineApiService['renameRow']>[0]) {
+    return this.commandBus.execute(new RenameRowCommand(data));
+  }
+
+  public removeRow(data: Parameters<EngineApiService['removeRow']>[0]) {
+    return this.commandBus.execute(new RemoveRowCommand(data));
+  }
+
+  public removeRows(data: Parameters<EngineApiService['removeRows']>[0]) {
+    return this.commandBus.execute(new RemoveRowsCommand(data));
+  }
+
+  public uploadFile(data: Parameters<EngineApiService['uploadFile']>[0]) {
+    return this.commandBus.execute(new UploadFileCommand(data));
+  }
+
+  // ---- Private ----
+
+  private async warmRowCache(
+    rows: { id: string; context: { revisionId: string; tableId: string } }[],
+  ) {
     await Promise.all(
       rows.map((row) =>
         this.rowCache.row({ ...row.context, rowId: row.id }, () =>

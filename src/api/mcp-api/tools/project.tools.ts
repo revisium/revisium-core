@@ -1,7 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 

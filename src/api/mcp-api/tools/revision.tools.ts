@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
   UriRevisionResolver,
@@ -15,7 +15,7 @@ import {
 export class RevisionTools implements McpToolRegistrar {
   constructor(
     private readonly projectApi: ProjectApiService,
-    private readonly revisions: RevisionApiService,
+    private readonly revisions: RevisionsApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 

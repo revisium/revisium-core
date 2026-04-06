@@ -20,7 +20,7 @@ import {
 import { GetRowForeignKeysInput } from 'src/api/graphql-api/row/inputs/get-row-foreign-keys.input';
 import { RowModel } from 'src/api/graphql-api/row/model/row.model';
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
-import { RowApiService } from 'src/core/row/row-api.service';
+import { RowApiService } from 'src/features/row/row-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,

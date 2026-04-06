@@ -1,66 +1,87 @@
 import { Injectable } from '@nestjs/common';
-import { QueryBus } from '@nestjs/cqrs';
-import {
-  EngineApiService,
-  GetChildrenByRevisionQueryData,
-  GetMigrationsQueryData,
-  GetRevisionQueryData,
-  GetTablesByRevisionIdQueryData,
-  ResolveBranchByRevisionQueryData,
-  ResolveChildBranchesByRevisionQueryData,
-  ResolveChildByRevisionQueryData,
-  ResolveParentByRevisionQueryData,
-} from '@revisium/engine';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { EngineApiService } from '@revisium/engine';
 import {
   GetEndpointsByRevisionIdQuery,
   GetEndpointsByRevisionIdQueryData,
 } from 'src/features/revision/queries/impl';
 import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
+import { CreateRevisionCommand, RevertChangesCommand } from './commands/impl';
 
 @Injectable()
 export class RevisionsApiService {
   constructor(
     private readonly engine: EngineApiService,
+    private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
     private readonly cache: RevisionCacheService,
   ) {}
 
-  public revision(data: GetRevisionQueryData) {
+  // ---- Cached reads ----
+
+  public getRevision(data: Parameters<EngineApiService['getRevision']>[0]) {
     return this.cache.revision(data, () => this.engine.getRevision(data));
   }
 
-  public migrations(data: GetMigrationsQueryData) {
-    return this.engine.getMigrations(data);
+  // ---- Passthrough reads ----
+
+  public getRevisionParent(
+    ...args: Parameters<EngineApiService['getRevisionParent']>
+  ) {
+    return this.engine.getRevisionParent(...args);
   }
 
-  public resolveParentByRevision(data: ResolveParentByRevisionQueryData) {
-    return this.engine.getRevisionParent(data);
+  public getRevisionChild(
+    ...args: Parameters<EngineApiService['getRevisionChild']>
+  ) {
+    return this.engine.getRevisionChild(...args);
   }
 
-  public resolveChildByRevision(data: ResolveChildByRevisionQueryData) {
-    return this.engine.getRevisionChild(data);
+  public getRevisionChildren(
+    ...args: Parameters<EngineApiService['getRevisionChildren']>
+  ) {
+    return this.engine.getRevisionChildren(...args);
   }
+
+  public getRevisionsByBranchId(
+    ...args: Parameters<EngineApiService['getRevisionsByBranchId']>
+  ) {
+    return this.engine.getRevisionsByBranchId(...args);
+  }
+
+  public revisionChanges(
+    ...args: Parameters<EngineApiService['revisionChanges']>
+  ) {
+    return this.engine.revisionChanges(...args);
+  }
+
+  // ---- Feature-specific reads ----
 
   public resolveChildBranchesByRevision(
-    data: ResolveChildBranchesByRevisionQueryData,
+    ...args: Parameters<EngineApiService['resolveChildBranchesByRevision']>
   ) {
-    return this.engine.resolveChildBranchesByRevision(data);
+    return this.engine.resolveChildBranchesByRevision(...args);
   }
 
-  public getTablesByRevisionId(data: GetTablesByRevisionIdQueryData) {
-    return this.engine.getTablesByRevisionId(data);
+  public resolveBranchByRevision(
+    ...args: Parameters<EngineApiService['resolveBranchByRevision']>
+  ) {
+    return this.engine.resolveBranchByRevision(...args);
   }
 
-  // Core-specific: endpoints not in engine
   public getEndpointsByRevisionId(data: GetEndpointsByRevisionIdQueryData) {
     return this.queryBus.execute(new GetEndpointsByRevisionIdQuery(data));
   }
 
-  public getChildrenByRevision(data: GetChildrenByRevisionQueryData) {
-    return this.engine.getRevisionChildren(data);
+  // ---- Commands ----
+
+  public createRevision(
+    data: Parameters<EngineApiService['createRevision']>[0],
+  ) {
+    return this.commandBus.execute(new CreateRevisionCommand(data));
   }
 
-  public resolveBranchByRevision(data: ResolveBranchByRevisionQueryData) {
-    return this.engine.resolveBranchByRevision(data);
+  public revertChanges(data: Parameters<EngineApiService['revertChanges']>[0]) {
+    return this.commandBus.execute(new RevertChangesCommand(data));
   }
 }

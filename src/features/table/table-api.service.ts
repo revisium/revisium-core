@@ -1,53 +1,111 @@
 import { Injectable } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
+import { EngineApiService } from '@revisium/engine';
 import {
-  EngineApiService,
-  GetCountRowsInTableQueryData,
-  GetTableQueryData,
-  GetTablesQueryData,
-  ResolveTableCountForeignKeysByQueryData,
-  ResolveTableCountForeignKeysToQueryData,
-  ResolveTableForeignKeysByQueryData,
-  ResolveTableForeignKeysToQueryData,
-  ResolveTableSchemaQueryData,
-} from '@revisium/engine';
+  CreateTableCommand,
+  UpdateTableCommand,
+  RenameTableCommand,
+  RemoveTableCommand,
+} from './commands/impl';
 
 @Injectable()
 export class TableApiService {
-  constructor(private readonly engine: EngineApiService) {}
+  constructor(
+    private readonly engine: EngineApiService,
+    private readonly commandBus: CommandBus,
+  ) {}
 
-  public getTable(data: GetTableQueryData) {
-    return this.engine.getTable(data);
+  // ---- Passthrough reads ----
+
+  public getTable(...args: Parameters<EngineApiService['getTable']>) {
+    return this.engine.getTable(...args);
   }
 
-  public getCountRowsInTable(data: GetCountRowsInTableQueryData) {
-    return this.engine.getCountRowsInTable(data);
+  public getTables(...args: Parameters<EngineApiService['getTables']>) {
+    return this.engine.getTables(...args);
   }
 
-  public resolveTableSchema(data: ResolveTableSchemaQueryData) {
-    return this.engine.resolveTableSchema(data);
+  public getTablesByRevisionId(
+    ...args: Parameters<EngineApiService['getTablesByRevisionId']>
+  ) {
+    return this.engine.getTablesByRevisionId(...args);
+  }
+
+  public resolveTableSchema(
+    ...args: Parameters<EngineApiService['resolveTableSchema']>
+  ) {
+    return this.engine.resolveTableSchema(...args);
+  }
+
+  public resolveTableForeignKeysBy(
+    ...args: Parameters<EngineApiService['resolveTableForeignKeysBy']>
+  ) {
+    return this.engine.resolveTableForeignKeysBy(...args);
+  }
+
+  public resolveTableForeignKeysTo(
+    ...args: Parameters<EngineApiService['resolveTableForeignKeysTo']>
+  ) {
+    return this.engine.resolveTableForeignKeysTo(...args);
   }
 
   public resolveTableCountForeignKeysBy(
-    data: ResolveTableCountForeignKeysByQueryData,
+    ...args: Parameters<EngineApiService['resolveTableCountForeignKeysBy']>
   ) {
-    return this.engine.resolveTableCountForeignKeysBy(data);
+    return this.engine.resolveTableCountForeignKeysBy(...args);
   }
 
   public resolveTableCountForeignKeysTo(
-    data: ResolveTableCountForeignKeysToQueryData,
+    ...args: Parameters<EngineApiService['resolveTableCountForeignKeysTo']>
   ) {
-    return this.engine.resolveTableCountForeignKeysTo(data);
+    return this.engine.resolveTableCountForeignKeysTo(...args);
   }
 
-  public resolveTableForeignKeysBy(data: ResolveTableForeignKeysByQueryData) {
-    return this.engine.resolveTableForeignKeysBy(data);
+  public getTableViews(...args: Parameters<EngineApiService['getTableViews']>) {
+    return this.engine.getTableViews(...args);
   }
 
-  public resolveTableForeignKeysTo(data: ResolveTableForeignKeysToQueryData) {
-    return this.engine.resolveTableForeignKeysTo(data);
+  public updateTableViews(
+    ...args: Parameters<EngineApiService['updateTableViews']>
+  ) {
+    return this.engine.updateTableViews(...args);
   }
 
-  public getTables(data: GetTablesQueryData) {
-    return this.engine.getTables(data);
+  public getSubSchemaItems(
+    ...args: Parameters<EngineApiService['getSubSchemaItems']>
+  ) {
+    return this.engine.getSubSchemaItems(...args);
+  }
+
+  public getMigrations(...args: Parameters<EngineApiService['getMigrations']>) {
+    return this.engine.getMigrations(...args);
+  }
+
+  public applyMigrations(
+    ...args: Parameters<EngineApiService['applyMigrations']>
+  ) {
+    return this.engine.applyMigrations(...args);
+  }
+
+  public tableChanges(...args: Parameters<EngineApiService['tableChanges']>) {
+    return this.engine.tableChanges(...args);
+  }
+
+  // ---- Commands ----
+
+  public createTable(data: Parameters<EngineApiService['createTable']>[0]) {
+    return this.commandBus.execute(new CreateTableCommand(data));
+  }
+
+  public updateTable(data: Parameters<EngineApiService['updateTable']>[0]) {
+    return this.commandBus.execute(new UpdateTableCommand(data));
+  }
+
+  public renameTable(data: Parameters<EngineApiService['renameTable']>[0]) {
+    return this.commandBus.execute(new RenameTableCommand(data));
+  }
+
+  public removeTable(data: Parameters<EngineApiService['removeTable']>[0]) {
+    return this.commandBus.execute(new RemoveTableCommand(data));
   }
 }

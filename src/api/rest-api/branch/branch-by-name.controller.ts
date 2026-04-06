@@ -27,8 +27,8 @@ import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   CreateRevisionDto,
@@ -63,7 +63,7 @@ import {
 export class BranchByNameController {
   constructor(
     private readonly branches: BranchApiService,
-    private readonly coreRevisions: RevisionApiService,
+    private readonly coreRevisions: RevisionsApiService,
     private readonly projectApi: ProjectApiService,
   ) {}
 

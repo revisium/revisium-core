@@ -13,8 +13,8 @@ import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-g
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { BranchApiService } from 'src/core/branch/branch-api.service';
-import { RevisionApiService } from 'src/core/revision/revision-api.service';
+import { BranchApiService } from 'src/features/branch/branch-api.service';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import {
   CreateBranchInput,
   DeleteBranchInput,
@@ -37,7 +37,7 @@ export class BranchResolver {
   constructor(
     private readonly projectApi: ProjectApiService,
     private readonly branchApi: BranchApiService,
-    private readonly coreRevisions: RevisionApiService,
+    private readonly coreRevisions: RevisionsApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
