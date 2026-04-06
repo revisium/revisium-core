@@ -93,11 +93,11 @@ export class EndpointTools implements McpToolRegistrar {
     if (!this.endpointServiceUrl) {
       if (!this.hasWarnedAboutFallbackUrl) {
         this.logger.warn(
-          'ENDPOINT_SERVICE_URL is not configured, using fallback http://localhost:8081',
+          'Neither ENDPOINT_SERVICE_URL nor PUBLIC_URL is configured — endpoint schema tools will fail',
         );
         this.hasWarnedAboutFallbackUrl = true;
       }
-      return 'http://localhost:8081';
+      return '';
     }
     return this.endpointServiceUrl;
   }
@@ -282,7 +282,7 @@ export class EndpointTools implements McpToolRegistrar {
       'get_graphql_schema',
       {
         description:
-          'Fetch GraphQL schema (introspection) from a GRAPHQL endpoint. Returns the full schema introspection result that describes all types, queries, and mutations available.',
+          'Fetch GraphQL schema (introspection) from a GRAPHQL endpoint. Returns the full schema introspection result that describes all types, queries, and mutations available. The endpoint URL is resolved server-side. If this fails with a connection error, check that ENDPOINT_SERVICE_URL or PUBLIC_URL env var is set correctly on the server.',
         inputSchema: {
           endpointId: z.string().describe('Endpoint ID (must be GRAPHQL type)'),
         },
@@ -373,7 +373,7 @@ export class EndpointTools implements McpToolRegistrar {
       'get_openapi_spec',
       {
         description:
-          'Fetch OpenAPI/Swagger specification from a REST_API endpoint. Returns the full OpenAPI JSON spec that describes all routes, parameters, and schemas.',
+          'Fetch OpenAPI/Swagger specification from a REST_API endpoint. Returns the full OpenAPI JSON spec that describes all routes, parameters, and schemas. The endpoint URL is resolved server-side. If this fails with a connection error, check that ENDPOINT_SERVICE_URL or PUBLIC_URL env var is set correctly on the server.',
         inputSchema: {
           endpointId: z
             .string()

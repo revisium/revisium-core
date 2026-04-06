@@ -302,7 +302,34 @@ FOREIGN KEY RULES:
 - Array of string foreignKeys: { "type": "array", "items": { "type": "string", "default": "", "foreignKey": "other-table" } }
 - foreignKey value MUST be a valid rowId — empty string is NOT allowed
 - foreignKey and x-formula CANNOT coexist on the same field
-- Self-references (foreignKey pointing to same table) are NOT supported`,
+- Self-references (foreignKey pointing to same table) are NOT supported
+
+FIELD PROPERTIES BY TYPE:
+
+All types support: title (display name), description (tooltip/help text), deprecated (boolean)
+
+- string: type, default (required, ""), readOnly, foreignKey, x-formula
+  - pattern: regex validation (e.g., "^[A-Z]{3}$")
+  - format: "date-time", "date", "time", "email", "regex"
+  - contentMediaType: "text/plain", "text/markdown", "text/html", "application/json", "application/yaml"
+  Example: { "type": "string", "default": "", "contentMediaType": "text/markdown" }
+  Example: { "type": "string", "default": "", "format": "date-time" }
+  Example: { "type": "string", "default": "", "pattern": "^[A-Z]{2}-\\\\d+$" }
+
+- number: type, default (required, 0), readOnly, x-formula
+
+- boolean: type, default (required, false), readOnly, x-formula
+
+- array: type, items (required, no default on array itself)
+  Items follow normal field rules per type.
+
+- object: type, properties, additionalProperties (false), required
+  No default on objects. Nested properties follow normal field rules.
+
+- $ref (File): { "$ref": "urn:jsonschema:io:revisium:file-schema:1.0.0" }
+  No default. Supports title, description, deprecated.
+
+Full meta-schema available via resource: revisium://specs/schema`,
         inputSchema: {
           ...draftRevisionIdOrUri,
           tableId: z
@@ -397,8 +424,34 @@ FOREIGN KEY RULES:
     server.registerTool(
       'update_table',
       {
-        description:
-          'Update table schema using JSON Patch. IMPORTANT: Always call get_table_schema first to understand current structure before updating. Do NOT manually add/remove/replace the "required" array or its elements — the system manages "required" automatically based on field defaults.',
+        description: `Update table schema using JSON Patch. IMPORTANT: Always call get_table_schema first to understand current structure before updating. Do NOT manually add/remove/replace the "required" array or its elements — the system manages "required" automatically based on field defaults.
+
+FIELD PROPERTIES BY TYPE:
+
+All types support: title (display name), description (tooltip/help text), deprecated (boolean)
+
+- string: type, default (required, ""), readOnly, foreignKey, x-formula
+  - pattern: regex validation (e.g., "^[A-Z]{3}$")
+  - format: "date-time", "date", "time", "email", "regex"
+  - contentMediaType: "text/plain", "text/markdown", "text/html", "application/json", "application/yaml"
+  Example: { "type": "string", "default": "", "contentMediaType": "text/markdown" }
+  Example: { "type": "string", "default": "", "format": "date-time" }
+  Example: { "type": "string", "default": "", "pattern": "^[A-Z]{2}-\\\\d+$" }
+
+- number: type, default (required, 0), readOnly, x-formula
+
+- boolean: type, default (required, false), readOnly, x-formula
+
+- array: type, items (required, no default on array itself)
+  Items follow normal field rules per type.
+
+- object: type, properties, additionalProperties (false), required
+  No default on objects. Nested properties follow normal field rules.
+
+- $ref (File): { "$ref": "urn:jsonschema:io:revisium:file-schema:1.0.0" }
+  No default. Supports title, description, deprecated.
+
+Full meta-schema available via resource: revisium://specs/schema`,
         inputSchema: {
           ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),

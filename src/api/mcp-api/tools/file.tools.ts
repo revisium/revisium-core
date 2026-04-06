@@ -23,7 +23,7 @@ export class FileTools implements McpToolRegistrar {
 WORKFLOW:
 1. Create a table with a file field using $ref: "urn:jsonschema:io:revisium:file-schema:1.0.0" in schema
 2. Create a row - the file field will have status "ready" and a generated fileId
-3. Get the row to find the fileId in the file field
+3. Get the row (get_row) to find the auto-generated fileId in the file field
 4. Use this tool to upload the actual file data using that fileId
 5. After upload, status changes to "uploaded" and url becomes available
 

@@ -340,7 +340,7 @@ COMPUTED FIELDS (x-formula):
 FILE FIELDS:
 - For file fields ($ref in schema), pass an empty file object: { "status": "", "fileId": "", "url": "", "fileName": "", "hash": "", "extension": "", "mimeType": "", "size": 0, "width": 0, "height": 0 }
 - The server will auto-set status to "ready" and generate a fileId
-- After row creation, use upload_file with the generated fileId to upload actual file data`,
+- After row creation, call get_row to read the auto-generated fileId, then use upload_file with that fileId to upload actual file data`,
         inputSchema: {
           ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
@@ -393,7 +393,7 @@ FILE FIELDS:
       'update_row',
       {
         description:
-          'Update a row by REPLACING all data. You must send the complete object with ALL fields. If you only need to change a few fields, use patch_row instead — it is more efficient and avoids accidentally overwriting other fields.',
+          'Update a row by REPLACING all data. You must send the complete object with ALL fields. Computed (x-formula) fields can be omitted — auto-filled, same as create_row. If you only need to change a few fields, use patch_row instead — it is more efficient and avoids accidentally overwriting other fields.',
         inputSchema: {
           ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
@@ -413,11 +413,19 @@ FILE FIELDS:
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
+        const schema = await this.engine.resolveTableSchema({
+          revisionId,
+          tableId,
+        });
+        const filledData = fillFormulaDefaults(
+          schema as Record<string, unknown>,
+          data,
+        );
         const result = await this.engine.updateRow({
           revisionId,
           tableId,
           rowId,
-          data: data as Prisma.InputJsonValue,
+          data: filledData as Prisma.InputJsonValue,
         });
         return {
           content: [
@@ -543,7 +551,7 @@ COMPUTED FIELDS (x-formula):
       'update_rows',
       {
         description:
-          'Update multiple rows by REPLACING all data for each row. If you only need to change a few fields, use patch_rows instead.',
+          'Update multiple rows by REPLACING all data for each row. Computed (x-formula) fields can be omitted — auto-filled, same as create_rows. If you only need to change a few fields, use patch_rows instead.',
         inputSchema: {
           ...draftRevisionIdOrUri,
           tableId: z.string().describe('Table ID'),
@@ -572,12 +580,19 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
+        const schema = await this.engine.resolveTableSchema({
+          revisionId,
+          tableId,
+        });
         const result = await this.engine.updateRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
             rowId: r.rowId,
-            data: r.data as Prisma.InputJsonValue,
+            data: fillFormulaDefaults(
+              schema as Record<string, unknown>,
+              r.data,
+            ) as Prisma.InputJsonValue,
           })),
         });
         return {
