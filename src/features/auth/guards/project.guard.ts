@@ -8,6 +8,8 @@ interface Params {
   projectId?: string;
   revisionId?: string;
   endpointId?: string;
+  branchName?: string;
+  tableId?: string;
 }
 
 abstract class ProjectGuard extends BasePermissionGuard<Params> {
@@ -65,6 +67,15 @@ abstract class ProjectGuard extends BasePermissionGuard<Params> {
     } else {
       throw new NotFoundException(params);
     }
+  }
+
+  protected override buildScopeRequest(params: Params) {
+    return {
+      organizationId: params.organizationId,
+      projectId: params.projectId,
+      branchName: params.branchName,
+      tableId: params.tableId,
+    };
   }
 }
 

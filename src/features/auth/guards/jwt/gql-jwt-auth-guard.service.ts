@@ -1,25 +1,11 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
-import { AuthGuard } from '@nestjs/passport';
-import { NoAuthService } from 'src/features/auth/no-auth.service';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { GqlUniversalAuthGuard } from 'src/features/auth/guards/universal/gql-universal-auth.guard';
 
 @Injectable()
-export class GqlJwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly noAuth: NoAuthService) {
-    super();
-  }
+export class GqlJwtAuthGuard implements CanActivate {
+  constructor(private readonly universalGuard: GqlUniversalAuthGuard) {}
 
   canActivate(context: ExecutionContext) {
-    if (this.noAuth.enabled) {
-      GqlExecutionContext.create(context).getContext().req.user =
-        this.noAuth.adminUser;
-      return true;
-    }
-    return super.canActivate(context);
-  }
-
-  getRequest(context: ExecutionContext) {
-    const ctx = GqlExecutionContext.create(context);
-    return ctx.getContext().req;
+    return this.universalGuard.canActivate(context);
   }
 }

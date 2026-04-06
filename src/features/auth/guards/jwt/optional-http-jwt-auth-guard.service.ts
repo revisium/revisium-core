@@ -1,22 +1,13 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
-import { NoAuthService } from 'src/features/auth/no-auth.service';
+import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { OptionalHttpUniversalAuthGuard } from 'src/features/auth/guards/universal/http-universal-auth.guard';
 
 @Injectable()
-export class OptionalHttpJwtAuthGuard extends AuthGuard('jwt') {
-  constructor(private readonly noAuth: NoAuthService) {
-    super();
-  }
+export class OptionalHttpJwtAuthGuard implements CanActivate {
+  constructor(
+    private readonly universalGuard: OptionalHttpUniversalAuthGuard,
+  ) {}
 
   canActivate(context: ExecutionContext) {
-    if (this.noAuth.enabled) {
-      context.switchToHttp().getRequest().user = this.noAuth.adminUser;
-      return true;
-    }
-    return super.canActivate(context);
-  }
-
-  handleRequest(_: any, user: any) {
-    return user;
+    return this.universalGuard.canActivate(context);
   }
 }

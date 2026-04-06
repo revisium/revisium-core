@@ -8,6 +8,19 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';
+import { UniversalAuthService } from 'src/features/auth/guards/universal-auth.service';
+import {
+  HttpUniversalAuthGuard,
+  OptionalHttpUniversalAuthGuard,
+  HttpJwtPassportGuard,
+  OptionalHttpJwtPassportGuard,
+} from 'src/features/auth/guards/universal/http-universal-auth.guard';
+import {
+  GqlUniversalAuthGuard,
+  OptionalGqlUniversalAuthGuard,
+  GqlJwtPassportGuard,
+  OptionalGqlJwtPassportGuard,
+} from 'src/features/auth/guards/universal/gql-universal-auth.guard';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -48,13 +61,19 @@ describe('NoAuthService', () => {
 });
 
 describe('JWT Guards with NO_AUTH enabled', () => {
-  const noAuthEnabled = {
-    enabled: true,
-    adminUser: { userId: 'admin', email: '' },
-  };
+  const adminUser = { userId: 'admin', email: '' };
+
+  const noAuthUniversalService = {
+    authenticateRequest: jest.fn().mockImplementation(async (request: any) => {
+      request.user = adminUser;
+      return 'authenticated';
+    }),
+  } as unknown as UniversalAuthService;
+
+  const mockJwtGuard = { canActivate: jest.fn() };
 
   const createHttpContext = (): { context: ExecutionContext; request: any } => {
-    const request = { user: undefined as any };
+    const request = { user: undefined as any, headers: {}, query: {}, ip: '' };
     const context = {
       switchToHttp: () => ({
         getRequest: () => request,
@@ -64,7 +83,7 @@ describe('JWT Guards with NO_AUTH enabled', () => {
   };
 
   const createGqlContext = (): { context: ExecutionContext; request: any } => {
-    const request = { user: undefined as any };
+    const request = { user: undefined as any, headers: {}, query: {}, ip: '' };
     (GqlExecutionContext.create as jest.Mock).mockReturnValue({
       getContext: () => ({ req: request }),
     });
@@ -73,52 +92,66 @@ describe('JWT Guards with NO_AUTH enabled', () => {
   };
 
   describe('HttpJwtAuthGuard', () => {
-    it('should set admin user and return true', () => {
-      const guard = new HttpJwtAuthGuard(noAuthEnabled as NoAuthService);
+    it('should set admin user and return true', async () => {
+      const universalGuard = new HttpUniversalAuthGuard(
+        noAuthUniversalService,
+        mockJwtGuard as unknown as HttpJwtPassportGuard,
+      );
+      const guard = new HttpJwtAuthGuard(universalGuard);
       const { context, request } = createHttpContext();
 
-      const result = guard.canActivate(context);
+      const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 
   describe('OptionalHttpJwtAuthGuard', () => {
-    it('should set admin user and return true', () => {
-      const guard = new OptionalHttpJwtAuthGuard(
-        noAuthEnabled as NoAuthService,
+    it('should set admin user and return true', async () => {
+      const universalGuard = new OptionalHttpUniversalAuthGuard(
+        noAuthUniversalService,
+        mockJwtGuard as unknown as OptionalHttpJwtPassportGuard,
       );
+      const guard = new OptionalHttpJwtAuthGuard(universalGuard);
       const { context, request } = createHttpContext();
 
-      const result = guard.canActivate(context);
+      const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 
   describe('GqlJwtAuthGuard', () => {
-    it('should set admin user and return true', () => {
-      const guard = new GqlJwtAuthGuard(noAuthEnabled as NoAuthService);
+    it('should set admin user and return true', async () => {
+      const universalGuard = new GqlUniversalAuthGuard(
+        noAuthUniversalService,
+        mockJwtGuard as unknown as GqlJwtPassportGuard,
+      );
+      const guard = new GqlJwtAuthGuard(universalGuard);
       const { context, request } = createGqlContext();
 
-      const result = guard.canActivate(context);
+      const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 
   describe('OptionalGqlJwtAuthGuard', () => {
-    it('should set admin user and return true', () => {
-      const guard = new OptionalGqlJwtAuthGuard(noAuthEnabled as NoAuthService);
+    it('should set admin user and return true', async () => {
+      const universalGuard = new OptionalGqlUniversalAuthGuard(
+        noAuthUniversalService,
+        mockJwtGuard as unknown as OptionalGqlJwtPassportGuard,
+      );
+      const guard = new OptionalGqlJwtAuthGuard(universalGuard);
       const { context, request } = createGqlContext();
 
-      const result = guard.canActivate(context);
+      const result = await guard.canActivate(context);
 
       expect(result).toBe(true);
-      expect(request.user).toEqual({ userId: 'admin', email: '' });
+      expect(request.user).toEqual(adminUser);
     });
   });
 });

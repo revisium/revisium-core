@@ -13,6 +13,7 @@ import {
   CreateApiKeyCommand,
   RevokeApiKeyCommand,
 } from 'src/features/api-key/commands/impl';
+import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('RevokeApiKeyHandler', () => {
@@ -21,7 +22,7 @@ describe('RevokeApiKeyHandler', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule],
+      imports: [CqrsModule, RevisiumCacheModule.forRootAsync()],
       providers: [
         RevokeApiKeyHandler,
         CreateApiKeyHandler,

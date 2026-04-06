@@ -11,6 +11,7 @@ import { testCreateUser } from 'src/__tests__/create-models';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { CreateApiKeyHandler } from 'src/features/api-key/commands/handlers';
 import { CreateApiKeyCommand } from 'src/features/api-key/commands/impl';
+import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('CreateApiKeyHandler', () => {
@@ -19,7 +20,7 @@ describe('CreateApiKeyHandler', () => {
 
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule],
+      imports: [CqrsModule, RevisiumCacheModule.forRootAsync()],
       providers: [CreateApiKeyHandler, ApiKeyService, PrismaService],
     }).compile();
 

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const KEY_PREFIX = 'rev_';
@@ -9,7 +10,10 @@ const KEY_FORMAT_REGEX = /^rev_[A-Za-z0-9_-]{22}$/;
 
 @Injectable()
 export class ApiKeyService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authCache: AuthCacheService,
+  ) {}
 
   generateKey(): { key: string; hash: string; prefix: string } {
     const random = nanoid(KEY_RANDOM_LENGTH);
@@ -28,8 +32,10 @@ export class ApiKeyService {
   }
 
   async findByHash(keyHash: string) {
-    return this.prisma.apiKey.findUnique({
-      where: { keyHash },
-    });
+    return this.authCache.apiKeyByHash(keyHash, () =>
+      this.prisma.apiKey.findUnique({
+        where: { keyHash },
+      }),
+    );
   }
 }

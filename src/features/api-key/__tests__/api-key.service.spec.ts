@@ -3,14 +3,18 @@ import { nanoid } from 'nanoid';
 import { ApiKeyType } from 'src/__generated__/client';
 import { testCreateUser } from 'src/__tests__/create-models';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
+import { RevisiumCacheModule } from 'src/infrastructure/cache';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('ApiKeyService', () => {
+  let module: TestingModule;
   let service: ApiKeyService;
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
+      imports: [RevisiumCacheModule.forRootAsync()],
       providers: [ApiKeyService, PrismaService],
     }).compile();
 
@@ -101,6 +105,32 @@ describe('ApiKeyService', () => {
     it('should return null for unknown hash', async () => {
       const result = await service.findByHash('nonexistent-hash');
       expect(result).toBeNull();
+    });
+
+    it('should go through AuthCacheService (noop in tests)', async () => {
+      const userId = nanoid();
+      await testCreateUser(prisma, { id: userId });
+
+      const { hash, prefix } = service.generateKey();
+      await prisma.apiKey.create({
+        data: {
+          prefix,
+          keyHash: hash,
+          type: ApiKeyType.PERSONAL,
+          name: 'cache-test-key',
+          userId,
+        },
+      });
+
+      const authCache = module.get(AuthCacheService);
+      const spy = jest.spyOn(authCache, 'apiKeyByHash');
+
+      const result = await service.findByHash(hash);
+
+      expect(result).not.toBeNull();
+      expect(spy).toHaveBeenCalledWith(hash, expect.any(Function));
+
+      spy.mockRestore();
     });
   });
 });
