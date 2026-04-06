@@ -1,29 +1,26 @@
 import { UriRevisionResolver } from '../uri-revision-resolver';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { BranchApiService } from 'src/core/branch/branch-api.service';
 
 describe('UriRevisionResolver', () => {
   let resolver: UriRevisionResolver;
   let projectApi: jest.Mocked<Pick<ProjectApiService, 'getProject'>>;
-  let engine: jest.Mocked<
-    Pick<
-      CoreEngineApiService,
-      'getBranch' | 'getDraftRevision' | 'getHeadRevision'
-    >
+  let branches: jest.Mocked<
+    Pick<BranchApiService, 'getBranch' | 'getDraftRevision' | 'getHeadRevision'>
   >;
 
   beforeEach(() => {
     projectApi = {
       getProject: jest.fn().mockResolvedValue({ id: 'project-id-1' }),
     };
-    engine = {
+    branches = {
       getBranch: jest.fn().mockResolvedValue({ id: 'branch-id-1' }),
       getDraftRevision: jest.fn().mockResolvedValue({ id: 'draft-rev-id' }),
       getHeadRevision: jest.fn().mockResolvedValue({ id: 'head-rev-id' }),
     };
     resolver = new UriRevisionResolver(
       projectApi as unknown as ProjectApiService,
-      engine as unknown as CoreEngineApiService,
+      branches as unknown as BranchApiService,
     );
   });
 
@@ -40,12 +37,12 @@ describe('UriRevisionResolver', () => {
       organizationId: 'org',
       projectName: 'proj',
     });
-    expect(engine.getBranch).toHaveBeenCalledWith({
+    expect(branches.getBranch).toHaveBeenCalledWith({
       projectId: 'project-id-1',
       branchName: 'master',
     });
-    expect(engine.getDraftRevision).toHaveBeenCalledWith('branch-id-1');
-    expect(engine.getHeadRevision).not.toHaveBeenCalled();
+    expect(branches.getDraftRevision).toHaveBeenCalledWith('branch-id-1');
+    expect(branches.getHeadRevision).not.toHaveBeenCalled();
   });
 
   it('resolves head revision', async () => {
@@ -57,8 +54,8 @@ describe('UriRevisionResolver', () => {
     });
 
     expect(result).toBe('head-rev-id');
-    expect(engine.getHeadRevision).toHaveBeenCalledWith('branch-id-1');
-    expect(engine.getDraftRevision).not.toHaveBeenCalled();
+    expect(branches.getHeadRevision).toHaveBeenCalledWith('branch-id-1');
+    expect(branches.getDraftRevision).not.toHaveBeenCalled();
   });
 
   it('passes through specific revisionId without calling any API', async () => {
@@ -71,7 +68,7 @@ describe('UriRevisionResolver', () => {
 
     expect(result).toBe('specific-uuid-123');
     expect(projectApi.getProject).not.toHaveBeenCalled();
-    expect(engine.getBranch).not.toHaveBeenCalled();
+    expect(branches.getBranch).not.toHaveBeenCalled();
   });
 
   it('propagates error when project not found', async () => {

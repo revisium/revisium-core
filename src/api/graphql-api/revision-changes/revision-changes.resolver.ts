@@ -14,7 +14,9 @@ import {
   RowChangesConnection,
   TableChangesConnection,
 } from './model';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RevisionApiService } from 'src/core/revision/revision-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -22,20 +24,24 @@ import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 })
 @Resolver()
 export class RevisionChangesResolver {
-  constructor(private readonly engine: CoreEngineApiService) {}
+  constructor(
+    private readonly revisions: RevisionApiService,
+    private readonly rows: RowApiService,
+    private readonly tables: TableApiService,
+  ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RevisionChangesModel)
   async revisionChanges(
     @Args('data') data: GetRevisionChangesInput,
   ): Promise<RevisionChangesModel> {
-    return this.engine.revisionChanges(data);
+    return this.revisions.revisionChanges(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RowChangesConnection)
   async rowChanges(@Args('data') data: GetRowChangesInput) {
-    return this.engine.rowChanges({
+    return this.rows.rowChanges({
       ...data,
       filters: data.filters
         ? {
@@ -49,7 +55,7 @@ export class RevisionChangesResolver {
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => TableChangesConnection)
   async tableChanges(@Args('data') data: GetTableChangesInput) {
-    return this.engine.tableChanges({
+    return this.tables.tableChanges({
       ...data,
       filters: data.filters
         ? {

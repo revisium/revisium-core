@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RevisionApiService } from 'src/core/revision/revision-api.service';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 import {
   UriRevisionResolver,
@@ -15,7 +15,7 @@ import {
 export class RevisionTools implements McpToolRegistrar {
   constructor(
     private readonly projectApi: ProjectApiService,
-    private readonly engine: CoreEngineApiService,
+    private readonly revisions: RevisionApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -55,7 +55,7 @@ export class RevisionTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.engine.getRevision({ revisionId });
+        const result = await this.revisions.getRevision({ revisionId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -89,7 +89,7 @@ export class RevisionTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.engine.getRevisionParent(revisionId);
+        const result = await this.revisions.getRevisionParent(revisionId);
         return {
           content: [
             {
@@ -142,7 +142,7 @@ export class RevisionTools implements McpToolRegistrar {
           organizationId,
           projectName,
         );
-        const result = await this.engine.createRevision({
+        const result = await this.revisions.createRevision({
           projectId,
           branchName,
           comment,

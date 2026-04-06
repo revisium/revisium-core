@@ -13,7 +13,8 @@ import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
 import {
   CreateRowInput,
   CreateRowsInput,
@@ -42,7 +43,10 @@ import { UpdateRowsResultModel } from 'src/api/graphql-api/draft/model/update-ro
 })
 @Resolver()
 export class DraftResolver {
-  constructor(private readonly engine: CoreEngineApiService) {}
+  constructor(
+    private readonly tables: TableApiService,
+    private readonly rows: RowApiService,
+  ) {}
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
   @PermissionParams({
@@ -51,7 +55,7 @@ export class DraftResolver {
   })
   @Mutation(() => CreateTableResultModel)
   createTable(@Args('data') data: CreateTableInput) {
-    return this.engine.createTable(data);
+    return this.tables.createTable(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -61,7 +65,7 @@ export class DraftResolver {
   })
   @Mutation(() => DeleteTableResultModel)
   async deleteTable(@Args('data') data: DeleteTableInput) {
-    return this.engine.removeTable(data);
+    return this.tables.removeTable(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -71,7 +75,7 @@ export class DraftResolver {
   })
   @Mutation(() => UpdateTableResultModel)
   async updateTable(@Args('data') data: UpdateTableInput) {
-    return this.engine.updateTable(data);
+    return this.tables.updateTable(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -81,7 +85,7 @@ export class DraftResolver {
   })
   @Mutation(() => RenameTableResultModel)
   async renameTable(@Args('data') data: RenameTableInput) {
-    return this.engine.renameTable(data);
+    return this.tables.renameTable(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -91,7 +95,7 @@ export class DraftResolver {
   })
   @Mutation(() => CreateRowResultModel)
   async createRow(@Args('data') data: CreateRowInput) {
-    return this.engine.createRow(data);
+    return this.rows.createRow(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -101,7 +105,7 @@ export class DraftResolver {
   })
   @Mutation(() => CreateRowsResultModel)
   async createRows(@Args('data') data: CreateRowsInput) {
-    return this.engine.createRows(data);
+    return this.rows.createRows(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -111,7 +115,7 @@ export class DraftResolver {
   })
   @Mutation(() => UpdateRowResultModel)
   async updateRow(@Args('data') data: UpdateRowInput) {
-    return this.engine.updateRow(data);
+    return this.rows.updateRow(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -121,7 +125,7 @@ export class DraftResolver {
   })
   @Mutation(() => UpdateRowsResultModel)
   async updateRows(@Args('data') data: UpdateRowsInput) {
-    return this.engine.updateRows(data);
+    return this.rows.updateRows(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -131,7 +135,7 @@ export class DraftResolver {
   })
   @Mutation(() => PatchRowResultModel)
   async patchRow(@Args('data') data: PatchRowInput) {
-    return this.engine.patchRow(data);
+    return this.rows.patchRow(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -141,7 +145,7 @@ export class DraftResolver {
   })
   @Mutation(() => PatchRowsResultModel)
   async patchRows(@Args('data') data: PatchRowsInput) {
-    return this.engine.patchRows(data);
+    return this.rows.patchRows(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -151,7 +155,7 @@ export class DraftResolver {
   })
   @Mutation(() => RenameRowResultModel)
   async renameRow(@Args('data') data: RenameRowInput) {
-    return this.engine.renameRow(data);
+    return this.rows.renameRow(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -161,7 +165,7 @@ export class DraftResolver {
   })
   @Mutation(() => DeleteRowResultModel)
   async deleteRow(@Args('data') data: DeleteRowInput) {
-    return this.engine.removeRow(data);
+    return this.rows.removeRow(data);
   }
 
   @UseGuards(GqlJwtAuthGuard, GQLProjectGuard)
@@ -171,6 +175,6 @@ export class DraftResolver {
   })
   @Mutation(() => DeleteRowsResultModel)
   async deleteRows(@Args('data') data: DeleteRowsInput) {
-    return this.engine.removeRows(data);
+    return this.rows.removeRows(data);
   }
 }

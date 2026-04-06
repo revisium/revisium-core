@@ -1,7 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { Prisma } from 'src/__generated__/client';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
 import { JsonPatch } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
@@ -15,7 +16,8 @@ import { fillFormulaDefaults } from './mcp-helpers';
 
 export class TableTools implements McpToolRegistrar {
   constructor(
-    private readonly engine: CoreEngineApiService,
+    private readonly tables: TableApiService,
+    private readonly rows: RowApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -70,7 +72,7 @@ export class TableTools implements McpToolRegistrar {
           includeSchema || includeRowCount
             ? Math.min(first ?? 50, 50)
             : (first ?? 100);
-        const result = await this.engine.getTables({
+        const result = await this.tables.getTables({
           revisionId,
           first: maxFirst,
           after,
@@ -81,13 +83,13 @@ export class TableTools implements McpToolRegistrar {
             result.edges.map(async (edge) => {
               const enrichments: Record<string, unknown> = {};
               if (includeSchema) {
-                enrichments.schema = await this.engine.resolveTableSchema({
+                enrichments.schema = await this.tables.resolveTableSchema({
                   revisionId,
                   tableId: edge.node.id,
                 });
               }
               if (includeRowCount) {
-                enrichments.rowCount = await this.engine.getCountRowsInTable({
+                enrichments.rowCount = await this.rows.getCountRowsInTable({
                   tableVersionId: edge.node.versionId,
                 });
               }
@@ -140,7 +142,7 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.engine.getTable({ revisionId, tableId });
+        const result = await this.tables.getTable({ revisionId, tableId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -174,8 +176,8 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const table = await this.engine.getTable({ revisionId, tableId });
-        const count = await this.engine.getCountRowsInTable({
+        const table = await this.tables.getTable({ revisionId, tableId });
+        const count = await this.rows.getCountRowsInTable({
           tableVersionId: table.versionId,
         });
         return {
@@ -214,7 +216,7 @@ export class TableTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.engine.resolveTableSchema({
+        const result = await this.tables.resolveTableSchema({
           revisionId,
           tableId,
         });
@@ -382,7 +384,7 @@ Full meta-schema available via resource: revisium://specs/schema`,
           permissions,
           auth.userId,
         );
-        const tableResult = await this.engine.createTable({
+        const tableResult = await this.tables.createTable({
           revisionId,
           tableId,
           schema: schema as Prisma.InputJsonValue,
@@ -395,7 +397,7 @@ Full meta-schema available via resource: revisium://specs/schema`,
         if (rows?.length) {
           try {
             const schemaObj = schema as Record<string, unknown>;
-            const rowsResult = await this.engine.createRows({
+            const rowsResult = await this.rows.createRows({
               revisionId,
               tableId,
               rows: rows.map((r) => ({
@@ -479,7 +481,7 @@ Full meta-schema available via resource: revisium://specs/schema`,
           ],
           auth.userId,
         );
-        await this.engine.updateTable({
+        await this.tables.updateTable({
           revisionId,
           tableId,
           patches: patches as JsonPatch[],
@@ -522,7 +524,7 @@ Full meta-schema available via resource: revisium://specs/schema`,
           ],
           auth.userId,
         );
-        await this.engine.renameTable({
+        await this.tables.renameTable({
           revisionId,
           tableId,
           nextTableId,
@@ -564,7 +566,7 @@ Full meta-schema available via resource: revisium://specs/schema`,
           ],
           auth.userId,
         );
-        await this.engine.removeTable({
+        await this.tables.removeTable({
           revisionId,
           tableId,
         });

@@ -36,7 +36,7 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import {
   GetRowForeignKeysByDto,
@@ -71,7 +71,7 @@ import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/tr
 @ApiBearerAuth('access-token')
 @ApiTags('Row')
 export class RowByIdController {
-  constructor(private readonly engine: CoreEngineApiService) {}
+  constructor(private readonly rows: RowApiService) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
@@ -110,7 +110,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
   ): Promise<CountModelDto> {
     return {
-      count: await this.engine.resolveRowCountForeignKeysBy({
+      count: await this.rows.resolveRowCountForeignKeysBy({
         revisionId,
         tableId,
         rowId,
@@ -135,7 +135,7 @@ export class RowByIdController {
     @Query() data: GetRowForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
-      await this.engine.resolveRowForeignKeysBy({
+      await this.rows.resolveRowForeignKeysBy({
         revisionId,
         tableId,
         rowId,
@@ -162,7 +162,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
   ): Promise<CountModelDto> {
     return {
-      count: await this.engine.resolveRowCountForeignKeysTo({
+      count: await this.rows.resolveRowCountForeignKeysTo({
         revisionId,
         tableId,
         rowId,
@@ -187,7 +187,7 @@ export class RowByIdController {
     @Query() data: GetRowForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToRowModel(
-      await this.engine.resolveRowForeignKeysTo({
+      await this.rows.resolveRowForeignKeysTo({
         revisionId,
         tableId,
         rowId,
@@ -214,7 +214,7 @@ export class RowByIdController {
     @Param('tableId') tableId: string,
     @Param('rowId') rowId: string,
   ): Promise<RemoveRowResponse> {
-    const result = await this.engine.removeRow({
+    const result = await this.rows.removeRow({
       revisionId,
       tableId,
       rowId,
@@ -247,7 +247,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: UpdateRowDto,
   ): Promise<UpdateRowResponse> {
-    const result = await this.engine.updateRow({
+    const result = await this.rows.updateRow({
       revisionId,
       tableId,
       rowId,
@@ -285,7 +285,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: PatchRowDto,
   ): Promise<PatchRowResponse> {
-    const result = await this.engine.patchRow({
+    const result = await this.rows.patchRow({
       revisionId,
       tableId,
       rowId,
@@ -320,7 +320,7 @@ export class RowByIdController {
     @Param('rowId') rowId: string,
     @Body() data: RenameRowDto,
   ): Promise<RenameRowResponse> {
-    const result = await this.engine.renameRow({
+    const result = await this.rows.renameRow({
       revisionId,
       tableId,
       rowId,
@@ -379,7 +379,7 @@ export class RowByIdController {
     )
     file: Express.Multer.File,
   ) {
-    const result = await this.engine.uploadFile({
+    const result = await this.rows.uploadFile({
       revisionId,
       tableId,
       rowId,
@@ -398,6 +398,6 @@ export class RowByIdController {
   }
 
   private resolveRow(revisionId: string, tableId: string, rowId: string) {
-    return this.engine.getRow({ revisionId, tableId, rowId });
+    return this.rows.getRow({ revisionId, tableId, rowId });
   }
 }

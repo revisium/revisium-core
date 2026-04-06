@@ -21,7 +21,8 @@ import { ApplyMigrationResultModel } from 'src/api/graphql-api/revision/model/ap
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
 import { RevisionsApiService } from 'src/features/revision';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RevisionApiService } from 'src/core/revision/revision-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -32,28 +33,29 @@ export class RevisionResolver {
   constructor(
     private readonly revisionApi: RevisionsApiService,
     private readonly projectApi: ProjectApiService,
-    private readonly engine: CoreEngineApiService,
+    private readonly coreRevisions: RevisionApiService,
+    private readonly coreTables: TableApiService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RevisionModel)
   revision(@Args('data') data: GetRevisionInput) {
-    return this.engine.getRevision(data);
+    return this.coreRevisions.getRevision(data);
   }
 
   @ResolveField()
   async children(@Parent() revision: RevisionModel) {
-    return this.engine.getRevisionChildren(revision.id);
+    return this.coreRevisions.getRevisionChildren(revision.id);
   }
 
   @ResolveField()
   async parent(@Parent() revision: RevisionModel) {
-    return this.engine.getRevisionParent(revision.id);
+    return this.coreRevisions.getRevisionParent(revision.id);
   }
 
   @ResolveField()
   async child(@Parent() revision: RevisionModel) {
-    return this.engine.getRevisionChild(revision.id);
+    return this.coreRevisions.getRevisionChild(revision.id);
   }
 
   @ResolveField()
@@ -66,7 +68,7 @@ export class RevisionResolver {
     @Parent() revision: RevisionModel,
     @Args('data') data: GetRevisionTablesInput,
   ) {
-    return this.engine.getTablesByRevisionId({
+    return this.coreTables.getTablesByRevisionId({
       ...data,
       revisionId: revision.id,
     });
@@ -84,12 +86,12 @@ export class RevisionResolver {
 
   @ResolveField()
   async migrations(@Parent() revision: RevisionModel) {
-    return this.engine.getMigrations({ revisionId: revision.id });
+    return this.coreTables.getMigrations({ revisionId: revision.id });
   }
 
   @ResolveField()
   async changes(@Parent() revision: RevisionModel) {
-    return this.engine.revisionChanges({
+    return this.coreRevisions.revisionChanges({
       revisionId: revision.id,
     });
   }
@@ -105,7 +107,7 @@ export class RevisionResolver {
       organizationId: data.organizationId,
       projectName: data.projectName,
     });
-    return this.engine.createRevision({
+    return this.coreRevisions.createRevision({
       projectId: project.id,
       branchName: data.branchName,
       comment: data.comment,
@@ -119,7 +121,7 @@ export class RevisionResolver {
   })
   @Mutation(() => [ApplyMigrationResultModel])
   async applyMigrations(@Args('data') data: ApplyMigrationsInput) {
-    return this.engine.applyMigrations({
+    return this.coreTables.applyMigrations({
       revisionId: data.revisionId,
       migrations: data.migrations as Migration[],
     });
