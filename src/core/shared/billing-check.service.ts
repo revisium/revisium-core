@@ -22,15 +22,17 @@ export class BillingCheckService {
     context?: { tableId?: string; projectId?: string },
   ): Promise<void> {
     const resolved = await this.resolveContext(revisionId);
-    const fullContext = context ? { ...context, revisionId } : undefined;
-    if (fullContext && !fullContext.projectId) {
-      if (
-        metric === LimitMetric.TABLES_PER_REVISION ||
-        metric === LimitMetric.BRANCHES_PER_PROJECT
-      ) {
-        fullContext.projectId = resolved.projectId;
-      }
-    }
+    const needsContext =
+      metric === LimitMetric.ROWS_PER_TABLE ||
+      metric === LimitMetric.TABLES_PER_REVISION ||
+      metric === LimitMetric.BRANCHES_PER_PROJECT;
+    const fullContext = needsContext
+      ? {
+          revisionId,
+          projectId: resolved.projectId,
+          ...context,
+        }
+      : context;
     const result = await this.limitsService.checkLimit(
       resolved.organizationId,
       metric,

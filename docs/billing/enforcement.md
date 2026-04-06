@@ -22,7 +22,7 @@ async checkLimit(organizationId, metric, increment, context?):
 
   // 3. Usage computation (cached 2 min via BillingCacheService)
   //    For resource-level metrics, context (revisionId/tableId/projectId) is included in cache key
-  current = billingCache.usage(organizationId, cacheKey, () => usageService.compute())
+  current = billingCache.usage(organizationId, cacheKey, () => usageService.computeUsage(organizationId, metric, context))
   if current + increment > limit → { allowed: false, current, limit, metric }
 
   → { allowed: true, current, limit }

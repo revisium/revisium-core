@@ -41,14 +41,10 @@ export class LimitsService implements ILimitsService {
     const limit = this.getLimitForMetric(orgLimits, metric);
     if (limit === null || limit === undefined) return { allowed: true };
 
-    const contextParts = [
-      context?.revisionId,
-      context?.tableId,
-      context?.projectId,
-    ].filter(Boolean);
-    const cacheKey = contextParts.length
-      ? `${metric}:${contextParts.join(':')}`
-      : metric;
+    const cacheKey =
+      context?.revisionId || context?.tableId || context?.projectId
+        ? `${metric}:r=${context?.revisionId ?? ''}:t=${context?.tableId ?? ''}:p=${context?.projectId ?? ''}`
+        : metric;
     const current = await this.billingCache.usage(
       organizationId,
       cacheKey,
