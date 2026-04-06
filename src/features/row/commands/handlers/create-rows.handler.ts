@@ -21,6 +21,12 @@ export class CreateRowsHandler implements ICommandHandler<CreateRowsCommand> {
       LimitMetric.ROW_VERSIONS,
       data.rows.length,
     );
+    await this.billingCheck.check(
+      data.revisionId,
+      LimitMetric.ROWS_PER_TABLE,
+      data.rows.length,
+      { tableId: data.tableId },
+    );
     const result = await this.engine.createRows(data);
     const events = data.rows.map(
       (row) => new RowCreatedEvent(data.revisionId, data.tableId, row.rowId),

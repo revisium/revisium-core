@@ -67,6 +67,7 @@ Fail-open: if payment service is unreachable and cache is cold, operations are a
 
 - **Absolute limits** (`row_versions`, `projects`, `seats`, `storage_bytes`) — total count across the org, never resets
 - **Rate limits** (`api_calls`) — resets per time window (daily)
+- **Resource-level limits** (`rows_per_table`, `tables_per_revision`, `branches_per_project`) — scoped to a specific entity (table, project), checked with context parameter
 - **No billing tables in core** — plans, subscriptions, payment intents all live in revisium-payment
 
 ## Contents

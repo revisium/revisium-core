@@ -16,6 +16,15 @@ export class PlanLimitsModel {
 
   @Field(() => Int, { nullable: true })
   api_calls_per_day: number | null;
+
+  @Field(() => Int, { nullable: true })
+  rows_per_table: number | null;
+
+  @Field(() => Int, { nullable: true })
+  tables_per_revision: number | null;
+
+  @Field(() => Int, { nullable: true })
+  branches_per_project: number | null;
 }
 
 @ObjectType()

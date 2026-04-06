@@ -1,12 +1,15 @@
 import { Injectable } from '@nestjs/common';
+import { CommandBus } from '@nestjs/cqrs';
 import { EngineApiService } from '@revisium/engine';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { CreateBranchCommand } from './commands/impl';
 
 @Injectable()
 export class BranchApiService {
   constructor(
     private readonly engine: EngineApiService,
     private readonly prisma: PrismaService,
+    private readonly commandBus: CommandBus,
   ) {}
 
   public getBranch(...args: Parameters<EngineApiService['getBranch']>) {
@@ -45,8 +48,8 @@ export class BranchApiService {
     return this.engine.getTouchedByBranchId(...args);
   }
 
-  public createBranch(...args: Parameters<EngineApiService['createBranch']>) {
-    return this.engine.createBranch(...args);
+  public createBranch(data: Parameters<EngineApiService['createBranch']>[0]) {
+    return this.commandBus.execute(new CreateBranchCommand(data));
   }
 
   public deleteBranch(...args: Parameters<EngineApiService['deleteBranch']>) {

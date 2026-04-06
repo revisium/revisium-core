@@ -17,6 +17,12 @@ export class CreateRowHandler implements ICommandHandler<CreateRowCommand> {
 
   async execute({ data }: CreateRowCommand) {
     await this.billingCheck.check(data.revisionId, LimitMetric.ROW_VERSIONS, 1);
+    await this.billingCheck.check(
+      data.revisionId,
+      LimitMetric.ROWS_PER_TABLE,
+      1,
+      { tableId: data.tableId },
+    );
     const result = await this.engine.createRow(data);
     await this.eventBus.publishAll([
       new RowCreatedEvent(data.revisionId, data.tableId, data.rowId),

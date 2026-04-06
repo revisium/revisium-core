@@ -45,6 +45,9 @@ export class BillingGraphqlService implements IBillingGraphqlService {
         seats: p.limits.seats,
         storageBytes: p.limits.storage_bytes,
         apiCallsPerDay: p.limits.api_calls_per_day,
+        rowsPerTable: p.limits.rows_per_table,
+        tablesPerRevision: p.limits.tables_per_revision,
+        branchesPerProject: p.limits.branches_per_project,
       },
       features: p.features ?? {},
     }));
