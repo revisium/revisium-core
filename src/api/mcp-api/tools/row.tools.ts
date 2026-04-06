@@ -11,7 +11,8 @@ import {
   compactRowEdges,
   fillFormulaDefaults,
 } from './mcp-helpers';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
 import {
   UriRevisionResolver,
   resolveRevisionId,
@@ -75,7 +76,8 @@ export function toCompactSearchResult(result: SearchRowsResponse) {
 export class RowTools implements McpToolRegistrar {
   constructor(
     private readonly uriResolver: UriRevisionResolver,
-    private readonly engine: CoreEngineApiService,
+    private readonly rows: RowApiService,
+    private readonly tables: TableApiService,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -197,7 +199,7 @@ RESPONSE may include:
           auth.userId,
         );
         const prismaOrderBy = mapToPrismaOrderBy(orderBy);
-        const result = await this.engine.getRows({
+        const result = await this.rows.getRows({
           revisionId,
           tableId,
           first: first ?? 50,
@@ -264,7 +266,7 @@ RESPONSE may include:
           ],
           auth.userId,
         );
-        const result = await this.engine.searchRows({
+        const result = await this.rows.searchRows({
           revisionId,
           query,
           first: first ?? 50,
@@ -315,7 +317,7 @@ RESPONSE may include:
           ],
           auth.userId,
         );
-        const result = await this.engine.getRow({ revisionId, tableId, rowId });
+        const result = await this.rows.getRow({ revisionId, tableId, rowId });
         return {
           content: [
             {
@@ -364,7 +366,7 @@ FILE FIELDS:
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const schema = await this.engine.resolveTableSchema({
+        const schema = await this.tables.resolveTableSchema({
           revisionId,
           tableId,
         });
@@ -372,7 +374,7 @@ FILE FIELDS:
           schema as Record<string, unknown>,
           data,
         );
-        const result = await this.engine.createRow({
+        const result = await this.rows.createRow({
           revisionId,
           tableId,
           rowId,
@@ -413,7 +415,7 @@ FILE FIELDS:
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const schema = await this.engine.resolveTableSchema({
+        const schema = await this.tables.resolveTableSchema({
           revisionId,
           tableId,
         });
@@ -421,7 +423,7 @@ FILE FIELDS:
           schema as Record<string, unknown>,
           data,
         );
-        const result = await this.engine.updateRow({
+        const result = await this.rows.updateRow({
           revisionId,
           tableId,
           rowId,
@@ -466,7 +468,7 @@ FILE FIELDS:
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.engine.patchRow({
+        const result = await this.rows.patchRow({
           revisionId,
           tableId,
           rowId,
@@ -521,11 +523,11 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.create, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const schema = await this.engine.resolveTableSchema({
+        const schema = await this.tables.resolveTableSchema({
           revisionId,
           tableId,
         });
-        const result = await this.engine.createRows({
+        const result = await this.rows.createRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
@@ -580,11 +582,11 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const schema = await this.engine.resolveTableSchema({
+        const schema = await this.tables.resolveTableSchema({
           revisionId,
           tableId,
         });
-        const result = await this.engine.updateRows({
+        const result = await this.rows.updateRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
@@ -639,7 +641,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.engine.patchRows({
+        const result = await this.rows.patchRows({
           revisionId,
           tableId,
           rows: rows.map((r) => ({
@@ -683,7 +685,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        await this.engine.removeRows({
+        await this.rows.removeRows({
           revisionId,
           tableId,
           rowIds,
@@ -742,7 +744,7 @@ COMPUTED FIELDS (x-formula):
           ],
           auth.userId,
         );
-        const result = await this.engine.resolveRowForeignKeysBy({
+        const result = await this.rows.resolveRowForeignKeysBy({
           revisionId,
           tableId,
           rowId,
@@ -784,7 +786,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.update, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        const result = await this.engine.renameRow({
+        const result = await this.rows.renameRow({
           revisionId,
           tableId,
           rowId,
@@ -823,7 +825,7 @@ COMPUTED FIELDS (x-formula):
           [{ action: PermissionAction.delete, subject: PermissionSubject.Row }],
           auth.userId,
         );
-        await this.engine.removeRow({
+        await this.rows.removeRow({
           revisionId,
           tableId,
           rowId,

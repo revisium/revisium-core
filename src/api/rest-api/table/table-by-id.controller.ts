@@ -35,7 +35,8 @@ import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-gua
 import { OptionalHttpJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-http-jwt-auth-guard.service';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { BranchModel } from 'src/api/rest-api/branch/model';
 import { RowsConnection } from 'src/api/rest-api/row/model';
@@ -84,7 +85,10 @@ import { Table } from 'src/__generated__/client';
 @ApiBearerAuth('access-token')
 @ApiTags('Table')
 export class TableByIdController {
-  constructor(private readonly engine: CoreEngineApiService) {}
+  constructor(
+    private readonly coreTables: TableApiService,
+    private readonly coreRows: RowApiService,
+  ) {}
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
   @Get()
@@ -119,7 +123,7 @@ export class TableByIdController {
     const table = await this.resolveTable(revisionId, tableId);
 
     return {
-      count: await this.engine.getCountRowsInTable({
+      count: await this.coreRows.getCountRowsInTable({
         tableVersionId: table.versionId,
       }),
     };
@@ -151,7 +155,7 @@ export class TableByIdController {
     const prismaOrderBy = mapToPrismaOrderBy(orderBy);
 
     return transformFromPaginatedPrismaToRowModel(
-      await this.engine.getRows({
+      await this.coreRows.getRows({
         ...data,
         revisionId,
         tableId,
@@ -178,7 +182,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: CreateRowDto,
   ): Promise<CreateRowResponse> {
-    const result = await this.engine.createRow({
+    const result = await this.coreRows.createRow({
       ...data,
       revisionId,
       tableId,
@@ -208,7 +212,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: CreateRowsDto,
   ): Promise<CreateRowsResponse> {
-    const result = await this.engine.createRows({
+    const result = await this.coreRows.createRows({
       revisionId,
       tableId,
       rows: data.rows,
@@ -242,7 +246,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: UpdateRowsDto,
   ): Promise<UpdateRowsResponse> {
-    const result = await this.engine.updateRows({
+    const result = await this.coreRows.updateRows({
       revisionId,
       tableId,
       rows: data.rows,
@@ -276,7 +280,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: PatchRowsDto,
   ): Promise<PatchRowsResponse> {
-    const result = await this.engine.patchRows({
+    const result = await this.coreRows.patchRows({
       revisionId,
       tableId,
       rows: data.rows,
@@ -306,7 +310,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() dto: RemoveRowsDto,
   ): Promise<RemoveRowsResponse> {
-    const result = await this.engine.removeRows({
+    const result = await this.coreRows.removeRows({
       revisionId,
       tableId,
       rowIds: dto.rowIds,
@@ -338,7 +342,7 @@ export class TableByIdController {
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ) {
-    return this.engine.resolveTableSchema({ revisionId, tableId });
+    return this.coreTables.resolveTableSchema({ revisionId, tableId });
   }
 
   @UseGuards(OptionalHttpJwtAuthGuard, HTTPProjectGuard)
@@ -356,7 +360,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
   ): Promise<CountModelDto> {
     return {
-      count: await this.engine.resolveTableCountForeignKeysBy({
+      count: await this.coreTables.resolveTableCountForeignKeysBy({
         revisionId,
         tableId,
       }),
@@ -379,7 +383,7 @@ export class TableByIdController {
     @Query() data: GetTableForeignKeysByDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
-      await this.engine.resolveTableForeignKeysBy({
+      await this.coreTables.resolveTableForeignKeysBy({
         ...data,
         revisionId,
         tableId,
@@ -402,7 +406,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
   ): Promise<CountModelDto> {
     return {
-      count: await this.engine.resolveTableCountForeignKeysTo({
+      count: await this.coreTables.resolveTableCountForeignKeysTo({
         revisionId,
         tableId,
       }),
@@ -425,7 +429,7 @@ export class TableByIdController {
     @Query() data: GetTableForeignKeysToDto,
   ) {
     return transformFromPaginatedPrismaToTableModel(
-      await this.engine.resolveTableForeignKeysTo({
+      await this.coreTables.resolveTableForeignKeysTo({
         ...data,
         revisionId,
         tableId,
@@ -448,7 +452,7 @@ export class TableByIdController {
     @Param('revisionId') revisionId: string,
     @Param('tableId') tableId: string,
   ): Promise<BranchModel> {
-    const result = await this.engine.removeTable({ revisionId, tableId });
+    const result = await this.coreTables.removeTable({ revisionId, tableId });
 
     return transformFromPrismaToBranchModel(result.branch);
   }
@@ -473,7 +477,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: UpdateTableDto,
   ): Promise<UpdateTableResponse> {
-    const result = await this.engine.updateTable({
+    const result = await this.coreTables.updateTable({
       revisionId,
       tableId,
       patches: data.patches,
@@ -504,7 +508,7 @@ export class TableByIdController {
     @Param('tableId') tableId: string,
     @Body() data: RenameTableDto,
   ): Promise<RenameTableResponse> {
-    const result = await this.engine.renameTable({
+    const result = await this.coreTables.renameTable({
       revisionId,
       tableId,
       nextTableId: data.nextTableId,
@@ -519,6 +523,6 @@ export class TableByIdController {
   }
 
   private resolveTable(revisionId: string, tableId: string): Promise<Table> {
-    return this.engine.getTable({ revisionId, tableId });
+    return this.coreTables.getTable({ revisionId, tableId });
   }
 }

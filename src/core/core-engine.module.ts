@@ -8,7 +8,10 @@ import { NullStorageService } from 'src/infrastructure/storage/null-storage.serv
 import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RowModule } from 'src/core/row/row.module';
+import { TableModule } from 'src/core/table/table.module';
+import { RevisionModule } from 'src/core/revision/revision.module';
+import { BranchModule } from 'src/core/branch/branch.module';
 
 export interface CoreEngineModuleOptions {
   storage?: IStorageService;
@@ -47,9 +50,18 @@ export class CoreEngineModule {
         DatabaseModule,
         RevisiumCacheModule.forRootAsync(),
         NotificationModule,
+        RowModule,
+        TableModule,
+        RevisionModule,
+        BranchModule,
       ],
-      providers: [CoreEngineApiService],
-      exports: [EngineModule, CoreEngineApiService],
+      exports: [
+        EngineModule,
+        RowModule,
+        TableModule,
+        RevisionModule,
+        BranchModule,
+      ],
     };
   }
 }

@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
@@ -13,7 +13,7 @@ import {
 
 export class MigrationTools implements McpToolRegistrar {
   constructor(
-    private readonly engine: CoreEngineApiService,
+    private readonly tables: TableApiService,
     private readonly uriResolver: UriRevisionResolver,
   ) {}
 
@@ -43,7 +43,7 @@ export class MigrationTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.engine.getMigrations({ revisionId });
+        const result = await this.tables.getMigrations({ revisionId });
         return {
           content: [
             { type: 'text' as const, text: JSON.stringify(result, null, 2) },
@@ -83,7 +83,7 @@ export class MigrationTools implements McpToolRegistrar {
           ],
           auth.userId,
         );
-        const result = await this.engine.applyMigrations({
+        const result = await this.tables.applyMigrations({
           revisionId,
           migrations: migrations as Migration[],
         });

@@ -20,7 +20,7 @@ import {
 import { GetRowForeignKeysInput } from 'src/api/graphql-api/row/inputs/get-row-foreign-keys.input';
 import { RowModel } from 'src/api/graphql-api/row/model/row.model';
 import { RowsConnection } from 'src/api/graphql-api/row/model/rows-connection.model';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -28,12 +28,12 @@ import { CoreEngineApiService } from 'src/core/core-engine-api.service';
 })
 @Resolver(() => RowModel)
 export class RowResolver {
-  constructor(private readonly engine: CoreEngineApiService) {}
+  constructor(private readonly coreRows: RowApiService) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
   @Query(() => RowModel, { nullable: true })
   public row(@Args('data') data: GetRowInput) {
-    return this.engine.getRow(data);
+    return this.coreRows.getRow(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -41,7 +41,7 @@ export class RowResolver {
     deprecationReason: 'use RowModel.rowForeignKeysBy.totalCount',
   })
   getRowCountForeignKeysTo(@Args('data') data: GetRowCountForeignKeysByInput) {
-    return this.engine.resolveRowCountForeignKeysBy(data);
+    return this.coreRows.resolveRowCountForeignKeysBy(data);
   }
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -49,7 +49,7 @@ export class RowResolver {
   rows(@Args('data') { orderBy, ...data }: GetRowsInput) {
     const prismaOrderBy = mapToPrismaOrderBy(orderBy);
 
-    return this.engine.getRows({
+    return this.coreRows.getRows({
       ...data,
       orderBy: prismaOrderBy,
     } as any);
@@ -60,7 +60,7 @@ export class RowResolver {
     @Parent() row: RowModel,
     @Args('data') data: GetRowForeignKeysInput,
   ) {
-    return this.engine.resolveRowForeignKeysBy({
+    return this.coreRows.resolveRowForeignKeysBy({
       revisionId: row.context.revisionId,
       tableId: row.context.tableId,
       rowId: row.id,
@@ -74,7 +74,7 @@ export class RowResolver {
     deprecationReason: 'use RowModel.rowForeignKeysTo.totalCount',
   })
   countForeignKeysTo(@Parent() row: RowModel) {
-    return this.engine.resolveRowCountForeignKeysTo({
+    return this.coreRows.resolveRowCountForeignKeysTo({
       revisionId: row.context.revisionId,
       tableId: row.context.tableId,
       rowId: row.id,
@@ -86,7 +86,7 @@ export class RowResolver {
     @Parent() row: RowModel,
     @Args('data') data: GetRowForeignKeysInput,
   ) {
-    return this.engine.resolveRowForeignKeysTo({
+    return this.coreRows.resolveRowForeignKeysTo({
       revisionId: row.context.revisionId,
       tableId: row.context.tableId,
       rowId: row.id,

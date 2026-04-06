@@ -1,11 +1,11 @@
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { BranchApiService } from 'src/core/branch/branch-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { ParsedUri } from './parse-revisium-uri';
 
 export class UriRevisionResolver {
   constructor(
     private readonly projectApi: ProjectApiService,
-    private readonly engine: CoreEngineApiService,
+    private readonly branches: BranchApiService,
   ) {}
 
   async resolve(parsed: ParsedUri): Promise<string> {
@@ -17,17 +17,17 @@ export class UriRevisionResolver {
       organizationId: parsed.organizationId,
       projectName: parsed.projectName,
     });
-    const branch = await this.engine.getBranch({
+    const branch = await this.branches.getBranch({
       projectId: project.id,
       branchName: parsed.branchName,
     });
 
     if (parsed.revision === 'head') {
-      const head = await this.engine.getHeadRevision(branch.id);
+      const head = await this.branches.getHeadRevision(branch.id);
       return head.id;
     }
 
-    const draft = await this.engine.getDraftRevision(branch.id);
+    const draft = await this.branches.getDraftRevision(branch.id);
     return draft.id;
   }
 }

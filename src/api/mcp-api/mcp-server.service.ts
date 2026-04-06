@@ -5,7 +5,10 @@ import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { RowApiService } from 'src/core/row/row-api.service';
+import { TableApiService } from 'src/core/table/table-api.service';
+import { RevisionApiService } from 'src/core/revision/revision-api.service';
+import { BranchApiService } from 'src/core/branch/branch-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
 import { EndpointApiService } from 'src/features/endpoint/queries/endpoint-api.service';
 import { McpUserContext } from './mcp-auth.service';
@@ -62,7 +65,10 @@ export class McpServerService {
     private readonly organizationApi: OrganizationApiService,
     private readonly projectApi: ProjectApiService,
 
-    private readonly engine: CoreEngineApiService,
+    private readonly rows: RowApiService,
+    private readonly tables: TableApiService,
+    private readonly revisions: RevisionApiService,
+    private readonly branches: BranchApiService,
     private readonly userApi: UserApiService,
     private readonly endpointApi: EndpointApiService,
   ) {
@@ -142,23 +148,29 @@ PERMISSIONS:
     this.migrationResource = new MigrationResource();
     this.fileResource = new FileResource();
 
-    this.uriResolver = new UriRevisionResolver(this.projectApi, this.engine);
+    this.uriResolver = new UriRevisionResolver(this.projectApi, this.branches);
 
     this.organizationTools = new OrganizationTools(this.organizationApi);
-    this.projectTools = new ProjectTools(this.projectApi, this.engine);
-    this.branchTools = new BranchTools(this.projectApi, this.engine);
-    this.tableTools = new TableTools(this.engine, this.uriResolver);
-    this.rowTools = new RowTools(this.uriResolver, this.engine);
+    this.projectTools = new ProjectTools(this.projectApi, this.branches);
+    this.branchTools = new BranchTools(
+      this.projectApi,
+      this.branches,
+      this.revisions,
+    );
+    this.tableTools = new TableTools(this.tables, this.rows, this.uriResolver);
+    this.rowTools = new RowTools(this.uriResolver, this.rows, this.tables);
     this.revisionTools = new RevisionTools(
       this.projectApi,
-      this.engine,
+      this.revisions,
       this.uriResolver,
     );
     this.revisionChangesTools = new RevisionChangesTools(
-      this.engine,
+      this.revisions,
+      this.tables,
+      this.rows,
       this.uriResolver,
     );
-    this.migrationTools = new MigrationTools(this.engine, this.uriResolver);
+    this.migrationTools = new MigrationTools(this.tables, this.uriResolver);
     this.userTools = new UserTools(this.userApi);
     this.endpointTools = new EndpointTools(
       this.endpointApi,
@@ -166,7 +178,7 @@ PERMISSIONS:
         this.configService.get<string>('PUBLIC_URL'),
       this.uriResolver,
     );
-    this.fileTools = new FileTools(this.engine, this.uriResolver);
+    this.fileTools = new FileTools(this.rows, this.uriResolver);
   }
 
   public getInstructions(): string {

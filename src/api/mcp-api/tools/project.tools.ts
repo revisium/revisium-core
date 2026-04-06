@@ -1,14 +1,14 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import { CoreEngineApiService } from 'src/core/core-engine-api.service';
+import { BranchApiService } from 'src/core/branch/branch-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { McpAuthHelpers, McpToolRegistrar } from '../types';
 
 export class ProjectTools implements McpToolRegistrar {
   constructor(
     private readonly projectApi: ProjectApiService,
-    private readonly engine: CoreEngineApiService,
+    private readonly branches: BranchApiService,
   ) {}
 
   register(server: McpServer, auth: McpAuthHelpers): void {
@@ -44,8 +44,10 @@ export class ProjectTools implements McpToolRegistrar {
           project.id,
         );
 
-        const draftRevision = await this.engine.getDraftRevision(rootBranch.id);
-        const headRevision = await this.engine.getHeadRevision(rootBranch.id);
+        const draftRevision = await this.branches.getDraftRevision(
+          rootBranch.id,
+        );
+        const headRevision = await this.branches.getHeadRevision(rootBranch.id);
 
         return {
           content: [
@@ -101,13 +103,13 @@ export class ProjectTools implements McpToolRegistrar {
           branchName,
         });
 
-        const branch = await this.engine.getBranch({
+        const branch = await this.branches.getBranch({
           projectId: project.id,
           branchName: branchName || 'master',
         });
 
-        const draftRevision = await this.engine.getDraftRevision(branch.id);
-        const headRevision = await this.engine.getHeadRevision(branch.id);
+        const draftRevision = await this.branches.getDraftRevision(branch.id);
+        const headRevision = await this.branches.getHeadRevision(branch.id);
         return {
           content: [
             {
