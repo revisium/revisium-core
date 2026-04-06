@@ -112,8 +112,6 @@ export class UniversalAuthService {
       throw new UnauthorizedException('API key has expired');
     }
 
-    this.apiKeyTracking.track(apiKey.id, ip);
-
     const scope: IApiKeyScope = {
       organizationId: apiKey.organizationId,
       projectIds: apiKey.projectIds,
@@ -121,15 +119,17 @@ export class UniversalAuthService {
       tableIds: apiKey.tableIds,
     };
 
+    let user: IAuthUser;
     if (apiKey.type === ApiKeyType.PERSONAL) {
-      return this.buildPersonalKeyUser(apiKey, scope);
+      user = await this.buildPersonalKeyUser(apiKey, scope);
+    } else if (apiKey.type === ApiKeyType.SERVICE) {
+      user = this.buildServiceKeyUser(apiKey, scope);
+    } else {
+      user = this.buildInternalKeyUser(apiKey);
     }
 
-    if (apiKey.type === ApiKeyType.SERVICE) {
-      return this.buildServiceKeyUser(apiKey, scope);
-    }
-
-    return this.buildInternalKeyUser(apiKey);
+    this.apiKeyTracking.track(apiKey.id, ip);
+    return user;
   }
 
   private async buildPersonalKeyUser(
