@@ -317,9 +317,7 @@ export class EndpointTools implements McpToolRegistrar {
           };
         }
 
-        const baseUrl = this.getEndpointServiceUrl();
-        const url = `${baseUrl}/endpoint/graphql/${path.orgId}/${path.projectName}/${path.branchName}/${path.postfix}`;
-
+        let url: string | undefined;
         const controller = new AbortController();
         const timeoutId = setTimeout(
           () => controller.abort(),
@@ -327,6 +325,9 @@ export class EndpointTools implements McpToolRegistrar {
         );
 
         try {
+          const baseUrl = this.getEndpointServiceUrl();
+          url = `${baseUrl}/endpoint/graphql/${path.orgId}/${path.projectName}/${path.branchName}/${path.postfix}`;
+
           const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -353,7 +354,7 @@ export class EndpointTools implements McpToolRegistrar {
                 text: JSON.stringify(
                   {
                     error: `Failed to fetch GraphQL schema: ${message}. Make sure the endpoint service is running and accessible.`,
-                    url,
+                    ...(url && { url }),
                   },
                   null,
                   2,
@@ -410,9 +411,7 @@ export class EndpointTools implements McpToolRegistrar {
           };
         }
 
-        const baseUrl = this.getEndpointServiceUrl();
-        const url = `${baseUrl}/endpoint/openapi/${path.orgId}/${path.projectName}/${path.branchName}/${path.postfix}/openapi.json`;
-
+        let url: string | undefined;
         const controller = new AbortController();
         const timeoutId = setTimeout(
           () => controller.abort(),
@@ -420,6 +419,9 @@ export class EndpointTools implements McpToolRegistrar {
         );
 
         try {
+          const baseUrl = this.getEndpointServiceUrl();
+          url = `${baseUrl}/endpoint/openapi/${path.orgId}/${path.projectName}/${path.branchName}/${path.postfix}/openapi.json`;
+
           const response = await fetch(url, { signal: controller.signal });
 
           if (!response.ok) {
@@ -441,7 +443,7 @@ export class EndpointTools implements McpToolRegistrar {
                 text: JSON.stringify(
                   {
                     error: `Failed to fetch OpenAPI spec: ${message}. Make sure the endpoint service is running and accessible.`,
-                    url,
+                    ...(url && { url }),
                   },
                   null,
                   2,
