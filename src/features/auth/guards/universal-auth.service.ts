@@ -60,12 +60,13 @@ export class UniversalAuthService {
     const authHeader = this.getHeader(headers, 'authorization');
     if (authHeader) {
       const bearer = this.extractBearer(authHeader);
-      if (bearer) {
-        if (bearer.startsWith('rev_')) {
-          return this.validateApiKeyToken(bearer, 'external', ip);
-        }
+      if (!bearer) {
         return null;
       }
+      if (bearer.startsWith('rev_')) {
+        return this.validateApiKeyToken(bearer, 'external', ip);
+      }
+      return null;
     }
 
     const queryKey = query?.api_key;

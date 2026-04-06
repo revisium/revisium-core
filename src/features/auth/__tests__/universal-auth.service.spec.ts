@@ -270,6 +270,19 @@ describe('UniversalAuthService', () => {
 
         expect(result).toBeNull();
       });
+
+      it('should block query api_key fallback when Authorization header is present', async () => {
+        apiKeyService.findByHash.mockResolvedValue(createMockApiKey());
+
+        const result = await service.authenticate(
+          { authorization: 'Basic dXNlcjpwYXNz' },
+          { api_key: 'rev_1234567890123456789012' },
+          '127.0.0.1',
+        );
+
+        expect(result).toBeNull();
+        expect(apiKeyService.findByHash).not.toHaveBeenCalled();
+      });
     });
 
     describe('Priority 4: ?api_key query param', () => {
