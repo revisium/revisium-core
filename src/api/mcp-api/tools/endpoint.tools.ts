@@ -81,7 +81,6 @@ const INTROSPECTION_QUERY = `
 
 export class EndpointTools implements McpToolRegistrar {
   private readonly logger = new Logger(EndpointTools.name);
-  private hasWarnedAboutFallbackUrl = false;
 
   constructor(
     private readonly endpointApi: EndpointApiService,
@@ -91,13 +90,12 @@ export class EndpointTools implements McpToolRegistrar {
 
   private getEndpointServiceUrl(): string {
     if (!this.endpointServiceUrl) {
-      if (!this.hasWarnedAboutFallbackUrl) {
-        this.logger.warn(
-          'Neither ENDPOINT_SERVICE_URL nor PUBLIC_URL is configured — endpoint schema tools will fail',
-        );
-        this.hasWarnedAboutFallbackUrl = true;
-      }
-      return '';
+      this.logger.warn(
+        'Neither ENDPOINT_SERVICE_URL nor PUBLIC_URL is configured — endpoint schema tools will fail',
+      );
+      throw new Error(
+        'Endpoint service URL not configured. Set ENDPOINT_SERVICE_URL or PUBLIC_URL environment variable.',
+      );
     }
     return this.endpointServiceUrl;
   }
