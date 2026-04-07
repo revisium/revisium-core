@@ -43,7 +43,9 @@ import { ConfigurationModule } from 'src/infrastructure/configuration/configurat
 import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql-metrics.plugin';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { RevisionChangesModule } from 'src/features/revision-changes/revision-changes.module';
+import { ApiKeyModule } from 'src/features/api-key/api-key.module';
 import { SubSchemaModule } from 'src/features/sub-schema';
+import { ApiKeyResolver } from 'src/api/graphql-api/api-key/api-key.resolver';
 import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.resolver';
 
 @Module({
@@ -78,6 +80,7 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
     TableModule,
     ViewsModule,
     SubSchemaModule,
+    ApiKeyModule,
   ],
   providers: [
     BillingConfigurationResolver,
@@ -105,6 +108,7 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
     RevisionChangesResolver,
     ViewsResolver,
     SubSchemaResolver,
+    ApiKeyResolver,
   ],
 })
 export class GraphqlApiModule {}

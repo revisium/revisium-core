@@ -1,5 +1,6 @@
 import { registerEnumType } from '@nestjs/graphql';
 import { Prisma } from 'src/__generated__/client';
+import { ApiKeyTypeEnum } from 'src/api/graphql-api/api-key/model/api-key-type.enum';
 import { BillingStatus } from 'src/api/graphql-api/billing/models/billing-status.enum';
 import { PatchRowOp } from 'src/api/graphql-api/draft/input/patch-row.input';
 import {
@@ -35,4 +36,5 @@ export const registerGraphqlEnums = () => {
   registerEnumType(UserProjectRoles, { name: 'UserProjectRoles' });
   registerEnumType(EndpointType, { name: 'EndpointType' });
   registerEnumType(BillingStatus, { name: 'BillingStatus' });
+  registerEnumType(ApiKeyTypeEnum, { name: 'ApiKeyType' });
 };
