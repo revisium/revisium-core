@@ -139,7 +139,10 @@ export class ViewValidationService {
       }
 
       const dbPath = getDBJsonPathByJsonSchemaStore(item);
-      const fieldPath = dbPath.startsWith('$.') ? dbPath.slice(2) : dbPath;
+      const fieldPath = (dbPath.startsWith('$.') ? dbPath.slice(2) : dbPath)
+        .split('.')
+        .map((s) => (s.startsWith('"') && s.endsWith('"') ? s.slice(1, -1) : s))
+        .join('.');
 
       validFields.add(fieldPath);
     });
