@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid';
 
 const key = `rev_${nanoid(22)}`;
-console.log(`INTERNAL_API_KEY=${key}`);
+const service = process.argv[2] || 'ENDPOINT';
+console.log(`INTERNAL_API_KEY_${service.toUpperCase()}=${key}`);
