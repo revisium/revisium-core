@@ -22,6 +22,7 @@
     "prisma:migrate:deploy": "npx prisma migrate deploy",
     "generate:seed:api": "ts-node prisma/seed/generateSeedApi.ts",
     "generate:seed:load": "ts-node prisma/seed/loadFromSeedApi.ts",
+    "generate:internal-key": "ts-node scripts/generate-internal-key.ts",
     "seed": "ts-node prisma/seed.ts",
     "seed:prod": "node --experimental-require-module dist/prisma/seed.js",
     "build": "nest build && tsc-alias -p tsconfig.build.json",
