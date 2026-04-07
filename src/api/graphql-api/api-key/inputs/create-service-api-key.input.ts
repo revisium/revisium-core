@@ -1,5 +1,6 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { DateTimeResolver, GraphQLJSON } from 'graphql-scalars';
+import { GraphQLJSON } from 'graphql-scalars';
+import { BaseApiKeyScopeInput } from 'src/api/graphql-api/api-key/inputs/base-api-key-scope.input';
 
 @InputType()
 export class CaslRuleInput {
@@ -26,30 +27,12 @@ export class CaslPermissionsInput {
 }
 
 @InputType()
-export class CreateServiceApiKeyInput {
+export class CreateServiceApiKeyInput extends BaseApiKeyScopeInput {
   @Field()
   name: string;
 
   @Field()
   organizationId: string;
-
-  @Field(() => [String], { nullable: true })
-  projectIds?: string[];
-
-  @Field(() => [String], { nullable: true })
-  branchNames?: string[];
-
-  @Field(() => [String], { nullable: true })
-  tableIds?: string[];
-
-  @Field({ nullable: true, defaultValue: false })
-  readOnly?: boolean;
-
-  @Field(() => [String], { nullable: true })
-  allowedIps?: string[];
-
-  @Field(() => DateTimeResolver, { nullable: true })
-  expiresAt?: Date;
 
   @Field(() => CaslPermissionsInput)
   permissions: CaslPermissionsInput;

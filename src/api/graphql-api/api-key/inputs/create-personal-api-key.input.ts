@@ -1,29 +1,11 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { DateTimeResolver } from 'graphql-scalars';
+import { BaseApiKeyScopeInput } from 'src/api/graphql-api/api-key/inputs/base-api-key-scope.input';
 
 @InputType()
-export class CreatePersonalApiKeyInput {
+export class CreatePersonalApiKeyInput extends BaseApiKeyScopeInput {
   @Field()
   name: string;
 
   @Field({ nullable: true })
   organizationId?: string;
-
-  @Field(() => [String], { nullable: true })
-  projectIds?: string[];
-
-  @Field(() => [String], { nullable: true })
-  branchNames?: string[];
-
-  @Field(() => [String], { nullable: true })
-  tableIds?: string[];
-
-  @Field({ nullable: true, defaultValue: false })
-  readOnly?: boolean;
-
-  @Field(() => [String], { nullable: true })
-  allowedIps?: string[];
-
-  @Field(() => DateTimeResolver, { nullable: true })
-  expiresAt?: Date;
 }
