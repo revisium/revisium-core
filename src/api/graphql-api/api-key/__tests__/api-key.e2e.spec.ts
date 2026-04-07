@@ -245,9 +245,7 @@ describe('API Key Management (e2e)', () => {
         .expect(200);
 
       expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain(
-        'You do not own this API key',
-      );
+      expect(response.body.errors[0].message).toContain('API key not found');
     });
 
     it('should revoke a key', async () => {
@@ -291,7 +289,7 @@ describe('API Key Management (e2e)', () => {
 
       expect(revokeResponse.body.errors).toBeDefined();
       expect(revokeResponse.body.errors[0].message).toContain(
-        'You do not own this API key',
+        'API key not found',
       );
     });
 
@@ -342,7 +340,7 @@ describe('API Key Management (e2e)', () => {
 
       expect(rotateResponse.body.errors).toBeDefined();
       expect(rotateResponse.body.errors[0].message).toContain(
-        'You do not own this API key',
+        'API key not found',
       );
     });
 

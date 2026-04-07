@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
@@ -140,7 +140,7 @@ describe('ApiKeyApiService', () => {
 
       await expect(
         service.getApiKeyById(created.id, otherUserId),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException for non-existent key', async () => {
@@ -184,7 +184,7 @@ describe('ApiKeyApiService', () => {
 
       await expect(
         service.revokeApiKey(created.id, otherUserId),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -223,7 +223,7 @@ describe('ApiKeyApiService', () => {
 
       await expect(
         service.rotateApiKey(created.id, otherUserId),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

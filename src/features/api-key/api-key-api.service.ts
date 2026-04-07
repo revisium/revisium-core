@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ApiKeyType } from 'src/__generated__/client';
 import {
@@ -74,25 +74,21 @@ export class ApiKeyApiService {
     keyId: string,
     userId: string,
   ): Promise<GetApiKeyByIdQueryReturnType> {
+    return this.assertOwnership(keyId, userId);
+  }
+
+  private async assertOwnership(
+    keyId: string,
+    userId: string,
+  ): Promise<GetApiKeyByIdQueryReturnType> {
     const apiKey: GetApiKeyByIdQueryReturnType = await this.queryBus.execute(
       new GetApiKeyByIdQuery({ keyId }),
     );
 
     if (apiKey.userId !== userId) {
-      throw new ForbiddenException('You do not own this API key');
+      throw new NotFoundException('API key not found');
     }
 
     return apiKey;
-  }
-
-  private async assertOwnership(keyId: string, userId: string): Promise<void> {
-    // GetApiKeyByIdQuery throws NotFoundException if key doesn't exist
-    const apiKey: GetApiKeyByIdQueryReturnType = await this.queryBus.execute(
-      new GetApiKeyByIdQuery({ keyId }),
-    );
-
-    if (apiKey.userId !== userId) {
-      throw new ForbiddenException('You do not own this API key');
-    }
   }
 }
