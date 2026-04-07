@@ -8,6 +8,19 @@ export interface GraphQLQueryOptions {
   query: string;
   variables?: Record<string, unknown>;
   token?: string;
+  headers?: Record<string, string>;
+}
+
+function applyHeaders(req: request.Test, options: GraphQLQueryOptions): void {
+  if (options.token) {
+    req.set('Authorization', `Bearer ${options.token}`);
+  }
+
+  if (options.headers) {
+    for (const [key, value] of Object.entries(options.headers)) {
+      req.set(key, value);
+    }
+  }
 }
 
 export async function gqlQuery<T = Record<string, any>>(
@@ -15,9 +28,7 @@ export async function gqlQuery<T = Record<string, any>>(
 ): Promise<T> {
   const req = request(options.app.getHttpServer()).post(GRAPHQL_URL);
 
-  if (options.token) {
-    req.set('Authorization', `Bearer ${options.token}`);
-  }
+  applyHeaders(req, options);
 
   const res = await req.send({
     query: options.query,
@@ -45,9 +56,7 @@ export async function gqlQueryExpectError(
 ): Promise<void> {
   const req = request(options.app.getHttpServer()).post(GRAPHQL_URL);
 
-  if (options.token) {
-    req.set('Authorization', `Bearer ${options.token}`);
-  }
+  applyHeaders(req, options);
 
   await req
     .send({
@@ -79,9 +88,7 @@ export async function gqlQueryRaw(
 ): Promise<GraphQLErrorResponse> {
   const req = request(options.app.getHttpServer()).post(GRAPHQL_URL);
 
-  if (options.token) {
-    req.set('Authorization', `Bearer ${options.token}`);
-  }
+  applyHeaders(req, options);
 
   const res = await req.send({
     query: options.query,
