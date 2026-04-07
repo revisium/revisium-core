@@ -11,6 +11,7 @@ import {
   View,
   ViewFilterGroup,
 } from 'src/features/views/types';
+import { unquoteFieldPath } from 'src/features/sub-schema/utils/unquote-field-path';
 
 const SYSTEM_FIELDS = new Set([
   'id',
@@ -139,10 +140,8 @@ export class ViewValidationService {
       }
 
       const dbPath = getDBJsonPathByJsonSchemaStore(item);
-      const fieldPath = (dbPath.startsWith('$.') ? dbPath.slice(2) : dbPath)
-        .split('.')
-        .map((s) => (s.startsWith('"') && s.endsWith('"') ? s.slice(1, -1) : s))
-        .join('.');
+      const rawPath = dbPath.startsWith('$.') ? dbPath.slice(2) : dbPath;
+      const fieldPath = unquoteFieldPath(rawPath);
 
       validFields.add(fieldPath);
     });
