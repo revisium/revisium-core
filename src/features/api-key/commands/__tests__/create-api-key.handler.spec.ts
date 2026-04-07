@@ -59,15 +59,21 @@ describe('CreateApiKeyHandler', () => {
   });
 
   it('should create a service key with scope', async () => {
+    const orgId = `org-${nanoid(8)}`;
+    await prisma.organization.create({
+      data: { id: orgId, createdId: nanoid() },
+    });
+
     const result = await commandBus.execute(
       new CreateApiKeyCommand({
         type: ApiKeyType.SERVICE,
         name: 'CRM Integration',
         serviceId: `crm-${nanoid(8)}`,
-        organizationId: 'org-1',
+        organizationId: orgId,
         projectIds: ['proj-1'],
         branchNames: ['$default'],
         readOnly: true,
+        permissions: { rules: [{ action: ['read'], subject: ['Row'] }] },
       }),
     );
 
@@ -77,10 +83,13 @@ describe('CreateApiKeyHandler', () => {
     const stored = await prisma.apiKey.findUnique({
       where: { id: result.id },
     });
-    expect(stored!.organizationId).toBe('org-1');
+    expect(stored!.organizationId).toBe(orgId);
     expect(stored!.projectIds).toEqual(['proj-1']);
     expect(stored!.branchNames).toEqual(['$default']);
     expect(stored!.readOnly).toBe(true);
+    expect(stored!.permissions).toEqual({
+      rules: [{ action: ['read'], subject: ['Row'] }],
+    });
   });
 
   it('should create an internal key', async () => {
@@ -192,12 +201,14 @@ describe('CreateApiKeyHandler', () => {
 
   it('should reject duplicate serviceId', async () => {
     const serviceId = `dup-${nanoid(8)}`;
+    const permissions = { rules: [{ action: ['read'], subject: ['Row'] }] };
 
     await commandBus.execute(
       new CreateApiKeyCommand({
         type: ApiKeyType.SERVICE,
         name: 'First',
         serviceId,
+        permissions,
       }),
     );
 
@@ -207,6 +218,7 @@ describe('CreateApiKeyHandler', () => {
           type: ApiKeyType.SERVICE,
           name: 'Second',
           serviceId,
+          permissions,
         }),
       ),
     ).rejects.toThrow(ConflictException);

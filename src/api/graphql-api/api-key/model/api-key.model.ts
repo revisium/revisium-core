@@ -1,5 +1,5 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
-import { DateTimeResolver } from 'graphql-scalars';
+import { DateTimeResolver, GraphQLJSON } from 'graphql-scalars';
 import { ApiKeyTypeEnum } from 'src/api/graphql-api/api-key/model/api-key-type.enum';
 
 @ObjectType()
@@ -33,6 +33,9 @@ export class ApiKeyModel {
 
   @Field(() => [String])
   allowedIps: string[];
+
+  @Field(() => GraphQLJSON, { nullable: true })
+  permissions?: unknown;
 
   @Field(() => DateTimeResolver, { nullable: true })
   expiresAt?: Date;

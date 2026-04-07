@@ -69,6 +69,7 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     JwtSecretService,
     NoAuthService,
     UniversalAuthService,
+    CaslAbilityFactory,
     HttpUniversalAuthGuard,
     OptionalHttpUniversalAuthGuard,
     GqlUniversalAuthGuard,

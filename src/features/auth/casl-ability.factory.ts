@@ -2,6 +2,7 @@ import { AbilityBuilder, createMongoAbility, MongoQuery } from '@casl/ability';
 import { AnyObject } from '@casl/ability/dist/types/types';
 import { Injectable } from '@nestjs/common';
 import { UserRole } from 'src/features/auth/consts';
+import { ICaslRule } from 'src/features/auth/types';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -24,6 +25,37 @@ export class CaslAbilityFactory {
         this.getPermissions(role),
       )) {
         can(action, subject, condition as MongoQuery<AnyObject>);
+      }
+    }
+
+    return build();
+  }
+
+  createFromRules(rules: ICaslRule[]) {
+    const { can, cannot, build } = new AbilityBuilder(createMongoAbility);
+
+    for (const rule of rules) {
+      const actions = Array.isArray(rule.action) ? rule.action : [rule.action];
+      const subjects = Array.isArray(rule.subject)
+        ? rule.subject
+        : [rule.subject];
+
+      for (const action of actions) {
+        for (const subject of subjects) {
+          const fn = rule.inverted ? cannot : can;
+          if (rule.conditions) {
+            fn(
+              action,
+              subject,
+              rule.fields,
+              rule.conditions as MongoQuery<AnyObject>,
+            );
+          } else if (rule.fields) {
+            fn(action, subject, rule.fields);
+          } else {
+            fn(action, subject);
+          }
+        }
       }
     }
 

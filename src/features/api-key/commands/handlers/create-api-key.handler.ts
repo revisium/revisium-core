@@ -10,11 +10,21 @@ import {
   CreateApiKeyCommand,
   CreateApiKeyCommandReturnType,
 } from 'src/features/api-key/commands/impl';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const MAX_NAME_LENGTH = 255;
 const MAX_INTERNAL_SERVICE_NAME_LENGTH = 50;
+
+const VALID_ACTIONS = new Set<string>([
+  ...Object.values(PermissionAction),
+  'manage',
+]);
+const VALID_SUBJECTS = new Set<string>([
+  ...Object.values(PermissionSubject),
+  'all',
+]);
 
 @CommandHandler(CreateApiKeyCommand)
 export class CreateApiKeyHandler implements ICommandHandler<
@@ -32,6 +42,7 @@ export class CreateApiKeyHandler implements ICommandHandler<
     this.validateFields(data);
     this.validateIdentity(data);
     this.validateCrossFields(data);
+    this.validatePermissions(data);
     await this.validateReferences(data);
 
     const { key, hash, prefix } = this.apiKeyService.generateKey();
@@ -129,6 +140,53 @@ export class CreateApiKeyHandler implements ICommandHandler<
     }
   }
 
+  private validatePermissions(data: CreateApiKeyCommand['data']): void {
+    if (data.type !== ApiKeyType.SERVICE) {
+      return;
+    }
+
+    const permissions = data.permissions as
+      | { rules: Array<{ action: string[]; subject: string[] }> }
+      | null
+      | undefined;
+
+    if (!permissions || !permissions.rules || permissions.rules.length === 0) {
+      throw new BadRequestException(
+        'permissions with at least one rule is required for SERVICE keys',
+      );
+    }
+
+    for (const rule of permissions.rules) {
+      if (!rule.action || rule.action.length === 0) {
+        throw new BadRequestException(
+          'Each permission rule must have at least one action',
+        );
+      }
+
+      for (const action of rule.action) {
+        if (!VALID_ACTIONS.has(action)) {
+          throw new BadRequestException(
+            `Invalid action "${action}". Valid actions: ${[...VALID_ACTIONS].join(', ')}`,
+          );
+        }
+      }
+
+      if (!rule.subject || rule.subject.length === 0) {
+        throw new BadRequestException(
+          'Each permission rule must have at least one subject',
+        );
+      }
+
+      for (const subject of rule.subject) {
+        if (!VALID_SUBJECTS.has(subject)) {
+          throw new BadRequestException(
+            `Invalid subject "${subject}". Valid subjects: ${[...VALID_SUBJECTS].join(', ')}`,
+          );
+        }
+      }
+    }
+  }
+
   private async validateReferences(
     data: CreateApiKeyCommand['data'],
   ): Promise<void> {
@@ -150,6 +208,18 @@ export class CreateApiKeyHandler implements ICommandHandler<
       if (existing) {
         throw new ConflictException(
           `API key with serviceId "${data.serviceId}" already exists`,
+        );
+      }
+    }
+
+    if (data.type === ApiKeyType.SERVICE && data.organizationId) {
+      const org = await this.prisma.organization.findUnique({
+        where: { id: data.organizationId },
+        select: { id: true },
+      });
+      if (!org) {
+        throw new NotFoundException(
+          `Organization "${data.organizationId}" not found`,
         );
       }
     }

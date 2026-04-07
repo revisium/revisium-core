@@ -85,6 +85,7 @@ describe('RotateApiKeyHandler', () => {
         type: ApiKeyType.SERVICE,
         name: 'Service Rotate',
         serviceId,
+        permissions: { rules: [{ action: ['read'], subject: ['Row'] }] },
       }),
     );
 

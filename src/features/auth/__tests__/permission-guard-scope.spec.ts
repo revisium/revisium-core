@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ApiKeyScopeService } from 'src/features/api-key/api-key-scope.service';
+import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { BasePermissionGuard } from 'src/features/auth/guards/base-persmission.guard';
 import {
@@ -56,6 +57,8 @@ class TestPermissionGuard extends BasePermissionGuard<TestParams> {
   }
 }
 
+const mockCaslAbilityFactory = {} as CaslAbilityFactory;
+
 describe('BasePermissionGuard scope validation', () => {
   let guard: TestPermissionGuard;
   let reflector: jest.Mocked<Reflector>;
@@ -93,7 +96,12 @@ describe('BasePermissionGuard scope validation', () => {
       resolveBranchNames: jest.fn().mockResolvedValue(['master']),
     } as any;
 
-    guard = new TestPermissionGuard(reflector, authApi, scopeService);
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
   });
 
   it('should skip scope validation for JWT users (no apiKeyId)', async () => {
@@ -287,7 +295,12 @@ describe('BasePermissionGuard error handling', () => {
     } as any;
     authApi = {} as any;
     scopeService = { validateScope: jest.fn() } as any;
-    guard = new TestPermissionGuard(reflector, authApi, scopeService);
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
   });
 
   it('should throw NotFoundException when params are null', async () => {
@@ -313,7 +326,12 @@ describe('BasePermissionGuard error handling', () => {
         throw new NotFoundException('Resource not found');
       }
     }
-    const g = new FailGuard(reflector, authApi, scopeService);
+    const g = new FailGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     const ctx = {
       getClass: () => ({}),
       getHandler: () => ({}),
@@ -334,7 +352,12 @@ describe('BasePermissionGuard error handling', () => {
         throw new Error('Permission denied');
       }
     }
-    const g = new FailGuard(reflector, authApi, scopeService);
+    const g = new FailGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     const ctx = {
       getClass: () => ({}),
       getHandler: () => ({}),
@@ -355,7 +378,12 @@ describe('BasePermissionGuard error handling', () => {
         throw 'string error';
       }
     }
-    const g = new FailGuard(reflector, authApi, scopeService);
+    const g = new FailGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     const ctx = {
       getClass: () => ({}),
       getHandler: () => ({}),
@@ -403,7 +431,12 @@ describe('BasePermissionGuard error handling', () => {
       }),
     } as any;
 
-    const g = new TrackGuard(mockReflector, authApi, scopeService);
+    const g = new TrackGuard(
+      mockReflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     const ctx = {
       getClass: () => classObj,
       getHandler: () => handlerObj,
@@ -472,7 +505,12 @@ describe('BasePermissionGuard internal key bypass', () => {
       }
     }
 
-    const guard = new TrackingGuard(reflector, authApi, scopeService);
+    const guard = new TrackingGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     const result = await guard.canActivate(createContext());
 
     expect(result).toBe(true);
@@ -508,7 +546,12 @@ describe('BasePermissionGuard internal key bypass', () => {
       }
     }
 
-    const guard = new TrackingGuard(reflector, authApi, scopeService);
+    const guard = new TrackingGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     const result = await guard.canActivate(createContext());
 
     expect(result).toBe(true);
@@ -535,7 +578,12 @@ describe('BasePermissionGuard internal key bypass', () => {
       }
     }
 
-    const guard = new TrackingGuard(reflector, authApi, scopeService);
+    const guard = new TrackingGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     await guard.canActivate(createContext());
 
     expect(guard.executeCommandCalled).toBe(true);
@@ -571,7 +619,12 @@ describe('BasePermissionGuard without scope override', () => {
     const authApi = {} as any;
     const scopeService = { validateScope: jest.fn() } as any;
 
-    const guard = new NoScopeGuard(reflector, authApi, scopeService);
+    const guard = new NoScopeGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
     guard.setTestData(
       {
         userId: 'u1',

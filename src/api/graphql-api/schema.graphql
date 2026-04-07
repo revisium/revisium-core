@@ -36,6 +36,7 @@ type ApiKeyModel {
   lastUsedAt: DateTime
   name: String!
   organizationId: String
+  permissions: JSON
   prefix: String!
   projectIds: [String!]!
   readOnly: Boolean!
@@ -119,6 +120,18 @@ type BranchesConnection {
 input CancelSubscriptionInput {
   cancelAtPeriodEnd: Boolean
   organizationId: ID!
+}
+
+input CaslPermissionsInput {
+  rules: [CaslRuleInput!]!
+}
+
+input CaslRuleInput {
+  action: [String!]!
+  conditions: JSON
+  fields: [String!]
+  inverted: Boolean
+  subject: [String!]!
 }
 
 enum ChangeType {
@@ -226,6 +239,18 @@ type CreateRowsResultModel {
 input CreateRowsRowInput {
   data: JSON!
   rowId: String!
+}
+
+input CreateServiceApiKeyInput {
+  allowedIps: [String!]
+  branchNames: [String!]
+  expiresAt: DateTime
+  name: String!
+  organizationId: String!
+  permissions: CaslPermissionsInput!
+  projectIds: [String!]
+  readOnly: Boolean = false
+  tableIds: [String!]
 }
 
 input CreateTableInput {
@@ -628,6 +653,7 @@ type Mutation {
   createRevision(data: CreateRevisionInput!): RevisionModel!
   createRow(data: CreateRowInput!): CreateRowResultModel!
   createRows(data: CreateRowsInput!): CreateRowsResultModel!
+  createServiceApiKey(data: CreateServiceApiKeyInput!): ApiKeyWithSecretModel!
   createTable(data: CreateTableInput!): CreateTableResultModel!
   createUser(data: CreateUserInput!): Boolean!
   deleteBranch(data: DeleteBranchInput!): Boolean!
@@ -844,6 +870,7 @@ type Query {
   rows(data: GetRowsInput!): RowsConnection!
   searchRows(data: SearchRowsInput!): SearchResultsConnection!
   searchUsers(data: SearchUsersInput!): SearchUsersConnection!
+  serviceApiKeys(organizationId: String!): [ApiKeyModel!]!
   subSchemaItems(data: GetSubSchemaItemsInput!): SubSchemaItemsConnection!
   table(data: GetTableInput!): TableModel
   tableChanges(data: GetTableChangesInput!): TableChangesConnection!

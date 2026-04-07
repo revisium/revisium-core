@@ -6,9 +6,11 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import { ForbiddenError } from '@casl/ability';
 import { Reflector } from '@nestjs/core';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { ApiKeyScopeService } from 'src/features/api-key/api-key-scope.service';
+import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import {
   PERMISSION_PARAMS_KEY,
@@ -24,6 +26,7 @@ export abstract class BasePermissionGuard<
     protected reflector: Reflector,
     protected authApi: AuthApiService,
     protected apiKeyScopeService: ApiKeyScopeService,
+    protected caslAbilityFactory: CaslAbilityFactory,
   ) {}
 
   protected getFromHttpContext(context: ExecutionContext) {
@@ -84,6 +87,33 @@ export abstract class BasePermissionGuard<
     }
 
     if (user?.authMethod === 'internal_key') {
+      return true;
+    }
+
+    if (user?.authMethod === 'service_key' && user.serviceKeyPermissions) {
+      const ability = this.caslAbilityFactory.createFromRules(
+        user.serviceKeyPermissions.rules,
+      );
+
+      try {
+        for (const permission of permissions) {
+          ForbiddenError.from(ability)
+            .setMessage(
+              `You are not allowed to ${permission.action} on ${permission.subject}`,
+            )
+            .throwUnlessCan(permission.action, permission.subject);
+        }
+      } catch (e) {
+        if (e instanceof Error) {
+          throw new ForbiddenException(e.message);
+        }
+        throw new InternalServerErrorException();
+      }
+
+      if (user.apiKeyId && user.apiKeyScope) {
+        await this.validateApiKeyScope(user, params);
+      }
+
       return true;
     }
 
