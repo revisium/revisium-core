@@ -147,7 +147,14 @@ export class ApiKeyApiService {
       if (!apiKey.organizationId) {
         throw new NotFoundException('API key not found');
       }
-      await this.assertOrgAdmin(userId, apiKey.organizationId);
+      try {
+        await this.assertOrgAdmin(userId, apiKey.organizationId);
+      } catch (error) {
+        if (error instanceof ForbiddenException) {
+          throw new NotFoundException('API key not found');
+        }
+        throw error;
+      }
       return apiKey;
     }
 

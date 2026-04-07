@@ -1,5 +1,5 @@
 import { Field, InputType } from '@nestjs/graphql';
-import { GraphQLJSON } from 'graphql-scalars';
+import { GraphQLJSONObject } from 'graphql-scalars';
 import { BaseApiKeyScopeInput } from 'src/api/graphql-api/api-key/inputs/base-api-key-scope.input';
 
 @InputType()
@@ -10,7 +10,7 @@ export class CaslRuleInput {
   @Field(() => [String])
   subject: string[];
 
-  @Field(() => GraphQLJSON, { nullable: true })
+  @Field(() => GraphQLJSONObject, { nullable: true })
   conditions?: Record<string, unknown>;
 
   @Field(() => [String], { nullable: true })

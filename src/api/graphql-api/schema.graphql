@@ -128,7 +128,7 @@ input CaslPermissionsInput {
 
 input CaslRuleInput {
   action: [String!]!
-  conditions: JSON
+  conditions: JSONObject
   fields: [String!]
   inverted: Boolean
   subject: [String!]!
@@ -556,6 +556,11 @@ type HistoryPatchModel {
 The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
 """
 scalar JSON
+
+"""
+The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSONObject
 
 input JsonFilter {
   array_contains: [JSON!]

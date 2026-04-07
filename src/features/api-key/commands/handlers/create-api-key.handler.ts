@@ -146,39 +146,46 @@ export class CreateApiKeyHandler implements ICommandHandler<
     }
 
     const permissions = data.permissions as
-      | { rules: Array<{ action: string[]; subject: string[] }> }
+      | { rules?: unknown }
       | null
       | undefined;
 
-    if (!permissions || !permissions.rules || permissions.rules.length === 0) {
+    if (
+      !permissions ||
+      !Array.isArray(permissions.rules) ||
+      permissions.rules.length === 0
+    ) {
       throw new BadRequestException(
         'permissions with at least one rule is required for SERVICE keys',
       );
     }
 
-    for (const rule of permissions.rules) {
-      if (!rule.action || rule.action.length === 0) {
+    for (const rule of permissions.rules as Array<{
+      action?: unknown;
+      subject?: unknown;
+    }>) {
+      if (!Array.isArray(rule.action) || rule.action.length === 0) {
         throw new BadRequestException(
           'Each permission rule must have at least one action',
         );
       }
 
       for (const action of rule.action) {
-        if (!VALID_ACTIONS.has(action)) {
+        if (typeof action !== 'string' || !VALID_ACTIONS.has(action)) {
           throw new BadRequestException(
             `Invalid action "${action}". Valid actions: ${[...VALID_ACTIONS].join(', ')}`,
           );
         }
       }
 
-      if (!rule.subject || rule.subject.length === 0) {
+      if (!Array.isArray(rule.subject) || rule.subject.length === 0) {
         throw new BadRequestException(
           'Each permission rule must have at least one subject',
         );
       }
 
       for (const subject of rule.subject) {
-        if (!VALID_SUBJECTS.has(subject)) {
+        if (typeof subject !== 'string' || !VALID_SUBJECTS.has(subject)) {
           throw new BadRequestException(
             `Invalid subject "${subject}". Valid subjects: ${[...VALID_SUBJECTS].join(', ')}`,
           );

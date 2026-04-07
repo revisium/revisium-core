@@ -1,4 +1,4 @@
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
@@ -249,7 +249,7 @@ describe('ApiKeyApiService - Service Keys', () => {
       });
 
       await expect(service.revokeApiKey(created.id, devId)).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
     });
 
@@ -273,7 +273,7 @@ describe('ApiKeyApiService - Service Keys', () => {
       });
 
       await expect(service.revokeApiKey(created.id, ownerB)).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
     });
   });
@@ -315,7 +315,7 @@ describe('ApiKeyApiService - Service Keys', () => {
       });
 
       await expect(service.rotateApiKey(created.id, readerId)).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
     });
   });
@@ -356,7 +356,7 @@ describe('ApiKeyApiService - Service Keys', () => {
       });
 
       await expect(service.getApiKeyById(created.id, devId)).rejects.toThrow(
-        ForbiddenException,
+        NotFoundException,
       );
     });
   });
