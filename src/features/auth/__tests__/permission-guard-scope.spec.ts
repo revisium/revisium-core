@@ -417,6 +417,131 @@ describe('BasePermissionGuard error handling', () => {
   });
 });
 
+describe('BasePermissionGuard internal key bypass', () => {
+  let reflector: jest.Mocked<Reflector>;
+  let authApi: jest.Mocked<AuthApiService>;
+  let scopeService: jest.Mocked<ApiKeyScopeService>;
+
+  const defaultPermission: IPermissionParams = {
+    action: PermissionAction.read,
+    subject: PermissionSubject.Project,
+  };
+
+  const createContext = (): ExecutionContext => {
+    return {
+      getClass: () => ({}),
+      getHandler: () => ({}),
+    } as unknown as ExecutionContext;
+  };
+
+  beforeEach(() => {
+    reflector = {
+      get: jest.fn().mockImplementation((key: string) => {
+        if (key === PERMISSION_PARAMS_KEY) {
+          return defaultPermission;
+        }
+        return undefined;
+      }),
+    } as any;
+    authApi = {
+      checkProjectPermission: jest.fn().mockResolvedValue(true),
+    } as any;
+    scopeService = {
+      validateScope: jest.fn().mockReturnValue(true),
+      resolveBranchNames: jest.fn().mockResolvedValue(['master']),
+    } as any;
+  });
+
+  it('should skip executeCommand for internal_key authMethod', async () => {
+    class TrackingGuard extends BasePermissionGuard<TestParams> {
+      public executeCommandCalled = false;
+      protected getParams(_context: ExecutionContext) {
+        return {
+          user: {
+            userId: 'internal:endpoint',
+            email: '',
+            authMethod: 'internal_key' as const,
+            apiKeyId: 'key-1',
+          },
+          params: { organizationId: 'org-1' } as TestParams,
+        };
+      }
+      protected executeCommand() {
+        this.executeCommandCalled = true;
+        return Promise.resolve(true);
+      }
+    }
+
+    const guard = new TrackingGuard(reflector, authApi, scopeService);
+    const result = await guard.canActivate(createContext());
+
+    expect(result).toBe(true);
+    expect(guard.executeCommandCalled).toBe(false);
+  });
+
+  it('should skip scope validation for internal_key authMethod', async () => {
+    class TrackingGuard extends BasePermissionGuard<TestParams> {
+      protected getParams(_context: ExecutionContext) {
+        return {
+          user: {
+            userId: 'internal:endpoint',
+            email: '',
+            authMethod: 'internal_key' as const,
+            apiKeyId: 'key-1',
+            apiKeyScope: {
+              organizationId: 'org-1',
+              projectIds: [],
+              branchNames: [],
+              tableIds: [],
+            },
+          },
+          params: { organizationId: 'org-1' } as TestParams,
+        };
+      }
+      protected executeCommand() {
+        return Promise.resolve(true);
+      }
+      protected override buildScopeRequest(params: TestParams) {
+        return {
+          organizationId: params.organizationId,
+        };
+      }
+    }
+
+    const guard = new TrackingGuard(reflector, authApi, scopeService);
+    const result = await guard.canActivate(createContext());
+
+    expect(result).toBe(true);
+    expect(scopeService.validateScope).not.toHaveBeenCalled();
+  });
+
+  it('should still call executeCommand for other authMethods', async () => {
+    class TrackingGuard extends BasePermissionGuard<TestParams> {
+      public executeCommandCalled = false;
+      protected getParams(_context: ExecutionContext) {
+        return {
+          user: {
+            userId: 'user-1',
+            email: '',
+            authMethod: 'personal_key' as const,
+            apiKeyId: 'key-1',
+          },
+          params: { organizationId: 'org-1' } as TestParams,
+        };
+      }
+      protected executeCommand() {
+        this.executeCommandCalled = true;
+        return Promise.resolve(true);
+      }
+    }
+
+    const guard = new TrackingGuard(reflector, authApi, scopeService);
+    await guard.canActivate(createContext());
+
+    expect(guard.executeCommandCalled).toBe(true);
+  });
+});
+
 describe('BasePermissionGuard without scope override', () => {
   class NoScopeGuard extends BasePermissionGuard<{ organizationId: string }> {
     private testUser: IOptionalAuthUser;

@@ -83,6 +83,10 @@ export abstract class BasePermissionGuard<
       throw new NotFoundException('Required parameters not found');
     }
 
+    if (user?.authMethod === 'internal_key') {
+      return true;
+    }
+
     try {
       await this.executeCommand(params, permissions, user?.userId);
     } catch (e) {
