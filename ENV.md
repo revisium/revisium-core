@@ -113,6 +113,17 @@ cp .env.example .env
 
 ---
 
+## Internal API Keys (Microservice Mode Only)
+
+In monolith/standalone mode, internal keys are derived automatically from `JWT_SECRET`. These env vars are ignored (a warning is logged if set). For multi-replica monolith deployments, ensure `JWT_SECRET` is explicitly set.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `INTERNAL_API_KEY_ENDPOINT` | - | Internal API key for `endpoint` service. Must match the value set in revisium-endpoint |
+| `INTERNAL_API_KEY_{SERVICE}` | - | Internal API key for additional services (e.g., `INTERNAL_API_KEY_WORKER`). Service name derived from suffix (lowercased) |
+
+---
+
 ## Endpoint Service
 
 | Variable | Default | Description |
