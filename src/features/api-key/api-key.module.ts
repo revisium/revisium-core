@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
+import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import { ApiKeyScopeService } from 'src/features/api-key/api-key-scope.service';
 import { ApiKeyTrackingService } from 'src/features/api-key/api-key-tracking.service';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
@@ -11,11 +12,17 @@ import { DatabaseModule } from 'src/infrastructure/database/database.module';
   imports: [CqrsModule, DatabaseModule],
   providers: [
     ApiKeyService,
+    ApiKeyApiService,
     ApiKeyTrackingService,
     ApiKeyScopeService,
     ...API_KEY_COMMANDS,
     ...API_KEY_QUERIES,
   ],
-  exports: [ApiKeyService, ApiKeyTrackingService, ApiKeyScopeService],
+  exports: [
+    ApiKeyService,
+    ApiKeyApiService,
+    ApiKeyTrackingService,
+    ApiKeyScopeService,
+  ],
 })
 export class ApiKeyModule {}

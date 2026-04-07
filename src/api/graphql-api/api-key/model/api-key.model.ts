@@ -1,0 +1,48 @@
+import { Field, ID, ObjectType } from '@nestjs/graphql';
+import { DateTimeResolver } from 'graphql-scalars';
+import { ApiKeyTypeEnum } from 'src/api/graphql-api/api-key/model/api-key-type.enum';
+
+@ObjectType()
+export class ApiKeyModel {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  prefix: string;
+
+  @Field(() => ApiKeyTypeEnum)
+  type: ApiKeyTypeEnum;
+
+  @Field()
+  name: string;
+
+  @Field({ nullable: true })
+  organizationId?: string;
+
+  @Field(() => [String])
+  projectIds: string[];
+
+  @Field(() => [String])
+  branchNames: string[];
+
+  @Field(() => [String])
+  tableIds: string[];
+
+  @Field()
+  readOnly: boolean;
+
+  @Field(() => [String])
+  allowedIps: string[];
+
+  @Field(() => DateTimeResolver, { nullable: true })
+  expiresAt?: Date;
+
+  @Field(() => DateTimeResolver, { nullable: true })
+  lastUsedAt?: Date;
+
+  @Field(() => DateTimeResolver)
+  createdAt: Date;
+
+  @Field(() => DateTimeResolver, { nullable: true })
+  revokedAt?: Date;
+}

@@ -27,6 +27,34 @@ input AdminUserInput {
   userId: String!
 }
 
+type ApiKeyModel {
+  allowedIps: [String!]!
+  branchNames: [String!]!
+  createdAt: DateTime!
+  expiresAt: DateTime
+  id: ID!
+  lastUsedAt: DateTime
+  name: String!
+  organizationId: String
+  prefix: String!
+  projectIds: [String!]!
+  readOnly: Boolean!
+  revokedAt: DateTime
+  tableIds: [String!]!
+  type: ApiKeyType!
+}
+
+enum ApiKeyType {
+  INTERNAL
+  PERSONAL
+  SERVICE
+}
+
+type ApiKeyWithSecretModel {
+  apiKey: ApiKeyModel!
+  secret: String!
+}
+
 type ApplyMigrationResultModel {
   error: String
   id: String!
@@ -142,6 +170,17 @@ input CreateCheckoutInput {
 input CreateEndpointInput {
   revisionId: String!
   type: EndpointType!
+}
+
+input CreatePersonalApiKeyInput {
+  allowedIps: [String!]
+  branchNames: [String!]
+  expiresAt: DateTime
+  name: String!
+  organizationId: String
+  projectIds: [String!]
+  readOnly: Boolean = false
+  tableIds: [String!]
 }
 
 input CreateProjectInput {
@@ -584,6 +623,7 @@ type Mutation {
   createBranch(data: CreateBranchInput!): BranchModel!
   createCheckout(data: CreateCheckoutInput!): CheckoutResultModel!
   createEndpoint(data: CreateEndpointInput!): EndpointModel!
+  createPersonalApiKey(data: CreatePersonalApiKeyInput!): ApiKeyWithSecretModel!
   createProject(data: CreateProjectInput!): ProjectModel!
   createRevision(data: CreateRevisionInput!): RevisionModel!
   createRow(data: CreateRowInput!): CreateRowResultModel!
@@ -607,6 +647,8 @@ type Mutation {
   renameTable(data: RenameTableInput!): RenameTableResultModel!
   resetPassword(data: ResetPasswordInput!): Boolean!
   revertChanges(data: RevertChangesInput!): BranchModel!
+  revokeApiKey(id: ID!): ApiKeyModel!
+  rotateApiKey(id: ID!): ApiKeyWithSecretModel!
   setUsername(data: SetUsernameInput!): Boolean!
   signUp(data: SignUpInput!): Boolean!
   updatePassword(data: UpdatePasswordInput!): Boolean!
@@ -781,6 +823,7 @@ type ProjectsConnection {
 type Query {
   adminUser(data: AdminUserInput!): UserModel
   adminUsers(data: SearchUsersInput!): UsersConnection!
+  apiKeyById(id: ID!): ApiKeyModel!
   availableProviders(country: String, method: String): [PaymentProviderModel!]!
   branch(data: GetBranchInput!): BranchModel!
   branches(data: GetBranchesInput!): BranchesConnection!
@@ -788,6 +831,7 @@ type Query {
   getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int! @deprecated(reason: "use RowModel.rowForeignKeysBy.totalCount")
   me: MeModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
+  myApiKeys: [ApiKeyModel!]!
   organization(data: GetOrganizationInput!): OrganizationModel!
   plans: [PlanModel!]!
   project(data: GetProjectInput!): ProjectModel!
