@@ -33,7 +33,11 @@ describe('InternalKeyBootstrapService', () => {
       ],
     }).compile();
 
-    prisma = module.get<PrismaService>(PrismaService);
+    const newPrisma = module.get<PrismaService>(PrismaService);
+    if (prisma && prisma !== newPrisma) {
+      await prisma.$disconnect();
+    }
+    prisma = newPrisma;
 
     return module;
   }

@@ -66,26 +66,31 @@ export class InternalKeyBootstrapService implements OnModuleInit {
       return;
     }
 
-    if (existing) {
-      await this.prisma.apiKey.update({
-        where: { id: existing.id },
-        data: { revokedAt: new Date() },
+    await this.prisma.$transaction(async (tx) => {
+      if (existing) {
+        await tx.apiKey.update({
+          where: { id: existing.id },
+          data: { revokedAt: new Date() },
+        });
+      }
+
+      await tx.apiKey.create({
+        data: {
+          prefix: 'rev_',
+          keyHash: newHash,
+          type: ApiKeyType.INTERNAL,
+          name: KEY_NAME,
+          internalServiceName: INTERNAL_SERVICE_NAME,
+        },
       });
+    });
+
+    if (existing) {
       await this.authCache.invalidateApiKeyByHash(existing.keyHash);
       this.logger.log(
         `Revoked old internal API key for '${INTERNAL_SERVICE_NAME}' service`,
       );
     }
-
-    await this.prisma.apiKey.create({
-      data: {
-        prefix: 'rev_',
-        keyHash: newHash,
-        type: ApiKeyType.INTERNAL,
-        name: KEY_NAME,
-        internalServiceName: INTERNAL_SERVICE_NAME,
-      },
-    });
 
     this.logger.log(
       `Internal API key for '${INTERNAL_SERVICE_NAME}' service initialized`,
