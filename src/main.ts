@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import compression from 'compression';
+import { Request, Response, NextFunction } from 'express';
 import { initSwagger } from 'src/api/rest-api/init-swagger';
 import { AppModule } from 'src/app.module';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
@@ -22,6 +23,13 @@ async function bootstrap() {
 
   app.useBodyParser('json', { limit: bodyLimit });
   app.use(compression());
+
+  app.use((_req: Request, res: Response, next: NextFunction) => {
+    if (!_req.path.startsWith('/files/')) {
+      res.setHeader('Cache-Control', 'no-store');
+    }
+    next();
+  });
   app.enableCors({
     maxAge: 86400,
   });
