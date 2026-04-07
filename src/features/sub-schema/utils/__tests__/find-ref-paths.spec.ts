@@ -29,7 +29,7 @@ describe('findRefPaths', () => {
 
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
-    expect(result).toEqual([{ path: 'file' }]);
+    expect(result).toEqual([{ path: '"file"' }]);
   });
 
   it('should find multiple refs at root level', () => {
@@ -41,8 +41,8 @@ describe('findRefPaths', () => {
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
     expect(result).toHaveLength(2);
-    expect(result).toContainEqual({ path: 'avatar' });
-    expect(result).toContainEqual({ path: 'cover' });
+    expect(result).toContainEqual({ path: '"avatar"' });
+    expect(result).toContainEqual({ path: '"cover"' });
   });
 
   it('should find refs in nested objects', () => {
@@ -56,8 +56,8 @@ describe('findRefPaths', () => {
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
     expect(result).toHaveLength(2);
-    expect(result).toContainEqual({ path: 'media.thumbnail' });
-    expect(result).toContainEqual({ path: 'media.fullImage' });
+    expect(result).toContainEqual({ path: '"media"."thumbnail"' });
+    expect(result).toContainEqual({ path: '"media"."fullImage"' });
   });
 
   it('should find refs in array items', () => {
@@ -67,7 +67,7 @@ describe('findRefPaths', () => {
 
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
-    expect(result).toEqual([{ path: 'images[*]' }]);
+    expect(result).toEqual([{ path: '"images"[*]' }]);
   });
 
   it('should find refs in array of objects', () => {
@@ -81,7 +81,7 @@ describe('findRefPaths', () => {
 
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
-    expect(result).toEqual([{ path: 'attachments[*].file' }]);
+    expect(result).toEqual([{ path: '"attachments"[*]."file"' }]);
   });
 
   it('should find refs in deeply nested structure', () => {
@@ -99,7 +99,9 @@ describe('findRefPaths', () => {
 
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
-    expect(result).toEqual([{ path: 'content.sections[*].media.image' }]);
+    expect(result).toEqual([
+      { path: '"content"."sections"[*]."media"."image"' },
+    ]);
   });
 
   it('should handle complex schema with mixed ref and non-ref fields', () => {
@@ -116,9 +118,26 @@ describe('findRefPaths', () => {
     const result = findRefPaths(schema, FILE_SCHEMA_ID);
 
     expect(result).toHaveLength(3);
-    expect(result).toContainEqual({ path: 'avatar' });
-    expect(result).toContainEqual({ path: 'metadata.icon' });
-    expect(result).toContainEqual({ path: 'gallery[*]' });
+    expect(result).toContainEqual({ path: '"avatar"' });
+    expect(result).toContainEqual({ path: '"metadata"."icon"' });
+    expect(result).toContainEqual({ path: '"gallery"[*]' });
+  });
+
+  it('should find refs with hyphenated keys', () => {
+    const schema = getObjectSchema({
+      'cover-image': getRefSchema(FILE_SCHEMA_ID),
+      'media-items': getArraySchema(
+        getObjectSchema({
+          'hero-banner': getRefSchema(FILE_SCHEMA_ID),
+        }),
+      ),
+    });
+
+    const result = findRefPaths(schema, FILE_SCHEMA_ID);
+
+    expect(result).toHaveLength(2);
+    expect(result).toContainEqual({ path: '"cover-image"' });
+    expect(result).toContainEqual({ path: '"media-items"[*]."hero-banner"' });
   });
 
   it('should return empty array when searching for different schemaId', () => {
