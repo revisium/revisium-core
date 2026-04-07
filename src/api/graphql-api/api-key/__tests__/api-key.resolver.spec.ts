@@ -79,7 +79,9 @@ describe('ApiKeyApiService', () => {
       expect(stored!.organizationId).toBe('org-1');
       expect(stored!.projectIds).toEqual(['proj-1']);
       expect(stored!.branchNames).toEqual(['master']);
+      expect(stored!.tableIds).toEqual(['posts']);
       expect(stored!.readOnly).toBe(true);
+      expect(stored!.allowedIps).toEqual(['192.168.1.0/24']);
     });
   });
 
