@@ -83,6 +83,20 @@ const API_KEY_BY_ID = `
   }
 `;
 
+const API_KEY_WITH_PROJECTS = `
+  query ApiKeyById($id: ID!) {
+    apiKeyById(id: $id) {
+      id
+      projectIds
+      projects {
+        id
+        name
+        organizationId
+      }
+    }
+  }
+`;
+
 describe('API Key Management (e2e)', () => {
   let app: INestApplication;
   let prismaService: PrismaService;
@@ -228,6 +242,57 @@ describe('API Key Management (e2e)', () => {
 
       expect(response.body.data.apiKeyById.id).toBe(keyId);
       expect(response.body.data.apiKeyById.name).toBe('Get By ID');
+    });
+
+    it('should resolve projects field with project details', async () => {
+      const createResponse = await graphqlRequest(preparedData.owner.token)
+        .send({
+          query: CREATE_PERSONAL_API_KEY,
+          variables: {
+            data: {
+              name: 'Projects Test',
+              projectIds: [preparedData.project.projectId],
+            },
+          },
+        })
+        .expect(200);
+
+      const keyId = createResponse.body.data.createPersonalApiKey.apiKey.id;
+
+      const response = await graphqlRequest(preparedData.owner.token)
+        .send({
+          query: API_KEY_WITH_PROJECTS,
+          variables: { id: keyId },
+        })
+        .expect(200);
+
+      const apiKey = response.body.data.apiKeyById;
+      expect(apiKey.projects).toHaveLength(1);
+      expect(apiKey.projects[0].id).toBe(preparedData.project.projectId);
+      expect(apiKey.projects[0].name).toBe(preparedData.project.projectName);
+      expect(apiKey.projects[0].organizationId).toBe(
+        preparedData.project.organizationId,
+      );
+    });
+
+    it('should return empty projects array when no projectIds', async () => {
+      const createResponse = await graphqlRequest(preparedData.owner.token)
+        .send({
+          query: CREATE_PERSONAL_API_KEY,
+          variables: { data: { name: 'No Projects' } },
+        })
+        .expect(200);
+
+      const keyId = createResponse.body.data.createPersonalApiKey.apiKey.id;
+
+      const response = await graphqlRequest(preparedData.owner.token)
+        .send({
+          query: API_KEY_WITH_PROJECTS,
+          variables: { id: keyId },
+        })
+        .expect(200);
+
+      expect(response.body.data.apiKeyById.projects).toEqual([]);
     });
 
     it('should not allow another user to get key by id', async () => {

@@ -1,6 +1,8 @@
 import { Field, ID, ObjectType } from '@nestjs/graphql';
 import { DateTimeResolver, GraphQLJSON } from 'graphql-scalars';
 import { ApiKeyTypeEnum } from 'src/api/graphql-api/api-key/model/api-key-type.enum';
+import { ProjectModel } from 'src/api/graphql-api/project/model/project.model';
+import { Relation } from 'src/api/graphql-api/share/model/relation.type';
 
 @ObjectType()
 export class ApiKeyModel {
@@ -21,6 +23,9 @@ export class ApiKeyModel {
 
   @Field(() => [String])
   projectIds: string[];
+
+  @Field(() => [ProjectModel])
+  projects: Relation<ProjectModel[]>;
 
   @Field(() => [String])
   branchNames: string[];
