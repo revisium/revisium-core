@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CommandBus, CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
@@ -28,6 +29,7 @@ describe('RevokeApiKeyHandler', () => {
         CreateApiKeyHandler,
         ApiKeyService,
         PrismaService,
+        { provide: ConfigService, useValue: { get: () => undefined } },
       ],
     }).compile();
 
