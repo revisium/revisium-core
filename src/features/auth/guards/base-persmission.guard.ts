@@ -71,6 +71,10 @@ export abstract class BasePermissionGuard<
       return true;
     }
 
+    if (user?.apiKeyReadOnly) {
+      this.checkReadOnly(permissions);
+    }
+
     if (user?.authMethod === 'service_key' && user.serviceKeyPermissions) {
       this.checkServiceKeyPermissions(
         user.serviceKeyPermissions.rules,
@@ -109,6 +113,23 @@ export abstract class BasePermissionGuard<
     }
 
     return permissions;
+  }
+
+  private checkReadOnly(permissions: IPermissionParams[]): void {
+    const writeActions = new Set([
+      'create',
+      'update',
+      'delete',
+      'revert',
+      'add',
+    ]);
+    for (const permission of permissions) {
+      if (writeActions.has(permission.action)) {
+        throw new ForbiddenException(
+          `API key is read-only: ${permission.action} on ${permission.subject} is not allowed`,
+        );
+      }
+    }
   }
 
   private checkServiceKeyPermissions(

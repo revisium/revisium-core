@@ -480,6 +480,74 @@ describe('UniversalAuthService', () => {
       });
     });
 
+    describe('readOnly flag propagation', () => {
+      it('should set apiKeyReadOnly for personal key with readOnly=true', async () => {
+        apiKeyService.findByHash.mockResolvedValue(
+          createMockApiKey({ readOnly: true }),
+        );
+
+        const result = await service.authenticate(
+          { 'x-api-key': 'rev_1234567890123456789012' },
+          {},
+          '127.0.0.1',
+        );
+
+        expect(result!.apiKeyReadOnly).toBe(true);
+      });
+
+      it('should not set apiKeyReadOnly for personal key with readOnly=false', async () => {
+        apiKeyService.findByHash.mockResolvedValue(
+          createMockApiKey({ readOnly: false }),
+        );
+
+        const result = await service.authenticate(
+          { 'x-api-key': 'rev_1234567890123456789012' },
+          {},
+          '127.0.0.1',
+        );
+
+        expect(result!.apiKeyReadOnly).toBeUndefined();
+      });
+
+      it('should set apiKeyReadOnly for service key with readOnly=true', async () => {
+        apiKeyService.findByHash.mockResolvedValue(
+          createMockApiKey({
+            type: ApiKeyType.SERVICE,
+            userId: null,
+            serviceId: 'svc-1',
+            readOnly: true,
+          }),
+        );
+
+        const result = await service.authenticate(
+          { 'x-api-key': 'rev_1234567890123456789012' },
+          {},
+          '127.0.0.1',
+        );
+
+        expect(result!.apiKeyReadOnly).toBe(true);
+      });
+
+      it('should not set apiKeyReadOnly for internal keys', async () => {
+        apiKeyService.findByHash.mockResolvedValue(
+          createMockApiKey({
+            type: ApiKeyType.INTERNAL,
+            userId: null,
+            internalServiceName: 'endpoint',
+            readOnly: true,
+          }),
+        );
+
+        const result = await service.authenticate(
+          { 'x-internal-api-key': 'rev_1234567890123456789012' },
+          {},
+          '127.0.0.1',
+        );
+
+        expect(result!.apiKeyReadOnly).toBeUndefined();
+      });
+    });
+
     describe('header handling', () => {
       it('should handle array header values', async () => {
         apiKeyService.findByHash.mockResolvedValue(createMockApiKey());
