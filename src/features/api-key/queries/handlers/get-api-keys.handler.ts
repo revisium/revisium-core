@@ -14,7 +14,7 @@ export class GetApiKeysHandler implements IQueryHandler<
   constructor(private readonly prisma: PrismaService) {}
 
   async execute({ data }: GetApiKeysQuery): Promise<GetApiKeysQueryReturnType> {
-    const where: Prisma.ApiKeyWhereInput = {};
+    const where: Prisma.ApiKeyWhereInput = { revokedAt: null };
 
     if (data.userId) {
       where.userId = data.userId;

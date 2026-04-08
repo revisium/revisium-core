@@ -27,12 +27,20 @@ describe('ApiKeyService', () => {
   });
 
   describe('generateKey', () => {
-    it('should generate a key with rev_ prefix', () => {
+    it('should generate a key with identifiable prefix', () => {
       const result = service.generateKey();
 
       expect(result.key).toMatch(/^rev_[A-Za-z0-9_-]{22}$/);
-      expect(result.prefix).toBe('rev_');
+      expect(result.prefix).toMatch(
+        /^rev_[A-Za-z0-9_-]{4}\.\.\.[A-Za-z0-9_-]{4}$/,
+      );
       expect(result.hash).toHaveLength(64);
+
+      // prefix must reflect the actual key's first/last 4 random chars
+      const random = result.key.slice('rev_'.length);
+      expect(result.prefix).toBe(
+        `rev_${random.slice(0, 4)}...${random.slice(-4)}`,
+      );
     });
 
     it('should generate unique keys', () => {
