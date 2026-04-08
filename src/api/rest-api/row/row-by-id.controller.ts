@@ -22,6 +22,7 @@ import {
   ApiConsumes,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -69,6 +70,7 @@ import { transformFromPrismaToTableModel } from 'src/api/rest-api/share/utils/tr
 })
 @Controller('revision/:revisionId/tables/:tableId/rows/:rowId')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @ApiTags('Row')
 export class RowByIdController {
   constructor(private readonly rows: RowApiService) {}

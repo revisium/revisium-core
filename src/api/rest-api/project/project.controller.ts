@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -49,6 +50,7 @@ import { transformFromPaginatedPrismaToUserProjectModel } from 'src/api/rest-api
 @Controller('organization/:organizationId/projects')
 @ApiTags('Project')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 export class ProjectController {
   constructor(private readonly projectApi: ProjectApiService) {}
 

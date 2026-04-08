@@ -10,6 +10,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -34,6 +35,7 @@ import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-met
 })
 @Controller('/endpoints/:endpointId')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @ApiTags('Endpoint')
 export class EndpointByIdController {
   constructor(private readonly endpointApi: EndpointApiService) {}

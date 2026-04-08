@@ -14,6 +14,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -59,6 +60,7 @@ import {
   'organization/:organizationId/projects/:projectName/branches/:branchName',
 )
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @ApiTags('Branch')
 export class BranchByNameController {
   constructor(

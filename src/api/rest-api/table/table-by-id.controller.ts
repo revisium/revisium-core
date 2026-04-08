@@ -20,6 +20,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -83,6 +84,7 @@ import { Table } from 'src/__generated__/client';
 })
 @Controller('revision/:revisionId/tables/:tableId')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @ApiTags('Table')
 export class TableByIdController {
   constructor(

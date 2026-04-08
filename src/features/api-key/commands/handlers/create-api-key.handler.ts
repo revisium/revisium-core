@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { ApiKeyType } from 'src/__generated__/client';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
@@ -16,6 +17,8 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const MAX_NAME_LENGTH = 255;
 const MAX_INTERNAL_SERVICE_NAME_LENGTH = 50;
+const DEFAULT_MAX_PERSONAL_KEYS_PER_USER = 10;
+const DEFAULT_MAX_SERVICE_KEYS_PER_ORG = 100;
 
 const VALID_ACTIONS = new Set<string>([
   ...Object.values(PermissionAction),
@@ -34,6 +37,7 @@ export class CreateApiKeyHandler implements ICommandHandler<
   constructor(
     private readonly prisma: PrismaService,
     private readonly apiKeyService: ApiKeyService,
+    private readonly configService: ConfigService,
   ) {}
 
   async execute({
@@ -44,6 +48,7 @@ export class CreateApiKeyHandler implements ICommandHandler<
     this.validateCrossFields(data);
     this.validatePermissions(data);
     await this.validateReferences(data);
+    await this.validateKeyLimit(data);
 
     const { key, hash, prefix } = this.apiKeyService.generateKey();
 
@@ -239,6 +244,50 @@ export class CreateApiKeyHandler implements ICommandHandler<
       if (!org) {
         throw new NotFoundException(
           `Organization "${data.organizationId}" not found`,
+        );
+      }
+    }
+  }
+
+  private async validateKeyLimit(
+    data: CreateApiKeyCommand['data'],
+  ): Promise<void> {
+    if (data.type === ApiKeyType.PERSONAL) {
+      const max =
+        Number(this.configService.get('API_KEY_MAX_PER_USER')) ||
+        DEFAULT_MAX_PERSONAL_KEYS_PER_USER;
+
+      const count = await this.prisma.apiKey.count({
+        where: {
+          type: ApiKeyType.PERSONAL,
+          userId: data.userId,
+          revokedAt: null,
+        },
+      });
+
+      if (count >= max) {
+        throw new BadRequestException(
+          `Maximum number of personal API keys (${max}) reached. Revoke unused keys to create new ones.`,
+        );
+      }
+    }
+
+    if (data.type === ApiKeyType.SERVICE) {
+      const max =
+        Number(this.configService.get('API_KEY_MAX_SERVICE_PER_ORG')) ||
+        DEFAULT_MAX_SERVICE_KEYS_PER_ORG;
+
+      const count = await this.prisma.apiKey.count({
+        where: {
+          type: ApiKeyType.SERVICE,
+          organizationId: data.organizationId,
+          revokedAt: null,
+        },
+      });
+
+      if (count >= max) {
+        throw new BadRequestException(
+          `Maximum number of service API keys (${max}) reached for this organization. Revoke unused keys to create new ones.`,
         );
       }
     }

@@ -3,6 +3,7 @@ import {
   ConflictException,
   NotFoundException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CommandBus, CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
@@ -21,7 +22,12 @@ describe('CreateApiKeyHandler', () => {
   beforeAll(async () => {
     const module: TestingModule = await Test.createTestingModule({
       imports: [CqrsModule, RevisiumCacheModule.forRootAsync()],
-      providers: [CreateApiKeyHandler, ApiKeyService, PrismaService],
+      providers: [
+        CreateApiKeyHandler,
+        ApiKeyService,
+        PrismaService,
+        { provide: ConfigService, useValue: { get: () => undefined } },
+      ],
     }).compile();
 
     await module.init();

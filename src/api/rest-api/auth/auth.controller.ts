@@ -11,6 +11,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from 'src/api/rest-api/share/decorators';
@@ -30,6 +31,7 @@ import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('Auth')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @Controller('auth')
 export class AuthController {
   constructor(
