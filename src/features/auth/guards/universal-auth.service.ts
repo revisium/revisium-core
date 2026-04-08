@@ -123,8 +123,14 @@ export class UniversalAuthService {
     let user: IAuthUser;
     if (apiKey.type === ApiKeyType.PERSONAL) {
       user = await this.buildPersonalKeyUser(apiKey, scope);
+      if (apiKey.readOnly) {
+        user.apiKeyReadOnly = true;
+      }
     } else if (apiKey.type === ApiKeyType.SERVICE) {
       user = this.buildServiceKeyUser(apiKey, scope);
+      if (apiKey.readOnly) {
+        user.apiKeyReadOnly = true;
+      }
     } else {
       user = this.buildInternalKeyUser(apiKey);
     }

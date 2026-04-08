@@ -26,6 +26,7 @@ export type IAuthUser = {
   apiKeyId?: string;
   serviceId?: string;
   apiKeyScope?: IApiKeyScope;
+  apiKeyReadOnly?: boolean;
   serviceKeyPermissions?: { rules: ICaslRule[] };
 };
 

@@ -590,6 +590,250 @@ describe('BasePermissionGuard internal key bypass', () => {
   });
 });
 
+describe('BasePermissionGuard readOnly enforcement', () => {
+  let guard: TestPermissionGuard;
+  let reflector: jest.Mocked<Reflector>;
+  let authApi: jest.Mocked<AuthApiService>;
+  let scopeService: jest.Mocked<ApiKeyScopeService>;
+
+  const createContext = (): ExecutionContext => {
+    return {
+      getClass: () => ({}),
+      getHandler: () => ({}),
+    } as unknown as ExecutionContext;
+  };
+
+  beforeEach(() => {
+    authApi = {
+      checkProjectPermission: jest.fn().mockResolvedValue(true),
+    } as any;
+
+    scopeService = {
+      validateScope: jest.fn().mockReturnValue(true),
+      resolveBranchNames: jest.fn().mockResolvedValue(['master']),
+    } as any;
+
+    guard = new TestPermissionGuard(
+      reflector!,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+  });
+
+  it('should allow read operations when readOnly is true', async () => {
+    reflector = {
+      get: jest.fn().mockReturnValue({
+        action: PermissionAction.read,
+        subject: PermissionSubject.Row,
+      }),
+    } as any;
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+
+    guard.setTestData(
+      {
+        userId: 'user-1',
+        email: '',
+        authMethod: 'personal_key',
+        apiKeyId: 'key-1',
+        apiKeyReadOnly: true,
+        apiKeyScope: {
+          organizationId: 'org-1',
+          projectIds: [],
+          branchNames: [],
+          tableIds: [],
+        },
+      },
+      { organizationId: 'org-1' },
+    );
+
+    const result = await guard.canActivate(createContext());
+    expect(result).toBe(true);
+  });
+
+  it('should deny create operations when readOnly is true', async () => {
+    reflector = {
+      get: jest.fn().mockReturnValue({
+        action: PermissionAction.create,
+        subject: PermissionSubject.Row,
+      }),
+    } as any;
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+
+    guard.setTestData(
+      {
+        userId: 'user-1',
+        email: '',
+        authMethod: 'personal_key',
+        apiKeyId: 'key-1',
+        apiKeyReadOnly: true,
+        apiKeyScope: {
+          organizationId: 'org-1',
+          projectIds: [],
+          branchNames: [],
+          tableIds: [],
+        },
+      },
+      { organizationId: 'org-1' },
+    );
+
+    await expect(guard.canActivate(createContext())).rejects.toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it('should deny update operations when readOnly is true', async () => {
+    reflector = {
+      get: jest.fn().mockReturnValue({
+        action: PermissionAction.update,
+        subject: PermissionSubject.Row,
+      }),
+    } as any;
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+
+    guard.setTestData(
+      {
+        userId: 'user-1',
+        email: '',
+        authMethod: 'personal_key',
+        apiKeyId: 'key-1',
+        apiKeyReadOnly: true,
+        apiKeyScope: {
+          organizationId: 'org-1',
+          projectIds: [],
+          branchNames: [],
+          tableIds: [],
+        },
+      },
+      { organizationId: 'org-1' },
+    );
+
+    await expect(guard.canActivate(createContext())).rejects.toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it('should deny delete operations when readOnly is true', async () => {
+    reflector = {
+      get: jest.fn().mockReturnValue({
+        action: PermissionAction.delete,
+        subject: PermissionSubject.Row,
+      }),
+    } as any;
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+
+    guard.setTestData(
+      {
+        userId: 'user-1',
+        email: '',
+        authMethod: 'personal_key',
+        apiKeyId: 'key-1',
+        apiKeyReadOnly: true,
+        apiKeyScope: {
+          organizationId: 'org-1',
+          projectIds: [],
+          branchNames: [],
+          tableIds: [],
+        },
+      },
+      { organizationId: 'org-1' },
+    );
+
+    await expect(guard.canActivate(createContext())).rejects.toThrow(
+      ForbiddenException,
+    );
+  });
+
+  it('should allow write operations when readOnly is false', async () => {
+    reflector = {
+      get: jest.fn().mockReturnValue({
+        action: PermissionAction.create,
+        subject: PermissionSubject.Row,
+      }),
+    } as any;
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+
+    guard.setTestData(
+      {
+        userId: 'user-1',
+        email: '',
+        authMethod: 'personal_key',
+        apiKeyId: 'key-1',
+        apiKeyReadOnly: false,
+        apiKeyScope: {
+          organizationId: 'org-1',
+          projectIds: [],
+          branchNames: [],
+          tableIds: [],
+        },
+      },
+      { organizationId: 'org-1' },
+    );
+
+    const result = await guard.canActivate(createContext());
+    expect(result).toBe(true);
+  });
+
+  it('should allow write operations when apiKeyReadOnly is not set', async () => {
+    reflector = {
+      get: jest.fn().mockReturnValue({
+        action: PermissionAction.create,
+        subject: PermissionSubject.Row,
+      }),
+    } as any;
+    guard = new TestPermissionGuard(
+      reflector,
+      authApi,
+      scopeService,
+      mockCaslAbilityFactory,
+    );
+
+    guard.setTestData(
+      {
+        userId: 'user-1',
+        email: '',
+        authMethod: 'personal_key',
+        apiKeyId: 'key-1',
+        apiKeyScope: {
+          organizationId: 'org-1',
+          projectIds: [],
+          branchNames: [],
+          tableIds: [],
+        },
+      },
+      { organizationId: 'org-1' },
+    );
+
+    const result = await guard.canActivate(createContext());
+    expect(result).toBe(true);
+  });
+});
+
 describe('BasePermissionGuard without scope override', () => {
   class NoScopeGuard extends BasePermissionGuard<{ organizationId: string }> {
     private testUser: IOptionalAuthUser;
