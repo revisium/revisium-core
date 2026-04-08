@@ -1,8 +1,17 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  ID,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { Prisma } from 'src/__generated__/client';
 import { ApiKeyWithSecretModel } from 'src/api/graphql-api/api-key/model/api-key-with-secret.model';
 import { ApiKeyModel } from 'src/api/graphql-api/api-key/model/api-key.model';
+import { ProjectModel } from 'src/api/graphql-api/project/model/project.model';
 import {
   CreatePersonalApiKeyInput,
   CreateServiceApiKeyInput,
@@ -11,11 +20,15 @@ import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { IAuthUser } from 'src/features/auth/types';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 
 @UseGuards(GqlJwtAuthGuard)
-@Resolver()
+@Resolver(() => ApiKeyModel)
 export class ApiKeyResolver {
-  constructor(private readonly apiKeyApiService: ApiKeyApiService) {}
+  constructor(
+    private readonly apiKeyApiService: ApiKeyApiService,
+    private readonly projectApi: ProjectApiService,
+  ) {}
 
   @Mutation(() => ApiKeyWithSecretModel)
   async createPersonalApiKey(
@@ -113,5 +126,15 @@ export class ApiKeyResolver {
   ): Promise<ApiKeyModel> {
     const apiKey = await this.apiKeyApiService.getApiKeyById(id, user.userId);
     return apiKey as unknown as ApiKeyModel;
+  }
+
+  @ResolveField(() => [ProjectModel])
+  async projects(@Parent() apiKey: ApiKeyModel): Promise<ProjectModel[]> {
+    if (apiKey.projectIds.length === 0) {
+      return [];
+    }
+    return this.projectApi.getProjectsByIds({
+      projectIds: apiKey.projectIds,
+    }) as unknown as Promise<ProjectModel[]>;
   }
 }

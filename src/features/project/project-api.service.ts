@@ -27,6 +27,9 @@ import {
   GetProjectQuery,
   GetProjectQueryData,
   GetProjectQueryReturnType,
+  GetProjectsByIdsQuery,
+  GetProjectsByIdsQueryData,
+  GetProjectsByIdsQueryReturnType,
   GetRootBranchByProjectQuery,
   GetRootBranchByProjectQueryData,
   GetRootBranchByProjectQueryReturnType,
@@ -46,6 +49,13 @@ export class ProjectApiService {
     return this.queryBus.execute<GetProjectQuery, GetProjectQueryReturnType>(
       new GetProjectQuery(data),
     );
+  }
+
+  public getProjectsByIds(data: GetProjectsByIdsQueryData) {
+    return this.queryBus.execute<
+      GetProjectsByIdsQuery,
+      GetProjectsByIdsQueryReturnType
+    >(new GetProjectsByIdsQuery(data));
   }
 
   public getRootBranchByProject(data: GetRootBranchByProjectQueryData) {

@@ -39,6 +39,7 @@ type ApiKeyModel {
   permissions: JSON
   prefix: String!
   projectIds: [String!]!
+  projects: [ProjectModel!]!
   readOnly: Boolean!
   revokedAt: DateTime
   tableIds: [String!]!
