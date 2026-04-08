@@ -15,6 +15,7 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiQuery,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import {
@@ -53,6 +54,7 @@ import { transformFromPaginatedPrismaToUserOrganizationModel } from 'src/api/res
 })
 @Controller('organization')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @ApiTags('Organization')
 export class OrganizationController {
   constructor(

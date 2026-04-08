@@ -9,6 +9,7 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
 } from '@nestjs/swagger';
 import { ApiCommonErrors } from 'src/api/rest-api/share/decorators';
@@ -21,6 +22,7 @@ import { MeModel } from 'src/api/rest-api/user/model';
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('User')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @Controller('user')
 export class UserController {
   constructor(private readonly userApiService: UserApiService) {}

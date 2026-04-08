@@ -14,6 +14,16 @@ export function initSwagger(app: INestApplication<any>) {
       },
       'access-token',
     )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        in: 'header',
+        name: 'X-Api-Key',
+        description:
+          'API Key (rev_...) for programmatic access. Query param ?api_key=rev_... is also supported for webhooks.',
+      },
+      'api-key',
+    )
     .addTag('Configuration', 'System configuration and feature flags')
     .addTag(
       'Auth',

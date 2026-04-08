@@ -1,4 +1,5 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
@@ -33,6 +34,7 @@ describe('ApiKeyApiService - Service Keys', () => {
         GetApiKeyByIdHandler,
         GetApiKeysHandler,
         PrismaService,
+        { provide: ConfigService, useValue: { get: () => undefined } },
       ],
     }).compile();
 

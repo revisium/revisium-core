@@ -59,6 +59,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -125,6 +128,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -193,6 +199,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -249,6 +258,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -344,6 +356,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -437,6 +452,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -532,6 +550,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -617,6 +638,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -701,6 +725,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -788,6 +815,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -871,6 +901,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -966,6 +999,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -1051,6 +1087,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -1155,6 +1194,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -1258,6 +1300,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -1351,6 +1396,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -1447,6 +1495,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -1542,6 +1593,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -1634,6 +1688,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -1730,6 +1787,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -1824,6 +1884,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -1920,6 +1983,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -2015,6 +2081,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -2109,6 +2178,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -2251,6 +2323,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -2356,6 +2431,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -2451,6 +2529,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -2527,6 +2608,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -2605,6 +2689,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -2681,6 +2768,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -2761,6 +2851,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -2846,6 +2939,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -2941,6 +3037,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3026,6 +3125,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3105,6 +3207,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -3190,6 +3295,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -3284,6 +3392,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3377,6 +3488,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -3523,6 +3637,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3668,6 +3785,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3775,6 +3895,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3861,6 +3984,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -3944,6 +4070,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -4039,6 +4168,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -4124,6 +4256,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -4221,6 +4356,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -4314,6 +4452,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -4411,6 +4552,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -4506,6 +4650,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -4603,6 +4750,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -4699,6 +4849,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -4785,6 +4938,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -4870,6 +5026,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -4974,6 +5133,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5059,6 +5221,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -5163,6 +5328,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5259,6 +5427,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5354,6 +5525,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5446,6 +5620,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -5550,6 +5727,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5653,6 +5833,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5747,6 +5930,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -5868,6 +6054,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -5962,6 +6151,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -6083,6 +6275,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -6187,6 +6382,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -6312,6 +6510,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -6389,6 +6590,9 @@
         },
         "security": [
           {
+            "api-key": []
+          },
+          {
             "access-token": []
           }
         ],
@@ -6465,6 +6669,9 @@
           }
         },
         "security": [
+          {
+            "api-key": []
+          },
           {
             "access-token": []
           }
@@ -6945,6 +7152,12 @@
         "scheme": "bearer",
         "bearerFormat": "JWT",
         "type": "http"
+      },
+      "api-key": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Api-Key",
+        "description": "API Key (rev_...) for programmatic access. Query param ?api_key=rev_... is also supported for webhooks."
       }
     },
     "schemas": {

@@ -14,6 +14,7 @@ import {
   ApiExtraModels,
   ApiOkResponse,
   ApiOperation,
+  ApiSecurity,
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger';
@@ -79,6 +80,7 @@ import { TablesConnection } from 'src/api/rest-api/table/model/table.model';
 })
 @Controller('revision/:revisionId')
 @ApiBearerAuth('access-token')
+@ApiSecurity('api-key')
 @ApiTags('Revision')
 @ApiExtraModels(InitMigrationDto)
 @ApiExtraModels(UpdateMigrationDto)

@@ -113,6 +113,15 @@ cp .env.example .env
 
 ---
 
+## API Key Limits
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `API_KEY_MAX_PER_USER` | `10` | Maximum number of personal API keys per user |
+| `API_KEY_MAX_SERVICE_PER_ORG` | `100` | Maximum number of service API keys per organization |
+
+---
+
 ## Internal API Keys (Microservice Mode Only)
 
 In monolith/standalone mode, internal keys are derived automatically from `JWT_SECRET`. These env vars are ignored (a warning is logged if set). For multi-replica monolith deployments, ensure `JWT_SECRET` is explicitly set.

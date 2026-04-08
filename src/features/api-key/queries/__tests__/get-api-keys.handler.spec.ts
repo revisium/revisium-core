@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
@@ -31,6 +32,7 @@ describe('GetApiKeysHandler', () => {
         RevokeApiKeyHandler,
         ApiKeyService,
         PrismaService,
+        { provide: ConfigService, useValue: { get: () => undefined } },
       ],
     }).compile();
 
