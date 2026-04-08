@@ -11,6 +11,14 @@ export type IApiKeyScope = {
   tableIds: string[];
 };
 
+export interface ICaslRule {
+  action: string | string[];
+  subject: string | string[];
+  conditions?: Record<string, unknown>;
+  fields?: string[];
+  inverted?: boolean;
+}
+
 export type IAuthUser = {
   userId: string;
   email: string;
@@ -18,6 +26,7 @@ export type IAuthUser = {
   apiKeyId?: string;
   serviceId?: string;
   apiKeyScope?: IApiKeyScope;
+  serviceKeyPermissions?: { rules: ICaslRule[] };
 };
 
 export type IOptionalAuthUser = IAuthUser | undefined;

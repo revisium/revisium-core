@@ -37,7 +37,7 @@ Keys can be restricted to specific content within the hierarchy:
 
 ### `readOnly` flag
 
-When `true`, the key cannot perform write operations on the draft. All reads are unaffected.
+Stored on the key record. Not yet enforced at the guard level — write requests are not blocked based on this flag alone. For SERVICE keys, use CASL permissions (omit `create`/`update`/`delete` actions) to restrict writes. Runtime enforcement of `readOnly` is planned for a future phase.
 
 ## Module Structure
 
@@ -291,5 +291,67 @@ After rotation, the database has:
 | `Authorization: Bearer` | JWT tokens | 3 |
 | `?api_key=` query param | PERSONAL, SERVICE | 4 (webhooks) |
 
-> **Note:** The UniversalAuthGuard that processes these headers is not yet implemented (Phase 3).
+## Service Key Management API
+
+Service keys are managed by organization admins (or system admins) via GraphQL mutations.
+
+### Mutations
+
+```graphql
+mutation CreateServiceApiKey($data: CreateServiceApiKeyInput!) {
+  createServiceApiKey(data: $data) {
+    apiKey { id prefix type name organizationId permissions }
+    secret
+  }
+}
+
+input CreateServiceApiKeyInput {
+  name: String!
+  organizationId: String!
+  projectIds: [String!]
+  branchNames: [String!]
+  tableIds: [String!]
+  readOnly: Boolean
+  allowedIps: [String!]
+  expiresAt: DateTime
+  permissions: CaslPermissionsInput!
+}
+
+input CaslPermissionsInput {
+  rules: [CaslRuleInput!]!
+}
+
+input CaslRuleInput {
+  action: [String!]!
+  subject: [String!]!
+  conditions: JSON
+  fields: [String!]
+  inverted: Boolean
+}
+```
+
+Revoke and rotate use the same `revokeApiKey` / `rotateApiKey` mutations as personal keys. Admin ownership is checked: only org owner/admin of the key's org (or system admin) can operate.
+
+### Queries
+
+```graphql
+query ServiceApiKeys($organizationId: String!) {
+  serviceApiKeys(organizationId: $organizationId) {
+    id type name permissions readOnly revokedAt
+  }
+}
+```
+
+### Access Control
+
+| Role | Can manage service keys? |
+|------|-------------------------|
+| Organization owner | Yes (own org) |
+| Organization admin | Yes (own org) |
+| Developer / Editor / Reader | No (403) |
+| System admin | Yes (any org) |
+
+### Authentication Flow
+
+When a SERVICE key authenticates, the stored CASL permission rules are loaded into the request context. `BasePermissionGuard` builds a CASL ability from these rules and checks each required permission. Scope fields (organizationId, projectIds, branchNames, tableIds) are enforced by `ApiKeyScopeService` as with personal keys.
 

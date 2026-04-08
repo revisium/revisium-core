@@ -24,6 +24,10 @@ export class GetApiKeysHandler implements IQueryHandler<
       where.type = data.type;
     }
 
+    if (data.organizationId) {
+      where.organizationId = data.organizationId;
+    }
+
     return this.prisma.apiKey.findMany({
       where,
       omit: { keyHash: true, userId: true, lastUsedIp: true },

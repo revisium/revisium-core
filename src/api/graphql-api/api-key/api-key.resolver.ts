@@ -1,8 +1,12 @@
 import { UseGuards } from '@nestjs/common';
 import { Args, ID, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Prisma } from 'src/__generated__/client';
 import { ApiKeyWithSecretModel } from 'src/api/graphql-api/api-key/model/api-key-with-secret.model';
 import { ApiKeyModel } from 'src/api/graphql-api/api-key/model/api-key.model';
-import { CreatePersonalApiKeyInput } from 'src/api/graphql-api/api-key/inputs';
+import {
+  CreatePersonalApiKeyInput,
+  CreateServiceApiKeyInput,
+} from 'src/api/graphql-api/api-key/inputs';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
@@ -21,6 +25,28 @@ export class ApiKeyResolver {
     const result = await this.apiKeyApiService.createPersonalApiKey({
       ...data,
       userId: user.userId,
+    });
+
+    const apiKey = await this.apiKeyApiService.getApiKeyById(
+      result.id,
+      user.userId,
+    );
+
+    return {
+      apiKey: apiKey as unknown as ApiKeyModel,
+      secret: result.key,
+    };
+  }
+
+  @Mutation(() => ApiKeyWithSecretModel)
+  async createServiceApiKey(
+    @Args('data') data: CreateServiceApiKeyInput,
+    @CurrentUser() user: IAuthUser,
+  ): Promise<ApiKeyWithSecretModel> {
+    const result = await this.apiKeyApiService.createServiceApiKey({
+      ...data,
+      userId: user.userId,
+      permissions: data.permissions as unknown as Prisma.InputJsonValue,
     });
 
     const apiKey = await this.apiKeyApiService.getApiKeyById(
@@ -65,6 +91,18 @@ export class ApiKeyResolver {
   @Query(() => [ApiKeyModel])
   async myApiKeys(@CurrentUser() user: IAuthUser): Promise<ApiKeyModel[]> {
     const keys = await this.apiKeyApiService.getMyApiKeys(user.userId);
+    return keys as unknown as ApiKeyModel[];
+  }
+
+  @Query(() => [ApiKeyModel])
+  async serviceApiKeys(
+    @Args('organizationId') organizationId: string,
+    @CurrentUser() user: IAuthUser,
+  ): Promise<ApiKeyModel[]> {
+    const keys = await this.apiKeyApiService.getServiceApiKeys(
+      organizationId,
+      user.userId,
+    );
     return keys as unknown as ApiKeyModel[];
   }
 

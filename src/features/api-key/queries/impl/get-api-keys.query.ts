@@ -5,6 +5,7 @@ export class GetApiKeysQuery {
     public readonly data: {
       readonly userId?: string;
       readonly type?: ApiKeyType;
+      readonly organizationId?: string;
     },
   ) {}
 }

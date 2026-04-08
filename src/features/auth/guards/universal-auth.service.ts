@@ -3,7 +3,7 @@ import { ApiKeyType } from 'src/__generated__/client';
 import { ApiKeyTrackingService } from 'src/features/api-key/api-key-tracking.service';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
-import { IApiKeyScope, IAuthUser } from 'src/features/auth/types';
+import { IApiKeyScope, IAuthUser, ICaslRule } from 'src/features/auth/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 @Injectable()
@@ -160,9 +160,19 @@ export class UniversalAuthService {
   }
 
   private buildServiceKeyUser(
-    apiKey: { id: string; serviceId: string | null },
+    apiKey: {
+      id: string;
+      serviceId: string | null;
+      permissions: unknown;
+      organizationId: string | null;
+    },
     scope: IApiKeyScope,
   ): IAuthUser {
+    const permissions = apiKey.permissions as
+      | { rules: ICaslRule[] }
+      | null
+      | undefined;
+
     return {
       userId: apiKey.serviceId || apiKey.id,
       email: '',
@@ -170,6 +180,7 @@ export class UniversalAuthService {
       apiKeyId: apiKey.id,
       serviceId: apiKey.serviceId || undefined,
       apiKeyScope: scope,
+      serviceKeyPermissions: permissions || undefined,
     };
   }
 
