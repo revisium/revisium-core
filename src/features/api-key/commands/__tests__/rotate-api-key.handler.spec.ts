@@ -79,12 +79,17 @@ describe('RotateApiKeyHandler', () => {
 
   it('should preserve serviceId on rotated service key', async () => {
     const serviceId = `svc-${nanoid(8)}`;
+    const orgId = `org-rot-${nanoid(8)}`;
+    await prisma.organization.create({
+      data: { id: orgId, createdId: nanoid() },
+    });
 
     const original = await commandBus.execute(
       new CreateApiKeyCommand({
         type: ApiKeyType.SERVICE,
         name: 'Service Rotate',
         serviceId,
+        organizationId: orgId,
         permissions: { rules: [{ action: ['read'], subject: ['Row'] }] },
       }),
     );

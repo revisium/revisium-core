@@ -124,6 +124,11 @@ export class CreateApiKeyHandler implements ICommandHandler<
     }
 
     if (data.type === ApiKeyType.SERVICE) {
+      if (!data.organizationId) {
+        throw new BadRequestException(
+          'organizationId is required for SERVICE keys',
+        );
+      }
       if (data.userId || data.internalServiceName) {
         throw new BadRequestException(
           'SERVICE keys must not have userId or internalServiceName',
@@ -226,7 +231,7 @@ export class CreateApiKeyHandler implements ICommandHandler<
       }
     }
 
-    if (data.type === ApiKeyType.SERVICE && data.organizationId) {
+    if (data.type === ApiKeyType.SERVICE) {
       const org = await this.prisma.organization.findUnique({
         where: { id: data.organizationId },
         select: { id: true },

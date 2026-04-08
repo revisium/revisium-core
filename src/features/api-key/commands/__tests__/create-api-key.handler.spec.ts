@@ -202,12 +202,17 @@ describe('CreateApiKeyHandler', () => {
   it('should reject duplicate serviceId', async () => {
     const serviceId = `dup-${nanoid(8)}`;
     const permissions = { rules: [{ action: ['read'], subject: ['Row'] }] };
+    const orgId = `org-dup-${nanoid(8)}`;
+    await prisma.organization.create({
+      data: { id: orgId, createdId: nanoid() },
+    });
 
     await commandBus.execute(
       new CreateApiKeyCommand({
         type: ApiKeyType.SERVICE,
         name: 'First',
         serviceId,
+        organizationId: orgId,
         permissions,
       }),
     );
@@ -218,6 +223,7 @@ describe('CreateApiKeyHandler', () => {
           type: ApiKeyType.SERVICE,
           name: 'Second',
           serviceId,
+          organizationId: orgId,
           permissions,
         }),
       ),
