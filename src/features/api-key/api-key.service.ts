@@ -20,7 +20,9 @@ export class ApiKeyService {
     const key = `${KEY_PREFIX}${random}`;
     const hash = createHash('sha256').update(key).digest('hex');
 
-    return { key, hash, prefix: KEY_PREFIX };
+    const prefix = `${KEY_PREFIX}${random.slice(0, 4)}...${random.slice(-4)}`;
+
+    return { key, hash, prefix };
   }
 
   validateKeyFormat(key: string): boolean {

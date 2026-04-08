@@ -134,7 +134,10 @@ describe('API Key Management (e2e)', () => {
       expect(result.apiKey.id).toBeDefined();
       expect(result.apiKey.name).toBe('CI/CD Key');
       expect(result.apiKey.type).toBe('PERSONAL');
-      expect(result.apiKey.prefix).toBe('rev_');
+      const random = result.secret.slice('rev_'.length);
+      expect(result.apiKey.prefix).toBe(
+        `rev_${random.slice(0, 4)}...${random.slice(-4)}`,
+      );
       expect(result.apiKey.readOnly).toBe(false);
       expect(result.apiKey.revokedAt).toBeNull();
     });
