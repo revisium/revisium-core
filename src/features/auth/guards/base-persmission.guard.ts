@@ -16,7 +16,7 @@ import {
   PERMISSION_PARAMS_KEY,
   IPermissionParams,
 } from 'src/features/auth/guards/permission-params';
-import { IOptionalAuthUser } from 'src/features/auth/types';
+import { ICaslRule, IOptionalAuthUser } from 'src/features/auth/types';
 
 @Injectable()
 export abstract class BasePermissionGuard<
@@ -60,6 +60,34 @@ export abstract class BasePermissionGuard<
   ): Promise<boolean>;
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const permissions = this.extractPermissions(context);
+    const { user, params } = this.getParams(context);
+
+    if (!params) {
+      throw new NotFoundException('Required parameters not found');
+    }
+
+    if (user?.authMethod === 'internal_key') {
+      return true;
+    }
+
+    if (user?.authMethod === 'service_key' && user.serviceKeyPermissions) {
+      this.checkServiceKeyPermissions(
+        user.serviceKeyPermissions.rules,
+        permissions,
+      );
+    } else {
+      await this.checkRolePermissions(params, permissions, user?.userId);
+    }
+
+    if (user?.apiKeyId && user.apiKeyScope) {
+      await this.validateApiKeyScope(user, params);
+    }
+
+    return true;
+  }
+
+  private extractPermissions(context: ExecutionContext): IPermissionParams[] {
     const permissions: IPermissionParams[] = [];
 
     const classPermission = this.reflector.get<IPermissionParams | undefined>(
@@ -80,45 +108,38 @@ export abstract class BasePermissionGuard<
       permissions.push(methodPermission);
     }
 
-    const { user, params } = this.getParams(context);
+    return permissions;
+  }
 
-    if (!params) {
-      throw new NotFoundException('Required parameters not found');
-    }
-
-    if (user?.authMethod === 'internal_key') {
-      return true;
-    }
-
-    if (user?.authMethod === 'service_key' && user.serviceKeyPermissions) {
-      const ability = this.caslAbilityFactory.createFromRules(
-        user.serviceKeyPermissions.rules,
-      );
-
-      try {
-        for (const permission of permissions) {
-          ForbiddenError.from(ability)
-            .setMessage(
-              `You are not allowed to ${permission.action} on ${permission.subject}`,
-            )
-            .throwUnlessCan(permission.action, permission.subject);
-        }
-      } catch (e) {
-        if (e instanceof Error) {
-          throw new ForbiddenException(e.message);
-        }
-        throw new InternalServerErrorException();
-      }
-
-      if (user.apiKeyId && user.apiKeyScope) {
-        await this.validateApiKeyScope(user, params);
-      }
-
-      return true;
-    }
+  private checkServiceKeyPermissions(
+    rules: ICaslRule[],
+    permissions: IPermissionParams[],
+  ): void {
+    const ability = this.caslAbilityFactory.createFromRules(rules);
 
     try {
-      await this.executeCommand(params, permissions, user?.userId);
+      for (const permission of permissions) {
+        ForbiddenError.from(ability)
+          .setMessage(
+            `You are not allowed to ${permission.action} on ${permission.subject}`,
+          )
+          .throwUnlessCan(permission.action, permission.subject);
+      }
+    } catch (e) {
+      if (e instanceof Error) {
+        throw new ForbiddenException(e.message);
+      }
+      throw new InternalServerErrorException();
+    }
+  }
+
+  private async checkRolePermissions(
+    params: T,
+    permissions: IPermissionParams[],
+    userId?: string,
+  ): Promise<void> {
+    try {
+      await this.executeCommand(params, permissions, userId);
     } catch (e) {
       if (e instanceof NotFoundException) {
         throw e;
@@ -129,12 +150,6 @@ export abstract class BasePermissionGuard<
         throw new InternalServerErrorException();
       }
     }
-
-    if (user?.apiKeyId && user.apiKeyScope) {
-      await this.validateApiKeyScope(user, params);
-    }
-
-    return true;
   }
 
   protected async validateApiKeyScope(

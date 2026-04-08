@@ -164,32 +164,39 @@ export class CreateApiKeyHandler implements ICommandHandler<
       action?: unknown;
       subject?: unknown;
     }>) {
-      if (!Array.isArray(rule.action) || rule.action.length === 0) {
+      this.validatePermissionRule(rule);
+    }
+  }
+
+  private validatePermissionRule(rule: {
+    action?: unknown;
+    subject?: unknown;
+  }): void {
+    if (!Array.isArray(rule.action) || rule.action.length === 0) {
+      throw new BadRequestException(
+        'Each permission rule must have at least one action',
+      );
+    }
+
+    for (const action of rule.action) {
+      if (typeof action !== 'string' || !VALID_ACTIONS.has(action)) {
         throw new BadRequestException(
-          'Each permission rule must have at least one action',
+          `Invalid action "${action}". Valid actions: ${[...VALID_ACTIONS].join(', ')}`,
         );
       }
+    }
 
-      for (const action of rule.action) {
-        if (typeof action !== 'string' || !VALID_ACTIONS.has(action)) {
-          throw new BadRequestException(
-            `Invalid action "${action}". Valid actions: ${[...VALID_ACTIONS].join(', ')}`,
-          );
-        }
-      }
+    if (!Array.isArray(rule.subject) || rule.subject.length === 0) {
+      throw new BadRequestException(
+        'Each permission rule must have at least one subject',
+      );
+    }
 
-      if (!Array.isArray(rule.subject) || rule.subject.length === 0) {
+    for (const subject of rule.subject) {
+      if (typeof subject !== 'string' || !VALID_SUBJECTS.has(subject)) {
         throw new BadRequestException(
-          'Each permission rule must have at least one subject',
+          `Invalid subject "${subject}". Valid subjects: ${[...VALID_SUBJECTS].join(', ')}`,
         );
-      }
-
-      for (const subject of rule.subject) {
-        if (typeof subject !== 'string' || !VALID_SUBJECTS.has(subject)) {
-          throw new BadRequestException(
-            `Invalid subject "${subject}". Valid subjects: ${[...VALID_SUBJECTS].join(', ')}`,
-          );
-        }
       }
     }
   }
