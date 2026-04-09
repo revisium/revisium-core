@@ -118,6 +118,29 @@ type BranchesConnection {
   totalCount: Int!
 }
 
+type CacheConfigModel {
+  enabled: Boolean!
+}
+
+type CacheMetricModel {
+  deletes: Int!
+  hitRate: Float!
+  hits: Int!
+  key: String!
+  misses: Int!
+  writes: Int!
+}
+
+type CacheStatsModel {
+  byCategory: [CacheMetricModel!]!
+  overallHitRate: Float!
+  totalClears: Int!
+  totalDeletes: Int!
+  totalHits: Int!
+  totalMisses: Int!
+  totalWrites: Int!
+}
+
 input CancelSubscriptionInput {
   cancelAtPeriodEnd: Boolean
   organizationId: ID!
@@ -155,6 +178,7 @@ type ChildBranchModel {
 type ConfigurationModel {
   availableEmailSignUp: Boolean!
   billing: BillingConfigurationModel!
+  cache: CacheConfigModel!
   github: GithubOauth!
   google: GoogleOauth!
   noAuth: Boolean!
@@ -648,6 +672,7 @@ type Mutation {
   activateEarlyAccess(data: ActivateEarlyAccessInput!): SubscriptionModel!
   addUserToOrganization(data: AddUserToOrganizationInput!): Boolean!
   addUserToProject(data: AddUserToProjectInput!): Boolean!
+  adminResetAllCache: Boolean!
   applyMigrations(data: ApplyMigrationsInput!): [ApplyMigrationResultModel!]!
   cancelSubscription(data: CancelSubscriptionInput!): Boolean!
   confirmEmailCode(data: ConfirmEmailCodeInput!): LoginModel!
@@ -853,6 +878,7 @@ type ProjectsConnection {
 }
 
 type Query {
+  adminCacheStats: CacheStatsModel!
   adminUser(data: AdminUserInput!): UserModel
   adminUsers(data: SearchUsersInput!): UsersConnection!
   apiKeyById(id: ID!): ApiKeyModel!

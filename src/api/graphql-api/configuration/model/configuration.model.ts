@@ -19,6 +19,12 @@ export class GithubOauth {
 }
 
 @ObjectType()
+export class CacheConfigModel {
+  @Field(() => Boolean)
+  enabled: boolean;
+}
+
+@ObjectType()
 export class PluginsModel {
   @Field(() => Boolean)
   file: boolean;
@@ -37,6 +43,9 @@ export class ConfigurationModel {
 
   @Field(() => GithubOauth)
   github: GithubOauth;
+
+  @Field(() => CacheConfigModel)
+  cache: CacheConfigModel;
 
   @Field(() => PluginsModel)
   plugins: PluginsModel;

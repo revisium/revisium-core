@@ -46,6 +46,7 @@ import { RevisionChangesModule } from 'src/features/revision-changes/revision-ch
 import { ApiKeyModule } from 'src/features/api-key/api-key.module';
 import { SubSchemaModule } from 'src/features/sub-schema';
 import { ApiKeyResolver } from 'src/api/graphql-api/api-key/api-key.resolver';
+import { CacheResolver } from 'src/api/graphql-api/cache/cache.resolver';
 import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.resolver';
 
 @Module({
@@ -109,6 +110,7 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
     ViewsResolver,
     SubSchemaResolver,
     ApiKeyResolver,
+    CacheResolver,
   ],
 })
 export class GraphqlApiModule {}
