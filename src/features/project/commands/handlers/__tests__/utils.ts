@@ -9,6 +9,7 @@ import { PROJECT_QUERIES } from 'src/features/project/queries/handlers';
 import { ShareModule } from 'src/features/share/share.module';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
@@ -24,6 +25,7 @@ export const createTestingModule = async () => {
       AppOptionsModule.forRoot({ mode: 'monolith' }),
       BillingModule,
       NotificationModule,
+      RevisiumCacheModule.forRootAsync(),
     ],
     providers: [
       {
