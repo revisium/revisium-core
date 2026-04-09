@@ -26,6 +26,7 @@
     "delete-user",
     "read-user",
     "read-project-private",
-    "read-project-public"
+    "read-project-public",
+    "manage-api-key"
   ]
 }
