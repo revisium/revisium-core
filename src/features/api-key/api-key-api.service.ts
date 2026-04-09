@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { ForbiddenError } from '@casl/ability';
 import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { ApiKeyType, Prisma } from 'src/__generated__/client';
@@ -21,17 +22,21 @@ import {
   GetApiKeysQueryReturnType,
 } from 'src/features/api-key/queries/impl';
 import {
-  UserOrganizationRoles,
-  UserSystemRoles,
-} from 'src/features/auth/consts';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
+  CheckOrganizationPermissionCommand,
+  CheckProjectPermissionCommand,
+} from 'src/features/auth/commands/impl';
+import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
+
+const MANAGE_API_KEY_PERMISSION = {
+  action: PermissionAction.manage,
+  subject: PermissionSubject.ApiKey,
+};
 
 @Injectable()
 export class ApiKeyApiService {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
-    private readonly prisma: PrismaService,
   ) {}
 
   async createPersonalApiKey(data: {
@@ -73,7 +78,11 @@ export class ApiKeyApiService {
     expiresAt?: Date;
     permissions: Prisma.InputJsonValue;
   }): Promise<CreateApiKeyCommandReturnType> {
-    await this.assertOrgAdmin(data.userId, data.organizationId);
+    await this.assertManageApiKeyPermission(
+      data.userId,
+      data.organizationId,
+      data.projectIds,
+    );
 
     const serviceId = `svc_${nanoid(12)}`;
 
@@ -118,7 +127,7 @@ export class ApiKeyApiService {
     organizationId: string,
     userId: string,
   ): Promise<GetApiKeysQueryReturnType> {
-    await this.assertOrgAdmin(userId, organizationId);
+    await this.assertManageApiKeyPermission(userId, organizationId);
 
     return this.queryBus.execute(
       new GetApiKeysQuery({
@@ -148,7 +157,11 @@ export class ApiKeyApiService {
         throw new NotFoundException('API key not found');
       }
       try {
-        await this.assertOrgAdmin(userId, apiKey.organizationId);
+        await this.assertManageApiKeyPermission(
+          userId,
+          apiKey.organizationId,
+          apiKey.projectIds.length > 0 ? apiKey.projectIds : undefined,
+        );
       } catch (error) {
         if (error instanceof ForbiddenException) {
           throw new NotFoundException('API key not found');
@@ -165,32 +178,38 @@ export class ApiKeyApiService {
     return apiKey;
   }
 
-  private async assertOrgAdmin(
+  private async assertManageApiKeyPermission(
     userId: string,
     organizationId: string,
+    projectIds?: string[],
   ): Promise<void> {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      select: { roleId: true },
-    });
-
-    if (user?.roleId === UserSystemRoles.systemAdmin) {
-      return;
-    }
-
-    const membership = await this.prisma.userOrganization.findFirst({
-      where: { userId, organizationId },
-      select: { roleId: true },
-    });
-
-    if (
-      !membership ||
-      (membership.roleId !== UserOrganizationRoles.organizationOwner &&
-        membership.roleId !== UserOrganizationRoles.organizationAdmin)
-    ) {
-      throw new ForbiddenException(
-        'Only organization admins can manage service API keys',
-      );
+    try {
+      if (projectIds && projectIds.length > 0) {
+        for (const projectId of projectIds) {
+          await this.commandBus.execute(
+            new CheckProjectPermissionCommand({
+              permissions: [MANAGE_API_KEY_PERMISSION],
+              projectId,
+              userId,
+            }),
+          );
+        }
+      } else {
+        await this.commandBus.execute(
+          new CheckOrganizationPermissionCommand({
+            permissions: [MANAGE_API_KEY_PERMISSION],
+            organizationId,
+            userId,
+          }),
+        );
+      }
+    } catch (error) {
+      if (error instanceof ForbiddenError) {
+        throw new ForbiddenException(
+          'You do not have permission to manage API keys',
+        );
+      }
+      throw error;
     }
   }
 }

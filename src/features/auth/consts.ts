@@ -57,6 +57,7 @@ export enum PermissionAction {
   revert = 'revert',
   update = 'update',
   add = 'add',
+  manage = 'manage',
 }
 
 export enum PermissionSubject {
@@ -68,4 +69,5 @@ export enum PermissionSubject {
   Row = 'Row',
   Endpoint = 'Endpoint',
   User = 'User',
+  ApiKey = 'ApiKey',
 }

@@ -156,13 +156,13 @@ describe('Service API Key Management (e2e)', () => {
       expect(apiKey.readOnly).toBe(true);
     });
 
-    it('should reject service key creation by non-admin', async () => {
+    it('should allow service key creation by developer (has manage-api-key)', async () => {
       const response = await graphqlRequest(preparedData.developer.token)
         .send({
           query: CREATE_SERVICE_API_KEY,
           variables: {
             data: {
-              name: 'Unauthorized Key',
+              name: 'Developer Key',
               organizationId: preparedData.project.organizationId,
               permissions: {
                 rules: [{ action: ['read'], subject: ['Row'] }],
@@ -172,10 +172,9 @@ describe('Service API Key Management (e2e)', () => {
         })
         .expect(200);
 
-      expect(response.body.errors).toBeDefined();
-      expect(response.body.errors[0].message).toContain(
-        'Only organization admins',
-      );
+      const result = response.body.data.createServiceApiKey;
+      expect(result.secret).toMatch(/^rev_[A-Za-z0-9_-]{22}$/);
+      expect(result.apiKey.type).toBe('SERVICE');
     });
 
     it('should reject service key creation by admin of another org', async () => {
@@ -196,7 +195,7 @@ describe('Service API Key Management (e2e)', () => {
 
       expect(response.body.errors).toBeDefined();
       expect(response.body.errors[0].message).toContain(
-        'Only organization admins',
+        'do not have permission to manage API keys',
       );
     });
 
@@ -280,7 +279,7 @@ describe('Service API Key Management (e2e)', () => {
       expect(names).toContain('Service Key Alpha');
     });
 
-    it('should reject listing by non-admin', async () => {
+    it('should reject listing by reader (no manage-api-key)', async () => {
       const response = await graphqlRequest(preparedData.reader.token)
         .send({
           query: SERVICE_API_KEYS,
@@ -292,7 +291,7 @@ describe('Service API Key Management (e2e)', () => {
 
       expect(response.body.errors).toBeDefined();
       expect(response.body.errors[0].message).toContain(
-        'Only organization admins',
+        'do not have permission to manage API keys',
       );
     });
   });
@@ -332,7 +331,7 @@ describe('Service API Key Management (e2e)', () => {
       expect(revokeResponse.body.data.revokeApiKey.revokedAt).not.toBeNull();
     });
 
-    it('should reject revoke by non-admin', async () => {
+    it('should reject revoke by reader (no manage-api-key)', async () => {
       const createResponse = await graphqlRequest(preparedData.owner.token)
         .send({
           query: CREATE_SERVICE_API_KEY,
@@ -350,7 +349,7 @@ describe('Service API Key Management (e2e)', () => {
 
       const keyId = createResponse.body.data.createServiceApiKey.apiKey.id;
 
-      const revokeResponse = await graphqlRequest(preparedData.developer.token)
+      const revokeResponse = await graphqlRequest(preparedData.reader.token)
         .send({
           query: REVOKE_API_KEY,
           variables: { id: keyId },
