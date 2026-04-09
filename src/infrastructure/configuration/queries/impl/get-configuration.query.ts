@@ -5,6 +5,9 @@ export type GetConfigurationQueryReturnType = {
   noAuth: boolean;
   google: { available: boolean; clientId?: string };
   github: { available: boolean; clientId?: string };
+  cache: {
+    enabled: boolean;
+  };
   plugins: {
     file: boolean;
   };

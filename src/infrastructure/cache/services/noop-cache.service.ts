@@ -21,6 +21,10 @@ export class NoopCacheService {
   public delete(_: DeleteOptions) {
     return false;
   }
+
+  public clear() {
+    return false;
+  }
 }
 
 const noopGetSetFactory: GetSetFactoryContext = {

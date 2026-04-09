@@ -44,7 +44,7 @@ export abstract class BasePermissionGuard<
 
     return {
       user,
-      params: args.data,
+      params: args.data ?? ({} as T),
     };
   }
 

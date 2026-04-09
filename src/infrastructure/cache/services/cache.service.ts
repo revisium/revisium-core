@@ -37,4 +37,8 @@ export class CacheService {
   public delete(options: DeleteOptions) {
     return this.bento.delete(options);
   }
+
+  public clear() {
+    return this.bento.clear();
+  }
 }
