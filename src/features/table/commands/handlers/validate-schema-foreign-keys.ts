@@ -34,6 +34,14 @@ export function validatePatchForeignKeys(
       (patch.op === 'add' || patch.op === 'replace') &&
       patch.value !== undefined
     ) {
+      if (
+        patch.path.endsWith('/foreignKey') &&
+        typeof patch.value !== 'string'
+      ) {
+        throw new BadRequestException(
+          'foreignKey must be a string (table ID), e.g. "categories"',
+        );
+      }
       validateSchemaForeignKeys(patch.value);
     }
   }
