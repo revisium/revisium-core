@@ -33,9 +33,14 @@ describe('validateRowId', () => {
       expect(() => validateRowId('-123')).not.toThrow();
     });
 
-    it('should pass for names starting with underscore', () => {
+    it('should pass for names starting with single underscore', () => {
       expect(() => validateRowId('_private')).not.toThrow();
-      expect(() => validateRowId('__row')).not.toThrow();
+      expect(() => validateRowId('_row')).not.toThrow();
+    });
+
+    it('should fail for names starting with double underscore (reserved)', () => {
+      expect(() => validateRowId('__row')).toThrow(BadRequestException);
+      expect(() => validateRowId('__reserved-id')).toThrow(BadRequestException);
     });
 
     it('should pass for UUID-like formats', () => {

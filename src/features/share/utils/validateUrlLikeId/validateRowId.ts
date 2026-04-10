@@ -9,6 +9,12 @@ export const ROW_ID_ERROR_MESSAGE =
   `and contain only letters (a-z, A-Z), digits (0-9), underscores (_), and hyphens (-).`;
 
 export const validateRowId = (id: string): void => {
+  if (id.startsWith('__')) {
+    throw new BadRequestException(
+      'Row ID cannot start with "__" (reserved prefix).',
+    );
+  }
+
   if (
     id.length < ROW_ID_MIN_LENGTH ||
     id.length > ROW_ID_MAX_LENGTH ||
