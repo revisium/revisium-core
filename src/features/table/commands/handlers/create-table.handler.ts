@@ -5,7 +5,6 @@ import { RowCreatedEvent } from 'src/infrastructure/cache';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
 import { EndpointNotifierService } from 'src/core/shared/endpoint-notifier.service';
 import { CreateTableCommand } from '../impl/create-table.command';
-import { validateSchemaForeignKeys } from './validate-schema-foreign-keys';
 
 @CommandHandler(CreateTableCommand)
 export class CreateTableHandler implements ICommandHandler<CreateTableCommand> {
@@ -22,7 +21,6 @@ export class CreateTableHandler implements ICommandHandler<CreateTableCommand> {
       LimitMetric.TABLES_PER_REVISION,
       1,
     );
-    validateSchemaForeignKeys(data.schema);
     const result = await this.engine.createTable(data);
     await this.eventBus.publishAll([
       new RowCreatedEvent(
