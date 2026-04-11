@@ -178,6 +178,36 @@ describe('RefreshTokenService', () => {
       expect(previousLive!.revokedAt).not.toBeNull();
     });
 
+    it('fallback path caches the successor under the original token id (idempotent on second replay)', async () => {
+      // Regression: cubic P1. The fallback path used to cache under
+      // `latestToken.id` (the family's live descendant we were rotating
+      // away from) instead of `storedToken.id` (the originally-presented
+      // token). A second replay of the same raw cookie would therefore
+      // always miss the cache and trigger yet another rotation,
+      // defeating the idempotent-replay guarantee this cache provides.
+      const original = await service.createToken(userId);
+      const first = await service.rotateToken(original);
+
+      // Force the fallback path once (cache miss).
+      (
+        service as unknown as { gracePeriodReplayCache: Map<string, unknown> }
+      ).gracePeriodReplayCache.clear();
+      const retryA = await service.rotateToken(original);
+      expect(retryA.newToken).not.toBe(first.newToken);
+
+      // Second replay of the same original — MUST now hit the cache
+      // populated by retryA and return the SAME successor instead of
+      // rotating a third time.
+      const retryB = await service.rotateToken(original);
+      expect(retryB.newToken).toBe(retryA.newToken);
+
+      // retryA's successor is still live (not revoked by a third rotation).
+      const stillLive = await prisma.refreshToken.findUnique({
+        where: { tokenHash: hash(retryA.newToken) },
+      });
+      expect(stillLive!.revokedAt).toBeNull();
+    });
+
     it('revokes the entire family when reuse happens outside the grace window', async () => {
       const original = await service.createToken(userId);
       const { newToken } = await service.rotateToken(original);

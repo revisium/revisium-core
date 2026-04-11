@@ -316,13 +316,18 @@ export class RefreshTokenService {
               familyId: latestToken.familyId,
               meta,
             });
+            // Cache keyed by the ORIGINALLY-PRESENTED token's id, not
+            // the family's live descendant. A client replaying the same
+            // raw refresh cookie will look up `storedToken.id` on the
+            // next call, so the cache entry must live under that key or
+            // the idempotent-replay behavior is defeated.
             return {
               kind: 'ok',
               result: {
                 userId: latestToken.userId,
                 newToken: newTokenValue,
               },
-              predecessorId: latestToken.id,
+              predecessorId: storedToken.id,
             };
           }
         }
