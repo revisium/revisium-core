@@ -28,13 +28,10 @@ export class LoginGithubHandler implements ICommandHandler<
 
     const user = (await this.getUser(email)) || (await this.createUser(email));
 
-    return {
-      accessToken: this.authService.login({
-        username: user.username,
-        email,
-        sub: user.id,
-      }),
-    };
+    return this.authService.issueTokens(user, {
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
   }
 
   private getUser(emailOrUserName: string) {

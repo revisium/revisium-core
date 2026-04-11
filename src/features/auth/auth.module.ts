@@ -25,6 +25,8 @@ import {
 } from 'src/features/auth/guards/universal/http-universal-auth.guard';
 import { JwtSecretService } from 'src/features/auth/jwt-secret.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
+import { CookieService } from 'src/features/auth/services/cookie.service';
+import { RefreshTokenService } from 'src/features/auth/services/refresh-token.service';
 import { JwtStrategy } from 'src/features/auth/strategy/jwt.strategy';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { EmailModule } from 'src/infrastructure/email/email.module';
@@ -51,6 +53,8 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     CaslAbilityFactory,
     NoAuthService,
     UniversalAuthService,
+    CookieService,
+    RefreshTokenService,
     HttpUniversalAuthGuard,
     OptionalHttpUniversalAuthGuard,
     HttpJwtPassportGuard,
@@ -69,6 +73,8 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     JwtSecretService,
     NoAuthService,
     UniversalAuthService,
+    CookieService,
+    RefreshTokenService,
     CaslAbilityFactory,
     HttpUniversalAuthGuard,
     OptionalHttpUniversalAuthGuard,

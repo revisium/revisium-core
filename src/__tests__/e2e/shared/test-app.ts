@@ -1,5 +1,6 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import cookieParser from 'cookie-parser';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -19,6 +20,7 @@ export async function getTestApp(): Promise<INestApplication> {
   }).compile();
 
   cachedApp = moduleFixture.createNestApplication();
+  cachedApp.use(cookieParser());
   cachedApp.useGlobalPipes(
     new ValidationPipe({
       transform: true,
@@ -54,6 +56,7 @@ export async function createFreshTestApp(): Promise<INestApplication> {
   }).compile();
 
   const app = moduleFixture.createNestApplication();
+  app.use(cookieParser());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,

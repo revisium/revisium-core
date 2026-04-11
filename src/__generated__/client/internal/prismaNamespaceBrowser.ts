@@ -70,7 +70,8 @@ export const ModelName = {
   OAuthAccessToken: 'OAuthAccessToken',
   OAuthRefreshToken: 'OAuthRefreshToken',
   ApiKey: 'ApiKey',
-  LicenseCache: 'LicenseCache'
+  LicenseCache: 'LicenseCache',
+  RefreshToken: 'RefreshToken'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -104,7 +105,8 @@ export const UserScalarFieldEnum = {
   password: 'password',
   isEmailConfirmed: 'isEmailConfirmed',
   emailCode: 'emailCode',
-  roleId: 'roleId'
+  roleId: 'roleId',
+  tokenVersion: 'tokenVersion'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
@@ -345,6 +347,21 @@ export const LicenseCacheScalarFieldEnum = {
 } as const
 
 export type LicenseCacheScalarFieldEnum = (typeof LicenseCacheScalarFieldEnum)[keyof typeof LicenseCacheScalarFieldEnum]
+
+
+export const RefreshTokenScalarFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  userId: 'userId',
+  familyId: 'familyId',
+  expiresAt: 'expiresAt',
+  revokedAt: 'revokedAt',
+  createdAt: 'createdAt',
+  userAgent: 'userAgent',
+  ip: 'ip'
+} as const
+
+export type RefreshTokenScalarFieldEnum = (typeof RefreshTokenScalarFieldEnum)[keyof typeof RefreshTokenScalarFieldEnum]
 
 
 export const SortOrder = {
@@ -594,4 +611,16 @@ export const LicenseCacheOrderByRelevanceFieldEnum = {
 } as const
 
 export type LicenseCacheOrderByRelevanceFieldEnum = (typeof LicenseCacheOrderByRelevanceFieldEnum)[keyof typeof LicenseCacheOrderByRelevanceFieldEnum]
+
+
+export const RefreshTokenOrderByRelevanceFieldEnum = {
+  id: 'id',
+  tokenHash: 'tokenHash',
+  userId: 'userId',
+  familyId: 'familyId',
+  userAgent: 'userAgent',
+  ip: 'ip'
+} as const
+
+export type RefreshTokenOrderByRelevanceFieldEnum = (typeof RefreshTokenOrderByRelevanceFieldEnum)[keyof typeof RefreshTokenOrderByRelevanceFieldEnum]
 

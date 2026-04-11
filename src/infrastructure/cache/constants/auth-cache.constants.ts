@@ -6,6 +6,8 @@ export const AUTH_CACHE_KEYS = {
   CHECK_PROJECT_PERMISSION: 'auth:check-project-permission',
 
   API_KEY_BY_HASH: (keyHash: string) => `auth:api-key:${keyHash}`,
+
+  USER_TOKEN_VERSION: (userId: string) => `auth:token-version:${userId}`,
 } as const;
 
 export const AUTH_CACHE_TAGS = {
@@ -28,6 +30,12 @@ export const AUTH_CACHE_CONFIG = {
   PERMISSION_CHECK_TTL: '10m' as const,
 
   API_KEY_TTL: '5m' as const,
+
+  // Short TTL so a tokenVersion bump (the "kick every session for this
+  // user" hammer) propagates within seconds across all pods. Users
+  // actively using the app will refresh via the access-JWT path within
+  // a few requests; the absolute ceiling is this TTL.
+  TOKEN_VERSION_TTL: '30s' as const,
 
   KEY_VERSION: 1 as const,
 } as const;

@@ -158,9 +158,10 @@ describe('JWT Guards with NO_AUTH enabled', () => {
 
 describe('LoginHandler with NO_AUTH enabled', () => {
   it('should return token for any credentials', async () => {
-    const authService = {
-      login: jest.fn().mockReturnValue('no-auth-token'),
-    };
+    const signAccessToken = jest
+      .fn()
+      .mockReturnValue({ accessToken: 'no-auth-token', expiresIn: 1800 });
+    const authService = { signAccessToken };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -188,8 +189,12 @@ describe('LoginHandler with NO_AUTH enabled', () => {
 
     const result = await handler.execute(command);
 
-    expect(result).toEqual({ accessToken: 'no-auth-token' });
-    expect(authService.login).toHaveBeenCalledWith({
+    expect(result).toEqual({
+      accessToken: 'no-auth-token',
+      refreshToken: null,
+      expiresIn: 1800,
+    });
+    expect(signAccessToken).toHaveBeenCalledWith({
       username: 'admin',
       email: '',
       sub: 'admin',
@@ -208,7 +213,11 @@ describe('LoginHandler with NO_AUTH enabled', () => {
         },
         {
           provide: AuthService,
-          useValue: { login: jest.fn().mockReturnValue('token') },
+          useValue: {
+            signAccessToken: jest
+              .fn()
+              .mockReturnValue({ accessToken: 'token', expiresIn: 1800 }),
+          },
         },
         {
           provide: NoAuthService,

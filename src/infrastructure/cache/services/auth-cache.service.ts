@@ -134,6 +134,27 @@ export class AuthCacheService {
     });
   }
 
+  public async userTokenVersion(
+    userId: string,
+    factory: () => Promise<number | null>,
+  ): Promise<number | null> {
+    return this.cache.getOrSet({
+      key: AUTH_CACHE_KEYS.USER_TOKEN_VERSION(userId),
+      ttl: AUTH_CACHE_CONFIG.TOKEN_VERSION_TTL,
+      tags: [
+        AUTH_CACHE_TAGS.AUTH_RELATIVES,
+        AUTH_CACHE_TAGS.USER_PERMISSIONS(userId),
+      ],
+      factory,
+    });
+  }
+
+  public async invalidateUserTokenVersion(userId: string) {
+    await this.cache.delete({
+      key: AUTH_CACHE_KEYS.USER_TOKEN_VERSION(userId),
+    });
+  }
+
   public async invalidateAllAuthCaches() {
     await this.cache.deleteByTag({
       tags: [AUTH_CACHE_TAGS.AUTH_RELATIVES],

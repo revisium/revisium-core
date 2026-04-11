@@ -33,10 +33,24 @@ cp .env.example .env
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `JWT_SECRET` | - | JWT signing key (required for production) |
+| `JWT_SECRET` | nanoid at boot (dev only) | JWT signing key. **Required** and must be shared across all pods in multi-pod / multi-replica deployments, otherwise pods reject tokens signed by their peers |
+| `JWT_ACCESS_TOKEN_TTL` | `30m` | Access-token lifetime (`ms` duration string, e.g. `30m`, `1h`). The `rev_at` JWT cookie inherits this expiry |
+| `JWT_REFRESH_TOKEN_TTL_DAYS` | `7` | Refresh-token lifetime in days. The `rev_rt` and `rev_session` cookies inherit this expiry |
+| `JWT_REFRESH_GRACE_PERIOD_MS` | `30000` | Window for legitimate rotation retries before refresh-token reuse is treated as theft and the entire family is revoked |
 | `ADMIN_PASSWORD` | `admin` | Default admin user password (used during seeding) |
 | `ENDPOINT_PASSWORD` | `endpoint` | Default endpoint user password (used during seeding) |
-| `REVISIUM_NO_AUTH` | `false` | Disable authentication; all requests authorized as admin (standalone only) |
+| `REVISIUM_NO_AUTH` | `false` | Disable authentication; all requests authorized as admin (standalone only). Login handlers return JSON `accessToken` only — no cookies, no refresh token |
+
+### Cookie & CORS (JWT 2.0 session model)
+
+Revisium-admin talks to core over httpOnly cookies (`rev_at`, `rev_rt`) plus a non-httpOnly presence cookie (`rev_session`) that lets the SPA detect "session likely alive" without a speculative `/me` call. See [`docs/jwt-refresh.md`](./docs/jwt-refresh.md) for the full deployment matrix. ADR-0045 in the architecture repo (not co-located with `revisium-core`) has the design rationale.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `COOKIE_SECURE` | `NODE_ENV === 'production'` | `true` / `false` override for the cookie `Secure` flag. Set to `true` on any HTTPS deployment. Required to be `true` when `COOKIE_SAMESITE=none` |
+| `COOKIE_SAMESITE` | `lax` | `lax` / `strict` / `none`. `none` is rejected at boot unless `COOKIE_SECURE=true` (browsers drop `SameSite=None` cookies without `Secure`). Use `strict` on cloud for slightly tighter cross-site posture; `none` is only for cross-site embeds Revisium does not ship by default |
+| `CORS_ORIGIN` | *(reflect request origin)* | Comma-separated allowlist of origins that may call core with credentials. Set explicitly on cloud (e.g. `https://cloud.revisium.io,https://cloud.revisium.ru`). Leaving unset reflects the request `Origin` header, which is permissive but functional in dev |
+| `TRUST_PROXY` | *(unset → off)* | Pass-through to Express `app.set('trust proxy', …)`. Accepts `true`, `false`, integer hop count (`1`, `2`), or an IP/CIDR list. **Required** whenever revisium-core runs behind one or more reverse proxies, so `req.ip` and `req.protocol` resolve to the real client instead of the nearest proxy. Reference values: `1` for selfhost monolith (single nginx in front), `2` for cloud k8s (ingress-nginx → admin-pod nginx → core). Without this, `RefreshToken.ip` audit metadata stores the proxy IP, not the browser's |
 
 ---
 

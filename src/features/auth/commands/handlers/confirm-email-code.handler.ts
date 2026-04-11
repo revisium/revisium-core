@@ -28,15 +28,12 @@ export class ConfirmEmailCodeHandler implements ICommandHandler<
       throw new UnauthorizedException('Email is already confirmed');
     }
 
-    await this.confirmEmail(user.id);
+    const updated = await this.confirmEmail(user.id);
 
-    return {
-      accessToken: this.authService.login({
-        username: user.username || '',
-        email: user.email || '',
-        sub: user.id,
-      }),
-    };
+    return this.authService.issueTokens(updated, {
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
   }
 
   private confirmEmail(userId: string) {

@@ -118,6 +118,36 @@ describe('UniversalAuthService', () => {
 
       expect(result).toBe('anonymous');
     });
+
+    it('should return jwt when only the rev_at cookie is present', async () => {
+      const request = {
+        headers: {},
+        query: {},
+        ip: '127.0.0.1',
+        cookies: { rev_at: 'eyJhbGciOiJIUzI1NiJ9' },
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('jwt');
+    });
+
+    it('returns jwt even when only the bearer header is present (no cookie)', async () => {
+      // Pair test with "cookie alone" above: both independently trigger
+      // 'jwt'. The downstream JwtStrategy extractor is what actually
+      // enforces header-over-cookie precedence — see
+      // jwt.strategy.spec.ts. UniversalAuthService's job here is just
+      // to route either signal to the JWT guard.
+      const request = {
+        headers: { authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9' },
+        query: {},
+        ip: '127.0.0.1',
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('jwt');
+    });
   });
 
   describe('authenticate', () => {

@@ -3,6 +3,7 @@
   "paths": {
     "/api/auth/login": {
       "post": {
+        "description": "Sets httpOnly auth cookies on success. The JSON body also carries `accessToken` + `expiresIn` for CLI / PAT consumers that use Bearer header auth and cannot manage cookies.",
         "operationId": "login",
         "parameters": [],
         "requestBody": {
@@ -16,7 +17,15 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
+            "headers": {
+              "Set-Cookie": {
+                "description": "Three Set-Cookie headers are returned: `rev_at` (httpOnly JWT access token, Path=/, 30 min), `rev_rt` (httpOnly opaque refresh token, Path=/api/auth/, 7 d), `rev_session` (non-httpOnly presence flag \"1\", Path=/, 7 d). See docs/jwt-refresh.md for the full cookie model.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
             "description": "",
             "content": {
               "application/json": {
@@ -57,15 +66,142 @@
             }
           }
         },
-        "security": [
+        "summary": "Authenticate and get access token",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/refresh": {
+      "post": {
+        "description": "Reads the httpOnly `rev_rt` cookie, rotates it, and returns new Set-Cookie headers for all three auth cookies. No request body. No bearer / api-key auth — this endpoint is cookie-driven.",
+        "operationId": "refresh",
+        "parameters": [
           {
-            "api-key": []
-          },
-          {
-            "access-token": []
+            "name": "Cookie",
+            "in": "header",
+            "description": "Must include `rev_rt=<opaque token>`",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
-        "summary": "Authenticate and get access token",
+        "responses": {
+          "200": {
+            "headers": {
+              "Set-Cookie": {
+                "description": "Three Set-Cookie headers are returned: `rev_at` (httpOnly JWT access token, Path=/, 30 min), `rev_rt` (httpOnly opaque refresh token, Path=/api/auth/, 7 d), `rev_session` (non-httpOnly presence flag \"1\", Path=/, 7 d). See docs/jwt-refresh.md for the full cookie model.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefreshResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired, or reuse-detected `rev_rt` refresh cookie. All auth cookies are cleared on the response so the client-side session is torn down.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Refresh access token using refresh cookie",
+        "tags": [
+          "Auth"
+        ]
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "description": "Reads the `rev_rt` cookie (sent because its Path `/api/auth/` prefix-matches this endpoint), revokes the refresh-token family server-side, and clears all three auth cookies on the response. No request body. No bearer / api-key auth — this endpoint is cookie-driven.",
+        "operationId": "logout",
+        "parameters": [
+          {
+            "name": "Cookie",
+            "in": "header",
+            "description": "Typically includes `rev_rt=<opaque token>`. If missing, local session state is still cleared on the response.",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "headers": {
+              "Set-Cookie": {
+                "description": "Three Set-Cookie headers that clear `rev_at`, `rev_rt`, and `rev_session`.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid `rev_rt` refresh cookie. Note: in practice logout is best-effort — if the cookie is absent, the client-side session is still cleared and the endpoint returns 204. A 401 here only surfaces if the server refuses the teardown for another reason.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Log out and clear auth cookies",
         "tags": [
           "Auth"
         ]
@@ -7181,10 +7317,14 @@
         "properties": {
           "accessToken": {
             "type": "string"
+          },
+          "expiresIn": {
+            "type": "number"
           }
         },
         "required": [
-          "accessToken"
+          "accessToken",
+          "expiresIn"
         ]
       },
       "ErrorModel": {
@@ -7210,6 +7350,17 @@
           "statusCode",
           "message",
           "error"
+        ]
+      },
+      "RefreshResponse": {
+        "type": "object",
+        "properties": {
+          "expiresIn": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "expiresIn"
         ]
       },
       "CreateUserDto": {

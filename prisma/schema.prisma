@@ -37,6 +37,9 @@ model User {
   oauthRefreshTokens      OAuthRefreshToken[]
 
   apiKeys ApiKey[]
+
+  tokenVersion  Int            @default(0)
+  refreshTokens RefreshToken[]
 }
 
 enum RoleLevel {
@@ -344,5 +347,22 @@ model LicenseCache {
   validatedAt DateTime
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String    @id @default(nanoid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  familyId  String
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+  userAgent String?
+  ip        String?
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
 }
 

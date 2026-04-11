@@ -1,12 +1,28 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
-import { AuthService } from 'src/features/auth/auth.service';
+import * as bcrypt from 'bcrypt';
+import { AuthService, BCRYPT_ROUNDS } from 'src/features/auth/auth.service';
 import {
   LoginCommand,
   LoginCommandReturnType,
 } from 'src/features/auth/commands/impl';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+
+// Dummy bcrypt hash used to keep the compare path running even when the
+// user does not exist, so response time does not leak account existence.
+// Lazily generated at runtime using the same BCRYPT_ROUNDS cost factor
+// as AuthService.hashPassword so the timing-equalisation mitigation
+// stays consistent if BCRYPT_ROUNDS ever changes.
+let dummyBcryptHash: string | undefined;
+function getDummyBcryptHash(): string {
+  if (!dummyBcryptHash) {
+    dummyBcryptHash = bcrypt.hashSync('unused', BCRYPT_ROUNDS);
+  }
+  return dummyBcryptHash;
+}
+
+const INVALID_CREDENTIALS_MESSAGE = 'Invalid credentials';
 
 @CommandHandler(LoginCommand)
 export class LoginHandler implements ICommandHandler<
@@ -22,42 +38,42 @@ export class LoginHandler implements ICommandHandler<
   async execute({ data }: LoginCommand): Promise<LoginCommandReturnType> {
     if (this.noAuth.enabled) {
       const admin = this.noAuth.adminUser;
+      const access = this.authService.signAccessToken({
+        username: admin.userId,
+        email: admin.email,
+        sub: admin.userId,
+      });
       return {
-        accessToken: this.authService.login({
-          username: admin.userId,
-          email: admin.email,
-          sub: admin.userId,
-        }),
+        accessToken: access.accessToken,
+        refreshToken: null,
+        expiresIn: access.expiresIn,
       };
     }
 
     const user = await this.getUser(data.emailOrUsername);
 
-    if (!user) {
-      throw new UnauthorizedException('User does not exist');
-    }
+    // Always run bcrypt compare (even against a dummy hash when the user
+    // does not exist) so the response time does not leak account existence
+    // to unauthenticated probes. All three failure modes return the same
+    // generic "Invalid credentials" message for the same reason.
+    const passwordHash = user?.password || getDummyBcryptHash();
+    const passwordMatches = await this.authService.comparePassword(
+      data.password,
+      passwordHash,
+    );
 
-    if (!user.password) {
-      throw new UnauthorizedException('Password login is not available');
-    }
-
-    if (
-      !(await this.authService.comparePassword(data.password, user.password))
-    ) {
-      throw new UnauthorizedException('Invalid password');
+    if (!user?.password || !passwordMatches) {
+      throw new UnauthorizedException(INVALID_CREDENTIALS_MESSAGE);
     }
 
     if (!user.isEmailConfirmed) {
       throw new UnauthorizedException('Email is not confirmed');
     }
 
-    return {
-      accessToken: this.authService.login({
-        username: user.username || '',
-        email: user.email || '',
-        sub: user.id,
-      }),
-    };
+    return this.authService.issueTokens(user, {
+      ip: data.ip,
+      userAgent: data.userAgent,
+    });
   }
 
   private getUser(emailOrUserName: string) {

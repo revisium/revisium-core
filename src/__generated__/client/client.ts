@@ -139,3 +139,8 @@ export type ApiKey = Prisma.ApiKeyModel
  * 
  */
 export type LicenseCache = Prisma.LicenseCacheModel
+/**
+ * Model RefreshToken
+ * 
+ */
+export type RefreshToken = Prisma.RefreshTokenModel

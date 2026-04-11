@@ -52,23 +52,25 @@ describe('graphql - auth mutations', () => {
       expect(typeof result.login.accessToken).toBe('string');
     });
 
-    it('login fails with wrong password', async () => {
+    it('login fails with Invalid credentials on wrong password', async () => {
       await gqlQueryExpectError(
         {
           app,
           ...getMutation(fixture.owner.user.username!, 'wrong-password'),
         },
-        /Invalid password/,
+        /Invalid credentials/,
       );
     });
 
-    it('login fails with non-existent user', async () => {
+    it('login fails with Invalid credentials on non-existent user', async () => {
+      // Same generic message prevents user enumeration via either the
+      // response body or the response time (bcrypt compare always runs).
       await gqlQueryExpectError(
         {
           app,
           ...getMutation('non-existent-user', 'password'),
         },
-        /User does not exist/,
+        /Invalid credentials/,
       );
     });
   });
