@@ -43,7 +43,7 @@ cp .env.example .env
 
 ### Cookie & CORS (JWT 2.0 session model)
 
-Revisium-admin talks to core over httpOnly cookies (`rev_at`, `rev_rt`) plus a non-httpOnly presence cookie (`rev_session`) that lets the SPA detect "session likely alive" without a speculative `/me` call. See [`docs/jwt-refresh.md`](./docs/jwt-refresh.md) for the full deployment matrix and [ADR-0045](../architecture/adr/ADR-0045-jwt-token-lifecycle.md) for design rationale.
+Revisium-admin talks to core over httpOnly cookies (`rev_at`, `rev_rt`) plus a non-httpOnly presence cookie (`rev_session`) that lets the SPA detect "session likely alive" without a speculative `/me` call. See [`docs/jwt-refresh.md`](./docs/jwt-refresh.md) for the full deployment matrix. ADR-0045 in the architecture repo (not co-located with `revisium-core`) has the design rationale.
 
 | Variable | Default | Description |
 |----------|---------|-------------|

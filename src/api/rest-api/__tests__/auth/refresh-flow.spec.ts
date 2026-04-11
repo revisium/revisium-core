@@ -62,12 +62,20 @@ function wasCleared(setCookie: SetCookieHeader, name: string): boolean {
     : setCookie
       ? [setCookie]
       : [];
-  return headers.some(
-    (entry) =>
+  return headers.some((entry) => {
+    if (!entry.startsWith(`${name}=`)) {
+      return false;
+    }
+    // Empty value after the name OR an expiry marker on the SAME entry.
+    // Both must be scoped to the entry for this cookie — matching across
+    // all headers would report a false positive when another cookie was
+    // expired on the same response.
+    return (
       entry.startsWith(`${name}=;`) ||
       /Expires=Thu, 01 Jan 1970/i.test(entry) ||
-      /Max-Age=0/i.test(entry),
-  );
+      /Max-Age=0/i.test(entry)
+    );
+  });
 }
 
 describe('restapi - auth cookie flow', () => {

@@ -142,19 +142,28 @@ describe('CookieService', () => {
   });
 
   describe('clearAuthCookies', () => {
-    it('clears all three cookies using the paths they were set with', () => {
-      const service = makeService({});
+    it('clears all three cookies forwarding secure/sameSite/httpOnly', () => {
+      const service = makeService({ COOKIE_SECURE: 'true' });
       const { res, clearCookie } = makeRes();
       service.clearAuthCookies(res);
 
       expect(clearCookie).toHaveBeenCalledWith(ACCESS_COOKIE_NAME, {
         path: ACCESS_COOKIE_PATH,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
       });
       expect(clearCookie).toHaveBeenCalledWith(REFRESH_COOKIE_NAME, {
         path: REFRESH_COOKIE_PATH,
+        httpOnly: true,
+        secure: true,
+        sameSite: 'lax',
       });
       expect(clearCookie).toHaveBeenCalledWith(SESSION_COOKIE_NAME, {
         path: SESSION_COOKIE_PATH,
+        httpOnly: false,
+        secure: true,
+        sameSite: 'lax',
       });
     });
   });

@@ -305,7 +305,7 @@ Migration: `20260411120000_add_jwt_refresh`.
 
 | File | Purpose |
 |---|---|
-| `features/auth/services/cookie.service.ts` | Sets / clears the two cookies with correct flags and paths |
+| `features/auth/services/cookie.service.ts` | Sets / clears the three cookies (`rev_at`, `rev_rt`, `rev_session`) with correct flags and paths |
 | `features/auth/services/refresh-token.service.ts` | `createToken`, `rotateToken`, `revokeFamily{,ByRawToken}`, `revokeAllUserTokens`, reuse detection |
 | `features/auth/strategy/jwt.strategy.ts` | Extracts from Bearer then `rev_at` cookie, validates `ver` claim |
 | `features/auth/auth.service.ts` | `signAccessToken`, `issueTokens`, `issueAccessTokenForUserId` |

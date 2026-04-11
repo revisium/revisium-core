@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import * as bcrypt from 'bcrypt';
-import { AuthService } from 'src/features/auth/auth.service';
+import { AuthService, BCRYPT_ROUNDS } from 'src/features/auth/auth.service';
 import {
   LoginCommand,
   LoginCommandReturnType,
@@ -11,13 +11,13 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 // Dummy bcrypt hash used to keep the compare path running even when the
 // user does not exist, so response time does not leak account existence.
-// Lazily generated at runtime from a throwaway input — never appears as
-// a string literal in the source so it cannot be flagged as a hardcoded
-// credential by static analysis.
+// Lazily generated at runtime using the same BCRYPT_ROUNDS cost factor
+// as AuthService.hashPassword so the timing-equalisation mitigation
+// stays consistent if BCRYPT_ROUNDS ever changes.
 let dummyBcryptHash: string | undefined;
 function getDummyBcryptHash(): string {
   if (!dummyBcryptHash) {
-    dummyBcryptHash = bcrypt.hashSync('unused', 10);
+    dummyBcryptHash = bcrypt.hashSync('unused', BCRYPT_ROUNDS);
   }
   return dummyBcryptHash;
 }

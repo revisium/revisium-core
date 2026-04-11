@@ -56,11 +56,30 @@ async function bootstrap() {
     next();
   });
 
+  // Fail-closed CORS:
+  // - CORS_ORIGIN set → explicit allowlist (preferred in prod)
+  // - CORS_ORIGIN unset + non-production → reflect request Origin (dev convenience)
+  // - CORS_ORIGIN unset + production → refuse cross-origin (same-origin only)
+  //
+  // `origin: true` with `credentials: true` would allow any origin to
+  // make credentialed requests, which is a permissive default we do not
+  // want production to fall into silently.
   const corsOrigin = config.get<string>('CORS_ORIGIN');
+  const isProduction = config.get<string>('NODE_ENV') === 'production';
+  const corsOriginSetting: boolean | string[] = corsOrigin
+    ? corsOrigin.split(',').map((o) => o.trim())
+    : !isProduction;
+  if (corsOrigin === undefined && isProduction) {
+    Logger.warn(
+      'CORS_ORIGIN is not set in production — cross-origin requests will be refused. ' +
+        'Set CORS_ORIGIN to an explicit allowlist if the admin UI is served from a different origin than core.',
+      'Bootstrap',
+    );
+  }
   app.enableCors({
     maxAge: 86400,
     credentials: true,
-    origin: corsOrigin ? corsOrigin.split(',').map((o) => o.trim()) : true,
+    origin: corsOriginSetting,
   });
 
   app.useGlobalPipes(

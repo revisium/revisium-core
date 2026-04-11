@@ -14,6 +14,7 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiHeader,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
@@ -44,10 +45,15 @@ type RequestWithCookies = ExpressRequest & {
   cookies?: Record<string, string>;
 };
 
+const SET_COOKIE_DESCRIPTION =
+  'Three Set-Cookie headers are returned: ' +
+  '`rev_at` (httpOnly JWT access token, Path=/, 30 min), ' +
+  '`rev_rt` (httpOnly opaque refresh token, Path=/api/auth/, 7 d), ' +
+  '`rev_session` (non-httpOnly presence flag "1", Path=/, 7 d). ' +
+  'See docs/jwt-refresh.md for the full cookie model.';
+
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('Auth')
-@ApiBearerAuth('access-token')
-@ApiSecurity('api-key')
 @Controller('auth')
 export class AuthController {
   constructor(
@@ -61,8 +67,20 @@ export class AuthController {
   @ApiOperation({
     operationId: 'login',
     summary: 'Authenticate and get access token',
+    description:
+      'Sets httpOnly auth cookies on success. The JSON body also carries ' +
+      '`accessToken` + `expiresIn` for CLI / PAT consumers that use Bearer ' +
+      'header auth and cannot manage cookies.',
   })
-  @ApiOkResponse({ type: LoginResponse })
+  @ApiOkResponse({
+    type: LoginResponse,
+    headers: {
+      'Set-Cookie': {
+        description: SET_COOKIE_DESCRIPTION,
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiCommonErrors()
   async login(
     @Body() data: LoginDto,
@@ -94,8 +112,26 @@ export class AuthController {
   @ApiOperation({
     operationId: 'refresh',
     summary: 'Refresh access token using refresh cookie',
+    description:
+      'Reads the httpOnly `rev_rt` cookie, rotates it, and returns new ' +
+      'Set-Cookie headers for all three auth cookies. No request body. ' +
+      'No bearer / api-key auth — this endpoint is cookie-driven.',
   })
-  @ApiOkResponse({ type: RefreshResponse })
+  @ApiHeader({
+    name: 'Cookie',
+    required: true,
+    description: 'Must include `rev_rt=<opaque token>`',
+    schema: { type: 'string' },
+  })
+  @ApiOkResponse({
+    type: RefreshResponse,
+    headers: {
+      'Set-Cookie': {
+        description: SET_COOKIE_DESCRIPTION,
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiCommonErrors()
   async refresh(
     @Req() req: RequestWithCookies,
@@ -107,19 +143,31 @@ export class AuthController {
       throw new UnauthorizedException('No refresh token');
     }
 
+    // Only `rotateToken` failures (invalid / expired / reuse-detected)
+    // should kill the client-side session. If the rotation succeeds but
+    // `issueAccessTokenForUserId` subsequently fails on a transient DB
+    // error, the new refresh token is still valid and the client can
+    // simply retry — do NOT clear cookies in that window.
+    let rotated: { userId: string; newToken: string };
     try {
-      const { userId, newToken } = await this.refreshTokenService.rotateToken(
-        refreshToken,
-        { ip: req.ip, userAgent: req.headers['user-agent'] },
-      );
-      const access =
-        await this.authApiService.issueAccessTokenForUserId(userId);
-      this.cookieService.setAuthCookies(res, access.accessToken, newToken);
-      return { expiresIn: access.expiresIn };
+      rotated = await this.refreshTokenService.rotateToken(refreshToken, {
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+      });
     } catch (error) {
       this.cookieService.clearAuthCookies(res);
       throw error;
     }
+
+    const access = await this.authApiService.issueAccessTokenForUserId(
+      rotated.userId,
+    );
+    this.cookieService.setAuthCookies(
+      res,
+      access.accessToken,
+      rotated.newToken,
+    );
+    return { expiresIn: access.expiresIn };
   }
 
   @Post('logout')
@@ -127,18 +175,46 @@ export class AuthController {
   @ApiOperation({
     operationId: 'logout',
     summary: 'Log out and clear auth cookies',
+    description:
+      'Reads the `rev_rt` cookie (sent because its Path `/api/auth/` ' +
+      'prefix-matches this endpoint), revokes the refresh-token family ' +
+      'server-side, and clears all three auth cookies on the response. ' +
+      'No request body. No bearer / api-key auth — this endpoint is ' +
+      'cookie-driven.',
   })
-  @ApiNoContentResponse()
+  @ApiHeader({
+    name: 'Cookie',
+    required: false,
+    description:
+      'Typically includes `rev_rt=<opaque token>`. If missing, local ' +
+      'session state is still cleared on the response.',
+    schema: { type: 'string' },
+  })
+  @ApiNoContentResponse({
+    headers: {
+      'Set-Cookie': {
+        description:
+          'Three Set-Cookie headers that clear `rev_at`, `rev_rt`, and `rev_session`.',
+        schema: { type: 'string' },
+      },
+    },
+  })
   @ApiCommonErrors()
   async logout(
     @Req() req: RequestWithCookies,
     @Res({ passthrough: true }) res: Response,
   ): Promise<void> {
     const refreshToken = req.cookies?.[REFRESH_COOKIE_NAME];
-    if (refreshToken) {
-      await this.refreshTokenService.revokeFamilyByRawToken(refreshToken);
+    try {
+      if (refreshToken) {
+        await this.refreshTokenService.revokeFamilyByRawToken(refreshToken);
+      }
+    } finally {
+      // Always tear down the client-side session even if server-side
+      // revocation throws — the user clicked logout and expects the
+      // browser to forget its credentials.
+      this.cookieService.clearAuthCookies(res);
     }
-    this.cookieService.clearAuthCookies(res);
   }
 
   @UseGuards(HttpJwtAuthGuard, HTTPSystemGuard)
@@ -147,6 +223,8 @@ export class AuthController {
     subject: PermissionSubject.User,
   })
   @Post('user')
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('api-key')
   @ApiOperation({
     operationId: 'createUser',
     summary: 'Create a new user (admin only)',
@@ -161,6 +239,8 @@ export class AuthController {
 
   @UseGuards(HttpJwtAuthGuard)
   @Put('password')
+  @ApiBearerAuth('access-token')
+  @ApiSecurity('api-key')
   @ApiOperation({
     operationId: 'updatePassword',
     summary: 'Update your password',

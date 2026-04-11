@@ -64,9 +64,35 @@ export class CookieService {
   }
 
   public clearAuthCookies(res: Response): void {
-    res.clearCookie(ACCESS_COOKIE_NAME, { path: ACCESS_COOKIE_PATH });
-    res.clearCookie(REFRESH_COOKIE_NAME, { path: REFRESH_COOKIE_PATH });
-    res.clearCookie(SESSION_COOKIE_NAME, { path: SESSION_COOKIE_PATH });
+    // Browsers require the same name/path AND the same security flags to
+    // reliably delete a cookie — especially SameSite=None which must
+    // also carry Secure on the clear. Forward httpOnly/secure/sameSite
+    // from the same builder used for set-cookie.
+    res.clearCookie(
+      ACCESS_COOKIE_NAME,
+      this.buildClearOptions(ACCESS_COOKIE_PATH),
+    );
+    res.clearCookie(
+      REFRESH_COOKIE_NAME,
+      this.buildClearOptions(REFRESH_COOKIE_PATH),
+    );
+    res.clearCookie(
+      SESSION_COOKIE_NAME,
+      this.buildClearOptions(SESSION_COOKIE_PATH, { httpOnly: false }),
+    );
+  }
+
+  private buildClearOptions(
+    path: string,
+    overrides?: Partial<CookieOptions>,
+  ): CookieOptions {
+    return {
+      httpOnly: true,
+      secure: this.isSecure,
+      sameSite: this.sameSite,
+      path,
+      ...overrides,
+    };
   }
 
   private buildOptions(
