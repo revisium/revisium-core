@@ -118,6 +118,32 @@ describe('UniversalAuthService', () => {
 
       expect(result).toBe('anonymous');
     });
+
+    it('should return jwt when only the rev_at cookie is present', async () => {
+      const request = {
+        headers: {},
+        query: {},
+        ip: '127.0.0.1',
+        cookies: { rev_at: 'eyJhbGciOiJIUzI1NiJ9' },
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('jwt');
+    });
+
+    it('bearer header should still win over rev_at cookie', async () => {
+      const request = {
+        headers: { authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9' },
+        query: {},
+        ip: '127.0.0.1',
+        cookies: { rev_at: 'other-token' },
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('jwt');
+    });
   });
 
   describe('authenticate', () => {

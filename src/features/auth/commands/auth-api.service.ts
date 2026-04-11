@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
+import { AuthService } from 'src/features/auth/auth.service';
 import {
   CheckOrganizationPermissionCommand,
   CheckOrganizationPermissionCommandData,
@@ -36,7 +37,12 @@ export class AuthApiService {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly authCache: AuthCacheService,
+    private readonly authService: AuthService,
   ) {}
+
+  public issueAccessTokenForUserId(userId: string) {
+    return this.authService.issueAccessTokenForUserId(userId);
+  }
 
   public checkSystemPermission(data: CheckSystemPermissionCommandData) {
     return this.authCache.systemPermissionCheck(data, () => {
@@ -67,20 +73,24 @@ export class AuthApiService {
     });
   }
 
-  public login(data: LoginCommandData) {
+  public login(data: LoginCommandData): Promise<LoginCommandReturnType> {
     return this.commandBus.execute<LoginCommand, LoginCommandReturnType>(
       new LoginCommand(data),
     );
   }
 
-  public loginGoogle(data: LoginGoogleCommandData) {
+  public loginGoogle(
+    data: LoginGoogleCommandData,
+  ): Promise<LoginGoogleCommandReturnType> {
     return this.commandBus.execute<
       LoginGoogleCommand,
       LoginGoogleCommandReturnType
     >(new LoginGoogleCommand(data));
   }
 
-  public loginGithub(data: LoginGithubCommandData) {
+  public loginGithub(
+    data: LoginGithubCommandData,
+  ): Promise<LoginGithubCommandReturnType> {
     return this.commandBus.execute<
       LoginGithubCommand,
       LoginGithubCommandReturnType

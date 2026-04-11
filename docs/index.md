@@ -5,6 +5,7 @@ Technical documentation for the Revisium Core backend.
 ## Contents
 
 - [OAuth 2.1 & MCP Authentication](./oauth.md) - OAuth 2.1 Provider, PKCE, token lifecycle, stateless MCP transport
+- [JWT Token Lifecycle (Admin UI Cookies)](./jwt-refresh.md) - httpOnly cookie flow, refresh rotation, reuse detection, `tokenVersion` revocation, NoAuth fallback
 - [Versioning System](./versioning.md) - Data model, draft operations, revert rules, hasChanges system, invariants
 - [File Storage](./file-storage.md) - Storage providers, file plugin, upload workflow, file serving, configuration
 - [API Keys](./api-keys.md) - Key types, scoping, generation, rotation, tracking, database schema

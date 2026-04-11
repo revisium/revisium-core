@@ -3,6 +3,7 @@ import { ApiKeyType } from 'src/__generated__/client';
 import { ApiKeyTrackingService } from 'src/features/api-key/api-key-tracking.service';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
+import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';
 import { IApiKeyScope, IAuthUser, ICaslRule } from 'src/features/auth/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -20,6 +21,7 @@ export class UniversalAuthService {
     query: Record<string, string | undefined>;
     ip: string;
     user?: IAuthUser;
+    cookies?: Record<string, string | undefined>;
   }): Promise<'authenticated' | 'jwt' | 'anonymous'> {
     if (this.noAuth.enabled) {
       request.user = this.noAuth.adminUser;
@@ -34,6 +36,10 @@ export class UniversalAuthService {
         }
 
         if (request.headers['authorization']) {
+          return 'jwt' as const;
+        }
+
+        if (request.cookies?.[ACCESS_COOKIE_NAME]) {
           return 'jwt' as const;
         }
 

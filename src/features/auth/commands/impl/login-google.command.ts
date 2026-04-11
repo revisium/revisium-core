@@ -3,6 +3,8 @@ export class LoginGoogleCommand {
     public readonly data: {
       redirectUrl: string;
       code: string;
+      ip?: string;
+      userAgent?: string;
     },
   ) {}
 }
@@ -11,4 +13,6 @@ export type LoginGoogleCommandData = LoginGoogleCommand['data'];
 
 export type LoginGoogleCommandReturnType = {
   accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number;
 };

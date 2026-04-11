@@ -640,6 +640,7 @@ input LoginInput {
 
 type LoginModel {
   accessToken: String!
+  expiresIn: Int!
 }
 
 type MeModel {

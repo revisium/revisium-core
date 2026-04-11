@@ -595,14 +595,6 @@ export type RevisionUpdateManyWithoutParentNestedInput = {
   deleteMany?: Prisma.RevisionScalarWhereInput | Prisma.RevisionScalarWhereInput[]
 }
 
-export type IntFieldUpdateOperationsInput = {
-  set?: number
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type RevisionUncheckedUpdateManyWithoutParentNestedInput = {
   create?: Prisma.XOR<Prisma.RevisionCreateWithoutParentInput, Prisma.RevisionUncheckedCreateWithoutParentInput> | Prisma.RevisionCreateWithoutParentInput[] | Prisma.RevisionUncheckedCreateWithoutParentInput[]
   connectOrCreate?: Prisma.RevisionCreateOrConnectWithoutParentInput | Prisma.RevisionCreateOrConnectWithoutParentInput[]
