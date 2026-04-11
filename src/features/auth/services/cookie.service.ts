@@ -26,9 +26,9 @@ export class CookieService {
   constructor(private readonly configService: ConfigService) {
     const cookieSecure = this.configService.get<string>('COOKIE_SECURE');
     this.isSecure =
-      cookieSecure !== undefined
-        ? cookieSecure === 'true'
-        : this.configService.get<string>('NODE_ENV') === 'production';
+      cookieSecure === undefined
+        ? this.configService.get<string>('NODE_ENV') === 'production'
+        : cookieSecure === 'true';
 
     this.sameSite = this.resolveSameSite();
   }
