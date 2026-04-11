@@ -17,7 +17,7 @@
           }
         },
         "responses": {
-          "200": {
+          "201": {
             "headers": {
               "Set-Cookie": {
                 "description": "Three Set-Cookie headers are returned: `rev_at` (httpOnly JWT access token, Path=/, 30 min), `rev_rt` (httpOnly opaque refresh token, Path=/api/auth/, 7 d), `rev_session` (non-httpOnly presence flag \"1\", Path=/, 7 d). See docs/jwt-refresh.md for the full cookie model.",
@@ -117,7 +117,7 @@
             }
           },
           "401": {
-            "description": "Authentication required. Provide a valid JWT token.",
+            "description": "Missing, invalid, expired, or reuse-detected `rev_rt` refresh cookie. All auth cookies are cleared on the response so the client-side session is torn down.",
             "content": {
               "application/json": {
                 "schema": {
@@ -181,7 +181,7 @@
             }
           },
           "401": {
-            "description": "Authentication required. Provide a valid JWT token.",
+            "description": "Missing or invalid `rev_rt` refresh cookie. Note: in practice logout is best-effort — if the cookie is absent, the client-side session is still cleared and the endpoint returns 204. A 401 here only surfaces if the server refuses the teardown for another reason.",
             "content": {
               "application/json": {
                 "schema": {

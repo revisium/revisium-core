@@ -8,8 +8,6 @@ import { IAuthUser } from 'src/features/auth/types';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
-const BEARER_PREFIX = 'Bearer ';
-
 type RequestWithCookies = Request & { cookies?: Record<string, string> };
 
 type AccessTokenPayload = {
@@ -20,12 +18,20 @@ type AccessTokenPayload = {
   ver?: number;
 };
 
+// RFC 7235 §2.1: the auth-scheme token is case-insensitive ("Bearer",
+// "bearer", "BEARER" are all valid). The previous startsWith('Bearer ')
+// would silently fall through to the cookie extractor for lowercase
+// variants, which is a subtle interop bug for HTTP clients that
+// lowercase header values (e.g. http.client in certain Python versions).
 export function extractTokenFromCookieOrHeader(
   req: RequestWithCookies,
 ): string | null {
   const authHeader = req.headers.authorization;
-  if (authHeader?.startsWith(BEARER_PREFIX)) {
-    return authHeader.slice(BEARER_PREFIX.length);
+  if (authHeader) {
+    const [scheme, token] = authHeader.split(/\s+/, 2);
+    if (scheme?.toLowerCase() === 'bearer' && token) {
+      return token;
+    }
   }
   return req.cookies?.[ACCESS_COOKIE_NAME] ?? null;
 }

@@ -135,17 +135,43 @@ describe('RefreshTokenService', () => {
   });
 
   describe('reuse detection', () => {
-    it('re-rotates from the latest live token when reuse happens inside the grace window', async () => {
+    it('returns the same successor on grace-window replay (idempotent retry)', async () => {
       const original = await service.createToken(userId);
       const first = await service.rotateToken(original);
 
-      // Replay the original — still inside the default 30s grace period.
+      // Replay the original — cache hit, should return the SAME successor
+      // as the first rotation instead of rotating again. This protects
+      // retry-on-network-blip callers: whichever 200 they read, it is
+      // still the live token.
       const retry = await service.rotateToken(original);
 
       expect(retry.userId).toBe(userId);
+      expect(retry.newToken).toBe(first.newToken);
+
+      // The successor issued on the first rotation is still live.
+      const stillLive = await prisma.refreshToken.findUnique({
+        where: { tokenHash: hash(first.newToken) },
+      });
+      expect(stillLive!.revokedAt).toBeNull();
+    });
+
+    it('falls back to re-rotation when the grace cache is empty (multi-pod path)', async () => {
+      const original = await service.createToken(userId);
+      const first = await service.rotateToken(original);
+
+      // Simulate a cache miss — the pod serving the replay is not the
+      // one that minted the successor (or the cache entry was evicted).
+      // The fallback path re-rotates from the family's latest live token.
+      // This DOES invalidate the previous 200 response, which is a known
+      // trade-off documented in docs/jwt-refresh.md for multi-pod
+      // deployments without sticky sessions.
+      (
+        service as unknown as { gracePeriodReplayCache: Map<string, unknown> }
+      ).gracePeriodReplayCache.clear();
+
+      const retry = await service.rotateToken(original);
       expect(retry.newToken).not.toBe(first.newToken);
 
-      // The latest live token before the replay should be revoked, a fresh one issued.
       const previousLive = await prisma.refreshToken.findUnique({
         where: { tokenHash: hash(first.newToken) },
       });
@@ -156,7 +182,10 @@ describe('RefreshTokenService', () => {
       const original = await service.createToken(userId);
       const { newToken } = await service.rotateToken(original);
 
-      // Backdate the original's revokedAt beyond the grace window.
+      // Backdate the original's revokedAt beyond the grace window. The
+      // cache gate checks `now - storedToken.revokedAt <= gracePeriodMs`
+      // against the DB value, so a fresh in-memory entry cannot shield
+      // a long-dead token from reuse detection.
       await prisma.refreshToken.update({
         where: { tokenHash: hash(original) },
         data: { revokedAt: new Date(Date.now() - 60_000) },

@@ -171,5 +171,40 @@ describe('JwtStrategy', () => {
       // already matched 'rev_'/internal-key/api-key routes upstream.
       expect(token).toBe('cookie-token');
     });
+
+    it('accepts a lowercase bearer scheme (RFC 7235 case-insensitive)', () => {
+      const token = extractTokenFromCookieOrHeader(
+        makeRequest({ authorization: 'bearer header-token' }),
+      );
+      expect(token).toBe('header-token');
+    });
+
+    it('accepts an uppercase BEARER scheme (RFC 7235 case-insensitive)', () => {
+      const token = extractTokenFromCookieOrHeader(
+        makeRequest({ authorization: 'BEARER header-token' }),
+      );
+      expect(token).toBe('header-token');
+    });
+
+    it('accepts a mixed-case BeArEr scheme', () => {
+      const token = extractTokenFromCookieOrHeader(
+        makeRequest({ authorization: 'BeArEr header-token' }),
+      );
+      expect(token).toBe('header-token');
+    });
+
+    it('returns null for a Bearer header with no token', () => {
+      const token = extractTokenFromCookieOrHeader(
+        makeRequest({ authorization: 'Bearer ' }),
+      );
+      expect(token).toBeNull();
+    });
+
+    it('returns null for a Bearer header with only whitespace after the scheme', () => {
+      const token = extractTokenFromCookieOrHeader(
+        makeRequest({ authorization: 'Bearer    ' }),
+      );
+      expect(token).toBeNull();
+    });
   });
 });

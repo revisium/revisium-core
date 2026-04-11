@@ -100,21 +100,28 @@ export class AuthService {
   }
 
   public signAccessToken(payload: AccessTokenClaims): AccessTokenResult {
-    const expiresIn =
+    // Normalize the configured TTL exactly ONCE so the JWT `exp` claim
+    // and the `expiresIn` returned to the client can never drift. The
+    // previous version passed the raw env-var string to `jwtService.sign`
+    // AND separately to `resolveExpiresInSeconds`, so a value of `'0'`,
+    // a negative duration, or a typo like `'30mins'` would sign a token
+    // whose real lifetime diverged from the advertised one.
+    const expiresInSeconds = this.resolveExpiresInSeconds(
       this.configService.get<string>('JWT_ACCESS_TOKEN_TTL') ??
-      DEFAULT_ACCESS_TOKEN_TTL;
+        DEFAULT_ACCESS_TOKEN_TTL,
+    );
 
     const accessToken = this.jwtService.sign(
       { ...payload },
       {
         secret: this.jwtSecret.secret,
-        expiresIn: expiresIn as StringValue,
+        expiresIn: expiresInSeconds,
       },
     );
 
     return {
       accessToken,
-      expiresIn: this.resolveExpiresInSeconds(expiresIn),
+      expiresIn: expiresInSeconds,
     };
   }
 

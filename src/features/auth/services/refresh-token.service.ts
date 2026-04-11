@@ -30,14 +30,35 @@ export type RotateResult = {
 };
 
 type RotateTxOutcome =
-  | { kind: 'ok'; result: RotateResult }
+  | {
+      kind: 'ok';
+      result: RotateResult;
+      // The storedToken.id we just revoked on the happy path. Used to
+      // populate the grace-window replay cache *after* the transaction
+      // commits, so legitimate retries of the same raw token within
+      // the grace window get back the SAME successor instead of
+      // triggering a second rotation that invalidates the first 200.
+      predecessorId: string;
+    }
   | { kind: 'reuse'; familyId: string; userId: string };
+
+type GraceCacheEntry = {
+  rawToken: string;
+  userId: string;
+  expiresAt: number;
+};
 
 @Injectable()
 export class RefreshTokenService {
   private readonly logger = new Logger(RefreshTokenService.name);
   private readonly refreshTtlMs: number;
   private readonly gracePeriodMs: number;
+  // In-memory map from the revoked token's DB id → the raw successor
+  // token we just minted. Entries expire after `gracePeriodMs` so the
+  // cache tracks the same window we allow legitimate replay in. Single-
+  // pod best-effort: a multi-pod cluster with no sticky sessions falls
+  // through to the fallback rotation path on cache miss (documented).
+  private readonly gracePeriodReplayCache = new Map<string, GraceCacheEntry>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -87,6 +108,29 @@ export class RefreshTokenService {
       throw new UnauthorizedException('Refresh token expired');
     }
 
+    // Idempotent replay inside the grace window: if this exact raw token
+    // was already rotated and the successor still lives in our in-memory
+    // cache, hand back that same successor. This protects retry-on-network-
+    // blip callers — the client re-sends the same rev_rt cookie and gets
+    // back the SAME new token it should have gotten the first time,
+    // instead of triggering a second rotation that invalidates the first
+    // 200 response. Only the pod that minted the successor has the raw
+    // value (raw tokens are never persisted); on a cache miss (multi-pod
+    // routing, pod restart, eviction) we fall through to the regular
+    // rotate-or-detect-reuse path. The cache hit is also gated on the
+    // DB-side `revokedAt` still being inside the grace window, so a
+    // fresh in-memory entry cannot override a token that the DB says
+    // was revoked too long ago.
+    if (storedToken.revokedAt) {
+      const elapsedSinceRevoke = Date.now() - storedToken.revokedAt.getTime();
+      if (elapsedSinceRevoke <= this.gracePeriodMs) {
+        const cached = this.peekGraceCache(storedToken.id);
+        if (cached) {
+          return { userId: cached.userId, newToken: cached.rawToken };
+        }
+      }
+    }
+
     // Run the whole rotate-or-detect-reuse flow inside one transaction so
     // the revoke+create pair (happy path) and the family-revoke (reuse
     // path) are atomic. We NEVER throw from inside the transaction — a
@@ -129,6 +173,7 @@ export class RefreshTokenService {
       return {
         kind: 'ok' as const,
         result: { userId: storedToken.userId, newToken: newTokenValue },
+        predecessorId: storedToken.id,
       };
     });
 
@@ -141,6 +186,11 @@ export class RefreshTokenService {
       );
       throw new UnauthorizedException('Refresh token reuse detected');
     }
+    this.writeGraceCache(outcome.predecessorId, {
+      rawToken: outcome.result.newToken,
+      userId: outcome.result.userId,
+      expiresAt: Date.now() + this.gracePeriodMs,
+    });
     return outcome.result;
   }
 
@@ -239,6 +289,14 @@ export class RefreshTokenService {
     if (storedToken.revokedAt) {
       const elapsed = Date.now() - storedToken.revokedAt.getTime();
       if (elapsed <= this.gracePeriodMs) {
+        // Fallback grace-window path (cache miss: multi-pod routing,
+        // pod restart, or eviction). We cannot return the successor raw
+        // value — it was only held by the pod that minted it and it is
+        // gone now. The next-best thing is to rotate from the family's
+        // current live descendant. This DOES invalidate the previous
+        // 200 response; retry idempotence for multi-pod replay requires
+        // either sticky sessions or an external cache (redis). Document
+        // the trade-off in docs/jwt-refresh.md.
         const latestToken = await tx.refreshToken.findFirst({
           where: { familyId: storedToken.familyId, revokedAt: null },
           orderBy: { createdAt: 'desc' },
@@ -264,6 +322,7 @@ export class RefreshTokenService {
                 userId: latestToken.userId,
                 newToken: newTokenValue,
               },
+              predecessorId: latestToken.id,
             };
           }
         }
@@ -280,5 +339,31 @@ export class RefreshTokenService {
       familyId: storedToken.familyId,
       userId: storedToken.userId,
     };
+  }
+
+  private peekGraceCache(predecessorId: string): GraceCacheEntry | null {
+    const entry = this.gracePeriodReplayCache.get(predecessorId);
+    if (!entry) {
+      return null;
+    }
+    if (entry.expiresAt <= Date.now()) {
+      this.gracePeriodReplayCache.delete(predecessorId);
+      return null;
+    }
+    return entry;
+  }
+
+  private writeGraceCache(predecessorId: string, entry: GraceCacheEntry): void {
+    this.pruneGraceCache();
+    this.gracePeriodReplayCache.set(predecessorId, entry);
+  }
+
+  private pruneGraceCache(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.gracePeriodReplayCache) {
+      if (entry.expiresAt <= now) {
+        this.gracePeriodReplayCache.delete(key);
+      }
+    }
   }
 }

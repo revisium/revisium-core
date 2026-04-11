@@ -14,12 +14,14 @@ import {
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiCreatedResponse,
   ApiHeader,
   ApiNoContentResponse,
   ApiOkResponse,
   ApiOperation,
   ApiSecurity,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { Request as ExpressRequest, Response } from 'express';
 import { ApiCommonErrors } from 'src/api/rest-api/share/decorators';
@@ -39,6 +41,7 @@ import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-met
 import { CreateUserDto, LoginDto } from 'src/api/rest-api/auth/dto';
 import { UpdatePasswordDto } from 'src/api/rest-api/auth/dto/update-password.dto';
 import { LoginResponse, RefreshResponse } from 'src/api/rest-api/auth/model';
+import { ErrorModel } from 'src/api/rest-api/share/model/error.model';
 import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 
 type RequestWithCookies = ExpressRequest & {
@@ -72,7 +75,7 @@ export class AuthController {
       '`accessToken` + `expiresIn` for CLI / PAT consumers that use Bearer ' +
       'header auth and cannot manage cookies.',
   })
-  @ApiOkResponse({
+  @ApiCreatedResponse({
     type: LoginResponse,
     headers: {
       'Set-Cookie': {
@@ -132,6 +135,13 @@ export class AuthController {
       },
     },
   })
+  @ApiUnauthorizedResponse({
+    type: ErrorModel,
+    description:
+      'Missing, invalid, expired, or reuse-detected `rev_rt` refresh cookie. ' +
+      'All auth cookies are cleared on the response so the client-side ' +
+      'session is torn down.',
+  })
   @ApiCommonErrors()
   async refresh(
     @Req() req: RequestWithCookies,
@@ -143,11 +153,13 @@ export class AuthController {
       throw new UnauthorizedException('No refresh token');
     }
 
-    // Only `rotateToken` failures (invalid / expired / reuse-detected)
-    // should kill the client-side session. If the rotation succeeds but
-    // `issueAccessTokenForUserId` subsequently fails on a transient DB
-    // error, the new refresh token is still valid and the client can
-    // simply retry — do NOT clear cookies in that window.
+    // Only authentication failures (invalid / expired / reuse-detected
+    // refresh token) should kill the client-side session. A transient
+    // Prisma / transaction error from `rotateToken` must bubble up with
+    // the browser session intact so the client can simply retry. Same
+    // for transient failures of `issueAccessTokenForUserId` after a
+    // successful rotation — the freshly-minted refresh token is already
+    // persisted and still valid on a retry.
     let rotated: { userId: string; newToken: string };
     try {
       rotated = await this.refreshTokenService.rotateToken(refreshToken, {
@@ -155,7 +167,9 @@ export class AuthController {
         userAgent: req.headers['user-agent'],
       });
     } catch (error) {
-      this.cookieService.clearAuthCookies(res);
+      if (error instanceof UnauthorizedException) {
+        this.cookieService.clearAuthCookies(res);
+      }
       throw error;
     }
 
@@ -198,6 +212,15 @@ export class AuthController {
         schema: { type: 'string' },
       },
     },
+  })
+  @ApiUnauthorizedResponse({
+    type: ErrorModel,
+    description:
+      'Missing or invalid `rev_rt` refresh cookie. Note: in practice ' +
+      'logout is best-effort — if the cookie is absent, the client-side ' +
+      'session is still cleared and the endpoint returns 204. A 401 here ' +
+      'only surfaces if the server refuses the teardown for another ' +
+      'reason.',
   })
   @ApiCommonErrors()
   async logout(
