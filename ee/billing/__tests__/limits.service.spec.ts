@@ -48,6 +48,8 @@ describe('LimitsService (Ultra-Thin)', () => {
   let module: TestingModule;
   let service: LimitsService;
   let prisma: PrismaService;
+  let billingCache: BillingCacheService;
+  let usageService: UsageService;
   let mockBillingClient: jest.Mocked<IBillingClient>;
 
   beforeAll(async () => {
@@ -79,6 +81,8 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     service = module.get(LimitsService);
     prisma = module.get(PrismaService);
+    billingCache = module.get(BillingCacheService);
+    usageService = module.get(UsageService);
   });
 
   beforeEach(() => {
@@ -302,6 +306,37 @@ describe('LimitsService (Ultra-Thin)', () => {
     expect(result.allowed).toBe(true);
     expect(result.current).toBe(2);
     expect(result.limit).toBe(10);
+  });
+
+  it('should bypass cache for PROJECTS metric', async () => {
+    const computeSpy = jest.spyOn(usageService, 'computeUsage');
+    const cacheSpy = jest.spyOn(billingCache, 'usage');
+    mockBillingClient.getOrgLimits.mockResolvedValue(PRO_LIMITS);
+
+    await service.checkLimit('test-org', LimitMetric.PROJECTS, 1);
+
+    expect(computeSpy).toHaveBeenCalledWith('test-org', LimitMetric.PROJECTS, undefined);
+    expect(cacheSpy).not.toHaveBeenCalled();
+  });
+
+  it('should bypass cache for SEATS metric', async () => {
+    const computeSpy = jest.spyOn(usageService, 'computeUsage');
+    const cacheSpy = jest.spyOn(billingCache, 'usage');
+    mockBillingClient.getOrgLimits.mockResolvedValue(PRO_LIMITS);
+
+    await service.checkLimit('test-org', LimitMetric.SEATS, 1);
+
+    expect(computeSpy).toHaveBeenCalledWith('test-org', LimitMetric.SEATS, undefined);
+    expect(cacheSpy).not.toHaveBeenCalled();
+  });
+
+  it('should use cache for ROW_VERSIONS metric', async () => {
+    const cacheSpy = jest.spyOn(billingCache, 'usage');
+    mockBillingClient.getOrgLimits.mockResolvedValue(PRO_LIMITS);
+
+    await service.checkLimit('test-org', LimitMetric.ROW_VERSIONS, 1);
+
+    expect(cacheSpy).toHaveBeenCalled();
   });
 
   it('should deny when branches_per_project limit reached', async () => {
