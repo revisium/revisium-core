@@ -110,7 +110,9 @@ describe('GetEndpointRelativesHandler', () => {
   function runTransaction(
     query: GetEndpointRelativesQuery,
   ): Promise<GetEndpointRelativesQueryReturnType> {
-    return transactionService.run(async () => queryBus.execute(query));
+    return transactionService.runSerializable(async () =>
+      queryBus.execute(query),
+    );
   }
 
   let prismaService: PrismaService;

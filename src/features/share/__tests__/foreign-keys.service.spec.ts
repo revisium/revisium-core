@@ -33,15 +33,17 @@ describe('ForeignKeysService', () => {
     it('should find rows by key-value in JSON data', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'title',
-          'Test Title 1',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'title',
+            'Test Title 1',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results).toHaveLength(1);
       expect(results[0].data).toEqual({ title: 'Test Title 1', count: 10 });
@@ -50,15 +52,17 @@ describe('ForeignKeysService', () => {
     it('should return empty array when no matches found', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'title',
-          'Non-existent Title',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'title',
+            'Non-existent Title',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results).toHaveLength(0);
     });
@@ -66,15 +70,17 @@ describe('ForeignKeysService', () => {
     it('should respect limit and offset parameters', async () => {
       const tableVersionId = await createTableWithManyRows();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'category',
-          'test',
-          2,
-          1,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'category',
+            'test',
+            2,
+            1,
+          );
+        },
+      );
 
       expect(results).toHaveLength(2);
     });
@@ -84,7 +90,7 @@ describe('ForeignKeysService', () => {
     it('should count rows by key-value in JSON data', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByKeyValueInData(
           tableVersionId,
           'title',
@@ -98,7 +104,7 @@ describe('ForeignKeysService', () => {
     it('should return 0 when no matches found', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByKeyValueInData(
           tableVersionId,
           'title',
@@ -114,15 +120,17 @@ describe('ForeignKeysService', () => {
     it('should find rows by JSON paths and value', async () => {
       const tableVersionId = await createTableWithNestedData();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          ['$.user.id', '$.metadata.userId'],
-          'user123',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            ['$.user.id', '$.metadata.userId'],
+            'user123',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results).toHaveLength(2);
     });
@@ -130,15 +138,17 @@ describe('ForeignKeysService', () => {
     it('should return empty array when jsonPaths is empty', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          [],
-          'any-value',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            [],
+            'any-value',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results).toHaveLength(0);
     });
@@ -146,15 +156,17 @@ describe('ForeignKeysService', () => {
     it('should handle multiple paths with OR logic', async () => {
       const tableVersionId = await createTableWithMultipleFields();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          ['$.author', '$.editor'],
-          'john',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            ['$.author', '$.editor'],
+            'john',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results).toHaveLength(3); // 2 with author=john, 1 with editor=john
     });
@@ -162,15 +174,17 @@ describe('ForeignKeysService', () => {
     it('should respect limit and offset', async () => {
       const tableVersionId = await createTableWithManyRows();
 
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          ['$.category'],
-          'test',
-          2,
-          2,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            ['$.category'],
+            'test',
+            2,
+            2,
+          );
+        },
+      );
 
       expect(results).toHaveLength(2);
     });
@@ -180,7 +194,7 @@ describe('ForeignKeysService', () => {
     it('should count rows by JSON paths and value', async () => {
       const tableVersionId = await createTableWithNestedData();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValueInData(
           tableVersionId,
           ['$.user.id', '$.metadata.userId'],
@@ -194,7 +208,7 @@ describe('ForeignKeysService', () => {
     it('should return 0 when jsonPaths is empty', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValueInData(
           tableVersionId,
           [],
@@ -208,7 +222,7 @@ describe('ForeignKeysService', () => {
     it('should handle multiple paths with OR logic', async () => {
       const tableVersionId = await createTableWithMultipleFields();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValueInData(
           tableVersionId,
           ['$.author', '$.editor'],
@@ -224,7 +238,7 @@ describe('ForeignKeysService', () => {
     it('should count rows matching any of multiple values', async () => {
       const tableVersionId = await createTableWithMultipleFields();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValuesInData(
           tableVersionId,
           ['$.author'],
@@ -238,7 +252,7 @@ describe('ForeignKeysService', () => {
     it('should count rows matching any path and any value', async () => {
       const tableVersionId = await createTableWithMultipleFields();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValuesInData(
           tableVersionId,
           ['$.author', '$.editor'],
@@ -255,7 +269,7 @@ describe('ForeignKeysService', () => {
     it('should return 0 when jsonPaths is empty', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValuesInData(
           tableVersionId,
           [],
@@ -269,7 +283,7 @@ describe('ForeignKeysService', () => {
     it('should return 0 when values is empty', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValuesInData(
           tableVersionId,
           ['$.title'],
@@ -283,7 +297,7 @@ describe('ForeignKeysService', () => {
     it('should return 0 when no matches found', async () => {
       const tableVersionId = await createTableWithRows();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValuesInData(
           tableVersionId,
           ['$.title'],
@@ -297,7 +311,7 @@ describe('ForeignKeysService', () => {
     it('should handle nested paths with multiple values', async () => {
       const tableVersionId = await createTableWithNestedData();
 
-      const count = await transactionPrismaService.run(async () => {
+      const count = await transactionPrismaService.runSerializable(async () => {
         return service.countRowsByPathsAndValuesInData(
           tableVersionId,
           ['$.user.id', '$.metadata.userId'],
@@ -314,24 +328,28 @@ describe('ForeignKeysService', () => {
       const values = ['john', 'jane'];
 
       // Batch call
-      const batchCount = await transactionPrismaService.run(async () => {
-        return service.countRowsByPathsAndValuesInData(
-          tableVersionId,
-          paths,
-          values,
-        );
-      });
+      const batchCount = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.countRowsByPathsAndValuesInData(
+            tableVersionId,
+            paths,
+            values,
+          );
+        },
+      );
 
       // Individual calls
       let individualSum = 0;
       for (const value of values) {
-        const count = await transactionPrismaService.run(async () => {
-          return service.countRowsByPathsAndValueInData(
-            tableVersionId,
-            paths,
-            value,
-          );
-        });
+        const count = await transactionPrismaService.runSerializable(
+          async () => {
+            return service.countRowsByPathsAndValueInData(
+              tableVersionId,
+              paths,
+              value,
+            );
+          },
+        );
         individualSum += count;
       }
 
@@ -345,45 +363,53 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithSpecialKeys();
 
       // These should all work now
-      const results1 = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          '123numerickey',
-          'value1',
-          10,
-          0,
-        );
-      });
+      const results1 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            '123numerickey',
+            'value1',
+            10,
+            0,
+          );
+        },
+      );
 
-      const results2 = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'key-with-hyphens',
-          'value2',
-          10,
-          0,
-        );
-      });
+      const results2 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'key-with-hyphens',
+            'value2',
+            10,
+            0,
+          );
+        },
+      );
 
-      const results3 = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'key.with.dots',
-          'value3',
-          10,
-          0,
-        );
-      });
+      const results3 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'key.with.dots',
+            'value3',
+            10,
+            0,
+          );
+        },
+      );
 
-      const results4 = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'key with spaces',
-          'value4',
-          10,
-          0,
-        );
-      });
+      const results4 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'key with spaces',
+            'value4',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results1).toHaveLength(1);
       expect(results2).toHaveLength(1);
@@ -395,7 +421,7 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithRows();
 
       await expect(
-        transactionPrismaService.run(async () => {
+        transactionPrismaService.runSerializable(async () => {
           return service.findRowsByKeyValueInData(
             tableVersionId,
             'key\0withnull',
@@ -412,7 +438,7 @@ describe('ForeignKeysService', () => {
       const longKey = 'a'.repeat(1001);
 
       await expect(
-        transactionPrismaService.run(async () => {
+        transactionPrismaService.runSerializable(async () => {
           return service.findRowsByKeyValueInData(
             tableVersionId,
             longKey,
@@ -428,15 +454,17 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithSpecialChars();
 
       // Values with special characters should work fine with parameterized queries
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'title',
-          'Title with \'quotes\' and "double quotes"',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'title',
+            'Title with \'quotes\' and "double quotes"',
+            10,
+            0,
+          );
+        },
+      );
 
       // Should find the matching row
       expect(results).toHaveLength(1);
@@ -446,15 +474,17 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithBackslashes();
 
       // Values with backslashes should work fine with parameterized queries
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'path',
-          'C:\\Windows\\System32\\file.exe',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'path',
+            'C:\\Windows\\System32\\file.exe',
+            10,
+            0,
+          );
+        },
+      );
 
       // Should find the matching row
       expect(results).toHaveLength(1);
@@ -464,15 +494,17 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithRows();
 
       // Malicious values should be treated as literal strings, not SQL
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'title',
-          'test\'; DROP TABLE "Row"; --',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'title',
+            'test\'; DROP TABLE "Row"; --',
+            10,
+            0,
+          );
+        },
+      );
 
       // Should return no results (treated as literal string match)
       expect(results).toHaveLength(0);
@@ -482,37 +514,43 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithSpecialKeys();
 
       // Test finding data with $ in field name
-      const results1 = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          ['$."field$with$dollars"'],
-          'value9',
-          10,
-          0,
-        );
-      });
+      const results1 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            ['$."field$with$dollars"'],
+            'value9',
+            10,
+            0,
+          );
+        },
+      );
 
       // Test finding data with ; in field name
-      const results2 = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          ['$."field;with;semicolons"'],
-          'value10',
-          10,
-          0,
-        );
-      });
+      const results2 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            ['$."field;with;semicolons"'],
+            'value10',
+            10,
+            0,
+          );
+        },
+      );
 
       // Test finding data with " in field name (escaped in JSON)
-      const results3 = await transactionPrismaService.run(async () => {
-        return service.findRowsByPathsAndValueInData(
-          tableVersionId,
-          ['$."field\\"with\\"quotes"'],
-          'value11',
-          10,
-          0,
-        );
-      });
+      const results3 = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByPathsAndValueInData(
+            tableVersionId,
+            ['$."field\\"with\\"quotes"'],
+            'value11',
+            10,
+            0,
+          );
+        },
+      );
 
       // Should find the matching rows
       expect(results1).toHaveLength(1);
@@ -531,7 +569,7 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithRows();
 
       await expect(
-        transactionPrismaService.run(async () => {
+        transactionPrismaService.runSerializable(async () => {
           return service.findRowsByPathsAndValueInData(
             tableVersionId,
             ['$.field\0withnull'],
@@ -547,7 +585,7 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithRows();
 
       await expect(
-        transactionPrismaService.run(async () => {
+        transactionPrismaService.runSerializable(async () => {
           return service.findRowsByPathsAndValueInData(
             tableVersionId,
             ['invalid.path'],
@@ -563,15 +601,17 @@ describe('ForeignKeysService', () => {
       const tableVersionId = await createTableWithLegitimateFieldNames();
 
       // Test that legitimate field names containing SQL keywords work correctly
-      const results = await transactionPrismaService.run(async () => {
-        return service.findRowsByKeyValueInData(
-          tableVersionId,
-          'fieldDROP', // Legitimate field name containing DROP
-          'some value',
-          10,
-          0,
-        );
-      });
+      const results = await transactionPrismaService.runSerializable(
+        async () => {
+          return service.findRowsByKeyValueInData(
+            tableVersionId,
+            'fieldDROP', // Legitimate field name containing DROP
+            'some value',
+            10,
+            0,
+          );
+        },
+      );
 
       expect(results).toHaveLength(1);
       expect(results[0].data).toEqual({
