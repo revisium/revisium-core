@@ -336,7 +336,25 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     await service.checkLimit('test-org', LimitMetric.ROW_VERSIONS, 1);
 
-    expect(cacheSpy).toHaveBeenCalled();
+    expect(cacheSpy).toHaveBeenCalledWith(
+      'test-org',
+      LimitMetric.ROW_VERSIONS,
+      expect.any(Function),
+    );
+  });
+
+  it('should use cache with context key for ROWS_PER_TABLE metric', async () => {
+    const cacheSpy = jest.spyOn(billingCache, 'usage');
+    mockBillingClient.getOrgLimits.mockResolvedValue(PRO_LIMITS);
+
+    const context = { revisionId: 'rev-1', tableId: 'tbl-1' };
+    await service.checkLimit('test-org', LimitMetric.ROWS_PER_TABLE, 1, context);
+
+    expect(cacheSpy).toHaveBeenCalledWith(
+      'test-org',
+      `${LimitMetric.ROWS_PER_TABLE}:r=rev-1:t=tbl-1:p=`,
+      expect.any(Function),
+    );
   });
 
   it('should deny when branches_per_project limit reached', async () => {
