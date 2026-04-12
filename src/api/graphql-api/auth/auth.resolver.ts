@@ -1,5 +1,5 @@
-import { UseGuards } from '@nestjs/common';
-import { Args, Context, Mutation, Resolver } from '@nestjs/graphql';
+import { ForbiddenException, UseGuards } from '@nestjs/common';
+import { Args, Context, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Request as ExpressRequest, Response } from 'express';
 import { AuthApiService } from 'src/features/auth/commands/auth-api.service';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
@@ -7,6 +7,8 @@ import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLSystemGuard } from 'src/features/auth/guards/system.guard';
 import { CookieService } from 'src/features/auth/services/cookie.service';
+import { IAuthUser } from 'src/features/auth/types';
+import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import {
   ConfirmEmailCodeInput,
   CreateUserInput,
@@ -32,6 +34,19 @@ export class AuthResolver {
     private readonly authApiService: AuthApiService,
     private readonly cookieService: CookieService,
   ) {}
+
+  @UseGuards(GqlJwtAuthGuard)
+  @Query(() => LoginModel)
+  public async issueAccessToken(
+    @CurrentUser() user: IAuthUser,
+  ): Promise<LoginModel> {
+    if (user.authMethod !== 'jwt') {
+      throw new ForbiddenException(
+        'Access token can only be issued for JWT-authenticated sessions',
+      );
+    }
+    return this.authApiService.issueAccessTokenForUserId(user.userId);
+  }
 
   @Mutation(() => LoginModel)
   public async login(
