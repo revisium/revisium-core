@@ -102,7 +102,7 @@ describe('graphql - issueAccessToken', () => {
     };
 
     expect(body.errors).toBeDefined();
-    expect(body.errors[0].message).toMatch(
+    expect(body.errors![0].message).toMatch(
       /Access token can only be issued for JWT-authenticated sessions/,
     );
   });
