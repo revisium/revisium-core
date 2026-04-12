@@ -420,7 +420,9 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
   async function runInTransaction(
     command: DraftRevisionRecomputeHasChangesCommand,
   ): Promise<void> {
-    return transactionService.run(async () => commandBus.execute(command));
+    return transactionService.runSerializable(async () =>
+      commandBus.execute(command),
+    );
   }
 
   let prismaService: PrismaService;

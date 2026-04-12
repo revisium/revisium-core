@@ -40,7 +40,7 @@ describe('DraftRevisionUpdateRowsHandler', () => {
     tableResult: DraftRevisionCreateTableCommandReturnType;
     rowsResult: DraftRevisionCreateRowsCommandReturnType;
   }> {
-    return transactionService.run(async () => {
+    return transactionService.runSerializable(async () => {
       const tableResult: DraftRevisionCreateTableCommandReturnType =
         await commandBus.execute(
           new DraftRevisionCreateTableCommand({ revisionId, tableId }),
@@ -60,7 +60,9 @@ describe('DraftRevisionUpdateRowsHandler', () => {
   function runInTransaction(
     command: DraftRevisionUpdateRowsCommand,
   ): Promise<DraftRevisionUpdateRowsCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   describe('validation', () => {

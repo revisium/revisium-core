@@ -186,7 +186,19 @@ export class TransactionPrismaService implements OnModuleInit {
     return this.getTransactionUnsafe() ?? this.prismaService;
   }
 
-  public async run<T>(
+  public runReadCommitted<T>(
+    handler: (...rest: unknown[]) => Promise<T>,
+    options?: Omit<Partial<TransactionOptions>, 'isolationLevel'>,
+  ): Promise<T> {
+    return this.run(handler, {
+      maxWait: options?.maxWait ?? this.serializableOptions.maxWait,
+      timeout: options?.timeout ?? this.serializableOptions.timeout,
+      isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
+      retry: options?.retry ?? this.serializableOptions.retry,
+    });
+  }
+
+  private async run<T>(
     handler: (...rest: unknown[]) => Promise<T>,
     options?: TransactionOptions,
   ): Promise<T> {

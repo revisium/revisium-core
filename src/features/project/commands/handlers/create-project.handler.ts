@@ -87,9 +87,9 @@ export class CreateProjectHandler implements ICommandHandler<
       throw new LimitExceededException(limitResult);
     }
 
-    return this.transactionService.run(() => this.transactionHandler(command), {
-      isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
-    });
+    return this.transactionService.runReadCommitted(() =>
+      this.transactionHandler(command),
+    );
   }
 
   private async transactionHandler(

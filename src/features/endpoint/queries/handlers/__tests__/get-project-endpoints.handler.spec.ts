@@ -209,7 +209,9 @@ describe('GetProjectEndpointsHandler', () => {
   function runTransaction(
     query: GetProjectEndpointsQuery,
   ): Promise<GetProjectEndpointsReturnType> {
-    return transactionService.run(async () => queryBus.execute(query));
+    return transactionService.runSerializable(async () =>
+      queryBus.execute(query),
+    );
   }
 
   let prismaService: PrismaService;

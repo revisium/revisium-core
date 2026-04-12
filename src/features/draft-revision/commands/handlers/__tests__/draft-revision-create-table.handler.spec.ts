@@ -28,7 +28,9 @@ describe('DraftRevisionCreateTableHandler', () => {
   function runInTransaction(
     command: DraftRevisionCreateTableCommand,
   ): Promise<DraftRevisionCreateTableCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   describe('validation', () => {

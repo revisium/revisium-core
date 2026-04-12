@@ -41,7 +41,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
     revisionId: string,
     tableId: string,
   ): Promise<DraftRevisionCreateTableCommandReturnType> {
-    return transactionService.run(() =>
+    return transactionService.runSerializable(() =>
       commandBus.execute(
         new DraftRevisionCreateTableCommand({ revisionId, tableId }),
       ),
@@ -53,7 +53,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
     tableId: string,
     rowId: string,
   ): Promise<DraftRevisionCreateTableCommandReturnType> {
-    return transactionService.run(async () => {
+    return transactionService.runSerializable(async () => {
       const tableResult: DraftRevisionCreateTableCommandReturnType =
         await commandBus.execute(
           new DraftRevisionCreateTableCommand({ revisionId, tableId }),
@@ -72,7 +72,9 @@ describe('DraftRevisionRemoveTableHandler', () => {
   function runInTransaction(
     command: DraftRevisionRemoveTableCommand,
   ): Promise<DraftRevisionRemoveTableCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   describe('validation', () => {

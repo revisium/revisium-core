@@ -39,7 +39,7 @@ describe('DraftRevisionRenameRowsHandler', () => {
     tableResult: DraftRevisionCreateTableCommandReturnType;
     rowsResult: DraftRevisionCreateRowsCommandReturnType;
   }> {
-    return transactionService.run(async () => {
+    return transactionService.runSerializable(async () => {
       const tableResult: DraftRevisionCreateTableCommandReturnType =
         await commandBus.execute(
           new DraftRevisionCreateTableCommand({ revisionId, tableId }),
@@ -59,13 +59,15 @@ describe('DraftRevisionRenameRowsHandler', () => {
   function runInTransaction(
     command: DraftRevisionRenameRowsCommand,
   ): Promise<DraftRevisionRenameRowsCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   describe('validation', () => {
     it('should throw an error if row does not exist', async () => {
       const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
-      await transactionService.run(() =>
+      await transactionService.runSerializable(() =>
         commandBus.execute(
           new DraftRevisionCreateTableCommand({
             revisionId: draftRevisionId,

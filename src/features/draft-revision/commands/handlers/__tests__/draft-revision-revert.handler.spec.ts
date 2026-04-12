@@ -29,11 +29,13 @@ describe('DraftRevisionRevertHandler', () => {
   function runInTransaction(
     command: DraftRevisionRevertCommand,
   ): Promise<DraftRevisionRevertCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   async function createChange(draftRevisionId: string, tableId: string) {
-    return transactionService.run(() =>
+    return transactionService.runSerializable(() =>
       commandBus.execute(
         new DraftRevisionCreateTableCommand({
           revisionId: draftRevisionId,

@@ -34,7 +34,7 @@ describe('DraftRevisionCreateRowsHandler', () => {
     revisionId: string,
     tableId: string,
   ): Promise<DraftRevisionCreateTableCommandReturnType> {
-    return transactionService.run(() =>
+    return transactionService.runSerializable(() =>
       commandBus.execute(
         new DraftRevisionCreateTableCommand({ revisionId, tableId }),
       ),
@@ -44,7 +44,9 @@ describe('DraftRevisionCreateRowsHandler', () => {
   function runInTransaction(
     command: DraftRevisionCreateRowsCommand,
   ): Promise<DraftRevisionCreateRowsCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   describe('validation', () => {

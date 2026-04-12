@@ -33,7 +33,7 @@ describe('DraftRevisionRenameTableHandler', () => {
     revisionId: string,
     tableId: string,
   ): Promise<DraftRevisionCreateTableCommandReturnType> {
-    return transactionService.run(() =>
+    return transactionService.runSerializable(() =>
       commandBus.execute(
         new DraftRevisionCreateTableCommand({ revisionId, tableId }),
       ),
@@ -43,7 +43,9 @@ describe('DraftRevisionRenameTableHandler', () => {
   function runInTransaction(
     command: DraftRevisionRenameTableCommand,
   ): Promise<DraftRevisionRenameTableCommandReturnType> {
-    return transactionService.run(() => commandBus.execute(command));
+    return transactionService.runSerializable(() =>
+      commandBus.execute(command),
+    );
   }
 
   describe('validation', () => {
