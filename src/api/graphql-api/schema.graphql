@@ -888,6 +888,7 @@ type Query {
   branches(data: GetBranchesInput!): BranchesConnection!
   configuration: ConfigurationModel!
   getRowCountForeignKeysTo(data: GetRowCountForeignKeysByInput!): Int! @deprecated(reason: "use RowModel.rowForeignKeysBy.totalCount")
+  issueAccessToken: LoginModel!
   me: MeModel!
   meProjects(data: GetMeProjectsInput!): ProjectsConnection!
   myApiKeys: [ApiKeyModel!]!
