@@ -22,6 +22,13 @@ export class LimitsService implements ILimitsService {
     { data: OrgLimits; expiresAt: number }
   >();
 
+  private static readonly UNCACHED_METRICS: ReadonlySet<LimitMetric> = new Set([
+    LimitMetric.PROJECTS,
+    LimitMetric.SEATS,
+    LimitMetric.BRANCHES_PER_PROJECT,
+    LimitMetric.TABLES_PER_REVISION,
+  ]);
+
   constructor(
     @Inject(BILLING_CLIENT_TOKEN)
     private readonly billingClient: IBillingClient,
@@ -41,15 +48,7 @@ export class LimitsService implements ILimitsService {
     const limit = this.getLimitForMetric(orgLimits, metric);
     if (limit === null || limit === undefined) return { allowed: true };
 
-    const cacheKey =
-      context?.revisionId || context?.tableId || context?.projectId
-        ? `${metric}:r=${context?.revisionId ?? ''}:t=${context?.tableId ?? ''}:p=${context?.projectId ?? ''}`
-        : metric;
-    const current = await this.billingCache.usage(
-      organizationId,
-      cacheKey,
-      () => this.usageService.computeUsage(organizationId, metric, context),
-    );
+    const current = await this.getUsage(organizationId, metric, context);
     const projected = current + increment;
 
     if (projected > limit) {
@@ -64,6 +63,25 @@ export class LimitsService implements ILimitsService {
 
   invalidateCache(organizationId: string): void {
     this.limitsCache.delete(organizationId);
+  }
+
+  private async getUsage(
+    organizationId: string,
+    metric: LimitMetric,
+    context?: { revisionId?: string; tableId?: string; projectId?: string },
+  ): Promise<number> {
+    if (LimitsService.UNCACHED_METRICS.has(metric)) {
+      return this.usageService.computeUsage(organizationId, metric, context);
+    }
+
+    const cacheKey =
+      context?.revisionId || context?.tableId || context?.projectId
+        ? `${metric}:r=${context?.revisionId ?? ''}:t=${context?.tableId ?? ''}:p=${context?.projectId ?? ''}`
+        : metric;
+
+    return this.billingCache.usage(organizationId, cacheKey, () =>
+      this.usageService.computeUsage(organizationId, metric, context),
+    );
   }
 
   private getLimitForMetric(
