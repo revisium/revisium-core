@@ -66,12 +66,13 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
 
 ### Discovery (RFC 8414)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/.well-known/oauth-authorization-server` | OAuth server metadata |
-| GET | `/.well-known/oauth-protected-resource` | Resource server metadata |
+| Method | Path                                      | Description              |
+| ------ | ----------------------------------------- | ------------------------ |
+| GET    | `/.well-known/oauth-authorization-server` | OAuth server metadata    |
+| GET    | `/.well-known/oauth-protected-resource`   | Resource server metadata |
 
 **Authorization Server Metadata:**
+
 ```json
 {
   "issuer": "https://revisium.example.com",
@@ -81,14 +82,21 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
   "response_types_supported": ["code"],
   "grant_types_supported": ["authorization_code", "refresh_token"],
   "code_challenge_methods_supported": ["S256"],
-  "token_endpoint_auth_methods_supported": ["client_secret_post"],
+  "token_endpoint_auth_methods_supported": [
+    "client_secret_post",
+    "client_secret_basic"
+  ],
   "revocation_endpoint": "https://revisium.example.com/oauth/revoke",
-  "revocation_endpoint_auth_methods_supported": ["client_secret_post"],
+  "revocation_endpoint_auth_methods_supported": [
+    "client_secret_post",
+    "client_secret_basic"
+  ],
   "scopes_supported": ["mcp"]
 }
 ```
 
 **Protected Resource Metadata:**
+
 ```json
 {
   "resource": "https://revisium.example.com",
@@ -100,11 +108,12 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
 
 ### Client Registration
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/oauth/register` | None | Dynamic Client Registration (RFC 7591) |
+| Method | Path              | Auth | Description                            |
+| ------ | ----------------- | ---- | -------------------------------------- |
+| POST   | `/oauth/register` | None | Dynamic Client Registration (RFC 7591) |
 
 **Request:**
+
 ```json
 {
   "client_name": "Claude Code",
@@ -114,40 +123,44 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
 ```
 
 **Response:**
+
 ```json
 {
   "client_id": "abc123",
   "client_secret": "ocs_<72 hex chars>",
   "client_name": "Claude Code",
+  "token_endpoint_auth_method": "client_secret_post",
   "redirect_uris": ["http://127.0.0.1:3000/callback"],
   "grant_types": ["authorization_code", "refresh_token"]
 }
 ```
 
 The `client_secret` is returned **once** and stored as a SHA-256 hash in the database. It cannot be retrieved later.
+The registration response explicitly declares `token_endpoint_auth_method: "client_secret_post"` so dynamically registered MCP clients do not fall back to `client_secret_basic` by default.
 
 All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascript:`, `data:`, etc.) are rejected. `http:` is only allowed for `localhost`, `127.0.0.1`, and `[::1]` (IPv6 loopback).
 
 ### Authorization
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/oauth/authorize` | None | Validate params and redirect to Admin UI |
-| POST | `/oauth/authorize` | Bearer JWT | Create auth code (called by Admin UI) |
+| Method | Path               | Auth       | Description                              |
+| ------ | ------------------ | ---------- | ---------------------------------------- |
+| GET    | `/oauth/authorize` | None       | Validate params and redirect to Admin UI |
+| POST   | `/oauth/authorize` | Bearer JWT | Create auth code (called by Admin UI)    |
 
 **GET /oauth/authorize** query parameters:
 
-| Parameter | Required | Description |
-|-----------|----------|-------------|
-| `client_id` | Yes | Registered client ID |
-| `redirect_uri` | Yes | Must match registered URI |
-| `code_challenge` | Yes | PKCE challenge (`base64url(sha256(verifier))`) |
-| `state` | Yes | Opaque value for CSRF protection |
-| `response_type` | Yes | Must be `code` |
-| `code_challenge_method` | Yes | Must be `S256` |
-| `scope` | No | Space-separated scopes (e.g. `mcp`) |
+| Parameter               | Required | Description                                    |
+| ----------------------- | -------- | ---------------------------------------------- |
+| `client_id`             | Yes      | Registered client ID                           |
+| `redirect_uri`          | Yes      | Must match registered URI                      |
+| `code_challenge`        | Yes      | PKCE challenge (`base64url(sha256(verifier))`) |
+| `state`                 | Yes      | Opaque value for CSRF protection               |
+| `response_type`         | Yes      | Must be `code`                                 |
+| `code_challenge_method` | Yes      | Must be `S256`                                 |
+| `scope`                 | No       | Space-separated scopes (e.g. `mcp`)            |
 
 Validates all parameters, then redirects `302` to Admin UI:
+
 ```text
 /authorize?client_id=...&client_name=...&redirect_uri=...&code_challenge=...&state=...&scope=mcp
 ```
@@ -171,6 +184,7 @@ Content-Type: application/json
 The `scope` field is optional. When present, it is stored with the authorization code and propagated to the access token on exchange.
 
 Response:
+
 ```json
 {
   "redirect_uri": "http://127.0.0.1:3000/callback?code=auth_<48 hex chars>&state=xyz789"
@@ -179,9 +193,9 @@ Response:
 
 ### Token Revocation (RFC 7009)
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/oauth/revoke` | `client_secret_post` | Revoke an access or refresh token |
+| Method | Path            | Auth                                          | Description                       |
+| ------ | --------------- | --------------------------------------------- | --------------------------------- |
+| POST   | `/oauth/revoke` | `client_secret_post` or `client_secret_basic` | Revoke an access or refresh token |
 
 ```http
 POST /oauth/revoke
@@ -196,21 +210,24 @@ Content-Type: application/json
 ```
 
 **Behavior:**
+
 - Always returns `200 OK`, even for invalid or already-revoked tokens (per RFC 7009)
 - `token_type_hint` is optional; the server uses token prefix (`oat_`/`ort_`) as a fallback hint
 - Revoking a **refresh token** cascades: all access tokens for the same client+user pair are also revoked
 - Revoking an **access token** does not revoke the associated refresh token
 - Client authentication (`client_id` + `client_secret`) is required
+- Client authentication can be provided either in the JSON body (`client_secret_post`) or via `Authorization: Basic <base64(client_id:client_secret)>` (`client_secret_basic`)
 
 MCP clients discover this endpoint via `revocation_endpoint` in the authorization server metadata.
 
 ### Token Exchange
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/oauth/token` | None | Exchange code or refresh token for tokens |
+| Method | Path           | Auth                                          | Description                               |
+| ------ | -------------- | --------------------------------------------- | ----------------------------------------- |
+| POST   | `/oauth/token` | `client_secret_post` or `client_secret_basic` | Exchange code or refresh token for tokens |
 
 **Authorization Code Grant:**
+
 ```http
 POST /oauth/token
 Content-Type: application/json
@@ -226,6 +243,7 @@ Content-Type: application/json
 ```
 
 **Refresh Token Grant:**
+
 ```http
 POST /oauth/token
 Content-Type: application/json
@@ -238,7 +256,23 @@ Content-Type: application/json
 }
 ```
 
+**Alternative client authentication (`client_secret_basic`):**
+
+```http
+POST /oauth/token
+Authorization: Basic base64(client_id:client_secret)
+Content-Type: application/json
+
+{
+  "grant_type": "authorization_code",
+  "code": "auth_<48 hex chars>",
+  "code_verifier": "<43-128 chars>",
+  "redirect_uri": "http://127.0.0.1:3000/callback"
+}
+```
+
 **Token Response (both grants):**
+
 ```json
 {
   "access_token": "oat_<72 hex chars>",
@@ -250,11 +284,11 @@ Content-Type: application/json
 
 ### MCP
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| POST | `/mcp` | Bearer | Stateless MCP request |
-| GET | `/mcp` | - | Returns 405 (SSE not supported) |
-| DELETE | `/mcp` | - | Returns 405 (sessions not supported) |
+| Method | Path   | Auth   | Description                          |
+| ------ | ------ | ------ | ------------------------------------ |
+| POST   | `/mcp` | Bearer | Stateless MCP request                |
+| GET    | `/mcp` | -      | Returns 405 (SSE not supported)      |
+| DELETE | `/mcp` | -      | Returns 405 (sessions not supported) |
 
 ```http
 POST /mcp
@@ -271,6 +305,7 @@ Accept: application/json, text/event-stream
 ```
 
 On `401`, the response includes a `WWW-Authenticate` header pointing to the resource metadata with the `mcp` scope:
+
 ```text
 WWW-Authenticate: Bearer resource_metadata="https://revisium.example.com/.well-known/oauth-protected-resource", scope="mcp"
 ```
@@ -279,12 +314,12 @@ The `scope="mcp"` parameter tells MCP clients to include this scope in the autho
 
 ## Token Types
 
-| Type | Prefix | Length | TTL | Storage |
-|------|--------|--------|-----|---------|
-| Client Secret | `ocs_` | 72 hex chars | Permanent | SHA-256 hash |
-| Authorization Code | `auth_` | 48 hex chars | 10 minutes | Plain text (single-use) |
-| Access Token | `oat_` | 72 hex chars | 1 hour (default) / 30 days (`scope=mcp`) | SHA-256 hash |
-| Refresh Token | `ort_` | 72 hex chars | 30 days (default) / 90 days (`scope=mcp`) | SHA-256 hash |
+| Type               | Prefix  | Length       | TTL                                       | Storage                 |
+| ------------------ | ------- | ------------ | ----------------------------------------- | ----------------------- |
+| Client Secret      | `ocs_`  | 72 hex chars | Permanent                                 | SHA-256 hash            |
+| Authorization Code | `auth_` | 48 hex chars | 10 minutes                                | Plain text (single-use) |
+| Access Token       | `oat_`  | 72 hex chars | 1 hour (default) / 30 days (`scope=mcp`)  | SHA-256 hash            |
+| Refresh Token      | `ort_`  | 72 hex chars | 30 days (default) / 90 days (`scope=mcp`) | SHA-256 hash            |
 
 All tokens are generated with `crypto.randomBytes()`. Client secrets and tokens are stored as SHA-256 hashes; only the authorization code is stored in plain text (it's single-use and short-lived).
 
@@ -294,10 +329,10 @@ The MCP access token TTL can be overridden via `MCP_ACCESS_TOKEN_EXPIRY_DAYS` en
 
 Revisium supports the `mcp` OAuth scope. When an MCP client (Claude Code, Cursor, etc.) connects, the server includes `scope="mcp"` in the `WWW-Authenticate` header on `401` responses. MCP clients pass this scope through the authorization flow, which results in longer-lived tokens:
 
-| Scope | Access Token TTL | Refresh Token TTL |
-|-------|-----------------|-------------------|
-| (none) | 1 hour | 30 days |
-| `mcp` | 30 days (configurable via `MCP_ACCESS_TOKEN_EXPIRY_DAYS`) | 90 days |
+| Scope  | Access Token TTL                                          | Refresh Token TTL |
+| ------ | --------------------------------------------------------- | ----------------- |
+| (none) | 1 hour                                                    | 30 days           |
+| `mcp`  | 30 days (configurable via `MCP_ACCESS_TOKEN_EXPIRY_DAYS`) | 90 days           |
 
 The scope is stored on the authorization code, access token, and refresh token. On token refresh, the scope is inherited from the refresh token being rotated.
 
@@ -597,25 +632,25 @@ In production, `PUBLIC_URL` matches the external domain (e.g. `https://revisium.
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PUBLIC_URL` | `http://localhost:8080` | External URL used in OAuth discovery metadata and redirects |
-| `JWT_SECRET` | - | Secret for signing/verifying JWT tokens |
-| `REVISIUM_NO_AUTH` | `false` | Skip auth, treat all requests as admin |
-| `MCP_ACCESS_TOKEN_EXPIRY_DAYS` | `30` | Access token TTL (in days) for `scope=mcp` |
+| Variable                       | Default                 | Description                                                 |
+| ------------------------------ | ----------------------- | ----------------------------------------------------------- |
+| `PUBLIC_URL`                   | `http://localhost:8080` | External URL used in OAuth discovery metadata and redirects |
+| `JWT_SECRET`                   | -                       | Secret for signing/verifying JWT tokens                     |
+| `REVISIUM_NO_AUTH`             | `false`                 | Skip auth, treat all requests as admin                      |
+| `MCP_ACCESS_TOKEN_EXPIRY_DAYS` | `30`                    | Access token TTL (in days) for `scope=mcp`                  |
 
 ## Source Files
 
-| File | Description |
-|------|-------------|
-| [`src/features/oauth/oauth.module.ts`](../src/features/oauth/oauth.module.ts) | OAuth NestJS module |
-| [`src/features/oauth/oauth.controller.ts`](../src/features/oauth/oauth.controller.ts) | Discovery, registration, authorization, token endpoints |
-| [`src/features/oauth/oauth-client.service.ts`](../src/features/oauth/oauth-client.service.ts) | Client registration and secret validation |
-| [`src/features/oauth/oauth-authorization.service.ts`](../src/features/oauth/oauth-authorization.service.ts) | Authorization code creation and PKCE exchange |
-| [`src/features/oauth/oauth-token.service.ts`](../src/features/oauth/oauth-token.service.ts) | Access/refresh token lifecycle |
-| [`src/api/mcp-api/mcp.controller.ts`](../src/api/mcp-api/mcp.controller.ts) | Stateless MCP HTTP transport |
-| [`src/api/mcp-api/mcp-auth.service.ts`](../src/api/mcp-api/mcp-auth.service.ts) | Bearer token detection (JWT vs OAuth) |
-| [`prisma/schema.prisma`](../prisma/schema.prisma) | Database models (OAuthClient, OAuthAuthorizationCode, OAuthAccessToken, OAuthRefreshToken) |
+| File                                                                                                        | Description                                                                                |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| [`src/features/oauth/oauth.module.ts`](../src/features/oauth/oauth.module.ts)                               | OAuth NestJS module                                                                        |
+| [`src/features/oauth/oauth.controller.ts`](../src/features/oauth/oauth.controller.ts)                       | Discovery, registration, authorization, token endpoints                                    |
+| [`src/features/oauth/oauth-client.service.ts`](../src/features/oauth/oauth-client.service.ts)               | Client registration and secret validation                                                  |
+| [`src/features/oauth/oauth-authorization.service.ts`](../src/features/oauth/oauth-authorization.service.ts) | Authorization code creation and PKCE exchange                                              |
+| [`src/features/oauth/oauth-token.service.ts`](../src/features/oauth/oauth-token.service.ts)                 | Access/refresh token lifecycle                                                             |
+| [`src/api/mcp-api/mcp.controller.ts`](../src/api/mcp-api/mcp.controller.ts)                                 | Stateless MCP HTTP transport                                                               |
+| [`src/api/mcp-api/mcp-auth.service.ts`](../src/api/mcp-api/mcp-auth.service.ts)                             | Bearer token detection (JWT vs OAuth)                                                      |
+| [`prisma/schema.prisma`](../prisma/schema.prisma)                                                           | Database models (OAuthClient, OAuthAuthorizationCode, OAuthAccessToken, OAuthRefreshToken) |
 
 ## Token Cleanup
 

@@ -92,7 +92,14 @@ describe('OAuth Controller', () => {
         response_types_supported: ['code'],
         grant_types_supported: ['authorization_code', 'refresh_token'],
         code_challenge_methods_supported: ['S256'],
-        revocation_endpoint_auth_methods_supported: ['client_secret_post'],
+        token_endpoint_auth_methods_supported: [
+          'client_secret_post',
+          'client_secret_basic',
+        ],
+        revocation_endpoint_auth_methods_supported: [
+          'client_secret_post',
+          'client_secret_basic',
+        ],
         scopes_supported: ['mcp'],
       });
     });
@@ -128,6 +135,7 @@ describe('OAuth Controller', () => {
         client_id: expect.any(String),
         client_secret: expect.stringMatching(/^ocs_/),
         client_name: 'test-app',
+        token_endpoint_auth_method: 'client_secret_post',
         redirect_uris: ['https://example.com/callback'],
       });
     });
@@ -379,6 +387,57 @@ describe('OAuth Controller', () => {
       });
     });
 
+    it('exchanges authorization code with client_secret_basic', async () => {
+      const codeVerifier = 'shared_test_code_verifier_that_is_long_enough';
+      const codeChallenge = createHash('sha256')
+        .update(codeVerifier)
+        .digest('base64url');
+
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'basic-auth-test',
+          redirect_uris: ['https://example.com/callback'],
+        })
+        .expect(201);
+
+      const { client_id, client_secret } = regRes.body;
+
+      const authRes = await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: codeChallenge,
+          state: 'test_state',
+        })
+        .expect(201);
+
+      const redirectUrl = new URL(authRes.body.redirect_uri);
+      const code = redirectUrl.searchParams.get('code');
+      const basicAuth = Buffer.from(`${client_id}:${client_secret}`).toString(
+        'base64',
+      );
+
+      const tokenRes = await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          code_verifier: codeVerifier,
+          redirect_uri: 'https://example.com/callback',
+        })
+        .expect(201);
+
+      expect(tokenRes.body).toMatchObject({
+        access_token: expect.stringMatching(/^oat_/),
+        refresh_token: expect.stringMatching(/^ort_/),
+        token_type: 'Bearer',
+      });
+    });
+
     it('preserves mcp scope on refresh', async () => {
       const { client_id, client_secret, refresh_token } = await obtainTokens({
         scope: 'mcp',
@@ -469,6 +528,21 @@ describe('OAuth Controller', () => {
           token: access_token,
           client_id,
           client_secret,
+        })
+        .expect(200);
+    });
+
+    it('accepts client_secret_basic for revocation', async () => {
+      const { client_id, client_secret, access_token } = await obtainTokens();
+      const basicAuth = Buffer.from(`${client_id}:${client_secret}`).toString(
+        'base64',
+      );
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          token: access_token,
         })
         .expect(200);
     });
