@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Controller,
   Get,
   HttpCode,
@@ -8,13 +9,15 @@ import {
   Body,
   Query,
   BadRequestException,
-  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { ApiExcludeController } from '@nestjs/swagger';
+import { Buffer } from 'node:buffer';
 import { Request, Response } from 'express';
-import { JwtSecretService } from 'src/features/auth/jwt-secret.service';
+import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
+import { IAuthUser } from 'src/features/auth/types';
 import { OAuthClientService } from './oauth-client.service';
 import { OAuthAuthorizationService } from './oauth-authorization.service';
 import { OAuthTokenService } from './oauth-token.service';
@@ -23,14 +26,15 @@ import { OAuthTokenService } from './oauth-token.service';
 @Controller()
 export class OAuthController {
   private readonly publicUrl: string;
+  private static readonly BASIC_AUTH_BASE64_REGEX =
+    /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly jwtService: JwtService,
-    private readonly jwtSecret: JwtSecretService,
     private readonly clientService: OAuthClientService,
     private readonly authorizationService: OAuthAuthorizationService,
     private readonly tokenService: OAuthTokenService,
+    private readonly noAuth: NoAuthService,
   ) {
     this.publicUrl =
       this.configService.get<string>('PUBLIC_URL') || 'http://localhost:8080';
@@ -46,9 +50,15 @@ export class OAuthController {
       response_types_supported: ['code'],
       grant_types_supported: ['authorization_code', 'refresh_token'],
       code_challenge_methods_supported: ['S256'],
-      token_endpoint_auth_methods_supported: ['client_secret_post'],
+      token_endpoint_auth_methods_supported: [
+        'client_secret_post',
+        'client_secret_basic',
+      ],
       revocation_endpoint: `${this.publicUrl}/oauth/revoke`,
-      revocation_endpoint_auth_methods_supported: ['client_secret_post'],
+      revocation_endpoint_auth_methods_supported: [
+        'client_secret_post',
+        'client_secret_basic',
+      ],
       scopes_supported: ['mcp'],
     };
   }
@@ -89,6 +99,7 @@ export class OAuthController {
       client_id: result.clientId,
       client_secret: result.clientSecret,
       client_name: result.clientName,
+      token_endpoint_auth_method: 'client_secret_post',
       redirect_uris: body.redirect_uris,
       grant_types: body.grant_types ?? ['authorization_code', 'refresh_token'],
     };
@@ -158,9 +169,10 @@ export class OAuthController {
     res.redirect(302, `${this.publicUrl}/authorize?${params.toString()}`);
   }
 
+  @UseGuards(HttpJwtAuthGuard)
   @Post('oauth/authorize')
   async handleAuthorize(
-    @Req() req: Request,
+    @Req() req: Request & { user: IAuthUser },
     @Body()
     body: {
       client_id: string;
@@ -171,6 +183,12 @@ export class OAuthController {
     },
   ) {
     const { client_id, redirect_uri, code_challenge, state, scope } = body;
+
+    if (!this.noAuth.enabled && req.user.authMethod !== 'jwt') {
+      throw new ForbiddenException(
+        'OAuth authorize requires a JWT-authenticated user session',
+      );
+    }
 
     if (!client_id || !redirect_uri || !code_challenge || !state) {
       throw new BadRequestException('Missing required fields');
@@ -185,11 +203,9 @@ export class OAuthController {
       throw new BadRequestException('Invalid redirect_uri');
     }
 
-    const userId = this.extractUserIdFromBearer(req);
-
     const code = await this.authorizationService.createAuthorizationCode({
       clientId: client_id,
-      userId,
+      userId: req.user.userId,
       redirectUri: redirect_uri,
       codeChallenge: code_challenge,
       scope,
@@ -207,6 +223,7 @@ export class OAuthController {
   @Post('oauth/revoke')
   @HttpCode(200)
   async revokeToken(
+    @Req() req: Request,
     @Body()
     body: {
       token: string;
@@ -215,31 +232,34 @@ export class OAuthController {
       client_secret?: string;
     },
   ) {
-    const { token, token_type_hint, client_id, client_secret } = body;
+    const { token, token_type_hint } = body;
 
     if (!token) {
       throw new BadRequestException('token is required');
     }
 
-    if (!client_id || !client_secret) {
+    const { clientId, clientSecret } = this.extractClientCredentials(req, body);
+
+    if (!clientId || !clientSecret) {
       throw new BadRequestException('Client authentication required');
     }
 
     const validSecret = await this.clientService.validateClientSecret(
-      client_id,
-      client_secret,
+      clientId,
+      clientSecret,
     );
     if (!validSecret) {
       throw new BadRequestException('Invalid client credentials');
     }
 
-    await this.tokenService.revokeToken(token, token_type_hint, client_id);
+    await this.tokenService.revokeToken(token, token_type_hint, clientId);
 
     return {};
   }
 
   @Post('oauth/token')
   async exchangeToken(
+    @Req() req: Request,
     @Body()
     body: {
       grant_type: string;
@@ -254,30 +274,33 @@ export class OAuthController {
     const grantType = body.grant_type;
 
     if (grantType === 'authorization_code') {
-      return this.handleAuthorizationCodeGrant(body);
+      return this.handleAuthorizationCodeGrant(req, body);
     }
 
     if (grantType === 'refresh_token') {
-      return this.handleRefreshTokenGrant(body);
+      return this.handleRefreshTokenGrant(req, body);
     }
 
     throw new BadRequestException(`Unsupported grant_type: ${grantType}`);
   }
 
-  private async handleAuthorizationCodeGrant(body: {
-    code?: string;
-    client_id?: string;
-    client_secret?: string;
-    code_verifier?: string;
-    redirect_uri?: string;
-  }) {
-    const { code, client_id, client_secret, code_verifier, redirect_uri } =
-      body;
+  private async handleAuthorizationCodeGrant(
+    req: Request,
+    body: {
+      code?: string;
+      client_id?: string;
+      client_secret?: string;
+      code_verifier?: string;
+      redirect_uri?: string;
+    },
+  ) {
+    const { code, code_verifier, redirect_uri } = body;
+    const { clientId, clientSecret } = this.extractClientCredentials(req, body);
 
     if (
       !code ||
-      !client_id ||
-      !client_secret ||
+      !clientId ||
+      !clientSecret ||
       !code_verifier ||
       !redirect_uri
     ) {
@@ -287,8 +310,8 @@ export class OAuthController {
     }
 
     const validSecret = await this.clientService.validateClientSecret(
-      client_id,
-      client_secret,
+      clientId,
+      clientSecret,
     );
     if (!validSecret) {
       throw new BadRequestException('Invalid client credentials');
@@ -296,13 +319,13 @@ export class OAuthController {
 
     const { userId, scope } = await this.authorizationService.exchangeCode({
       code,
-      clientId: client_id,
+      clientId,
       codeVerifier: code_verifier,
       redirectUri: redirect_uri,
     });
 
     const tokens = await this.tokenService.createTokens(
-      client_id,
+      clientId,
       userId,
       scope ?? undefined,
     );
@@ -315,22 +338,26 @@ export class OAuthController {
     };
   }
 
-  private async handleRefreshTokenGrant(body: {
-    client_id?: string;
-    client_secret?: string;
-    refresh_token?: string;
-  }) {
-    const { client_id, client_secret, refresh_token } = body;
+  private async handleRefreshTokenGrant(
+    req: Request,
+    body: {
+      client_id?: string;
+      client_secret?: string;
+      refresh_token?: string;
+    },
+  ) {
+    const { refresh_token } = body;
+    const { clientId, clientSecret } = this.extractClientCredentials(req, body);
 
-    if (!client_id || !client_secret || !refresh_token) {
+    if (!clientId || !clientSecret || !refresh_token) {
       throw new BadRequestException(
         'Missing required parameters for refresh_token grant',
       );
     }
 
     const validSecret = await this.clientService.validateClientSecret(
-      client_id,
-      client_secret,
+      clientId,
+      clientSecret,
     );
     if (!validSecret) {
       throw new BadRequestException('Invalid client credentials');
@@ -338,7 +365,7 @@ export class OAuthController {
 
     const tokens = await this.tokenService.refreshTokens(
       refresh_token,
-      client_id,
+      clientId,
     );
 
     return {
@@ -349,26 +376,50 @@ export class OAuthController {
     };
   }
 
-  private extractUserIdFromBearer(req: Request): string {
+  private extractClientCredentials(
+    req: Request,
+    body: { client_id?: string; client_secret?: string },
+  ): { clientId?: string; clientSecret?: string } {
     const authHeader = req.headers['authorization'];
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing Authorization header');
-    }
 
-    const token = authHeader.slice(7);
+    if (authHeader?.startsWith('Basic ')) {
+      const encoded = authHeader.slice(6).trim();
 
-    try {
-      const decoded: { sub?: string } = this.jwtService.verify(token, {
-        secret: this.jwtSecret.secret,
-      });
+      try {
+        if (
+          encoded.length === 0 ||
+          encoded.length % 4 !== 0 ||
+          !OAuthController.BASIC_AUTH_BASE64_REGEX.test(encoded)
+        ) {
+          throw new BadRequestException('Invalid client credentials');
+        }
 
-      if (!decoded?.sub) {
-        throw new UnauthorizedException('Invalid token');
+        const decoded = Buffer.from(encoded, 'base64').toString('utf8');
+        const separatorIndex = decoded.indexOf(':');
+
+        if (separatorIndex <= 0) {
+          throw new BadRequestException('Invalid client credentials');
+        }
+
+        const clientId = decoded.slice(0, separatorIndex);
+        const clientSecret = decoded.slice(separatorIndex + 1);
+
+        if (!clientId || !clientSecret) {
+          throw new BadRequestException('Invalid client credentials');
+        }
+
+        return {
+          clientId,
+          clientSecret,
+        };
+      } catch {
+        throw new BadRequestException('Invalid client credentials');
       }
-
-      return decoded.sub;
-    } catch {
-      throw new UnauthorizedException('Invalid or expired token');
     }
+
+    return {
+      clientId: body.client_id,
+      clientSecret: body.client_secret,
+    };
   }
 }

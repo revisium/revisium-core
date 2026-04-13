@@ -1,22 +1,30 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createHash } from 'node:crypto';
+import { ApiKeyType } from 'src/__generated__/client';
 import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/__tests__/utils/prepareProject';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { AuthService } from 'src/features/auth/auth.service';
+import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('OAuth Controller', () => {
   let app: INestApplication;
   let authService: AuthService;
+  let apiKeyService: ApiKeyService;
+  let prisma: PrismaService;
   let fixture: PrepareDataReturnType;
   let userToken: string;
 
   beforeAll(async () => {
     app = await createFreshTestApp();
     authService = app.get(AuthService);
+    apiKeyService = app.get(ApiKeyService);
+    prisma = app.get(PrismaService);
     fixture = await prepareData(app);
     userToken = authService.login({
       username: fixture.owner.user.username,
@@ -25,6 +33,7 @@ describe('OAuth Controller', () => {
   });
 
   afterAll(async () => {
+    await prisma.$disconnect();
     await app.close();
   });
 
@@ -57,6 +66,9 @@ describe('OAuth Controller', () => {
 
     const redirectUrl = new URL(authRes.body.redirect_uri);
     const code = redirectUrl.searchParams.get('code');
+    if (!code) {
+      throw new Error('missing authorization code from authorize response');
+    }
 
     const tokenRes = await request(app.getHttpServer())
       .post('/oauth/token')
@@ -77,6 +89,49 @@ describe('OAuth Controller', () => {
     };
   };
 
+  const obtainAuthorizationCode = async (options: { scope?: string } = {}) => {
+    const codeVerifier = 'shared_test_code_verifier_that_is_long_enough';
+    const codeChallenge = createHash('sha256')
+      .update(codeVerifier)
+      .digest('base64url');
+
+    const regRes = await request(app.getHttpServer())
+      .post('/oauth/register')
+      .send({
+        client_name: 'obtain-auth-code-test',
+        redirect_uris: ['https://example.com/callback'],
+      })
+      .expect(201);
+
+    const { client_id, client_secret } = regRes.body;
+
+    const authRes = await request(app.getHttpServer())
+      .post('/oauth/authorize')
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({
+        client_id,
+        redirect_uri: 'https://example.com/callback',
+        code_challenge: codeChallenge,
+        state: 'test_state',
+        ...(options.scope ? { scope: options.scope } : {}),
+      })
+      .expect(201);
+
+    const redirectUrl = new URL(authRes.body.redirect_uri);
+    const code = redirectUrl.searchParams.get('code');
+    if (!code) {
+      throw new Error('missing authorization code from authorize response');
+    }
+
+    return {
+      client_id,
+      client_secret,
+      code,
+      code_verifier: codeVerifier,
+      redirect_uri: 'https://example.com/callback',
+    };
+  };
+
   describe('GET /.well-known/oauth-authorization-server', () => {
     it('returns authorization server metadata', async () => {
       const res = await request(app.getHttpServer())
@@ -92,7 +147,14 @@ describe('OAuth Controller', () => {
         response_types_supported: ['code'],
         grant_types_supported: ['authorization_code', 'refresh_token'],
         code_challenge_methods_supported: ['S256'],
-        revocation_endpoint_auth_methods_supported: ['client_secret_post'],
+        token_endpoint_auth_methods_supported: [
+          'client_secret_post',
+          'client_secret_basic',
+        ],
+        revocation_endpoint_auth_methods_supported: [
+          'client_secret_post',
+          'client_secret_basic',
+        ],
         scopes_supported: ['mcp'],
       });
     });
@@ -128,6 +190,7 @@ describe('OAuth Controller', () => {
         client_id: expect.any(String),
         client_secret: expect.stringMatching(/^ocs_/),
         client_name: 'test-app',
+        token_endpoint_auth_method: 'client_secret_post',
         redirect_uris: ['https://example.com/callback'],
       });
     });
@@ -308,11 +371,34 @@ describe('OAuth Controller', () => {
       expect(res.body.redirect_uri).toContain('state=test_state');
     });
 
-    it('rejects without Bearer token', async () => {
+    it('accepts the rev_at cookie without an Authorization header', async () => {
       const regRes = await request(app.getHttpServer())
         .post('/oauth/register')
         .send({
-          client_name: 'no-bearer-test',
+          client_name: 'cookie-authorize-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const res = await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('Cookie', `${ACCESS_COOKIE_NAME}=${userToken}`)
+        .send({
+          client_id: regRes.body.client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: 'test_challenge',
+          state: 'test_state',
+        })
+        .expect(201);
+
+      expect(res.body.redirect_uri).toContain('code=');
+      expect(res.body.redirect_uri).toContain('state=test_state');
+    });
+
+    it('rejects without an authenticated session', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'no-session-test',
           redirect_uris: ['https://example.com/callback'],
         });
 
@@ -325,6 +411,37 @@ describe('OAuth Controller', () => {
           state: 'state',
         })
         .expect(401);
+    });
+
+    it('rejects API-key authentication for authorization-code minting', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'api-key-authorize-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const { key, hash, prefix } = apiKeyService.generateKey();
+      await prisma.apiKey.create({
+        data: {
+          prefix,
+          keyHash: hash,
+          type: ApiKeyType.PERSONAL,
+          name: 'authorize-test-key',
+          userId: fixture.owner.user.id,
+        },
+      });
+
+      await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('x-api-key', key)
+        .send({
+          client_id: regRes.body.client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: 'challenge',
+          state: 'state',
+        })
+        .expect(403);
     });
 
     it('rejects missing fields', async () => {
@@ -377,6 +494,123 @@ describe('OAuth Controller', () => {
         refresh_token: expect.stringMatching(/^ort_/),
         token_type: 'Bearer',
       });
+    });
+
+    it('exchanges authorization code with client_secret_basic', async () => {
+      const { client_id, client_secret, code, code_verifier, redirect_uri } =
+        await obtainAuthorizationCode();
+      const basicAuth = Buffer.from(`${client_id}:${client_secret}`).toString(
+        'base64',
+      );
+
+      const tokenRes = await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          code_verifier,
+          redirect_uri,
+        })
+        .expect(201);
+
+      expect(tokenRes.body).toMatchObject({
+        access_token: expect.stringMatching(/^oat_/),
+        refresh_token: expect.stringMatching(/^ort_/),
+        token_type: 'Bearer',
+      });
+    });
+
+    it('rejects malformed base64 client_secret_basic without falling back to body credentials', async () => {
+      const { client_id, client_secret, code, code_verifier, redirect_uri } =
+        await obtainAuthorizationCode();
+
+      await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', 'Basic !!!')
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier,
+          redirect_uri,
+        })
+        .expect(400)
+        .expect(({ body }) => {
+          expect(body.message).toBe('Invalid client credentials');
+          expect(body).not.toHaveProperty('access_token');
+        });
+    });
+
+    it('rejects client_secret_basic with trailing invalid base64 characters', async () => {
+      const { client_id, client_secret, code, code_verifier, redirect_uri } =
+        await obtainAuthorizationCode();
+      const basicAuth =
+        Buffer.from(`${client_id}:${client_secret}`).toString('base64') + '!!!';
+
+      await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier,
+          redirect_uri,
+        })
+        .expect(400)
+        .expect(({ body }) => {
+          expect(body.message).toBe('Invalid client credentials');
+          expect(body).not.toHaveProperty('access_token');
+        });
+    });
+
+    it('rejects client_secret_basic without a colon', async () => {
+      const { client_id, client_secret, code, code_verifier, redirect_uri } =
+        await obtainAuthorizationCode();
+      const basicAuth = Buffer.from(client_id).toString('base64');
+
+      await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier,
+          redirect_uri,
+        })
+        .expect(400)
+        .expect(({ body }) => {
+          expect(body.message).toBe('Invalid client credentials');
+          expect(body).not.toHaveProperty('access_token');
+        });
+    });
+
+    it('rejects client_secret_basic with an empty client id', async () => {
+      const { client_id, client_secret, code, code_verifier, redirect_uri } =
+        await obtainAuthorizationCode();
+      const basicAuth = Buffer.from(`:${client_secret}`).toString('base64');
+
+      await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier,
+          redirect_uri,
+        })
+        .expect(400)
+        .expect(({ body }) => {
+          expect(body.message).toBe('Invalid client credentials');
+          expect(body).not.toHaveProperty('access_token');
+        });
     });
 
     it('preserves mcp scope on refresh', async () => {
@@ -469,6 +703,21 @@ describe('OAuth Controller', () => {
           token: access_token,
           client_id,
           client_secret,
+        })
+        .expect(200);
+    });
+
+    it('accepts client_secret_basic for revocation', async () => {
+      const { client_id, client_secret, access_token } = await obtainTokens();
+      const basicAuth = Buffer.from(`${client_id}:${client_secret}`).toString(
+        'base64',
+      );
+
+      await request(app.getHttpServer())
+        .post('/oauth/revoke')
+        .set('Authorization', `Basic ${basicAuth}`)
+        .send({
+          token: access_token,
         })
         .expect(200);
     });
