@@ -1,23 +1,30 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { createHash } from 'node:crypto';
+import { ApiKeyType } from 'src/__generated__/client';
 import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/__tests__/utils/prepareProject';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { AuthService } from 'src/features/auth/auth.service';
 import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('OAuth Controller', () => {
   let app: INestApplication;
   let authService: AuthService;
+  let apiKeyService: ApiKeyService;
+  let prisma: PrismaService;
   let fixture: PrepareDataReturnType;
   let userToken: string;
 
   beforeAll(async () => {
     app = await createFreshTestApp();
     authService = app.get(AuthService);
+    apiKeyService = app.get(ApiKeyService);
+    prisma = app.get(PrismaService);
     fixture = await prepareData(app);
     userToken = authService.login({
       username: fixture.owner.user.username,
@@ -397,6 +404,37 @@ describe('OAuth Controller', () => {
           state: 'state',
         })
         .expect(401);
+    });
+
+    it('rejects API-key authentication for authorization-code minting', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'api-key-authorize-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const { key, hash, prefix } = apiKeyService.generateKey();
+      await prisma.apiKey.create({
+        data: {
+          prefix,
+          keyHash: hash,
+          type: ApiKeyType.PERSONAL,
+          name: 'authorize-test-key',
+          userId: fixture.owner.user.id,
+        },
+      });
+
+      await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('x-api-key', key)
+        .send({
+          client_id: regRes.body.client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: 'challenge',
+          state: 'state',
+        })
+        .expect(403);
     });
 
     it('rejects missing fields', async () => {

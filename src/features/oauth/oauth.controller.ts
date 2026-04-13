@@ -1,4 +1,5 @@
 import {
+  ForbiddenException,
   Controller,
   Get,
   HttpCode,
@@ -15,6 +16,7 @@ import { ApiExcludeController } from '@nestjs/swagger';
 import { Buffer } from 'node:buffer';
 import { Request, Response } from 'express';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
+import { NoAuthService } from 'src/features/auth/no-auth.service';
 import { IAuthUser } from 'src/features/auth/types';
 import { OAuthClientService } from './oauth-client.service';
 import { OAuthAuthorizationService } from './oauth-authorization.service';
@@ -30,6 +32,7 @@ export class OAuthController {
     private readonly clientService: OAuthClientService,
     private readonly authorizationService: OAuthAuthorizationService,
     private readonly tokenService: OAuthTokenService,
+    private readonly noAuth: NoAuthService,
   ) {
     this.publicUrl =
       this.configService.get<string>('PUBLIC_URL') || 'http://localhost:8080';
@@ -178,6 +181,12 @@ export class OAuthController {
     },
   ) {
     const { client_id, redirect_uri, code_challenge, state, scope } = body;
+
+    if (!this.noAuth.enabled && req.user.authMethod !== 'jwt') {
+      throw new ForbiddenException(
+        'OAuth authorize requires a JWT-authenticated user session',
+      );
+    }
 
     if (!client_id || !redirect_uri || !code_challenge || !state) {
       throw new BadRequestException('Missing required fields');
