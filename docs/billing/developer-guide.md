@@ -9,7 +9,7 @@ src/features/billing/               # Core (Apache 2.0)
   billing.module.ts                 # @Global, provides NoopLimitsService
   limits.interface.ts               # ILimitsService, LimitMetric, LimitCheckResult
   noop-limits.service.ts            # Always returns { allowed: true }
-  limit-exceeded.exception.ts       # HTTP 403 with structured error
+  limit-exceeded.exception.ts       # HTTP 402 with structured error
 
 ee/billing/                         # Enterprise (proprietary)
   ee-billing.module.ts              # Registers all providers, overrides noop
