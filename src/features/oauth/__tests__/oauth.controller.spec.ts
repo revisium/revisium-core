@@ -33,6 +33,7 @@ describe('OAuth Controller', () => {
   });
 
   afterAll(async () => {
+    await prisma.$disconnect();
     await app.close();
   });
 
@@ -65,6 +66,9 @@ describe('OAuth Controller', () => {
 
     const redirectUrl = new URL(authRes.body.redirect_uri);
     const code = redirectUrl.searchParams.get('code');
+    if (!code) {
+      throw new Error('missing authorization code from authorize response');
+    }
 
     const tokenRes = await request(app.getHttpServer())
       .post('/oauth/token')
@@ -115,6 +119,9 @@ describe('OAuth Controller', () => {
 
     const redirectUrl = new URL(authRes.body.redirect_uri);
     const code = redirectUrl.searchParams.get('code');
+    if (!code) {
+      throw new Error('missing authorization code from authorize response');
+    }
 
     return {
       client_id,
@@ -521,6 +528,30 @@ describe('OAuth Controller', () => {
       await request(app.getHttpServer())
         .post('/oauth/token')
         .set('Authorization', 'Basic !!!')
+        .send({
+          grant_type: 'authorization_code',
+          code,
+          client_id,
+          client_secret,
+          code_verifier,
+          redirect_uri,
+        })
+        .expect(400)
+        .expect(({ body }) => {
+          expect(body.message).toBe('Invalid client credentials');
+          expect(body).not.toHaveProperty('access_token');
+        });
+    });
+
+    it('rejects client_secret_basic with trailing invalid base64 characters', async () => {
+      const { client_id, client_secret, code, code_verifier, redirect_uri } =
+        await obtainAuthorizationCode();
+      const basicAuth =
+        Buffer.from(`${client_id}:${client_secret}`).toString('base64') + '!!!';
+
+      await request(app.getHttpServer())
+        .post('/oauth/token')
+        .set('Authorization', `Basic ${basicAuth}`)
         .send({
           grant_type: 'authorization_code',
           code,

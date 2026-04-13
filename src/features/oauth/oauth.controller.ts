@@ -26,6 +26,8 @@ import { OAuthTokenService } from './oauth-token.service';
 @Controller()
 export class OAuthController {
   private readonly publicUrl: string;
+  private static readonly BASIC_AUTH_BASE64_REGEX =
+    /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
   constructor(
     private readonly configService: ConfigService,
@@ -384,6 +386,14 @@ export class OAuthController {
       const encoded = authHeader.slice(6).trim();
 
       try {
+        if (
+          encoded.length === 0 ||
+          encoded.length % 4 !== 0 ||
+          !OAuthController.BASIC_AUTH_BASE64_REGEX.test(encoded)
+        ) {
+          throw new BadRequestException('Invalid client credentials');
+        }
+
         const decoded = Buffer.from(encoded, 'base64').toString('utf8');
         const separatorIndex = decoded.indexOf(':');
 
