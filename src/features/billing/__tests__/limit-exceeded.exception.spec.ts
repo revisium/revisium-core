@@ -10,7 +10,9 @@ describe('LimitExceededException', () => {
       metric: LimitMetric.PROJECTS,
     });
 
+    expect(exception.getStatus()).toBe(402);
     const response = exception.getResponse() as any;
+    expect(response.statusCode).toBe(402);
     expect(response.code).toBe('LIMIT_EXCEEDED');
     expect(response.metric).toBe(LimitMetric.PROJECTS);
     expect(response.current).toBe(5);

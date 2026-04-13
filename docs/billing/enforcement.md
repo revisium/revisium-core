@@ -98,11 +98,11 @@ await this.billingCheck.check(revisionId, LimitMetric.ROWS_PER_TABLE, rows.lengt
 
 ## Error Response
 
-When a limit is exceeded, `LimitExceededException` returns HTTP 403:
+When a limit is exceeded, `LimitExceededException` returns HTTP 402 (Payment Required):
 
 ```json
 {
-  "statusCode": 403,
+  "statusCode": 402,
   "code": "LIMIT_EXCEEDED",
   "metric": "row_versions",
   "current": 10000,
