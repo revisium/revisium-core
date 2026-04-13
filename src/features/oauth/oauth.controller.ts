@@ -404,12 +404,21 @@ export class OAuthController {
         const decoded = Buffer.from(encoded, 'base64').toString('utf8');
         const separatorIndex = decoded.indexOf(':');
 
-        if (separatorIndex > 0) {
-          return {
-            clientId: decoded.slice(0, separatorIndex),
-            clientSecret: decoded.slice(separatorIndex + 1),
-          };
+        if (separatorIndex <= 0) {
+          throw new BadRequestException('Invalid client credentials');
         }
+
+        const clientId = decoded.slice(0, separatorIndex);
+        const clientSecret = decoded.slice(separatorIndex + 1);
+
+        if (!clientId || !clientSecret) {
+          throw new BadRequestException('Invalid client credentials');
+        }
+
+        return {
+          clientId,
+          clientSecret,
+        };
       } catch {
         throw new BadRequestException('Invalid client credentials');
       }
