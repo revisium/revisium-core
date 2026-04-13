@@ -7,6 +7,7 @@ import {
 } from 'src/__tests__/utils/prepareProject';
 import { createFreshTestApp } from 'src/__tests__/e2e/shared';
 import { AuthService } from 'src/features/auth/auth.service';
+import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';
 
 describe('OAuth Controller', () => {
   let app: INestApplication;
@@ -356,11 +357,34 @@ describe('OAuth Controller', () => {
       expect(res.body.redirect_uri).toContain('state=test_state');
     });
 
-    it('rejects without Bearer token', async () => {
+    it('accepts the rev_at cookie without an Authorization header', async () => {
       const regRes = await request(app.getHttpServer())
         .post('/oauth/register')
         .send({
-          client_name: 'no-bearer-test',
+          client_name: 'cookie-authorize-test',
+          redirect_uris: ['https://example.com/callback'],
+        });
+
+      const res = await request(app.getHttpServer())
+        .post('/oauth/authorize')
+        .set('Cookie', `${ACCESS_COOKIE_NAME}=${userToken}`)
+        .send({
+          client_id: regRes.body.client_id,
+          redirect_uri: 'https://example.com/callback',
+          code_challenge: 'test_challenge',
+          state: 'test_state',
+        })
+        .expect(201);
+
+      expect(res.body.redirect_uri).toContain('code=');
+      expect(res.body.redirect_uri).toContain('state=test_state');
+    });
+
+    it('rejects without an authenticated session', async () => {
+      const regRes = await request(app.getHttpServer())
+        .post('/oauth/register')
+        .send({
+          client_name: 'no-session-test',
           redirect_uris: ['https://example.com/callback'],
         });
 

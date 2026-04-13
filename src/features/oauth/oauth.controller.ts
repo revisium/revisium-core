@@ -8,14 +8,14 @@ import {
   Body,
   Query,
   BadRequestException,
-  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { JwtService } from '@nestjs/jwt';
 import { ApiExcludeController } from '@nestjs/swagger';
 import { Buffer } from 'node:buffer';
 import { Request, Response } from 'express';
-import { JwtSecretService } from 'src/features/auth/jwt-secret.service';
+import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';
+import { IAuthUser } from 'src/features/auth/types';
 import { OAuthClientService } from './oauth-client.service';
 import { OAuthAuthorizationService } from './oauth-authorization.service';
 import { OAuthTokenService } from './oauth-token.service';
@@ -27,8 +27,6 @@ export class OAuthController {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly jwtService: JwtService,
-    private readonly jwtSecret: JwtSecretService,
     private readonly clientService: OAuthClientService,
     private readonly authorizationService: OAuthAuthorizationService,
     private readonly tokenService: OAuthTokenService,
@@ -166,9 +164,10 @@ export class OAuthController {
     res.redirect(302, `${this.publicUrl}/authorize?${params.toString()}`);
   }
 
+  @UseGuards(HttpJwtAuthGuard)
   @Post('oauth/authorize')
   async handleAuthorize(
-    @Req() req: Request,
+    @Req() req: Request & { user: IAuthUser },
     @Body()
     body: {
       client_id: string;
@@ -193,11 +192,9 @@ export class OAuthController {
       throw new BadRequestException('Invalid redirect_uri');
     }
 
-    const userId = this.extractUserIdFromBearer(req);
-
     const code = await this.authorizationService.createAuthorizationCode({
       clientId: client_id,
-      userId,
+      userId: req.user.userId,
       redirectUri: redirect_uri,
       codeChallenge: code_challenge,
       scope,
@@ -366,29 +363,6 @@ export class OAuthController {
       expires_in: tokens.expiresIn,
       refresh_token: tokens.refreshToken,
     };
-  }
-
-  private extractUserIdFromBearer(req: Request): string {
-    const authHeader = req.headers['authorization'];
-    if (!authHeader?.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing Authorization header');
-    }
-
-    const token = authHeader.slice(7);
-
-    try {
-      const decoded: { sub?: string } = this.jwtService.verify(token, {
-        secret: this.jwtSecret.secret,
-      });
-
-      if (!decoded?.sub) {
-        throw new UnauthorizedException('Invalid token');
-      }
-
-      return decoded.sub;
-    } catch {
-      throw new UnauthorizedException('Invalid or expired token');
-    }
   }
 
   private extractClientCredentials(

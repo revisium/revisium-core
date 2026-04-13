@@ -39,7 +39,7 @@ Revisium implements an OAuth 2.1 Authorization Code flow with PKCE to authentica
        |                       |       "Authorize"      |
        |                       |                        |
        |                       |  POST /oauth/authorize |
-       |                       |  Bearer JWT            |
+       |                       |  Session JWT           |
        |                       |<-----------------------|
        |                       |  { redirect_uri }      |
        |                       |----------------------->|
@@ -145,7 +145,7 @@ All `redirect_uris` must use `http:` or `https:` scheme. Other schemes (`javascr
 | Method | Path               | Auth       | Description                              |
 | ------ | ------------------ | ---------- | ---------------------------------------- |
 | GET    | `/oauth/authorize` | None       | Validate params and redirect to Admin UI |
-| POST   | `/oauth/authorize` | Bearer JWT | Create auth code (called by Admin UI)    |
+| POST   | `/oauth/authorize` | Session JWT | Create auth code (called by Admin UI)   |
 
 **GET /oauth/authorize** query parameters:
 
@@ -169,7 +169,6 @@ Validates all parameters, then redirects `302` to Admin UI:
 
 ```http
 POST /oauth/authorize
-Authorization: Bearer <user-jwt>
 Content-Type: application/json
 
 {
@@ -180,6 +179,10 @@ Content-Type: application/json
   "scope": "mcp"
 }
 ```
+
+The user session can be authenticated either by `Authorization: Bearer <user-jwt>`
+or by the browser's `rev_at` cookie. For the admin UI under JWT 2.0, the
+cookie-backed session is the normal path.
 
 The `scope` field is optional. When present, it is stored with the authorization code and propagated to the access token on exchange.
 
@@ -579,7 +582,7 @@ Browser opens /authorize?client_id=...&client_name=...
   |
   +-- User clicks Authorize -> approve()
   |   +-- POST /oauth/authorize
-  |       Authorization: Bearer <JWT from AuthService.token>
+  |       Cookie: rev_at=<httpOnly JWT> (or Authorization: Bearer <user-jwt>)
   |       Body: { client_id, redirect_uri, code_challenge, state }
   |
   +-- Response: { redirect_uri }
