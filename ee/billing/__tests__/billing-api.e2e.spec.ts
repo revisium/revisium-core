@@ -26,6 +26,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
       rows_per_table: 1_000,
       tables_per_revision: 10,
       branches_per_project: 3,
+      endpoints_per_project: 2,
     },
   }),
   createCheckout: jest.fn(),
@@ -49,6 +50,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         rows_per_table: 1_000,
         tables_per_revision: 10,
         branches_per_project: 3,
+        endpoints_per_project: 2,
       },
       features: {},
     },
@@ -67,6 +69,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         rows_per_table: 10_000,
         tables_per_revision: 100,
         branches_per_project: 20,
+        endpoints_per_project: 10,
       },
       features: { sso: true, audit: true },
     },
@@ -199,6 +202,7 @@ describe('Billing REST API (e2e)', () => {
       expect(res.body.projects).toBeDefined();
       expect(res.body.seats).toBeDefined();
       expect(res.body.storageBytes).toBeDefined();
+      expect(res.body.endpointsPerProject).toBeDefined();
     });
   });
 

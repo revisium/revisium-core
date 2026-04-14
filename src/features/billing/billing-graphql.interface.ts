@@ -13,6 +13,7 @@ export interface PlanLimitsResult {
   rowsPerTable: number | null;
   tablesPerRevision: number | null;
   branchesPerProject: number | null;
+  endpointsPerProject: number | null;
 }
 
 export interface PlanResult {
@@ -46,6 +47,7 @@ export interface UsageSummaryResult {
   projects: UsageMetricResult;
   seats: UsageMetricResult;
   storageBytes: UsageMetricResult;
+  endpointsPerProject: UsageMetricResult;
 }
 
 export interface PaymentProviderResult {
@@ -79,6 +81,11 @@ export interface IBillingGraphqlService {
   getSubscription(organizationId: string): Promise<SubscriptionResult | null>;
 
   getUsage(organizationId: string): Promise<UsageSummaryResult | null>;
+
+  getProjectEndpointUsage(
+    organizationId: string,
+    projectId: string,
+  ): Promise<UsageMetricResult | null>;
 
   activateEarlyAccess(
     organizationId: string,

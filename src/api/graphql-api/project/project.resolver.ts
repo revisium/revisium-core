@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { Inject, UseGuards } from '@nestjs/common';
 import {
   Args,
   Mutation,
@@ -23,12 +23,17 @@ import {
   UpdateUserProjectRoleInput,
 } from 'src/api/graphql-api/project/inputs';
 import { GetProjectBranchesInput } from 'src/api/graphql-api/project/inputs/get-project-branches.input';
+import { UsageMetricModel } from 'src/api/graphql-api/billing/models/usage.model';
 import { ProjectModel } from 'src/api/graphql-api/project/model';
 import { UsersProjectConnection } from 'src/api/graphql-api/project/model/users-project.connection';
 import { IOptionalAuthUser } from 'src/features/auth/types';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { UserApiService } from 'src/features/user/user-api.service';
+import {
+  BILLING_GRAPHQL_SERVICE_TOKEN,
+  IBillingGraphqlService,
+} from 'src/features/billing/billing-graphql.interface';
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -40,6 +45,8 @@ export class ProjectResolver {
     private readonly projectApi: ProjectApiService,
     private readonly organizationApi: OrganizationApiService,
     private readonly userApi: UserApiService,
+    @Inject(BILLING_GRAPHQL_SERVICE_TOKEN)
+    private readonly billingService: IBillingGraphqlService,
   ) {}
 
   @UseGuards(OptionalGqlJwtAuthGuard, GQLProjectGuard)
@@ -143,5 +150,13 @@ export class ProjectResolver {
       projectId: parent.id,
       userId: user.userId,
     });
+  }
+
+  @ResolveField(() => UsageMetricModel, { nullable: true })
+  endpointUsage(@Parent() parent: ProjectModel) {
+    return this.billingService.getProjectEndpointUsage(
+      parent.organizationId,
+      parent.id,
+    );
   }
 }

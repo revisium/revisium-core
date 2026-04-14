@@ -6,6 +6,7 @@ import {
   PaymentProviderResult,
   PlanResult,
   SubscriptionResult,
+  UsageMetricResult,
   UsageSummaryResult,
 } from './billing-graphql.interface';
 
@@ -28,6 +29,10 @@ export class NoopBillingGraphqlService implements IBillingGraphqlService {
   }
 
   async getUsage(): Promise<UsageSummaryResult | null> {
+    return null;
+  }
+
+  async getProjectEndpointUsage(): Promise<UsageMetricResult | null> {
     return null;
   }
 

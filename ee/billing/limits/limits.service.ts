@@ -27,6 +27,7 @@ export class LimitsService implements ILimitsService {
     LimitMetric.SEATS,
     LimitMetric.BRANCHES_PER_PROJECT,
     LimitMetric.TABLES_PER_REVISION,
+    LimitMetric.ENDPOINTS_PER_PROJECT,
   ]);
 
   constructor(
@@ -106,6 +107,8 @@ export class LimitsService implements ILimitsService {
         return l.tables_per_revision;
       case LimitMetric.BRANCHES_PER_PROJECT:
         return l.branches_per_project;
+      case LimitMetric.ENDPOINTS_PER_PROJECT:
+        return l.endpoints_per_project;
       default:
         return null;
     }

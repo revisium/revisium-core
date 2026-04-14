@@ -25,7 +25,8 @@ export class BillingCheckService {
     const needsContext =
       metric === LimitMetric.ROWS_PER_TABLE ||
       metric === LimitMetric.TABLES_PER_REVISION ||
-      metric === LimitMetric.BRANCHES_PER_PROJECT;
+      metric === LimitMetric.BRANCHES_PER_PROJECT ||
+      metric === LimitMetric.ENDPOINTS_PER_PROJECT;
     const fullContext = needsContext
       ? {
           revisionId,

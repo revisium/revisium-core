@@ -1,5 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
+import { EndpointType } from 'src/__generated__/client';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -85,6 +86,24 @@ describe('UsageService', () => {
     return { projectId, revisionId };
   };
 
+  const createEndpointVersion = async (type: EndpointType) => {
+    const existing = await prisma.endpointVersion.findUnique({
+      where: { type_version: { type, version: 1 } },
+    });
+    if (existing) {
+      return existing.id;
+    }
+
+    const created = await prisma.endpointVersion.create({
+      data: {
+        id: nanoid(),
+        type,
+        version: 1,
+      },
+    });
+    return created.id;
+  };
+
   describe('computeUsage', () => {
     it('should count unique row versions across org', async () => {
       const orgId = await createOrg();
@@ -164,6 +183,136 @@ describe('UsageService', () => {
       const orgId = await createOrg();
       const result = await service.computeUsage(orgId, LimitMetric.API_CALLS);
       expect(result).toBe(0);
+    });
+
+    it('should count non-deleted endpoints in project', async () => {
+      const orgId = await createOrg();
+      const { projectId, revisionId } = await createProjectWithRows(orgId, 0);
+      const graphqlVersionId = await createEndpointVersion(EndpointType.GRAPHQL);
+      const restVersionId = await createEndpointVersion(EndpointType.REST_API);
+      const branchId = nanoid();
+      const secondRevisionId = nanoid();
+
+      await prisma.branch.create({
+        data: {
+          id: branchId,
+          name: `feature-${branchId}`,
+          projectId,
+          revisions: {
+            create: {
+              id: secondRevisionId,
+              isHead: true,
+            },
+          },
+        },
+      });
+
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.GRAPHQL,
+          revisionId,
+          versionId: graphqlVersionId,
+        },
+      });
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.REST_API,
+          revisionId,
+          versionId: restVersionId,
+        },
+      });
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.REST_API,
+          revisionId: secondRevisionId,
+          versionId: restVersionId,
+          isDeleted: true,
+        },
+      });
+
+      const result = await service.computeUsage(
+        orgId,
+        LimitMetric.ENDPOINTS_PER_PROJECT,
+        { projectId },
+      );
+
+      expect(result).toBe(2);
+    });
+  });
+
+  describe('computeUsageSummary', () => {
+    it('should expose the max endpoints count across projects', async () => {
+      const orgId = await createOrg();
+      const firstProject = await createProjectWithRows(orgId, 0);
+      const secondProject = await createProjectWithRows(orgId, 0);
+      const graphqlVersionId = await createEndpointVersion(EndpointType.GRAPHQL);
+      const restVersionId = await createEndpointVersion(EndpointType.REST_API);
+      const secondBranchId = nanoid();
+      const secondRevisionId = nanoid();
+
+      await prisma.branch.create({
+        data: {
+          id: secondBranchId,
+          name: `feature-${secondBranchId}`,
+          projectId: secondProject.projectId,
+          revisions: {
+            create: {
+              id: secondRevisionId,
+              isHead: true,
+            },
+          },
+        },
+      });
+
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.GRAPHQL,
+          revisionId: firstProject.revisionId,
+          versionId: graphqlVersionId,
+        },
+      });
+
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.GRAPHQL,
+          revisionId: secondProject.revisionId,
+          versionId: graphqlVersionId,
+        },
+      });
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.REST_API,
+          revisionId: secondProject.revisionId,
+          versionId: restVersionId,
+        },
+      });
+      await prisma.endpoint.create({
+        data: {
+          id: nanoid(),
+          type: EndpointType.REST_API,
+          revisionId: secondRevisionId,
+          versionId: restVersionId,
+          isDeleted: true,
+        },
+      });
+
+      const result = await service.computeUsageSummary(orgId, {
+        row_versions: 10_000,
+        projects: 3,
+        seats: 1,
+        storage_bytes: 500_000_000,
+        endpoints_per_project: 2,
+      });
+
+      expect(result.endpointsPerProject.current).toBe(2);
+      expect(result.endpointsPerProject.limit).toBe(2);
+      expect(result.endpointsPerProject.percentage).toBe(100);
     });
   });
 });

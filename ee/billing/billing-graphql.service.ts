@@ -7,8 +7,11 @@ import {
   PaymentProviderResult,
   PlanResult,
   SubscriptionResult,
+  UsageMetricResult,
   UsageSummaryResult,
 } from 'src/features/billing/billing-graphql.interface';
+import { LimitMetric } from 'src/features/billing/limits.interface';
+import { buildMetric } from './usage/build-metric';
 import {
   BILLING_CLIENT_TOKEN,
   IBillingClient,
@@ -48,6 +51,7 @@ export class BillingGraphqlService implements IBillingGraphqlService {
         rowsPerTable: p.limits.rows_per_table,
         tablesPerRevision: p.limits.tables_per_revision,
         branchesPerProject: p.limits.branches_per_project,
+        endpointsPerProject: p.limits.endpoints_per_project,
       },
       features: p.features ?? {},
     }));
@@ -87,6 +91,24 @@ export class BillingGraphqlService implements IBillingGraphqlService {
       organizationId,
       orgLimits.limits,
     );
+  }
+
+  async getProjectEndpointUsage(
+    organizationId: string,
+    projectId: string,
+  ): Promise<UsageMetricResult | null> {
+    if (!this.billingClient.configured) {
+      return null;
+    }
+
+    const orgLimits = await this.billingClient.getOrgLimits(organizationId);
+    const current = await this.usageService.computeUsage(
+      organizationId,
+      LimitMetric.ENDPOINTS_PER_PROJECT,
+      { projectId },
+    );
+
+    return buildMetric(current, orgLimits.limits.endpoints_per_project);
   }
 
   async activateEarlyAccess(

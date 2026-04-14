@@ -9,6 +9,11 @@ export interface UsageSummary {
   projects: { current: number; limit: number | null; percentage: number | null };
   seats: { current: number; limit: number | null; percentage: number | null };
   storageBytes: { current: number; limit: number | null; percentage: number | null };
+  endpointsPerProject: {
+    current: number;
+    limit: number | null;
+    percentage: number | null;
+  };
 }
 
 @Injectable()
@@ -22,13 +27,16 @@ export class UsageService {
       projects: number | null;
       seats: number | null;
       storage_bytes: number | null;
+      endpoints_per_project: number | null;
     } | null,
   ): Promise<UsageSummary> {
-    const [rowVersions, projects, seats, storageBytes] = await Promise.all([
+    const [rowVersions, projects, seats, storageBytes, endpointsPerProject] =
+      await Promise.all([
       this.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
       this.computeUsage(organizationId, LimitMetric.PROJECTS),
       this.computeUsage(organizationId, LimitMetric.SEATS),
       this.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
+      this.countMaxEndpointsInProjects(organizationId),
     ]);
 
     return {
@@ -36,6 +44,10 @@ export class UsageService {
       projects: buildMetric(projects, planLimits?.projects),
       seats: buildMetric(seats, planLimits?.seats),
       storageBytes: buildMetric(storageBytes, planLimits?.storage_bytes),
+      endpointsPerProject: buildMetric(
+        endpointsPerProject,
+        planLimits?.endpoints_per_project,
+      ),
     };
   }
 
@@ -72,6 +84,12 @@ export class UsageService {
           throw new Error('BRANCHES_PER_PROJECT requires projectId in context');
         }
         return this.countBranchesInProject(context.projectId);
+      }
+      case LimitMetric.ENDPOINTS_PER_PROJECT: {
+        if (!context?.projectId) {
+          throw new Error('ENDPOINTS_PER_PROJECT requires projectId in context');
+        }
+        return this.countEndpointsInProject(context.projectId);
       }
       default: {
         const _exhaustive: never = metric;
@@ -140,5 +158,38 @@ export class UsageService {
 
   private async countBranchesInProject(projectId: string): Promise<number> {
     return this.prisma.branch.count({ where: { projectId } });
+  }
+
+  private async countEndpointsInProject(projectId: string): Promise<number> {
+    return this.prisma.endpoint.count({
+      where: {
+        revision: { branch: { projectId } },
+        isDeleted: false,
+      },
+    });
+  }
+
+  private async countMaxEndpointsInProjects(
+    organizationId: string,
+  ): Promise<number> {
+    const projects = await this.prisma.project.findMany({
+      where: {
+        organizationId,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (projects.length === 0) {
+      return 0;
+    }
+
+    const counts = await Promise.all(
+      projects.map(({ id }) => this.countEndpointsInProject(id)),
+    );
+
+    return Math.max(...counts);
   }
 }

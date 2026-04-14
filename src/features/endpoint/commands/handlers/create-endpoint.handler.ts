@@ -1,6 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
+import { BillingCheckService } from 'src/core/shared/billing-check.service';
+import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   CreateEndpointCommand,
@@ -15,6 +17,7 @@ export class CreateEndpointHandler implements ICommandHandler<
 > {
   constructor(
     private readonly prisma: PrismaService,
+    private readonly billingCheck: BillingCheckService,
     private readonly endpointNotification: EndpointNotificationService,
   ) {}
 
@@ -24,6 +27,11 @@ export class CreateEndpointHandler implements ICommandHandler<
     if (existEndpoint && !existEndpoint.isDeleted) {
       throw new BadRequestException('Endpoint already has been created');
     }
+
+    await this.billingCheck.check(
+      data.revisionId,
+      LimitMetric.ENDPOINTS_PER_PROJECT,
+    );
 
     const endpoint = existEndpoint
       ? await this.restoreEndpoint(existEndpoint.id)

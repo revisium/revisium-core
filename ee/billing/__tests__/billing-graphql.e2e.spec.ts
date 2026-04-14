@@ -2,6 +2,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
 import request from 'supertest';
+import { EndpointType } from 'src/__generated__/client';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -26,6 +27,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
       rows_per_table: 1_000,
       tables_per_revision: 10,
       branches_per_project: 3,
+      endpoints_per_project: 2,
     },
   }),
   createCheckout: jest.fn().mockResolvedValue({
@@ -58,6 +60,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         rows_per_table: 1_000,
         tables_per_revision: 10,
         branches_per_project: 3,
+        endpoints_per_project: 2,
       },
       features: {},
     },
@@ -76,6 +79,7 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
         rows_per_table: 10_000,
         tables_per_revision: 100,
         branches_per_project: 20,
+        endpoints_per_project: 10,
       },
       features: { sso: true, audit: true },
     },
@@ -93,12 +97,13 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
           projects: 20,
           seats: 10,
           storage_bytes: 10_000_000_000,
-          api_calls_per_day: 50_000,
-          rows_per_table: 10_000,
-          tables_per_revision: 100,
-          branches_per_project: 20,
-        },
-        features: { sso: true, audit: true },
+        api_calls_per_day: 50_000,
+        rows_per_table: 10_000,
+        tables_per_revision: 100,
+        branches_per_project: 20,
+        endpoints_per_project: 10,
+      },
+      features: { sso: true, audit: true },
       });
     }
     return Promise.resolve(null);
@@ -168,6 +173,98 @@ describe('Billing GraphQL API (e2e)', () => {
     return { orgId, userId, token };
   };
 
+  const createEndpointVersion = async (type: EndpointType) => {
+    const existing = await prisma.endpointVersion.findUnique({
+      where: { type_version: { type, version: 1 } },
+    });
+    if (existing) {
+      return existing.id;
+    }
+
+    const created = await prisma.endpointVersion.create({
+      data: {
+        id: nanoid(),
+        type,
+        version: 1,
+      },
+    });
+
+    return created.id;
+  };
+
+  const createProjectWithEndpoints = async (organizationId: string) => {
+    const projectId = nanoid();
+    const projectName = `project-${projectId}`;
+    const branchId = nanoid();
+    const revisionId = nanoid();
+    const secondBranchId = nanoid();
+    const secondRevisionId = nanoid();
+    const graphqlVersionId = await createEndpointVersion(EndpointType.GRAPHQL);
+    const restVersionId = await createEndpointVersion(EndpointType.REST_API);
+
+    await prisma.project.create({
+      data: {
+        id: projectId,
+        name: projectName,
+        organizationId,
+        branches: {
+          create: [
+            {
+              id: branchId,
+              name: 'master',
+              isRoot: true,
+              revisions: {
+                create: {
+                  id: revisionId,
+                  isHead: true,
+                  isDraft: true,
+                },
+              },
+            },
+            {
+              id: secondBranchId,
+              name: 'feature',
+              revisions: {
+                create: {
+                  id: secondRevisionId,
+                  isHead: true,
+                },
+              },
+            },
+          ],
+        },
+      },
+    });
+
+    await prisma.endpoint.create({
+      data: {
+        id: nanoid(),
+        type: EndpointType.GRAPHQL,
+        revisionId,
+        versionId: graphqlVersionId,
+      },
+    });
+    await prisma.endpoint.create({
+      data: {
+        id: nanoid(),
+        type: EndpointType.REST_API,
+        revisionId,
+        versionId: restVersionId,
+      },
+    });
+    await prisma.endpoint.create({
+      data: {
+        id: nanoid(),
+        type: EndpointType.REST_API,
+        revisionId: secondRevisionId,
+        versionId: restVersionId,
+        isDeleted: true,
+      },
+    });
+
+    return { projectId, projectName };
+  };
+
   const gql = (
     query: string,
     variables?: Record<string, unknown>,
@@ -199,7 +296,7 @@ describe('Billing GraphQL API (e2e)', () => {
       const res = await gql(`{
         plans {
           id name isPublic monthlyPriceUsd yearlyPriceUsd
-          limits { rowVersions projects seats storageBytes apiCallsPerDay rowsPerTable tablesPerRevision branchesPerProject }
+          limits { rowVersions projects seats storageBytes apiCallsPerDay rowsPerTable tablesPerRevision branchesPerProject endpointsPerProject }
           features
         }
       }`).expect(200);
@@ -209,6 +306,7 @@ describe('Billing GraphQL API (e2e)', () => {
       expect(pro.id).toBe('pro');
       expect(pro.limits.rowVersions).toBe(500_000);
       expect(pro.limits.apiCallsPerDay).toBe(50_000);
+      expect(pro.limits.endpointsPerProject).toBe(10);
       expect(pro.features).toEqual({ sso: true, audit: true });
     });
   });
@@ -330,6 +428,7 @@ describe('Billing GraphQL API (e2e)', () => {
               projects { current limit percentage }
               seats { current limit percentage }
               storageBytes { current limit percentage }
+              endpointsPerProject { current limit percentage }
             }
           }
         }`,
@@ -342,6 +441,7 @@ describe('Billing GraphQL API (e2e)', () => {
       expect(usage.projects.limit).toBe(3);
       expect(usage.seats.limit).toBe(1);
       expect(usage.storageBytes.limit).toBe(500_000_000);
+      expect(usage.endpointsPerProject.limit).toBe(2);
       expect(mockBillingClient.getOrgLimits).toHaveBeenCalledWith(orgId);
     });
 
@@ -364,6 +464,33 @@ describe('Billing GraphQL API (e2e)', () => {
       expect(seats.current).toBe(1);
       expect(seats.limit).toBe(1);
       expect(seats.percentage).toBe(100);
+    });
+  });
+
+  describe('project.endpointUsage', () => {
+    it('should return project-scoped endpoint usage and limit', async () => {
+      const { orgId, token } = await createOrgWithOwner();
+      const { projectName } = await createProjectWithEndpoints(orgId);
+
+      const res = await gql(
+        `query($data: GetProjectInput!) {
+          project(data: $data) {
+            endpointUsage {
+              current
+              limit
+              percentage
+            }
+          }
+        }`,
+        { data: { organizationId: orgId, projectName } },
+        token,
+      ).expect(200);
+
+      expect(res.body.data.project.endpointUsage).toEqual({
+        current: 2,
+        limit: 2,
+        percentage: 100,
+      });
     });
   });
 

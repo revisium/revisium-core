@@ -12,6 +12,7 @@ export interface OrgLimits {
     rows_per_table: number | null;
     tables_per_revision: number | null;
     branches_per_project: number | null;
+    endpoints_per_project: number | null;
   };
 }
 

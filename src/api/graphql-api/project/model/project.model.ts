@@ -7,6 +7,7 @@ import {
 import { OrganizationModel } from 'src/api/graphql-api/organization/model/organization.model';
 import { UsersProjectModel } from 'src/api/graphql-api/project/model/users-project.model';
 import { Relation } from 'src/api/graphql-api/share/model/relation.type';
+import { UsageMetricModel } from 'src/api/graphql-api/billing/models/usage.model';
 
 @ObjectType()
 export class ProjectModel {
@@ -36,4 +37,7 @@ export class ProjectModel {
 
   @Field(() => UsersProjectModel, { nullable: true })
   userProject?: UsersProjectModel;
+
+  @Field(() => UsageMetricModel, { nullable: true })
+  endpointUsage?: Relation<UsageMetricModel | null>;
 }
