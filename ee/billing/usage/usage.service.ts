@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from 'src/__generated__/client';
 import { countOrgRowVersions } from 'src/__generated__/client/sql';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -32,12 +33,12 @@ export class UsageService {
   ): Promise<UsageSummary> {
     const [rowVersions, projects, seats, storageBytes, endpointsPerProject] =
       await Promise.all([
-      this.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
-      this.computeUsage(organizationId, LimitMetric.PROJECTS),
-      this.computeUsage(organizationId, LimitMetric.SEATS),
-      this.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
-      this.countMaxEndpointsInProjects(organizationId),
-    ]);
+        this.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
+        this.computeUsage(organizationId, LimitMetric.PROJECTS),
+        this.computeUsage(organizationId, LimitMetric.SEATS),
+        this.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
+        this.countMaxEndpointsInProjects(organizationId),
+      ]);
 
     return {
       rowVersions: buildMetric(rowVersions, planLimits?.row_versions),
@@ -172,24 +173,26 @@ export class UsageService {
   private async countMaxEndpointsInProjects(
     organizationId: string,
   ): Promise<number> {
-    const projects = await this.prisma.project.findMany({
-      where: {
-        organizationId,
-        isDeleted: false,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (projects.length === 0) {
-      return 0;
-    }
-
-    const counts = await Promise.all(
-      projects.map(({ id }) => this.countEndpointsInProject(id)),
+    const result = await this.prisma.$queryRaw<Array<{ maxCount: bigint | number }>>(
+      Prisma.sql`
+        SELECT COALESCE(MAX(project_counts.count), 0)::bigint AS "maxCount"
+        FROM (
+          SELECT COUNT(e."id")::bigint AS count
+          FROM "Project" p
+          LEFT JOIN "Branch" b
+            ON b."projectId" = p."id"
+          LEFT JOIN "Revision" r
+            ON r."branchId" = b."id"
+          LEFT JOIN "Endpoint" e
+            ON e."revisionId" = r."id"
+           AND e."isDeleted" = false
+          WHERE p."organizationId" = ${organizationId}
+            AND p."isDeleted" = false
+          GROUP BY p."id"
+        ) AS project_counts
+      `,
     );
 
-    return Math.max(...counts);
+    return Number(result[0]?.maxCount ?? 0);
   }
 }
