@@ -1,4 +1,8 @@
+import { Prisma, PrismaClient } from 'src/__generated__/client';
+
 export const LIMITS_SERVICE_TOKEN = Symbol('LIMITS_SERVICE');
+
+export type BillingDbClient = PrismaClient | Prisma.TransactionClient;
 
 export enum LimitMetric {
   // Absolute metrics — total count across the org, never resets
@@ -30,5 +34,6 @@ export interface ILimitsService {
     metric: LimitMetric,
     increment?: number,
     context?: { revisionId?: string; tableId?: string; projectId?: string },
+    db?: BillingDbClient,
   ): Promise<LimitCheckResult>;
 }

@@ -10,6 +10,11 @@ import { CreateEndpointHandler } from '../create-endpoint.handler';
 describe('CreateEndpointHandler', () => {
   let handler: CreateEndpointHandler;
   let prisma: {
+    $transaction: jest.Mock;
+    revision: {
+      findUniqueOrThrow: jest.Mock;
+    };
+    $queryRaw: jest.Mock;
     endpoint: {
       findFirst: jest.Mock;
       create: jest.Mock;
@@ -21,12 +26,26 @@ describe('CreateEndpointHandler', () => {
 
   beforeEach(async () => {
     prisma = {
+      $transaction: jest.fn(),
+      revision: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          branch: {
+            project: {
+              id: 'project-1',
+            },
+          },
+        }),
+      },
+      $queryRaw: jest.fn(),
       endpoint: {
         findFirst: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
       },
     };
+    prisma.$transaction.mockImplementation(
+      async (callback: (tx: typeof prisma) => unknown) => callback(prisma),
+    );
     billingCheck = { check: jest.fn() };
     endpointNotification = { create: jest.fn() };
 
@@ -59,10 +78,32 @@ describe('CreateEndpointHandler', () => {
     expect(billingCheck.check).toHaveBeenCalledWith(
       'rev-1',
       LimitMetric.ENDPOINTS_PER_PROJECT,
+      undefined,
+      undefined,
+      prisma,
     );
+    expect(prisma.$queryRaw).toHaveBeenCalled();
     expect(prisma.endpoint.create).toHaveBeenCalled();
     expect(endpointNotification.create).toHaveBeenCalledWith('endpoint-1');
     expect(result).toBe('endpoint-1');
+  });
+
+  it('does not write or notify when the billing check fails', async () => {
+    prisma.endpoint.findFirst.mockResolvedValue(null);
+    billingCheck.check.mockRejectedValue(new Error('limit exceeded'));
+
+    await expect(
+      handler.execute(
+        new CreateEndpointCommand({
+          revisionId: 'rev-1',
+          type: EndpointType.GRAPHQL,
+        }),
+      ),
+    ).rejects.toThrow('limit exceeded');
+
+    expect(prisma.endpoint.create).not.toHaveBeenCalled();
+    expect(prisma.endpoint.update).not.toHaveBeenCalled();
+    expect(endpointNotification.create).not.toHaveBeenCalled();
   });
 
   it('checks endpoint limits before restoring a deleted endpoint', async () => {
@@ -82,6 +123,9 @@ describe('CreateEndpointHandler', () => {
     expect(billingCheck.check).toHaveBeenCalledWith(
       'rev-1',
       LimitMetric.ENDPOINTS_PER_PROJECT,
+      undefined,
+      undefined,
+      prisma,
     );
     expect(prisma.endpoint.update).toHaveBeenCalledWith({
       where: { id: 'endpoint-2' },

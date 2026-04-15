@@ -174,15 +174,10 @@ describe('Billing GraphQL API (e2e)', () => {
   };
 
   const createEndpointVersion = async (type: EndpointType) => {
-    const existing = await prisma.endpointVersion.findUnique({
+    const created = await prisma.endpointVersion.upsert({
       where: { type_version: { type, version: 1 } },
-    });
-    if (existing) {
-      return existing.id;
-    }
-
-    const created = await prisma.endpointVersion.create({
-      data: {
+      update: {},
+      create: {
         id: nanoid(),
         type,
         version: 1,

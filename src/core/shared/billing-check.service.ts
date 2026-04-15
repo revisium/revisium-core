@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
+  BillingDbClient,
   ILimitsService,
   LimitMetric,
   LIMITS_SERVICE_TOKEN,
@@ -20,8 +21,9 @@ export class BillingCheckService {
     metric: LimitMetric,
     increment?: number,
     context?: { tableId?: string; projectId?: string },
+    db: BillingDbClient = this.prisma,
   ): Promise<void> {
-    const resolved = await this.resolveContext(revisionId);
+    const resolved = await this.resolveContext(revisionId, db);
     const needsContext =
       metric === LimitMetric.ROWS_PER_TABLE ||
       metric === LimitMetric.TABLES_PER_REVISION ||
@@ -29,9 +31,9 @@ export class BillingCheckService {
       metric === LimitMetric.ENDPOINTS_PER_PROJECT;
     const fullContext = needsContext
       ? {
+          ...context,
           revisionId,
           projectId: resolved.projectId,
-          ...context,
         }
       : context;
     const result = await this.limitsService.checkLimit(
@@ -39,6 +41,7 @@ export class BillingCheckService {
       metric,
       increment,
       fullContext,
+      db,
     );
     if (!result.allowed) {
       throw new LimitExceededException(result);
@@ -47,8 +50,9 @@ export class BillingCheckService {
 
   private async resolveContext(
     revisionId: string,
+    db: BillingDbClient,
   ): Promise<{ organizationId: string; projectId: string }> {
-    const revision = await this.prisma.revision.findUniqueOrThrow({
+    const revision = await db.revision.findUniqueOrThrow({
       where: { id: revisionId },
       select: {
         branch: {

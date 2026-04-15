@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
+import { Prisma } from 'src/__generated__/client';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -22,41 +23,72 @@ export class CreateEndpointHandler implements ICommandHandler<
   ) {}
 
   async execute({ data }: CreateEndpointCommand): Promise<string> {
-    const existEndpoint = await this.getEndpoint(data);
+    const endpoint = await this.prisma.$transaction(async (tx) => {
+      const revision = await tx.revision.findUniqueOrThrow({
+        where: { id: data.revisionId },
+        select: {
+          branch: {
+            select: {
+              project: {
+                select: { id: true },
+              },
+            },
+          },
+        },
+      });
 
-    if (existEndpoint && !existEndpoint.isDeleted) {
-      throw new BadRequestException('Endpoint already has been created');
-    }
+      await tx.$queryRaw(
+        Prisma.sql`SELECT pg_advisory_xact_lock(hashtext(${revision.branch.project.id}))`,
+      );
 
-    await this.billingCheck.check(
-      data.revisionId,
-      LimitMetric.ENDPOINTS_PER_PROJECT,
-    );
+      const existEndpoint = await this.getEndpoint(data, tx);
 
-    const endpoint = existEndpoint
-      ? await this.restoreEndpoint(existEndpoint.id)
-      : await this.createEndpoint(data);
+      if (existEndpoint && !existEndpoint.isDeleted) {
+        throw new BadRequestException('Endpoint already has been created');
+      }
+
+      await this.billingCheck.check(
+        data.revisionId,
+        LimitMetric.ENDPOINTS_PER_PROJECT,
+        undefined,
+        undefined,
+        tx,
+      );
+
+      return existEndpoint
+        ? this.restoreEndpoint(existEndpoint.id, tx)
+        : this.createEndpoint(data, tx);
+    });
 
     await this.endpointNotification.create(endpoint.id);
 
     return endpoint.id;
   }
 
-  private getEndpoint({ revisionId, type }: CreateEndpointCommand['data']) {
-    return this.prisma.endpoint.findFirst({
+  private getEndpoint(
+    { revisionId, type }: CreateEndpointCommand['data'],
+    prisma: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
+    return prisma.endpoint.findFirst({
       where: { revisionId, type },
     });
   }
 
-  private restoreEndpoint(endpointId: string) {
-    return this.prisma.endpoint.update({
+  private restoreEndpoint(
+    endpointId: string,
+    prisma: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
+    return prisma.endpoint.update({
       where: { id: endpointId },
       data: { isDeleted: false, createdAt: new Date() },
     });
   }
 
-  private createEndpoint({ revisionId, type }: CreateEndpointCommand['data']) {
-    return this.prisma.endpoint.create({
+  private createEndpoint(
+    { revisionId, type }: CreateEndpointCommand['data'],
+    prisma: Prisma.TransactionClient | PrismaService = this.prisma,
+  ) {
+    return prisma.endpoint.create({
       data: {
         id: nanoid(),
         revision: {

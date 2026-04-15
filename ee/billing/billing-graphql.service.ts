@@ -20,9 +20,19 @@ import { UsageService } from './usage/usage.service';
 
 const VALID_BILLING_STATUSES = new Set<string>(Object.values(BillingStatus));
 const VALID_INTERVALS = new Set(['monthly', 'yearly']);
+const ORG_LIMITS_CACHE_TTL_MS = 60_000;
 
 @Injectable()
 export class BillingGraphqlService implements IBillingGraphqlService {
+  private readonly orgLimitsCache = new Map<
+    string,
+    {
+      data?: Awaited<ReturnType<IBillingClient['getOrgLimits']>>;
+      expiresAt: number;
+      promise?: Promise<Awaited<ReturnType<IBillingClient['getOrgLimits']>>>;
+    }
+  >();
+
   constructor(
     @Inject(BILLING_CLIENT_TOKEN)
     private readonly billingClient: IBillingClient,
@@ -101,7 +111,7 @@ export class BillingGraphqlService implements IBillingGraphqlService {
       return null;
     }
 
-    const orgLimits = await this.billingClient.getOrgLimits(organizationId);
+    const orgLimits = await this.getOrgLimitsCached(organizationId);
     const current = await this.usageService.computeUsage(
       organizationId,
       LimitMetric.ENDPOINTS_PER_PROJECT,
@@ -179,6 +189,37 @@ export class BillingGraphqlService implements IBillingGraphqlService {
     } catch {
       throw new BadRequestException(`${field} must be a valid HTTP(S) URL`);
     }
+  }
+
+  private async getOrgLimitsCached(organizationId: string) {
+    const cached = this.orgLimitsCache.get(organizationId);
+    if (cached?.data && cached.expiresAt > Date.now()) {
+      return cached.data;
+    }
+    if (cached?.promise) {
+      return cached.promise;
+    }
+
+    const promise = this.billingClient
+      .getOrgLimits(organizationId)
+      .then((data) => {
+        this.orgLimitsCache.set(organizationId, {
+          data,
+          expiresAt: Date.now() + ORG_LIMITS_CACHE_TTL_MS,
+        });
+        return data;
+      })
+      .catch((error) => {
+        this.orgLimitsCache.delete(organizationId);
+        throw error;
+      });
+
+    this.orgLimitsCache.set(organizationId, {
+      expiresAt: 0,
+      promise,
+    });
+
+    return promise;
   }
 
 }

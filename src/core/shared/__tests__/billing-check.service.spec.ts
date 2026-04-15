@@ -68,12 +68,14 @@ describe('BillingCheckService', () => {
         revisionId: 'revision-1',
         projectId: 'project-1',
       },
+      prisma,
     );
   });
 
   it('passes through explicit context while preserving resolved project id', async () => {
     await service.check('revision-1', LimitMetric.ENDPOINTS_PER_PROJECT, 2, {
       tableId: 'table-1',
+      projectId: 'user-project',
     });
 
     expect(limitsService.checkLimit).toHaveBeenCalledWith(
@@ -85,6 +87,7 @@ describe('BillingCheckService', () => {
         projectId: 'project-1',
         tableId: 'table-1',
       },
+      prisma,
     );
   });
 
@@ -96,6 +99,7 @@ describe('BillingCheckService', () => {
       LimitMetric.PROJECTS,
       undefined,
       undefined,
+      prisma,
     );
   });
 

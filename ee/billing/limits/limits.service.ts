@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import {
+  BillingDbClient,
   ILimitsService,
   LimitCheckResult,
   LimitMetric,
@@ -42,6 +43,7 @@ export class LimitsService implements ILimitsService {
     metric: LimitMetric,
     increment: number = 1,
     context?: { revisionId?: string; tableId?: string; projectId?: string },
+    db?: BillingDbClient,
   ): Promise<LimitCheckResult> {
     const orgLimits = await this.getOrgLimits(organizationId);
     if (!orgLimits) return { allowed: true };
@@ -49,7 +51,7 @@ export class LimitsService implements ILimitsService {
     const limit = this.getLimitForMetric(orgLimits, metric);
     if (limit === null || limit === undefined) return { allowed: true };
 
-    const current = await this.getUsage(organizationId, metric, context);
+    const current = await this.getUsage(organizationId, metric, context, db);
     const projected = current + increment;
 
     if (projected > limit) {
@@ -70,9 +72,10 @@ export class LimitsService implements ILimitsService {
     organizationId: string,
     metric: LimitMetric,
     context?: { revisionId?: string; tableId?: string; projectId?: string },
+    db?: BillingDbClient,
   ): Promise<number> {
     if (LimitsService.UNCACHED_METRICS.has(metric)) {
-      return this.usageService.computeUsage(organizationId, metric, context);
+      return this.usageService.computeUsage(organizationId, metric, context, db);
     }
 
     const cacheKey =
@@ -81,7 +84,7 @@ export class LimitsService implements ILimitsService {
         : metric;
 
     return this.billingCache.usage(organizationId, cacheKey, () =>
-      this.usageService.computeUsage(organizationId, metric, context),
+      this.usageService.computeUsage(organizationId, metric, context, db),
     );
   }
 
