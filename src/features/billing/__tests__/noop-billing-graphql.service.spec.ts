@@ -26,6 +26,10 @@ describe('NoopBillingGraphqlService', () => {
     expect(await service.getUsage()).toBeNull();
   });
 
+  it('getProjectEndpointUsage returns null', async () => {
+    expect(await service.getProjectEndpointUsage()).toBeNull();
+  });
+
   it('activateEarlyAccess throws', async () => {
     await expect(service.activateEarlyAccess()).rejects.toThrow(
       BadRequestException,
