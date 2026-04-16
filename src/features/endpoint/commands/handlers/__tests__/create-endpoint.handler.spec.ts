@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { EndpointType } from 'src/__generated__/client';
+import { EndpointType, Prisma } from 'src/__generated__/client';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -93,6 +93,27 @@ describe('CreateEndpointHandler', () => {
 
     expect(prisma.endpoint.create).not.toHaveBeenCalled();
     expect(prisma.endpoint.update).not.toHaveBeenCalled();
+    expect(endpointNotification.create).not.toHaveBeenCalled();
+  });
+
+  it('translates endpoint unique conflicts into the expected validation error', async () => {
+    prisma.endpoint.findFirst.mockResolvedValue(null);
+    prisma.endpoint.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+      }),
+    );
+
+    await expect(
+      handler.execute(
+        new CreateEndpointCommand({
+          revisionId: 'rev-1',
+          type: EndpointType.GRAPHQL,
+        }),
+      ),
+    ).rejects.toThrow('Endpoint already has been created');
+
     expect(endpointNotification.create).not.toHaveBeenCalled();
   });
 

@@ -102,4 +102,39 @@ describe('BillingGraphqlService', () => {
     });
     expect(billingClient.getOrgLimits).not.toHaveBeenCalled();
   });
+
+  it('loads the endpoint limit when the injected option is undefined', async () => {
+    const billingClient = createBillingClient({
+      getOrgLimits: jest.fn().mockResolvedValue({
+        planId: 'pro',
+        status: BillingStatus.active,
+        limits: {
+          row_versions: null,
+          projects: null,
+          seats: null,
+          storage_bytes: null,
+          api_calls_per_day: null,
+          rows_per_table: null,
+          tables_per_revision: null,
+          branches_per_project: null,
+          endpoints_per_project: 12,
+        },
+      }),
+    });
+    const usageService = createUsageService({
+      computeUsage: jest.fn().mockResolvedValue(6),
+    });
+    const service = new BillingGraphqlService(billingClient, usageService);
+
+    await expect(
+      service.getProjectEndpointUsage('org-1', 'project-1', {
+        endpointLimit: undefined,
+      }),
+    ).resolves.toEqual({
+      current: 6,
+      limit: 12,
+      percentage: 50,
+    });
+    expect(billingClient.getOrgLimits).toHaveBeenCalledWith('org-1');
+  });
 });

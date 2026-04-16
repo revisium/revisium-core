@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
+import { Prisma } from 'src/__generated__/client';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -29,9 +30,15 @@ export class CreateEndpointHandler implements ICommandHandler<
   }
 
   async execute({ data }: CreateEndpointCommand): Promise<string> {
-    const endpoint = await this.transactionService.runSerializable(() =>
-      this.transactionHandler(data),
-    );
+    const endpoint = await this.transactionService
+      .runSerializable(() => this.transactionHandler(data))
+      .catch((error) => {
+        if (this.isEndpointAlreadyCreatedError(error)) {
+          throw new BadRequestException('Endpoint already has been created');
+        }
+
+        throw error;
+      });
 
     await this.endpointNotification.create(endpoint.id);
 
@@ -97,5 +104,12 @@ export class CreateEndpointHandler implements ICommandHandler<
         },
       },
     });
+  }
+
+  private isEndpointAlreadyCreatedError(error: unknown) {
+    return (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === 'P2002'
+    );
   }
 }
