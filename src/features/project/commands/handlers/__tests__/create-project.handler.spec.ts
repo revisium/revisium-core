@@ -1,9 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { TestingModule } from '@nestjs/testing';
-import {
-  prepareProject,
-  createTestingModule,
-} from 'src/testing/project/project-command-test-utils';
+import { createProjectCommandTestKit } from 'src/testing/kit/create-project-command-test-kit';
+import { prepareProject } from 'src/testing/utils/prepareProject';
 import { DEFAULT_BRANCH_NAME } from 'src/features/project/commands/handlers/create-project.handler';
 import {
   CreateProjectCommand,
@@ -255,11 +253,11 @@ describe('CreateProjectHandler', () => {
   }
 
   beforeAll(async () => {
-    const result = await createTestingModule();
-    moduleFixture = result.module;
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    closeModule = result.close;
+    const kit = await createProjectCommandTestKit();
+    moduleFixture = kit.module;
+    prismaService = kit.prismaService;
+    commandBus = kit.commandBus;
+    closeModule = kit.close;
   });
 
   afterAll(async () => {

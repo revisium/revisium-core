@@ -3,7 +3,7 @@ import { TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
 import { prepareProject } from 'src/testing/utils/prepareProject';
 import { UserProjectRoles, UserSystemRoles } from 'src/features/auth/consts';
-import { createTestingModule } from 'src/testing/project/project-command-test-utils';
+import { createProjectCommandTestKit } from 'src/testing/kit/create-project-command-test-kit';
 import {
   UpdateUserProjectRoleCommand,
   UpdateUserProjectRoleCommandReturnType,
@@ -154,12 +154,12 @@ describe('UpdateUserProjectRole', () => {
   }
 
   beforeAll(async () => {
-    const result = await createTestingModule();
-    moduleFixture = result.module;
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    endpointNotificationService = result.endpointNotificationService;
-    closeModule = result.close;
+    const kit = await createProjectCommandTestKit();
+    moduleFixture = kit.module;
+    prismaService = kit.prismaService;
+    commandBus = kit.commandBus;
+    endpointNotificationService = kit.endpointNotificationService;
+    closeModule = kit.close;
   });
 
   beforeEach(() => {

@@ -1,7 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { TestingModule } from '@nestjs/testing';
 import { prepareProject } from 'src/testing/utils/prepareProject';
-import { createTestingModule } from 'src/testing/project/project-command-test-utils';
+import { createProjectCommandTestKit } from 'src/testing/kit/create-project-command-test-kit';
 import {
   UpdateProjectCommand,
   UpdateProjectCommandReturnType,
@@ -61,12 +61,12 @@ describe('UpdateProjectHandler', () => {
   }
 
   beforeAll(async () => {
-    const result = await createTestingModule();
-    moduleFixture = result.module;
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    authCacheService = result.module.get(AuthCacheService);
-    closeModule = result.close;
+    const kit = await createProjectCommandTestKit();
+    moduleFixture = kit.module;
+    prismaService = kit.prismaService;
+    commandBus = kit.commandBus;
+    authCacheService = kit.module.get(AuthCacheService);
+    closeModule = kit.close;
   });
 
   afterAll(async () => {
