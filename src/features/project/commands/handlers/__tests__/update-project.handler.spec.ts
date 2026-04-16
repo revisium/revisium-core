@@ -1,6 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
-import { createTestingModule } from 'src/features/project/commands/handlers/__tests__/utils';
+import { TestingModule } from '@nestjs/testing';
+import { prepareProject } from 'src/testing/utils/prepareProject';
+import { createTestingModule } from 'src/testing/project/project-command-test-utils';
 import {
   UpdateProjectCommand,
   UpdateProjectCommandReturnType,
@@ -11,7 +12,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 describe('UpdateProjectHandler', () => {
   it('should update isPublic', async () => {
     const { organizationId, projectName, projectId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const command = new UpdateProjectCommand({
       organizationId,
@@ -30,7 +31,7 @@ describe('UpdateProjectHandler', () => {
   });
 
   it('should invalidate project permissions cache after update', async () => {
-    const { organizationId, projectName } = await prepareProject(prismaService);
+    const { organizationId, projectName } = await prepareProject(moduleFixture);
 
     const spy = jest.spyOn(authCacheService, 'invalidateProjectPermissions');
 
@@ -50,6 +51,7 @@ describe('UpdateProjectHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let authCacheService: AuthCacheService;
+  let moduleFixture: TestingModule;
 
   function execute(
     command: UpdateProjectCommand,
@@ -59,6 +61,7 @@ describe('UpdateProjectHandler', () => {
 
   beforeAll(async () => {
     const result = await createTestingModule();
+    moduleFixture = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     authCacheService = result.module.get(AuthCacheService);

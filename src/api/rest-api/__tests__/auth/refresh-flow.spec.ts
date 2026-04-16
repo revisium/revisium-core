@@ -4,8 +4,8 @@ import request from 'supertest';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { createFreshTestApp, anonPost } from 'src/__tests__/e2e/shared';
+} from 'src/testing/utils/prepareProject';
+import { createFreshTestApp, anonPost } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 type SetCookieHeader = string[] | string | undefined;

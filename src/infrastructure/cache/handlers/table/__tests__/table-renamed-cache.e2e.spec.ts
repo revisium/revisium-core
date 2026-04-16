@@ -2,7 +2,7 @@ import { CacheService } from 'src/infrastructure/cache/services/cache.service';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 import { TableRenamedEventHandler } from '../table-renamed.handler';
 import { TableRenamedEvent } from 'src/infrastructure/cache/events';
-import { InMemoryBentoCache } from '../../__tests__/in-memory-bento-cache';
+import { InMemoryBentoCache } from 'src/testing/infrastructure/cache/in-memory-bento-cache';
 
 describe('TableRenamedEventHandler (cache)', () => {
   const revisionId = 'rev-1';

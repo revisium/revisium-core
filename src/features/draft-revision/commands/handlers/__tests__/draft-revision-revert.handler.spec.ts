@@ -5,10 +5,8 @@ import { DraftRevisionRevertCommand } from 'src/features/draft-revision/commands
 import { DraftRevisionRevertCommandReturnType } from 'src/features/draft-revision/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createDraftRevisionTestingModule,
-  prepareDraftRevisionTest,
-} from './utils';
+import { createDraftRevisionCommandTestKit } from 'src/testing/kit/create-draft-revision-command-test-kit';
+import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionRevertHandler', () => {
   let prismaService: PrismaService;
@@ -16,7 +14,7 @@ describe('DraftRevisionRevertHandler', () => {
   let transactionService: TransactionPrismaService;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionTestingModule();
+    const result = await createDraftRevisionCommandTestKit();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
@@ -54,7 +52,7 @@ describe('DraftRevisionRevertHandler', () => {
 
   describe('validation', () => {
     it('should throw if branch has no head revision', async () => {
-      const { branchId } = await prepareDraftRevisionTest(prismaService);
+      const { branchId } = await givenDraftRevision(prismaService);
       await prismaService.revision.updateMany({
         where: { branchId },
         data: { isHead: false },
@@ -70,7 +68,7 @@ describe('DraftRevisionRevertHandler', () => {
     });
 
     it('should throw if branch has no draft revision', async () => {
-      const { branchId } = await prepareDraftRevisionTest(prismaService);
+      const { branchId } = await givenDraftRevision(prismaService);
       await prismaService.revision.updateMany({
         where: { branchId },
         data: { isDraft: false },
@@ -86,7 +84,7 @@ describe('DraftRevisionRevertHandler', () => {
     });
 
     it('should throw if draft has no changes', async () => {
-      const { branchId } = await prepareDraftRevisionTest(prismaService);
+      const { branchId } = await givenDraftRevision(prismaService);
 
       const command = new DraftRevisionRevertCommand({ branchId });
       await expect(runInTransaction(command)).rejects.toThrow(
@@ -101,7 +99,7 @@ describe('DraftRevisionRevertHandler', () => {
   describe('success cases', () => {
     it('should revert draft to head state', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -113,7 +111,7 @@ describe('DraftRevisionRevertHandler', () => {
 
     it('should reset hasChanges flag', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -128,7 +126,7 @@ describe('DraftRevisionRevertHandler', () => {
 
     it('should reset draft tables to head tables', async () => {
       const { branchId, headRevisionId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -152,7 +150,7 @@ describe('DraftRevisionRevertHandler', () => {
 
     it('should disconnect draft-only tables', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       const tableResult = await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 

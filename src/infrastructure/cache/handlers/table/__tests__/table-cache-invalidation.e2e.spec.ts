@@ -6,7 +6,7 @@ import {
   TableSchemaUpdatedEvent,
   TableDeletedEvent,
 } from 'src/infrastructure/cache/events';
-import { InMemoryBentoCache } from '../../__tests__/in-memory-bento-cache';
+import { InMemoryBentoCache } from 'src/testing/infrastructure/cache/in-memory-bento-cache';
 
 describe('Table cache invalidation', () => {
   const revisionId = 'rev-1';

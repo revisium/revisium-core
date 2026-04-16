@@ -1,7 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import { Request } from 'express';
 import { JwtSecretService } from 'src/features/auth/jwt-secret.service';
 import {

@@ -1,5 +1,5 @@
 import { INestApplication } from '@nestjs/common';
-import { createFreshTestApp, anonGet } from 'src/__tests__/e2e/shared';
+import { createFreshTestApp, anonGet } from 'src/testing/e2e';
 
 describe('restapi - configuration', () => {
   let app: INestApplication;

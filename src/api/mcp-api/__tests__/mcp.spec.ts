@@ -3,8 +3,8 @@ import request from 'supertest';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+} from 'src/testing/utils/prepareProject';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { AuthService } from 'src/features/auth/auth.service';
 
 const mcpPost = (app: INestApplication, body: object, token?: string) => {

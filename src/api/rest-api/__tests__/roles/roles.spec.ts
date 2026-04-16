@@ -2,14 +2,14 @@ import { INestApplication } from '@nestjs/common';
 import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   createFreshTestApp,
   authGet,
   authPost,
   authDelete,
   authPut,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { EndpointType } from 'src/api/graphql-api/endpoint/model/endpoint.model';
 

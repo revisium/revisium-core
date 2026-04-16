@@ -1,14 +1,14 @@
 import { INestApplication } from '@nestjs/common';
-import { gql } from 'src/__tests__/utils/gql';
+import { gql } from 'src/testing/utils/gql';
 import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   createFreshTestApp,
   gqlQuery,
   gqlQueryExpectError,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('graphql - endpoint mutations (role-based)', () => {

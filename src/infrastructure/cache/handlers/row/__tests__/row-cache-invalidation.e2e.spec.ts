@@ -10,7 +10,7 @@ import {
   RowDeletedEvent,
   RowsDeletedEvent,
 } from 'src/infrastructure/cache/events';
-import { InMemoryBentoCache } from '../../__tests__/in-memory-bento-cache';
+import { InMemoryBentoCache } from 'src/testing/infrastructure/cache/in-memory-bento-cache';
 
 describe('Row cache invalidation', () => {
   const revisionId = 'rev-1';

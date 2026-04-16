@@ -1,6 +1,6 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { findConstraint } from 'src/api/rest-api/table/dto/__tests__/utils';
+import { findConstraint } from 'src/testing/assertions/find-constraint';
 import { BoolFilterDto } from '../row/bool-filter.dto';
 
 describe('BoolFilterDto', () => {

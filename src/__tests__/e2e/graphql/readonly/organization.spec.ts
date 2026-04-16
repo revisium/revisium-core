@@ -1,12 +1,12 @@
 import { INestApplication } from '@nestjs/common';
-import { gql } from 'src/__tests__/utils/gql';
+import { gql } from 'src/testing/utils/gql';
 import {
   getTestApp,
   closeTestApp,
   getReadonlyFixture,
   gqlQuery,
   type PrepareDataReturnType,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 
 describe('graphql - organization (readonly)', () => {
   let app: INestApplication;

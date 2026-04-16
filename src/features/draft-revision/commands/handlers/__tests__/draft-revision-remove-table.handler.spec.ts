@@ -9,10 +9,8 @@ import {
 } from 'src/features/draft-revision/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createDraftRevisionTestingModule,
-  prepareDraftRevisionTest,
-} from './utils';
+import { createDraftRevisionCommandTestKit } from 'src/testing/kit/create-draft-revision-command-test-kit';
+import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionRemoveTableHandler', () => {
   let prismaService: PrismaService;
@@ -27,7 +25,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
   }
 
   beforeAll(async () => {
-    const result = await createDraftRevisionTestingModule();
+    const result = await createDraftRevisionCommandTestKit();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
@@ -79,7 +77,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
 
   describe('validation', () => {
     it('should throw an error if table does not exist', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       const command = new DraftRevisionRemoveTableCommand({
         revisionId: draftRevisionId,
@@ -97,7 +95,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
 
   describe('success cases', () => {
     it('should delete table when table is not readonly', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       const tableResult = await createTable(draftRevisionId, 'test-table');
 
       const command = new DraftRevisionRemoveTableCommand({
@@ -118,7 +116,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
     });
 
     it('should delete table and its rows when rows are only linked to this table', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       const tableResult = await createTableWithRow(
         draftRevisionId,
         'test-table',
@@ -154,7 +152,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
     });
 
     it('should disconnect table when table is readonly', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       const tableResult = await createTable(draftRevisionId, 'test-table');
 
       await prismaService.table.update({
@@ -186,7 +184,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
 
   describe('hasChanges', () => {
     it('should set hasChanges to false when all changes are removed', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       await createTable(draftRevisionId, 'test-table');
       await resetHasChanges(draftRevisionId);
 
@@ -211,7 +209,7 @@ describe('DraftRevisionRemoveTableHandler', () => {
     });
 
     it('should keep hasChanges true when other changes remain', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       await createTable(draftRevisionId, 'table-to-keep');
       await createTable(draftRevisionId, 'table-to-remove');
 

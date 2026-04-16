@@ -1,13 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createExpressImageFile } from 'src/__tests__/utils/file';
+import { createExpressImageFile } from 'src/testing/utils/file';
 import {
-  createPreviousFile,
+  createEmptyFile,
   prepareData,
   PrepareDataReturnType,
   prepareRow,
   prepareTableWithSchema,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   getArraySchema,
   getObjectSchema,
@@ -15,13 +15,11 @@ import {
 } from '@revisium/schema-toolkit/mocks';
 import { CoreModule } from 'src/core/core.module';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { STORAGE_SERVICE } from 'src/infrastructure/storage/storage.interface';
 import request from 'supertest';
 
 describe('restapi - row - upload file', () => {
   let preparedData: PrepareDataReturnType;
-  let prismaService: PrismaService;
   let fileId: string;
   let tableId: string;
   let rowId: string;
@@ -75,7 +73,6 @@ describe('restapi - row - upload file', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
-    prismaService = app.get(PrismaService);
     await app.init();
 
     await prepare();
@@ -88,19 +85,12 @@ describe('restapi - row - upload file', () => {
   async function prepare() {
     preparedData = await prepareData(app);
 
-    const {
-      headRevisionId,
-      draftRevisionId,
-      schemaTableVersionId,
-      migrationTableVersionId,
-    } = preparedData.project;
+    const { draftRevisionId, projectId, branchName } = preparedData.project;
 
-    const table = await prepareTableWithSchema({
-      prismaService,
-      headRevisionId,
+    const table = await prepareTableWithSchema(app, {
+      projectId,
+      branchName,
       draftRevisionId,
-      schemaTableVersionId,
-      migrationTableVersionId,
       schema: getObjectSchema({
         file: getRefSchema(SystemSchemaIds.File),
         files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
@@ -108,22 +98,27 @@ describe('restapi - row - upload file', () => {
     });
 
     const data = {
-      file: createPreviousFile(),
+      file: createEmptyFile(),
       files: [],
     };
 
-    const { rowDraft } = await prepareRow({
-      prismaService,
-      headTableVersionId: table.headTableVersionId,
-      draftTableVersionId: table.draftTableVersionId,
-      schema: table.schema,
+    const rowResult = await prepareRow(app, {
+      projectId,
+      branchName,
+      draftRevisionId: table.draftRevisionId,
+      tableId: table.tableId,
       data: data,
       dataDraft: data,
     });
+    const { rowDraft } = rowResult;
 
     tableId = table.tableId;
     rowId = rowDraft.id;
-    fileId = data.file.fileId;
+    fileId = (rowDraft.data as { file: { fileId: string } }).file.fileId;
+    preparedData.project.headRevisionId = rowResult.headRevisionId;
+    preparedData.project.draftRevisionId = rowResult.draftRevisionId;
+    preparedData.project.tableId = table.tableId;
+    preparedData.project.rowId = rowDraft.id;
     file = createExpressImageFile();
   }
 });

@@ -3,16 +3,14 @@ import { nanoid } from 'nanoid';
 import { DraftRevisionRecomputeHasChangesCommand } from 'src/features/draft-revision/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createDraftRevisionTestingModule,
-  prepareDraftRevisionTest,
-} from 'src/features/draft-revision/commands/handlers/__tests__/utils';
+import { createDraftRevisionCommandTestKit } from 'src/testing/kit/create-draft-revision-command-test-kit';
+import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionRecomputeHasChangesHandler', () => {
   describe('revert table', () => {
     it('should revert table to head when no row changes remain', async () => {
       const { draftRevisionId, headRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
 
       const tableId = 'test-table';
       const headTableVersionId = nanoid();
@@ -90,7 +88,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
 
     it('should connect to head table version when reverting', async () => {
       const { draftRevisionId, headRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
 
       const tableId = 'test-table';
       const headTableVersionId = nanoid();
@@ -180,7 +178,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
     });
 
     it('should not revert table when row changes remain', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       const tableId = 'test-table';
       const tableVersionId = nanoid();
@@ -237,7 +235,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
     });
 
     it('should NOT revert table when table does not exist in head', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       const tableId = 'new-draft-table';
       const tableVersionId = nanoid();
@@ -284,7 +282,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
     });
 
     it('should NOT revert table when table created in draft and all rows removed', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       const tableId = 'new-draft-table';
       const tableVersionId = nanoid();
@@ -349,7 +347,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
 
   describe('hasChanges computation', () => {
     it('should set hasChanges to false when no table diffs', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       await prismaService.revision.update({
         where: { id: draftRevisionId },
@@ -371,7 +369,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
     });
 
     it('should keep hasChanges true when other tables have changes', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       await prismaService.table.create({
         data: {
@@ -430,7 +428,7 @@ describe('DraftRevisionRecomputeHasChangesHandler', () => {
   let transactionService: TransactionPrismaService;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionTestingModule();
+    const result = await createDraftRevisionCommandTestKit();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;

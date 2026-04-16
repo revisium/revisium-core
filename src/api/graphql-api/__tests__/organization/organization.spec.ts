@@ -1,11 +1,11 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { gql } from 'src/__tests__/utils/gql';
+import { gql } from 'src/testing/utils/gql';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { graphqlQuery, graphqlQueryError } from 'src/__tests__/utils/queryTest';
+} from 'src/testing/utils/prepareProject';
+import { graphqlQuery, graphqlQueryError } from 'src/testing/utils/queryTest';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 

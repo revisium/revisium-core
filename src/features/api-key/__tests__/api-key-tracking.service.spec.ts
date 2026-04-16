@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
 import { ApiKeyType } from 'src/__generated__/client';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import { ApiKeyTrackingService } from 'src/features/api-key/api-key-tracking.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 

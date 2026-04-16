@@ -1,7 +1,7 @@
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   SearchUsersQuery,

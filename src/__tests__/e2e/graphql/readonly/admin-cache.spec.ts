@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
-import { gql } from 'src/__tests__/utils/gql';
+import { testCreateUser } from 'src/testing/factories/create-models';
+import { gql } from 'src/testing/utils/gql';
 import { UserSystemRoles } from 'src/features/auth/consts';
 import { AuthService } from 'src/features/auth/auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -12,7 +12,7 @@ import {
   gqlQuery,
   gqlQueryRaw,
   type PrepareDataReturnType,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 
 describe('graphql - admin cache (readonly)', () => {
   let app: INestApplication;

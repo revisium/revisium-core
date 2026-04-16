@@ -1,16 +1,16 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { gql } from 'src/__tests__/utils/gql';
+import { gql } from 'src/testing/utils/gql';
 import {
   anonGet,
   anonPost,
   createFreshTestApp,
   gqlQuery,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 
 const mcpPost = (app: INestApplication, body: object) => {
   return request(app.getHttpServer())

@@ -8,10 +8,8 @@ import {
 } from 'src/features/draft-revision/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import {
-  createDraftRevisionTestingModule,
-  prepareDraftRevisionTest,
-} from './utils';
+import { createDraftRevisionCommandTestKit } from 'src/testing/kit/create-draft-revision-command-test-kit';
+import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionRenameTableHandler', () => {
   let prismaService: PrismaService;
@@ -19,7 +17,7 @@ describe('DraftRevisionRenameTableHandler', () => {
   let transactionService: TransactionPrismaService;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionTestingModule();
+    const result = await createDraftRevisionCommandTestKit();
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     transactionService = result.transactionService;
@@ -50,7 +48,7 @@ describe('DraftRevisionRenameTableHandler', () => {
 
   describe('validation', () => {
     it('should throw an error if revision is not a draft', async () => {
-      const { headRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { headRevisionId } = await givenDraftRevision(prismaService);
 
       const command = new DraftRevisionRenameTableCommand({
         revisionId: headRevisionId,
@@ -64,7 +62,7 @@ describe('DraftRevisionRenameTableHandler', () => {
     });
 
     it('should throw an error if table does not exist', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
 
       const command = new DraftRevisionRenameTableCommand({
         revisionId: draftRevisionId,
@@ -78,7 +76,7 @@ describe('DraftRevisionRenameTableHandler', () => {
     });
 
     it('should throw an error if nextTableId is empty', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       await createTable(draftRevisionId, 'test-table');
 
       const command = new DraftRevisionRenameTableCommand({
@@ -93,7 +91,7 @@ describe('DraftRevisionRenameTableHandler', () => {
     });
 
     it('should throw an error if nextTableId already exists', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       await createTable(draftRevisionId, 'table-one');
       await createTable(draftRevisionId, 'table-two');
 
@@ -109,7 +107,7 @@ describe('DraftRevisionRenameTableHandler', () => {
     });
 
     it('should throw an error if tableId equals nextTableId', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       await createTable(draftRevisionId, 'test-table');
 
       const command = new DraftRevisionRenameTableCommand({
@@ -129,7 +127,7 @@ describe('DraftRevisionRenameTableHandler', () => {
 
   describe('rename draft table', () => {
     it('should rename a draft table', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       const createResult = await createTable(draftRevisionId, 'original-table');
 
       const command = new DraftRevisionRenameTableCommand({
@@ -154,7 +152,7 @@ describe('DraftRevisionRenameTableHandler', () => {
 
   describe('hasChanges', () => {
     it('should set hasChanges to true on revision', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(prismaService);
       await createTable(draftRevisionId, 'original-table');
       await prismaService.revision.update({
         where: { id: draftRevisionId },
@@ -186,7 +184,7 @@ describe('DraftRevisionRenameTableHandler', () => {
   describe('rename readonly table (copy-on-write)', () => {
     it('should create new table version when renaming readonly table', async () => {
       const { draftRevisionId, headRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       const createResult = await createTable(draftRevisionId, 'shared-table');
 
       await prismaService.table.update({

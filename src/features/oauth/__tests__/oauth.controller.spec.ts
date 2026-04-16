@@ -5,8 +5,8 @@ import { ApiKeyType } from 'src/__generated__/client';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+} from 'src/testing/utils/prepareProject';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { AuthService } from 'src/features/auth/auth.service';
 import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';

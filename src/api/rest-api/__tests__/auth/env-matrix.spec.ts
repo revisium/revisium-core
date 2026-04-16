@@ -7,8 +7,8 @@ import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { anonPost } from 'src/__tests__/e2e/shared';
+} from 'src/testing/utils/prepareProject';
+import { anonPost } from 'src/testing/e2e';
 
 type SetCookieHeader = string[] | string | undefined;
 

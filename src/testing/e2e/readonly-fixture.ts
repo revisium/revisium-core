@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 let cachedFixture: PrepareDataReturnType | null = null;

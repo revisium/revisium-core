@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { prepareData } from 'src/__tests__/utils/prepareProject';
-import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+import { prepareData } from 'src/testing/utils/prepareProject';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { AuthService } from 'src/features/auth/auth.service';
 
 interface McpToolResult {
