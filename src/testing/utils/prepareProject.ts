@@ -461,7 +461,7 @@ export async function prepareRow({
       },
       data: dataDraft,
       hash: hash(dataDraft),
-      schemaHash: hash(testSchema),
+      schemaHash: hash(schema),
     },
   });
 
