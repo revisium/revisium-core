@@ -5,8 +5,8 @@ import {
   LIMITS_SERVICE_TOKEN,
   LimitMetric,
 } from 'src/features/billing/limits.interface';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 describe('BillingCheckService', () => {
   let service: BillingCheckService;
@@ -15,6 +15,7 @@ describe('BillingCheckService', () => {
       findUniqueOrThrow: jest.Mock;
     };
   };
+  let transactionService: { getTransactionOrPrisma: jest.Mock };
   let limitsService: jest.Mocked<ILimitsService>;
 
   beforeEach(async () => {
@@ -33,11 +34,14 @@ describe('BillingCheckService', () => {
     limitsService = {
       checkLimit: jest.fn().mockResolvedValue({ allowed: true }),
     };
+    transactionService = {
+      getTransactionOrPrisma: jest.fn().mockReturnValue(prisma),
+    };
 
     const module = await Test.createTestingModule({
       providers: [
         BillingCheckService,
-        { provide: PrismaService, useValue: prisma },
+        { provide: TransactionPrismaService, useValue: transactionService },
         { provide: LIMITS_SERVICE_TOKEN, useValue: limitsService },
       ],
     }).compile();
@@ -68,7 +72,6 @@ describe('BillingCheckService', () => {
         revisionId: 'revision-1',
         projectId: 'project-1',
       },
-      prisma,
     );
   });
 
@@ -87,7 +90,6 @@ describe('BillingCheckService', () => {
         projectId: 'project-1',
         tableId: 'table-1',
       },
-      prisma,
     );
   });
 
@@ -99,7 +101,6 @@ describe('BillingCheckService', () => {
       LimitMetric.PROJECTS,
       undefined,
       undefined,
-      prisma,
     );
   });
 

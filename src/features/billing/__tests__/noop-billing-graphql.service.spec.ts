@@ -26,6 +26,10 @@ describe('NoopBillingGraphqlService', () => {
     expect(await service.getUsage()).toBeNull();
   });
 
+  it('getProjectEndpointLimit returns undefined', async () => {
+    expect(await service.getProjectEndpointLimit()).toBeUndefined();
+  });
+
   it('getProjectEndpointUsage returns null', async () => {
     expect(await service.getProjectEndpointUsage()).toBeNull();
   });

@@ -3,6 +3,7 @@ import { EndpointType } from 'src/__generated__/client';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import { CreateEndpointCommand } from '../../impl';
 import { CreateEndpointHandler } from '../create-endpoint.handler';
@@ -10,42 +11,33 @@ import { CreateEndpointHandler } from '../create-endpoint.handler';
 describe('CreateEndpointHandler', () => {
   let handler: CreateEndpointHandler;
   let prisma: {
-    $transaction: jest.Mock;
-    revision: {
-      findUniqueOrThrow: jest.Mock;
-    };
-    $queryRaw: jest.Mock;
     endpoint: {
       findFirst: jest.Mock;
       create: jest.Mock;
       update: jest.Mock;
     };
   };
+  let transactionService: {
+    runSerializable: jest.Mock;
+    getTransaction: jest.Mock;
+  };
   let billingCheck: { check: jest.Mock };
   let endpointNotification: { create: jest.Mock };
 
   beforeEach(async () => {
     prisma = {
-      $transaction: jest.fn(),
-      revision: {
-        findUniqueOrThrow: jest.fn().mockResolvedValue({
-          branch: {
-            project: {
-              id: 'project-1',
-            },
-          },
-        }),
-      },
-      $queryRaw: jest.fn(),
       endpoint: {
         findFirst: jest.fn(),
         create: jest.fn(),
         update: jest.fn(),
       },
     };
-    prisma.$transaction.mockImplementation(
-      async (callback: (tx: typeof prisma) => unknown) => callback(prisma),
-    );
+    transactionService = {
+      runSerializable: jest
+        .fn()
+        .mockImplementation((callback: () => unknown) => callback()),
+      getTransaction: jest.fn().mockReturnValue(prisma),
+    };
     billingCheck = { check: jest.fn() };
     endpointNotification = { create: jest.fn() };
 
@@ -53,6 +45,7 @@ describe('CreateEndpointHandler', () => {
       providers: [
         CreateEndpointHandler,
         { provide: PrismaService, useValue: prisma },
+        { provide: TransactionPrismaService, useValue: transactionService },
         { provide: BillingCheckService, useValue: billingCheck },
         {
           provide: EndpointNotificationService,
@@ -78,11 +71,8 @@ describe('CreateEndpointHandler', () => {
     expect(billingCheck.check).toHaveBeenCalledWith(
       'rev-1',
       LimitMetric.ENDPOINTS_PER_PROJECT,
-      undefined,
-      undefined,
-      prisma,
     );
-    expect(prisma.$queryRaw).toHaveBeenCalled();
+    expect(transactionService.runSerializable).toHaveBeenCalled();
     expect(prisma.endpoint.create).toHaveBeenCalled();
     expect(endpointNotification.create).toHaveBeenCalledWith('endpoint-1');
     expect(result).toBe('endpoint-1');
@@ -123,9 +113,6 @@ describe('CreateEndpointHandler', () => {
     expect(billingCheck.check).toHaveBeenCalledWith(
       'rev-1',
       LimitMetric.ENDPOINTS_PER_PROJECT,
-      undefined,
-      undefined,
-      prisma,
     );
     expect(prisma.endpoint.update).toHaveBeenCalledWith({
       where: { id: 'endpoint-2' },

@@ -36,9 +36,6 @@ export class EarlyAccessService {
       ? await this.billingClient.getPlan(subscription.planId)
       : null;
 
-    return this.usageService.computeUsageSummary(
-      organizationId,
-      plan?.limits,
-    );
+    return this.usageService.computeUsageSummary(organizationId, plan?.limits);
   }
 }

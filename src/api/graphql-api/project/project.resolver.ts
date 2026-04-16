@@ -1,6 +1,7 @@
 import { Inject, UseGuards } from '@nestjs/common';
 import {
   Args,
+  Context,
   Mutation,
   Parent,
   Query,
@@ -34,6 +35,10 @@ import {
   BILLING_GRAPHQL_SERVICE_TOKEN,
   IBillingGraphqlService,
 } from 'src/features/billing/billing-graphql.interface';
+
+type ProjectResolverContext = {
+  endpointUsageLimitByOrg?: Map<string, Promise<number | null | undefined>>;
+};
 
 @PermissionParams({
   action: PermissionAction.read,
@@ -153,10 +158,43 @@ export class ProjectResolver {
   }
 
   @ResolveField(() => UsageMetricModel, { nullable: true })
-  endpointUsage(@Parent() parent: ProjectModel) {
+  async endpointUsage(
+    @Parent() parent: ProjectModel,
+    @Context() ctx: ProjectResolverContext,
+  ) {
+    const endpointLimit = await this.getEndpointUsageLimitForOrganization(
+      parent.organizationId,
+      ctx,
+    );
+
+    if (endpointLimit === undefined) {
+      return null;
+    }
+
     return this.billingService.getProjectEndpointUsage(
       parent.organizationId,
       parent.id,
+      { endpointLimit },
     );
+  }
+
+  private getEndpointUsageLimitForOrganization(
+    organizationId: string,
+    ctx: ProjectResolverContext,
+  ) {
+    if (!ctx.endpointUsageLimitByOrg) {
+      ctx.endpointUsageLimitByOrg = new Map();
+    }
+
+    const existing = ctx.endpointUsageLimitByOrg.get(organizationId);
+    if (existing) {
+      return existing;
+    }
+
+    const limitPromise =
+      this.billingService.getProjectEndpointLimit(organizationId);
+    ctx.endpointUsageLimitByOrg.set(organizationId, limitPromise);
+
+    return limitPromise;
   }
 }

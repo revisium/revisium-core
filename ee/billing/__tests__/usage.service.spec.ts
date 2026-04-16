@@ -183,7 +183,9 @@ describe('UsageService', () => {
     it('should count non-deleted endpoints in project', async () => {
       const orgId = await createOrg();
       const { projectId, revisionId } = await createProjectWithRows(orgId, 0);
-      const graphqlVersionId = await createEndpointVersion(EndpointType.GRAPHQL);
+      const graphqlVersionId = await createEndpointVersion(
+        EndpointType.GRAPHQL,
+      );
       const restVersionId = await createEndpointVersion(EndpointType.REST_API);
       const branchId = nanoid();
       const secondRevisionId = nanoid();
@@ -243,7 +245,9 @@ describe('UsageService', () => {
       const orgId = await createOrg();
       const firstProject = await createProjectWithRows(orgId, 0);
       const secondProject = await createProjectWithRows(orgId, 0);
-      const graphqlVersionId = await createEndpointVersion(EndpointType.GRAPHQL);
+      const graphqlVersionId = await createEndpointVersion(
+        EndpointType.GRAPHQL,
+      );
       const restVersionId = await createEndpointVersion(EndpointType.REST_API);
       const secondBranchId = nanoid();
       const secondRevisionId = nanoid();

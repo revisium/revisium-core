@@ -25,9 +25,7 @@ export class BillingClient implements IBillingClient {
     this.secret = configService.get<string>('PAYMENT_SERVICE_SECRET', '');
     this.configured = !!this.baseUrl;
     if (!this.configured) {
-      this.logger.warn(
-        'PAYMENT_SERVICE_URL not configured — billing disabled',
-      );
+      this.logger.warn('PAYMENT_SERVICE_URL not configured — billing disabled');
     }
   }
 

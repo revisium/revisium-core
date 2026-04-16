@@ -219,5 +219,4 @@ describe('Billing REST API (e2e)', () => {
       expect(res.body.data.plans[0].id).toBeDefined();
     });
   });
-
 });

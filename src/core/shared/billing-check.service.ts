@@ -1,29 +1,31 @@
 import { Inject, Injectable } from '@nestjs/common';
 import {
-  BillingDbClient,
   ILimitsService,
   LimitMetric,
   LIMITS_SERVICE_TOKEN,
 } from 'src/features/billing/limits.interface';
 import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @Injectable()
 export class BillingCheckService {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly transactionService: TransactionPrismaService,
     @Inject(LIMITS_SERVICE_TOKEN)
     private readonly limitsService: ILimitsService,
   ) {}
+
+  private get db() {
+    return this.transactionService.getTransactionOrPrisma();
+  }
 
   async check(
     revisionId: string,
     metric: LimitMetric,
     increment?: number,
     context?: { tableId?: string; projectId?: string },
-    db: BillingDbClient = this.prisma,
   ): Promise<void> {
-    const resolved = await this.resolveContext(revisionId, db);
+    const resolved = await this.resolveContext(revisionId);
     const needsContext =
       metric === LimitMetric.ROWS_PER_TABLE ||
       metric === LimitMetric.TABLES_PER_REVISION ||
@@ -41,7 +43,6 @@ export class BillingCheckService {
       metric,
       increment,
       fullContext,
-      db,
     );
     if (!result.allowed) {
       throw new LimitExceededException(result);
@@ -50,9 +51,8 @@ export class BillingCheckService {
 
   private async resolveContext(
     revisionId: string,
-    db: BillingDbClient,
   ): Promise<{ organizationId: string; projectId: string }> {
-    const revision = await db.revision.findUniqueOrThrow({
+    const revision = await this.db.revision.findUniqueOrThrow({
       where: { id: revisionId },
       select: {
         branch: {

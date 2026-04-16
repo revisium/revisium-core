@@ -318,7 +318,11 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     await service.checkLimit('test-org', LimitMetric.PROJECTS, 1);
 
-    expect(computeSpy).toHaveBeenCalledWith('test-org', LimitMetric.PROJECTS, undefined);
+    expect(computeSpy).toHaveBeenCalledWith(
+      'test-org',
+      LimitMetric.PROJECTS,
+      undefined,
+    );
     expect(cacheSpy).not.toHaveBeenCalled();
   });
 
@@ -329,7 +333,11 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     await service.checkLimit('test-org', LimitMetric.SEATS, 1);
 
-    expect(computeSpy).toHaveBeenCalledWith('test-org', LimitMetric.SEATS, undefined);
+    expect(computeSpy).toHaveBeenCalledWith(
+      'test-org',
+      LimitMetric.SEATS,
+      undefined,
+    );
     expect(cacheSpy).not.toHaveBeenCalled();
   });
 
@@ -351,7 +359,12 @@ describe('LimitsService (Ultra-Thin)', () => {
     mockBillingClient.getOrgLimits.mockResolvedValue(PRO_LIMITS);
 
     const context = { revisionId: 'rev-1', tableId: 'tbl-1' };
-    await service.checkLimit('test-org', LimitMetric.ROWS_PER_TABLE, 1, context);
+    await service.checkLimit(
+      'test-org',
+      LimitMetric.ROWS_PER_TABLE,
+      1,
+      context,
+    );
 
     expect(cacheSpy).toHaveBeenCalledWith(
       'test-org',

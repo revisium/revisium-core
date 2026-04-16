@@ -97,13 +97,13 @@ const mockBillingClient: jest.Mocked<IBillingClient> = {
           projects: 20,
           seats: 10,
           storage_bytes: 10_000_000_000,
-        api_calls_per_day: 50_000,
-        rows_per_table: 10_000,
-        tables_per_revision: 100,
-        branches_per_project: 20,
-        endpoints_per_project: 10,
-      },
-      features: { sso: true, audit: true },
+          api_calls_per_day: 50_000,
+          rows_per_table: 10_000,
+          tables_per_revision: 100,
+          branches_per_project: 20,
+          endpoints_per_project: 10,
+        },
+        features: { sso: true, audit: true },
       });
     }
     return Promise.resolve(null);
@@ -407,7 +407,9 @@ describe('Billing GraphQL API (e2e)', () => {
       ).expect(200);
 
       expect(res.body.errors).toBeDefined();
-      expect(res.body.errors[0].message).toContain('must be a valid HTTP(S) URL');
+      expect(res.body.errors[0].message).toContain(
+        'must be a valid HTTP(S) URL',
+      );
     });
   });
 

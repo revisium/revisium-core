@@ -82,9 +82,14 @@ export interface IBillingGraphqlService {
 
   getUsage(organizationId: string): Promise<UsageSummaryResult | null>;
 
+  getProjectEndpointLimit(
+    organizationId: string,
+  ): Promise<number | null | undefined>;
+
   getProjectEndpointUsage(
     organizationId: string,
     projectId: string,
+    options?: { endpointLimit?: number | null },
   ): Promise<UsageMetricResult | null>;
 
   activateEarlyAccess(

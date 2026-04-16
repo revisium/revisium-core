@@ -5,10 +5,14 @@ describe('UsageService unit', () => {
     const prisma = {
       $queryRaw: jest.fn(),
     };
+    const transactionService = {
+      getTransactionOrPrisma: jest.fn().mockReturnValue(prisma),
+    };
 
     return {
       prisma,
-      service: new UsageService(prisma as never),
+      transactionService,
+      service: new UsageService(prisma as never, transactionService as never),
     };
   };
 
