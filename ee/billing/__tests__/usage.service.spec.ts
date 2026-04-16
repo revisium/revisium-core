@@ -241,77 +241,21 @@ describe('UsageService', () => {
   });
 
   describe('computeUsageSummary', () => {
-    it('should expose the max endpoints count across projects', async () => {
+    it('should only return org-scoped usage metrics', async () => {
       const orgId = await createOrg();
-      const firstProject = await createProjectWithRows(orgId, 0);
-      const secondProject = await createProjectWithRows(orgId, 0);
-      const graphqlVersionId = await createEndpointVersion(
-        EndpointType.GRAPHQL,
-      );
-      const restVersionId = await createEndpointVersion(EndpointType.REST_API);
-      const secondBranchId = nanoid();
-      const secondRevisionId = nanoid();
-
-      await prisma.branch.create({
-        data: {
-          id: secondBranchId,
-          name: `feature-${secondBranchId}`,
-          projectId: secondProject.projectId,
-          revisions: {
-            create: {
-              id: secondRevisionId,
-              isHead: true,
-            },
-          },
-        },
-      });
-
-      await prisma.endpoint.create({
-        data: {
-          id: nanoid(),
-          type: EndpointType.GRAPHQL,
-          revisionId: firstProject.revisionId,
-          versionId: graphqlVersionId,
-        },
-      });
-
-      await prisma.endpoint.create({
-        data: {
-          id: nanoid(),
-          type: EndpointType.GRAPHQL,
-          revisionId: secondProject.revisionId,
-          versionId: graphqlVersionId,
-        },
-      });
-      await prisma.endpoint.create({
-        data: {
-          id: nanoid(),
-          type: EndpointType.REST_API,
-          revisionId: secondProject.revisionId,
-          versionId: restVersionId,
-        },
-      });
-      await prisma.endpoint.create({
-        data: {
-          id: nanoid(),
-          type: EndpointType.REST_API,
-          revisionId: secondRevisionId,
-          versionId: restVersionId,
-          isDeleted: true,
-        },
-      });
-
       const result = await service.computeUsageSummary(orgId, {
         row_versions: 10_000,
         projects: 3,
         seats: 1,
         storage_bytes: 500_000_000,
-        endpoints_per_project: 2,
       });
 
-      expect(result.endpointsPerProject.current).toBe(2);
-      expect(result.endpointsPerProject.limit).toBe(2);
-      expect(result.endpointsPerProject.percentage).toBe(100);
+      expect(result).toEqual({
+        rowVersions: expect.any(Object),
+        projects: expect.any(Object),
+        seats: expect.any(Object),
+        storageBytes: expect.any(Object),
+      });
     });
   });
 });

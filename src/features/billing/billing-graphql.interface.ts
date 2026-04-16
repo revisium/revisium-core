@@ -47,7 +47,6 @@ export interface UsageSummaryResult {
   projects: UsageMetricResult;
   seats: UsageMetricResult;
   storageBytes: UsageMetricResult;
-  endpointsPerProject: UsageMetricResult;
 }
 
 export interface PaymentProviderResult {

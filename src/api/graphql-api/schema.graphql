@@ -1487,7 +1487,6 @@ type UsageMetricModel {
 }
 
 type UsageSummaryModel {
-  endpointsPerProject: UsageMetricModel!
   projects: UsageMetricModel!
   rowVersions: UsageMetricModel!
   seats: UsageMetricModel!

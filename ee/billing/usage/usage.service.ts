@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { Prisma } from 'src/__generated__/client';
 import { countOrgRowVersions } from 'src/__generated__/client/sql';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -19,11 +18,6 @@ export interface UsageSummary {
   };
   seats: { current: number; limit: number | null; percentage: number | null };
   storageBytes: {
-    current: number;
-    limit: number | null;
-    percentage: number | null;
-  };
-  endpointsPerProject: {
     current: number;
     limit: number | null;
     percentage: number | null;
@@ -48,27 +42,20 @@ export class UsageService {
       projects: number | null;
       seats: number | null;
       storage_bytes: number | null;
-      endpoints_per_project: number | null;
     } | null,
   ): Promise<UsageSummary> {
-    const [rowVersions, projects, seats, storageBytes, endpointsPerProject] =
-      await Promise.all([
-        this.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
-        this.computeUsage(organizationId, LimitMetric.PROJECTS),
-        this.computeUsage(organizationId, LimitMetric.SEATS),
-        this.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
-        this.countMaxEndpointsInProjects(organizationId),
-      ]);
+    const [rowVersions, projects, seats, storageBytes] = await Promise.all([
+      this.computeUsage(organizationId, LimitMetric.ROW_VERSIONS),
+      this.computeUsage(organizationId, LimitMetric.PROJECTS),
+      this.computeUsage(organizationId, LimitMetric.SEATS),
+      this.computeUsage(organizationId, LimitMetric.STORAGE_BYTES),
+    ]);
 
     return {
       rowVersions: buildMetric(rowVersions, planLimits?.row_versions),
       projects: buildMetric(projects, planLimits?.projects),
       seats: buildMetric(seats, planLimits?.seats),
       storageBytes: buildMetric(storageBytes, planLimits?.storage_bytes),
-      endpointsPerProject: buildMetric(
-        endpointsPerProject,
-        planLimits?.endpoints_per_project,
-      ),
     };
   }
 
@@ -192,33 +179,5 @@ export class UsageService {
         isDeleted: false,
       },
     });
-  }
-
-  private async countMaxEndpointsInProjects(
-    organizationId: string,
-  ): Promise<number> {
-    const result = await this.db.$queryRaw<
-      Array<{ maxCount: bigint | number }>
-    >(
-      Prisma.sql`
-        SELECT COALESCE(MAX(project_counts.count), 0)::bigint AS "maxCount"
-        FROM (
-          SELECT COUNT(e."id")::bigint AS count
-          FROM "Project" p
-          LEFT JOIN "Branch" b
-            ON b."projectId" = p."id"
-          LEFT JOIN "Revision" r
-            ON r."branchId" = b."id"
-          LEFT JOIN "Endpoint" e
-            ON e."revisionId" = r."id"
-           AND e."isDeleted" = false
-          WHERE p."organizationId" = ${organizationId}
-            AND p."isDeleted" = false
-          GROUP BY p."id"
-        ) AS project_counts
-      `,
-    );
-
-    return Number(result[0]?.maxCount ?? 0);
   }
 }

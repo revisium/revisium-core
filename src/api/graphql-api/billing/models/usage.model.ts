@@ -25,7 +25,4 @@ export class UsageSummaryModel {
 
   @Field(() => UsageMetricModel)
   storageBytes: UsageMetricModel;
-
-  @Field(() => UsageMetricModel)
-  endpointsPerProject: UsageMetricModel;
 }

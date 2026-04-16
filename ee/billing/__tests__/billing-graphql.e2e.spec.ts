@@ -425,7 +425,6 @@ describe('Billing GraphQL API (e2e)', () => {
               projects { current limit percentage }
               seats { current limit percentage }
               storageBytes { current limit percentage }
-              endpointsPerProject { current limit percentage }
             }
           }
         }`,
@@ -438,7 +437,6 @@ describe('Billing GraphQL API (e2e)', () => {
       expect(usage.projects.limit).toBe(3);
       expect(usage.seats.limit).toBe(1);
       expect(usage.storageBytes.limit).toBe(500_000_000);
-      expect(usage.endpointsPerProject.limit).toBe(2);
       expect(mockBillingClient.getOrgLimits).toHaveBeenCalledWith(orgId);
     });
 

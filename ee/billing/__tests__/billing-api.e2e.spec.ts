@@ -202,7 +202,7 @@ describe('Billing REST API (e2e)', () => {
       expect(res.body.projects).toBeDefined();
       expect(res.body.seats).toBeDefined();
       expect(res.body.storageBytes).toBeDefined();
-      expect(res.body.endpointsPerProject).toBeDefined();
+      expect(res.body.endpointsPerProject).toBeUndefined();
     });
   });
 
