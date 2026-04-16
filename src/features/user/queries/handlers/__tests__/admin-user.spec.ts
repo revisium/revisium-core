@@ -1,15 +1,17 @@
 import { NotFoundException } from '@nestjs/common';
-import { CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { Test, TestingModule } from '@nestjs/testing';
+import { QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/testing/factories/create-models';
+import {
+  createUserQueryTestKit,
+  type UserQueryTestKit,
+} from 'src/testing/kit/create-user-query-test-kit';
 import { UserSystemRoles } from 'src/features/auth/consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   AdminUserQuery,
   AdminUserQueryReturnType,
 } from 'src/features/user/queries/impl';
-import { AdminUserHandler } from 'src/features/user/queries/handlers/admin-user.handler';
 
 describe('AdminUserHandler', () => {
   describe('get user by id', () => {
@@ -129,23 +131,18 @@ describe('AdminUserHandler', () => {
     });
   });
 
+  let kit: UserQueryTestKit;
   let queryBus: QueryBus;
   let prismaService: PrismaService;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule],
-      providers: [PrismaService, AdminUserHandler],
-    }).compile();
-
-    await module.init();
-
-    prismaService = module.get(PrismaService);
-    queryBus = module.get(QueryBus);
+    kit = await createUserQueryTestKit();
+    prismaService = kit.prismaService;
+    queryBus = kit.queryBus;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 
   const createQuery = (data: AdminUserQuery['data']): AdminUserQuery => {

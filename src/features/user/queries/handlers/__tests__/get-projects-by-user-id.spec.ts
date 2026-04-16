@@ -1,5 +1,4 @@
-import { CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { Test, TestingModule } from '@nestjs/testing';
+import { QueryBus } from '@nestjs/cqrs';
 import {
   Prisma,
   UserOrganization,
@@ -7,6 +6,10 @@ import {
 } from 'src/__generated__/client';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/testing/factories/create-models';
+import {
+  createUserQueryTestKit,
+  type UserQueryTestKit,
+} from 'src/testing/kit/create-user-query-test-kit';
 import {
   UserOrganizationRoles,
   UserProjectRoles,
@@ -16,7 +19,6 @@ import {
   GetProjectsByUserIdQuery,
   GetProjectsByUserIdQueryReturnType,
 } from 'src/features/user/queries/impl';
-import { GetProjectsByUserIdHandler } from 'src/features/user/queries/handlers/get-projects-by-user-id.handler';
 
 describe('GetProjectsByUserIdHandler', () => {
   it('should handle no projects found', async () => {
@@ -107,19 +109,14 @@ describe('GetProjectsByUserIdHandler', () => {
     });
   };
 
+  let kit: UserQueryTestKit;
   let prismaService: PrismaService;
   let queryBus: QueryBus;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule],
-      providers: [PrismaService, GetProjectsByUserIdHandler],
-    }).compile();
-
-    await module.init();
-
-    prismaService = module.get<PrismaService>(PrismaService);
-    queryBus = module.get<QueryBus>(QueryBus);
+    kit = await createUserQueryTestKit();
+    prismaService = kit.prismaService;
+    queryBus = kit.queryBus;
   });
 
   const createQuery = (
@@ -200,6 +197,6 @@ describe('GetProjectsByUserIdHandler', () => {
   };
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 });
