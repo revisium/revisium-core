@@ -1,50 +1,33 @@
-import { ConfigService } from '@nestjs/config';
-import { CommandBus, CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { Test, TestingModule } from '@nestjs/testing';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { ApiKeyType } from 'src/__generated__/client';
 import { testCreateUser } from 'src/testing/factories/create-models';
-import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import {
-  CreateApiKeyHandler,
-  RevokeApiKeyHandler,
-} from 'src/features/api-key/commands/handlers';
+  createApiKeyCommandTestKit,
+  type ApiKeyCommandTestKit,
+} from 'src/testing/kit/create-api-key-command-test-kit';
 import {
   CreateApiKeyCommand,
   RevokeApiKeyCommand,
 } from 'src/features/api-key/commands/impl';
-import { GetApiKeysHandler } from 'src/features/api-key/queries/handlers';
 import { GetApiKeysQuery } from 'src/features/api-key/queries/impl';
-import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('GetApiKeysHandler', () => {
+  let kit: ApiKeyCommandTestKit;
   let commandBus: CommandBus;
   let queryBus: QueryBus;
   let prisma: PrismaService;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule, RevisiumCacheModule.forRootAsync()],
-      providers: [
-        GetApiKeysHandler,
-        CreateApiKeyHandler,
-        RevokeApiKeyHandler,
-        ApiKeyService,
-        PrismaService,
-        { provide: ConfigService, useValue: { get: () => undefined } },
-      ],
-    }).compile();
-
-    await module.init();
-
-    commandBus = module.get(CommandBus);
-    queryBus = module.get(QueryBus);
-    prisma = module.get(PrismaService);
+    kit = await createApiKeyCommandTestKit();
+    commandBus = kit.commandBus;
+    queryBus = kit.queryBus;
+    prisma = kit.prismaService;
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await kit.close();
   });
 
   it('should not return revoked keys', async () => {

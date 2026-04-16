@@ -1,17 +1,17 @@
 import { BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { CommandBus, CqrsModule } from '@nestjs/cqrs';
-import { Test, TestingModule } from '@nestjs/testing';
+import { CommandBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { ApiKeyType } from 'src/__generated__/client';
 import { testCreateUser } from 'src/testing/factories/create-models';
-import { ApiKeyService } from 'src/features/api-key/api-key.service';
-import { CreateApiKeyHandler } from 'src/features/api-key/commands/handlers';
+import {
+  createApiKeyCommandTestKit,
+  type ApiKeyCommandTestKit,
+} from 'src/testing/kit/create-api-key-command-test-kit';
 import { CreateApiKeyCommand } from 'src/features/api-key/commands/impl';
-import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('CreateApiKeyHandler — key limits', () => {
+  let kit: ApiKeyCommandTestKit;
   let commandBus: CommandBus;
   let prisma: PrismaService;
 
@@ -19,34 +19,18 @@ describe('CreateApiKeyHandler — key limits', () => {
   const TEST_SERVICE_LIMIT = 3;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule, RevisiumCacheModule.forRootAsync()],
-      providers: [
-        CreateApiKeyHandler,
-        ApiKeyService,
-        PrismaService,
-        {
-          provide: ConfigService,
-          useValue: {
-            get: (key: string) => {
-              if (key === 'API_KEY_MAX_PER_USER') return TEST_PERSONAL_LIMIT;
-              if (key === 'API_KEY_MAX_SERVICE_PER_ORG')
-                return TEST_SERVICE_LIMIT;
-              return undefined;
-            },
-          },
-        },
-      ],
-    }).compile();
-
-    await module.init();
-
-    commandBus = module.get(CommandBus);
-    prisma = module.get(PrismaService);
+    kit = await createApiKeyCommandTestKit({
+      configValues: {
+        API_KEY_MAX_PER_USER: TEST_PERSONAL_LIMIT,
+        API_KEY_MAX_SERVICE_PER_ORG: TEST_SERVICE_LIMIT,
+      },
+    });
+    commandBus = kit.commandBus;
+    prisma = kit.prismaService;
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await kit.close();
   });
 
   describe('personal key limit', () => {
