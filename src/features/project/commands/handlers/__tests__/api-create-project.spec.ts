@@ -1,9 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
 import { TestingModule } from '@nestjs/testing';
-import {
-  prepareProject,
-  createTestingModule,
-} from 'src/testing/project/project-command-test-utils';
+import { createProjectCommandTestKit } from 'src/testing/kit/create-project-command-test-kit';
+import { prepareProject } from 'src/testing/utils/prepareProject';
 import {
   ApiCreateProjectCommand,
   ApiCreateProjectCommandReturnType,
@@ -39,10 +37,10 @@ describe('ApiCreateProjectHandler', () => {
   }
 
   beforeAll(async () => {
-    const result = await createTestingModule();
-    moduleFixture = result.module;
-    commandBus = result.commandBus;
-    closeModule = result.close;
+    const kit = await createProjectCommandTestKit();
+    moduleFixture = kit.module;
+    commandBus = kit.commandBus;
+    closeModule = kit.close;
   });
 
   afterAll(async () => {
