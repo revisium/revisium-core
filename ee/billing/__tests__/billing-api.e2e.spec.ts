@@ -6,7 +6,7 @@ import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
-import { hashedPassword } from 'src/__tests__/utils/prepareProject';
+import { hashedPassword } from 'src/testing/utils/prepareProject';
 import {
   BILLING_CLIENT_TOKEN,
   IBillingClient,

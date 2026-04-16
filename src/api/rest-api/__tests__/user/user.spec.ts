@@ -2,8 +2,8 @@ import { INestApplication } from '@nestjs/common';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { createFreshTestApp, authGet, anonGet } from 'src/__tests__/e2e/shared';
+} from 'src/testing/utils/prepareProject';
+import { createFreshTestApp, authGet, anonGet } from 'src/testing/e2e';
 
 describe('restapi - user', () => {
   let app: INestApplication;

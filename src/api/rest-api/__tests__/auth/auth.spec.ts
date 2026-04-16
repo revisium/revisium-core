@@ -2,13 +2,13 @@ import { INestApplication } from '@nestjs/common';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   createFreshTestApp,
   anonPost,
   authPost,
   authPut,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 
 describe('restapi - auth', () => {
   let app: INestApplication;

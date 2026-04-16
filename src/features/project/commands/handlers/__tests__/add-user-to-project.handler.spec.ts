@@ -1,8 +1,9 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
+import { prepareProject } from 'src/testing/utils/prepareProject';
 import { UserProjectRoles, UserSystemRoles } from 'src/features/auth/consts';
-import { createTestingModule } from 'src/features/project/commands/handlers/__tests__/utils';
+import { createTestingModule } from 'src/testing/project/project-command-test-utils';
 import {
   AddUserToProjectCommand,
   AddUserToProjectCommandReturnType,
@@ -13,7 +14,7 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('AddUserToProject', () => {
   it('should add user to project', async () => {
     const { organizationId, projectName, projectId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const user = await prismaService.user.create({
       data: {
@@ -45,7 +46,7 @@ describe('AddUserToProject', () => {
 
   it('should not add user to project if the project is deleted', async () => {
     const { organizationId, projectName, projectId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     await prismaService.project.update({
       where: {
@@ -77,6 +78,8 @@ describe('AddUserToProject', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
+  let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: AddUserToProjectCommand,
@@ -86,9 +89,11 @@ describe('AddUserToProject', () => {
 
   beforeAll(async () => {
     const result = await createTestingModule();
+    moduleFixture = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+    closeModule = result.close;
   });
 
   beforeEach(() => {
@@ -96,6 +101,6 @@ describe('AddUserToProject', () => {
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

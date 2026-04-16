@@ -6,9 +6,9 @@ import {
   PrepareDataReturnType,
   PrepareDataWithRolesReturnType,
   PrepareProjectUserReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import { UserSystemRoles } from 'src/features/auth/consts';
-import { createFreshTestApp } from 'src/__tests__/e2e/shared';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
 

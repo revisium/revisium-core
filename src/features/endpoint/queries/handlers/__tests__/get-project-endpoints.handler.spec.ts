@@ -1,7 +1,7 @@
 import { QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { EndpointType } from 'src/__generated__/client';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
+import { prepareProject } from 'src/testing/utils/prepareProject';
 import { CoreModule } from 'src/core/core.module';
 import {
   GetProjectEndpointsQuery,
@@ -13,7 +13,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 describe('GetProjectEndpointsHandler', () => {
   it('should return endpoints for a project', async () => {
     const { organizationId, projectName, headEndpointId, draftEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const result = await runTransaction(
       new GetProjectEndpointsQuery({
@@ -32,8 +32,8 @@ describe('GetProjectEndpointsHandler', () => {
   });
 
   it('should filter endpoints by branchId', async () => {
-    const project1 = await prepareProject(prismaService);
-    const project2 = await prepareProject(prismaService);
+    const project1 = await prepareProject(moduleFixture);
+    const project2 = await prepareProject(moduleFixture);
 
     const result = await runTransaction(
       new GetProjectEndpointsQuery({
@@ -56,7 +56,7 @@ describe('GetProjectEndpointsHandler', () => {
 
   it('should filter endpoints by type', async () => {
     const { organizationId, projectName, headEndpointId, draftEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const restApiResult = await runTransaction(
       new GetProjectEndpointsQuery({
@@ -89,7 +89,7 @@ describe('GetProjectEndpointsHandler', () => {
 
   it('should not return deleted endpoints', async () => {
     const { organizationId, projectName, headEndpointId, draftEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     await prismaService.endpoint.update({
       where: { id: headEndpointId },
@@ -110,7 +110,7 @@ describe('GetProjectEndpointsHandler', () => {
   });
 
   it('should paginate results', async () => {
-    const { organizationId, projectName } = await prepareProject(prismaService);
+    const { organizationId, projectName } = await prepareProject(moduleFixture);
 
     const firstPage = await runTransaction(
       new GetProjectEndpointsQuery({
@@ -142,7 +142,7 @@ describe('GetProjectEndpointsHandler', () => {
 
   it('should return revisionId for each endpoint', async () => {
     const { organizationId, projectName, headRevisionId, draftRevisionId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const result = await runTransaction(
       new GetProjectEndpointsQuery({
@@ -159,7 +159,7 @@ describe('GetProjectEndpointsHandler', () => {
 
   it('should return empty result for project with no endpoints', async () => {
     const { organizationId, projectName, headEndpointId, draftEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     await prismaService.endpoint.deleteMany({
       where: { id: { in: [headEndpointId, draftEndpointId] } },
@@ -179,7 +179,7 @@ describe('GetProjectEndpointsHandler', () => {
 
   it('should order endpoints by revision createdAt descending', async () => {
     const { organizationId, projectName, headRevisionId, draftRevisionId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const olderDate = new Date('2020-01-01');
     const newerDate = new Date('2025-01-01');
@@ -217,9 +217,10 @@ describe('GetProjectEndpointsHandler', () => {
   let prismaService: PrismaService;
   let transactionService: TransactionPrismaService;
   let queryBus: QueryBus;
+  let moduleFixture: TestingModule;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    moduleFixture = await Test.createTestingModule({
       imports: [CoreModule.forRoot({ mode: 'monolith' })],
     }).compile();
 

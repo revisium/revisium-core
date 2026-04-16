@@ -6,7 +6,7 @@ import {
   JsonValueTypeEnum,
   JsonAggregationEnum,
 } from 'src/api/rest-api/share/model/order-by.model';
-import { findConstraint } from 'src/api/rest-api/table/dto/__tests__/utils';
+import { findConstraint } from 'src/testing/assertions/find-constraint';
 import { GetTableRowsDto } from '../get-table-rows.dto';
 
 describe('GetTableRowsDto', () => {

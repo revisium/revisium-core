@@ -1,17 +1,17 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { TestingModule } from '@nestjs/testing';
 import {
   prepareProject,
   createTestingModule,
-} from 'src/features/project/commands/handlers/__tests__/utils';
+} from 'src/testing/project/project-command-test-utils';
 import {
   ApiCreateProjectCommand,
   ApiCreateProjectCommandReturnType,
 } from 'src/features/project/commands/impl';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('ApiCreateProjectHandler', () => {
   it('should create a new project', async () => {
-    const { organizationId, branchName } = await prepareProject(prismaService);
+    const { organizationId, branchName } = await prepareProject(moduleFixture);
 
     const projectName = 'newProjectName';
 
@@ -28,8 +28,9 @@ describe('ApiCreateProjectHandler', () => {
     expect(result.isPublic).toBe(false);
   });
 
-  let prismaService: PrismaService;
   let commandBus: CommandBus;
+  let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: ApiCreateProjectCommand,
@@ -39,11 +40,12 @@ describe('ApiCreateProjectHandler', () => {
 
   beforeAll(async () => {
     const result = await createTestingModule();
-    prismaService = result.prismaService;
+    moduleFixture = result.module;
     commandBus = result.commandBus;
+    closeModule = result.close;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

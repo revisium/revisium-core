@@ -4,9 +4,9 @@ import request from 'supertest';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
-import { gql } from 'src/__tests__/utils/gql';
-import { graphqlQuery, graphqlQueryError } from 'src/__tests__/utils/queryTest';
+} from 'src/testing/utils/prepareProject';
+import { gql } from 'src/testing/utils/gql';
+import { graphqlQuery, graphqlQueryError } from 'src/testing/utils/queryTest';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 

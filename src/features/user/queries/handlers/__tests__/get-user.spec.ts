@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { CqrsModule, QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { GetUserQuery } from 'src/features/user/queries/impl';
 import { GetUserHandler } from 'src/features/user/queries/handlers/get-user.handler';

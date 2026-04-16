@@ -1,13 +1,13 @@
 import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { createExpressImageFile } from 'src/__tests__/utils/file';
+import { createExpressImageFile } from 'src/testing/utils/file';
 import {
   createPreviousFile,
   prepareData,
   PrepareDataReturnType,
   prepareRow,
   prepareTableWithSchema,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   getArraySchema,
   getObjectSchema,

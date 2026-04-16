@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { QueryBus } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
+import { prepareProject } from 'src/testing/utils/prepareProject';
 import { CoreModule } from 'src/core/core.module';
 import {
   GetEndpointRelativesQuery,
@@ -13,7 +13,7 @@ import { TransactionPrismaService } from 'src/infrastructure/database/transactio
 describe('GetEndpointRelativesHandler', () => {
   it('should return endpoint relatives when endpoint exists', async () => {
     const { headEndpointId, headRevisionId, branchId, projectId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const result = await runTransaction(
       new GetEndpointRelativesQuery({ endpointId: headEndpointId }),
@@ -28,7 +28,7 @@ describe('GetEndpointRelativesHandler', () => {
 
   it('should return proper structure for draft endpoint', async () => {
     const { draftEndpointId, draftRevisionId, branchId, projectId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const result = await runTransaction(
       new GetEndpointRelativesQuery({ endpointId: draftEndpointId }),
@@ -42,7 +42,7 @@ describe('GetEndpointRelativesHandler', () => {
   });
 
   it('should throw NotFoundException when endpoint does not exist', async () => {
-    await prepareProject(prismaService);
+    await prepareProject(moduleFixture);
 
     const nonExistentEndpointId = 'non-existent-endpoint';
 
@@ -68,7 +68,7 @@ describe('GetEndpointRelativesHandler', () => {
       organizationId,
       projectName,
       branchName,
-    } = await prepareProject(prismaService);
+    } = await prepareProject(moduleFixture);
 
     const result = await runTransaction(
       new GetEndpointRelativesQuery({ endpointId: headEndpointId }),
@@ -93,7 +93,7 @@ describe('GetEndpointRelativesHandler', () => {
 
   it('should handle different endpoint types', async () => {
     const { headEndpointId, draftEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const headResult = await runTransaction(
       new GetEndpointRelativesQuery({ endpointId: headEndpointId }),
@@ -118,9 +118,10 @@ describe('GetEndpointRelativesHandler', () => {
   let prismaService: PrismaService;
   let transactionService: TransactionPrismaService;
   let queryBus: QueryBus;
+  let moduleFixture: TestingModule;
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
+    moduleFixture = await Test.createTestingModule({
       imports: [CoreModule.forRoot({ mode: 'monolith' })],
     }).compile();
 

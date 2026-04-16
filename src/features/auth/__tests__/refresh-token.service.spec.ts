@@ -3,7 +3,7 @@ import { UnauthorizedException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createHash } from 'node:crypto';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import { RefreshTokenService } from 'src/features/auth/services/refresh-token.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 

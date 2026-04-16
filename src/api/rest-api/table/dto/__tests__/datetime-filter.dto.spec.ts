@@ -1,6 +1,6 @@
 import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
-import { findConstraint } from 'src/api/rest-api/table/dto/__tests__/utils';
+import { findConstraint } from 'src/testing/assertions/find-constraint';
 import { DateTimeFilterDto } from '../row/datetime-filter.dto';
 
 describe('DateTimeFilterDto', () => {

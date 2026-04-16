@@ -1,15 +1,15 @@
 import { INestApplication } from '@nestjs/common';
-import { gql } from 'src/__tests__/utils/gql';
+import { gql } from 'src/testing/utils/gql';
 import {
   prepareData,
   PrepareDataReturnType,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   createFreshTestApp,
   gqlQuery,
   gqlQueryExpectError,
   gqlQueryRaw,
-} from 'src/__tests__/e2e/shared';
+} from 'src/testing/e2e';
 
 describe('graphql - draft mutations', () => {
   let app: INestApplication;

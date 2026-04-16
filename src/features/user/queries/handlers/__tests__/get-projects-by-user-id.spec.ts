@@ -6,7 +6,7 @@ import {
   UserProject,
 } from 'src/__generated__/client';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import {
   UserOrganizationRoles,
   UserProjectRoles,

@@ -7,7 +7,7 @@ import {
   PrepareDataReturnType,
   prepareRow,
   prepareTableWithSchema,
-} from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/utils/prepareProject';
 import {
   getArraySchema,
   getObjectSchema,

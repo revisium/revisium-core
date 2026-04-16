@@ -6,15 +6,15 @@ import { getObjectSchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
-import { gql } from 'src/__tests__/utils/gql';
+import { gql } from 'src/testing/utils/gql';
 import {
   getTestApp,
   closeTestApp,
   gqlQuery,
   gqlQueryExpectError,
   getPrismaService,
-} from 'src/__tests__/e2e/shared';
-import { prepareData, prepareRow } from 'src/__tests__/utils/prepareProject';
+} from 'src/testing/e2e';
+import { prepareData, prepareRow } from 'src/testing/utils/prepareProject';
 import { JsonPatchAdd, InitMigration } from '@revisium/schema-toolkit/types';
 
 const FILE_SCHEMA_ID = SystemSchemaIds.File;

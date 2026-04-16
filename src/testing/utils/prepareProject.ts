@@ -1,3 +1,4 @@
+import type { INestApplicationContext } from '@nestjs/common';
 import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import hash from 'object-hash';
@@ -15,7 +16,7 @@ import {
 import {
   getTestLinkedSchema,
   testSchema,
-} from 'src/__tests__/utils/test-schemas';
+} from 'src/testing/utils/test-schemas';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
@@ -33,6 +34,17 @@ export type PrepareDataReturnType = Awaited<ReturnType<typeof prepareData>>;
 export type PrepareProjectReturnType = Awaited<
   ReturnType<typeof prepareProject>
 >;
+
+export type PrismaOrContainer =
+  | PrismaService
+  | Pick<INestApplicationContext, 'get'>;
+
+const resolvePrisma = (source: PrismaOrContainer): PrismaService => {
+  if (typeof (source as { get?: unknown }).get === 'function') {
+    return (source as Pick<INestApplicationContext, 'get'>).get(PrismaService);
+  }
+  return source as PrismaService;
+};
 
 export const hashedPassword =
   '$2a$10$Uj1aVmkVJh4ZV9Ij54bFLexeFcYz71QtySoosQ5V.txpETjOgG0bW';
@@ -98,7 +110,8 @@ export const prepareData = async (
   };
 };
 
-export async function prepareBranch(prismaService: PrismaService) {
+export async function prepareBranch(source: PrismaOrContainer) {
+  const prismaService = resolvePrisma(source);
   const organizationId = `org-${nanoid()}`;
   const projectId = `project-${nanoid()}`;
   const projectName = `name-${projectId}`;
@@ -163,6 +176,24 @@ export async function prepareBranch(prismaService: PrismaService) {
     },
   });
 
+  // shared schemas table
+
+  const sharedSchemasTableVersionId = nanoid();
+  const sharedSchemasTableCreatedId = nanoid();
+
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.SharedSchemas,
+      versionId: sharedSchemasTableVersionId,
+      createdId: sharedSchemasTableCreatedId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
+    },
+  });
+
   // migration table
 
   const migrationTableVersionId = nanoid();
@@ -191,6 +222,8 @@ export async function prepareBranch(prismaService: PrismaService) {
     draftRevisionId,
     schemaTableVersionId,
     schemaTableCreatedId,
+    sharedSchemasTableVersionId,
+    sharedSchemasTableCreatedId,
     migrationTableVersionId,
     migrationTableCreatedId,
   };
@@ -428,7 +461,7 @@ export async function prepareRow({
       },
       data: dataDraft,
       hash: hash(dataDraft),
-      schemaHash: hash(testSchema),
+      schemaHash: hash(schema),
     },
   });
 
@@ -443,9 +476,10 @@ export async function prepareRow({
 }
 
 export const prepareProject = async (
-  prismaService: PrismaService,
+  source: PrismaOrContainer,
   options?: { createLinkedTable?: boolean },
 ) => {
+  const prismaService = resolvePrisma(source);
   const prepareBranchResult = await prepareBranch(prismaService);
   const {
     headRevisionId,
@@ -517,9 +551,10 @@ export const prepareProject = async (
 };
 
 export const prepareTableAndRowWithFile = async (
-  prismaService: PrismaService,
+  source: PrismaOrContainer,
   data: object,
 ) => {
+  const prismaService = resolvePrisma(source);
   const {
     headRevisionId,
     draftRevisionId,

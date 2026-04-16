@@ -1,6 +1,7 @@
 import { CommandBus } from '@nestjs/cqrs';
-import { prepareProject } from 'src/__tests__/utils/prepareProject';
-import { createTestingModule } from 'src/features/project/commands/handlers/__tests__/utils';
+import { TestingModule } from '@nestjs/testing';
+import { prepareProject } from 'src/testing/utils/prepareProject';
+import { createTestingModule } from 'src/testing/project/project-command-test-utils';
 import {
   DeleteProjectCommand,
   DeleteProjectCommandReturnType,
@@ -11,10 +12,10 @@ import { EndpointNotificationService } from 'src/infrastructure/notification/end
 describe('DeleteProjectHandler', () => {
   it('should delete project', async () => {
     const { organizationId, projectName, draftEndpointId, headEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const { headEndpointId: anotherEndpointId } =
-      await prepareProject(prismaService);
+      await prepareProject(moduleFixture);
 
     const command = new DeleteProjectCommand({
       organizationId,
@@ -72,6 +73,8 @@ describe('DeleteProjectHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
+  let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: DeleteProjectCommand,
@@ -81,9 +84,11 @@ describe('DeleteProjectHandler', () => {
 
   beforeAll(async () => {
     const result = await createTestingModule();
+    moduleFixture = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+    closeModule = result.close;
   });
 
   beforeEach(() => {
@@ -91,6 +96,6 @@ describe('DeleteProjectHandler', () => {
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

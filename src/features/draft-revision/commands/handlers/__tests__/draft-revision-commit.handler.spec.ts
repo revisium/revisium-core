@@ -1,47 +1,45 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { DraftRevisionCommitCommand } from 'src/features/draft-revision/commands/impl/draft-revision-commit.command';
 import { DraftRevisionCreateTableCommand } from 'src/features/draft-revision/commands/impl/draft-revision-create-table.command';
-import { DraftRevisionCommitCommandReturnType } from 'src/features/draft-revision/commands/impl';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
-  createDraftRevisionTestingModule,
-  prepareDraftRevisionTest,
-} from './utils';
+  DraftRevisionCommitCommandReturnType,
+  DraftRevisionCreateTableCommandReturnType,
+} from 'src/features/draft-revision/commands/impl';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import {
+  createDraftRevisionCommandTestKit,
+  type DraftRevisionCommandTestKit,
+} from 'src/testing/kit/create-draft-revision-command-test-kit';
+import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionCommitHandler', () => {
+  let kit: DraftRevisionCommandTestKit;
   let prismaService: PrismaService;
-  let commandBus: CommandBus;
-  let transactionService: TransactionPrismaService;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionTestingModule();
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    transactionService = result.transactionService;
+    kit = await createDraftRevisionCommandTestKit();
+    prismaService = kit.prismaService;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 
   function runInTransaction(
     command: DraftRevisionCommitCommand,
   ): Promise<DraftRevisionCommitCommandReturnType> {
-    return transactionService.runSerializable(() =>
-      commandBus.execute(command),
-    );
+    return kit.executeSerializable(command);
   }
 
-  async function createChange(draftRevisionId: string, tableId: string) {
-    return transactionService.runSerializable(() =>
-      commandBus.execute(
-        new DraftRevisionCreateTableCommand({
-          revisionId: draftRevisionId,
-          tableId,
-        }),
-      ),
+  async function createChange(
+    draftRevisionId: string,
+    tableId: string,
+  ): Promise<DraftRevisionCreateTableCommandReturnType> {
+    return kit.executeSerializable(
+      new DraftRevisionCreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      }),
     );
   }
 
@@ -54,7 +52,7 @@ describe('DraftRevisionCommitHandler', () => {
 
   describe('validation', () => {
     it('should throw if branch has no head revision', async () => {
-      const { branchId } = await prepareDraftRevisionTest(prismaService);
+      const { branchId } = await givenDraftRevision(prismaService);
       await prismaService.revision.updateMany({
         where: { branchId },
         data: { isHead: false },
@@ -70,7 +68,7 @@ describe('DraftRevisionCommitHandler', () => {
     });
 
     it('should throw if branch has no draft revision', async () => {
-      const { branchId } = await prepareDraftRevisionTest(prismaService);
+      const { branchId } = await givenDraftRevision(prismaService);
       await prismaService.revision.updateMany({
         where: { branchId },
         data: { isDraft: false },
@@ -86,7 +84,7 @@ describe('DraftRevisionCommitHandler', () => {
     });
 
     it('should throw if draft has no changes', async () => {
-      const { branchId } = await prepareDraftRevisionTest(prismaService);
+      const { branchId } = await givenDraftRevision(prismaService);
 
       const command = new DraftRevisionCommitCommand({ branchId });
       await expect(runInTransaction(command)).rejects.toThrow(
@@ -101,7 +99,7 @@ describe('DraftRevisionCommitHandler', () => {
   describe('success cases', () => {
     it('should commit draft revision and create new draft', async () => {
       const { branchId, headRevisionId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -116,7 +114,7 @@ describe('DraftRevisionCommitHandler', () => {
 
     it('should update revision flags correctly', async () => {
       const { branchId, headRevisionId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -147,7 +145,7 @@ describe('DraftRevisionCommitHandler', () => {
 
     it('should lock tables and rows after commit', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       const tableResult = await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -162,7 +160,7 @@ describe('DraftRevisionCommitHandler', () => {
 
     it('should connect tables to new draft revision', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       const tableResult = await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -179,7 +177,7 @@ describe('DraftRevisionCommitHandler', () => {
 
     it('should save comment when provided', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await createChange(draftRevisionId, 'test-table');
       await setHasChanges(draftRevisionId, true);
 
@@ -195,7 +193,7 @@ describe('DraftRevisionCommitHandler', () => {
 
     it('should commit successfully when draft has no tables', async () => {
       const { branchId, draftRevisionId } =
-        await prepareDraftRevisionTest(prismaService);
+        await givenDraftRevision(prismaService);
       await setHasChanges(draftRevisionId, true);
 
       const command = new DraftRevisionCommitCommand({ branchId });

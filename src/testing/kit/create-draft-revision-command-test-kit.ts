@@ -1,6 +1,5 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test, type TestingModule } from '@nestjs/testing';
 import { CommandBus, CqrsModule } from '@nestjs/cqrs';
-import { nanoid } from 'nanoid';
 import { EngineModule } from '@revisium/engine';
 import { AppOptionsModule } from 'src/core/app-options.module';
 import { BranchModule } from 'src/features/branch/branch.module';
@@ -14,74 +13,24 @@ import { RevisionModule } from 'src/features/revision/revision.module';
 import { DiffService } from 'src/features/share/diff.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { RevisiumCacheModule } from 'src/infrastructure/cache';
+import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
+import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
-export interface PrepareDraftRevisionTestResult {
-  organizationId: string;
-  projectId: string;
-  branchId: string;
-  headRevisionId: string;
-  draftRevisionId: string;
+export interface DraftRevisionCommandTestKit {
+  module: TestingModule;
+  prismaService: PrismaService;
+  commandBus: CommandBus;
+  transactionService: TransactionPrismaService;
+  draftRevisionApiService: DraftRevisionApiService;
+  executeSerializable<TResult>(command: object): Promise<TResult>;
+  close(): Promise<void>;
 }
 
-export async function prepareDraftRevisionTest(
-  prismaService: PrismaService,
-): Promise<PrepareDraftRevisionTestResult> {
-  const organizationId = `org-${nanoid()}`;
-  const projectId = `project-${nanoid()}`;
-  const branchId = `branch-${nanoid()}`;
-  const headRevisionId = nanoid();
-  const draftRevisionId = nanoid();
-
-  await prismaService.branch.create({
-    data: {
-      id: branchId,
-      name: `branch-${branchId}`,
-      isRoot: true,
-      project: {
-        create: {
-          id: projectId,
-          name: `project-${projectId}`,
-          organization: {
-            create: {
-              id: organizationId,
-              createdId: nanoid(),
-            },
-          },
-        },
-      },
-      revisions: {
-        create: [
-          {
-            id: headRevisionId,
-            isStart: true,
-            isHead: true,
-            hasChanges: false,
-          },
-          {
-            id: draftRevisionId,
-            parentId: headRevisionId,
-            hasChanges: false,
-            isDraft: true,
-          },
-        ],
-      },
-    },
-  });
-
-  return {
-    organizationId,
-    projectId,
-    branchId,
-    headRevisionId,
-    draftRevisionId,
-  };
-}
-
-export const createDraftRevisionTestingModule = async () => {
-  const module: TestingModule = await Test.createTestingModule({
+export async function createDraftRevisionCommandTestKit(): Promise<DraftRevisionCommandTestKit> {
+  const module = await Test.createTestingModule({
     imports: [
       DatabaseModule,
       CqrsModule,
@@ -99,15 +48,29 @@ export const createDraftRevisionTestingModule = async () => {
       ShareTransactionalQueries,
       ...DRAFT_REVISION_COMMANDS_HANDLERS,
     ],
-  }).compile();
+  })
+    .overrideProvider(CACHE_SERVICE)
+    .useValue(new NoopCacheService())
+    .compile();
 
   await module.init();
+
+  const commandBus = module.get(CommandBus);
+  const transactionService = module.get(TransactionPrismaService);
 
   return {
     module,
     prismaService: module.get(PrismaService),
-    commandBus: module.get(CommandBus),
-    transactionService: module.get(TransactionPrismaService),
+    commandBus,
+    transactionService,
     draftRevisionApiService: module.get(DraftRevisionApiService),
+    executeSerializable<TResult>(command: object): Promise<TResult> {
+      return transactionService.runSerializable(() =>
+        commandBus.execute<object, TResult>(command),
+      );
+    },
+    async close() {
+      await module.close();
+    },
   };
-};
+}

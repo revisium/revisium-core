@@ -1,36 +1,27 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { DraftRevisionCreateTableCommand } from 'src/features/draft-revision/commands/impl/draft-revision-create-table.command';
 import { DraftRevisionCreateTableCommandReturnType } from 'src/features/draft-revision/commands/impl';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
-  createDraftRevisionTestingModule,
-  prepareDraftRevisionTest,
-} from './utils';
+  createDraftRevisionCommandTestKit,
+  type DraftRevisionCommandTestKit,
+} from 'src/testing/kit/create-draft-revision-command-test-kit';
+import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionCreateTableHandler', () => {
-  let prismaService: PrismaService;
-  let commandBus: CommandBus;
-  let transactionService: TransactionPrismaService;
+  let kit: DraftRevisionCommandTestKit;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionTestingModule();
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    transactionService = result.transactionService;
+    kit = await createDraftRevisionCommandTestKit();
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 
   function runInTransaction(
     command: DraftRevisionCreateTableCommand,
   ): Promise<DraftRevisionCreateTableCommandReturnType> {
-    return transactionService.runSerializable(() =>
-      commandBus.execute(command),
-    );
+    return kit.executeSerializable(command);
   }
 
   describe('validation', () => {
@@ -49,7 +40,7 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should throw an error if revision is not draft', async () => {
-      const { headRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { headRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const command = new DraftRevisionCreateTableCommand({
         revisionId: headRevisionId,
@@ -65,7 +56,7 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should throw an error if tableId is empty', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const command = new DraftRevisionCreateTableCommand({
         revisionId: draftRevisionId,
@@ -81,7 +72,7 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should throw an error if table already exists', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const command = new DraftRevisionCreateTableCommand({
         revisionId: draftRevisionId,
@@ -99,7 +90,7 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should throw an error if table already exists with different case', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const createLowerCase = new DraftRevisionCreateTableCommand({
         revisionId: draftRevisionId,
@@ -124,7 +115,7 @@ describe('DraftRevisionCreateTableHandler', () => {
 
   describe('success cases', () => {
     it('should create a table', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const command = new DraftRevisionCreateTableCommand({
         revisionId: draftRevisionId,
@@ -137,7 +128,7 @@ describe('DraftRevisionCreateTableHandler', () => {
       expect(result.tableCreatedId).toBeDefined();
       expect(result.tableVersionId).not.toBe(result.tableCreatedId);
 
-      const table = await prismaService.table.findUnique({
+      const table = await kit.prismaService.table.findUnique({
         where: { versionId: result.tableVersionId },
       });
 
@@ -149,7 +140,7 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should create a system table', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const command = new DraftRevisionCreateTableCommand({
         revisionId: draftRevisionId,
@@ -159,7 +150,7 @@ describe('DraftRevisionCreateTableHandler', () => {
 
       const result = await runInTransaction(command);
 
-      const table = await prismaService.table.findUnique({
+      const table = await kit.prismaService.table.findUnique({
         where: { versionId: result.tableVersionId },
       });
 
@@ -167,7 +158,7 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should link table to revision', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
       const command = new DraftRevisionCreateTableCommand({
         revisionId: draftRevisionId,
@@ -176,7 +167,7 @@ describe('DraftRevisionCreateTableHandler', () => {
 
       const result = await runInTransaction(command);
 
-      const revision = await prismaService.revision.findUnique({
+      const revision = await kit.prismaService.revision.findUnique({
         where: { id: draftRevisionId },
         include: { tables: true },
       });
@@ -190,9 +181,9 @@ describe('DraftRevisionCreateTableHandler', () => {
     });
 
     it('should set hasChanges to true on revision', async () => {
-      const { draftRevisionId } = await prepareDraftRevisionTest(prismaService);
+      const { draftRevisionId } = await givenDraftRevision(kit.prismaService);
 
-      const revisionBefore = await prismaService.revision.findUnique({
+      const revisionBefore = await kit.prismaService.revision.findUnique({
         where: { id: draftRevisionId },
         select: { hasChanges: true },
       });
@@ -205,7 +196,7 @@ describe('DraftRevisionCreateTableHandler', () => {
 
       await runInTransaction(command);
 
-      const revisionAfter = await prismaService.revision.findUnique({
+      const revisionAfter = await kit.prismaService.revision.findUnique({
         where: { id: draftRevisionId },
         select: { hasChanges: true },
       });

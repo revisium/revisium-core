@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { CqrsModule } from '@nestjs/cqrs';
 import { Test, TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/__tests__/create-models';
+import { testCreateUser } from 'src/testing/factories/create-models';
 import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { CreateApiKeyHandler } from 'src/features/api-key/commands/handlers';

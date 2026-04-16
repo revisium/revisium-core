@@ -1,8 +1,9 @@
 import { CommandBus } from '@nestjs/cqrs';
+import { TestingModule } from '@nestjs/testing';
 import {
   prepareProject,
   createTestingModule,
-} from 'src/features/project/commands/handlers/__tests__/utils';
+} from 'src/testing/project/project-command-test-utils';
 import { DEFAULT_BRANCH_NAME } from 'src/features/project/commands/handlers/create-project.handler';
 import {
   CreateProjectCommand,
@@ -12,7 +13,7 @@ import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('CreateProjectHandler', () => {
   it('should create a new project', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
 
     const newProjectName = 'newProject';
 
@@ -69,7 +70,7 @@ describe('CreateProjectHandler', () => {
   });
 
   it('should create a new project with specified branch name', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
 
     const newProjectName = 'newProject';
     const branchName = 'develop';
@@ -96,7 +97,7 @@ describe('CreateProjectHandler', () => {
       headRevisionId,
       schemaTableVersionId,
       headTableVersionId,
-    } = await prepareProject(prismaService);
+    } = await prepareProject(moduleFixture);
 
     const newProjectName = 'newProject';
 
@@ -139,7 +140,7 @@ describe('CreateProjectHandler', () => {
   });
 
   it('should create a new project with name that was previously used by a deleted project', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
     const projectName = 'reusedProjectName';
 
     const initialCommand = new CreateProjectCommand({
@@ -174,7 +175,7 @@ describe('CreateProjectHandler', () => {
   });
 
   it('should not create a new project with name that is used by another project', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
     const projectName = 'reusedProjectName';
 
     const initialCommand = new CreateProjectCommand({
@@ -195,7 +196,7 @@ describe('CreateProjectHandler', () => {
   });
 
   it('should not create a new project with case-insensitive duplicate name', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
 
     await execute(
       new CreateProjectCommand({
@@ -215,7 +216,7 @@ describe('CreateProjectHandler', () => {
   });
 
   it('should not create a project with reserved branch name "head"', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
 
     const command = new CreateProjectCommand({
       organizationId,
@@ -229,7 +230,7 @@ describe('CreateProjectHandler', () => {
   });
 
   it('should not create a project with reserved branch name "draft"', async () => {
-    const { organizationId } = await prepareProject(prismaService);
+    const { organizationId } = await prepareProject(moduleFixture);
 
     const command = new CreateProjectCommand({
       organizationId,
@@ -244,6 +245,8 @@ describe('CreateProjectHandler', () => {
 
   let prismaService: PrismaService;
   let commandBus: CommandBus;
+  let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: CreateProjectCommand,
@@ -253,11 +256,13 @@ describe('CreateProjectHandler', () => {
 
   beforeAll(async () => {
     const result = await createTestingModule();
+    moduleFixture = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
+    closeModule = result.close;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });
