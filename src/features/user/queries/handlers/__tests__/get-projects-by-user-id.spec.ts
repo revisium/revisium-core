@@ -1,11 +1,11 @@
 import { QueryBus } from '@nestjs/cqrs';
-import {
-  Prisma,
-  UserOrganization,
-  UserProject,
-} from 'src/__generated__/client';
 import { nanoid } from 'nanoid';
-import { testCreateUser } from 'src/testing/factories/create-models';
+import {
+  testAddUserToOrganization,
+  testAddUserToProject,
+  testCreateOrganization,
+  testCreateUser,
+} from 'src/testing/factories/create-models';
 import {
   createUserQueryTestKit,
   type UserQueryTestKit,
@@ -35,12 +35,12 @@ describe('GetProjectsByUserIdHandler', () => {
     const organizationId = nanoid();
     const projectId = nanoid();
     await testCreateUser(prismaService, { id: userId });
-    await createOrganization(organizationId);
-    await addUserToOrganization(
+    await testCreateOrganization(prismaService, organizationId);
+    await testAddUserToOrganization(prismaService, {
       organizationId,
       userId,
-      UserOrganizationRoles.organizationOwner,
-    );
+      roleId: UserOrganizationRoles.organizationOwner,
+    });
     await createProject(organizationId, projectId);
 
     const query = createQuery({ first: 1, userId });
@@ -59,9 +59,13 @@ describe('GetProjectsByUserIdHandler', () => {
     const organizationId = nanoid();
     const projectId = nanoid();
     await testCreateUser(prismaService, { id: userId });
-    await createOrganization(organizationId);
+    await testCreateOrganization(prismaService, organizationId);
     await createProject(organizationId, projectId);
-    await addUserToProject(projectId, userId, UserProjectRoles.reader);
+    await testAddUserToProject(prismaService, {
+      projectId,
+      userId,
+      roleId: UserProjectRoles.reader,
+    });
 
     const query = createQuery({ first: 1, userId });
     const result = await queryBus.execute<
@@ -79,9 +83,13 @@ describe('GetProjectsByUserIdHandler', () => {
     const organizationId = nanoid();
     const projectId = nanoid();
     await testCreateUser(prismaService, { id: userId });
-    await createOrganization(organizationId);
+    await testCreateOrganization(prismaService, organizationId);
     await createProject(organizationId, projectId);
-    await addUserToProject(projectId, userId, UserProjectRoles.reader);
+    await testAddUserToProject(prismaService, {
+      projectId,
+      userId,
+      roleId: UserProjectRoles.reader,
+    });
 
     await prismaService.project.update({
       where: { id: projectId },
@@ -126,73 +134,6 @@ describe('GetProjectsByUserIdHandler', () => {
       userId: 'userId',
       first: 10,
       ...data,
-    });
-  };
-
-  const createOrganization = (organizationId: string) => {
-    return prismaService.organization.create({
-      data: {
-        id: organizationId,
-        createdId: nanoid(),
-      },
-    });
-  };
-
-  const addUserToOrganization = async (
-    organizationId: string,
-    userId: string,
-    roleId: UserOrganizationRoles,
-  ): Promise<UserOrganization> => {
-    const data: Prisma.UserOrganizationCreateInput = {
-      id: nanoid(),
-      role: {
-        connect: {
-          id: roleId,
-        },
-      },
-      organization: {
-        connect: {
-          id: organizationId,
-        },
-      },
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-    };
-
-    return prismaService.userOrganization.create({
-      data,
-    });
-  };
-
-  const addUserToProject = async (
-    projectId: string,
-    userId: string,
-    roleId: UserProjectRoles,
-  ): Promise<UserProject> => {
-    const data: Prisma.UserProjectCreateInput = {
-      id: nanoid(),
-      role: {
-        connect: {
-          id: roleId,
-        },
-      },
-      project: {
-        connect: {
-          id: projectId,
-        },
-      },
-      user: {
-        connect: {
-          id: userId,
-        },
-      },
-    };
-
-    return prismaService.userProject.create({
-      data,
     });
   };
 
