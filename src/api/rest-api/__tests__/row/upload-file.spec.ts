@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { createExpressImageFile } from 'src/testing/utils/file';
 import {
-  createEmptyFile,
+  createPreviousFile,
   prepareData,
   PrepareDataReturnType,
   prepareRow,
@@ -15,11 +15,13 @@ import {
 } from '@revisium/schema-toolkit/mocks';
 import { CoreModule } from 'src/core/core.module';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { STORAGE_SERVICE } from 'src/infrastructure/storage/storage.interface';
 import request from 'supertest';
 
 describe('restapi - row - upload file', () => {
   let preparedData: PrepareDataReturnType;
+  let prismaService: PrismaService;
   let fileId: string;
   let tableId: string;
   let rowId: string;
@@ -73,6 +75,7 @@ describe('restapi - row - upload file', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    prismaService = app.get(PrismaService);
     await app.init();
 
     await prepare();
@@ -85,12 +88,19 @@ describe('restapi - row - upload file', () => {
   async function prepare() {
     preparedData = await prepareData(app);
 
-    const { draftRevisionId, projectId, branchName } = preparedData.project;
-
-    const table = await prepareTableWithSchema(app, {
-      projectId,
-      branchName,
+    const {
+      headRevisionId,
       draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = preparedData.project;
+
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         file: getRefSchema(SystemSchemaIds.File),
         files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
@@ -98,27 +108,22 @@ describe('restapi - row - upload file', () => {
     });
 
     const data = {
-      file: createEmptyFile(),
+      file: createPreviousFile(),
       files: [],
     };
 
-    const rowResult = await prepareRow(app, {
-      projectId,
-      branchName,
-      draftRevisionId: table.draftRevisionId,
-      tableId: table.tableId,
+    const { rowDraft } = await prepareRow({
+      prismaService,
+      headTableVersionId: table.headTableVersionId,
+      draftTableVersionId: table.draftTableVersionId,
+      schema: table.schema,
       data: data,
       dataDraft: data,
     });
-    const { rowDraft } = rowResult;
 
     tableId = table.tableId;
     rowId = rowDraft.id;
-    fileId = (rowDraft.data as { file: { fileId: string } }).file.fileId;
-    preparedData.project.headRevisionId = rowResult.headRevisionId;
-    preparedData.project.draftRevisionId = rowResult.draftRevisionId;
-    preparedData.project.tableId = table.tableId;
-    preparedData.project.rowId = rowDraft.id;
+    fileId = data.file.fileId;
     file = createExpressImageFile();
   }
 });

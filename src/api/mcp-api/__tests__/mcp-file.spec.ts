@@ -2,7 +2,7 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import {
-  createEmptyFile,
+  createPreviousFile,
   prepareData,
   PrepareDataReturnType,
   prepareRow,
@@ -16,6 +16,7 @@ import {
 } from '@revisium/schema-toolkit/mocks';
 import { CoreModule } from 'src/core/core.module';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { STORAGE_SERVICE } from 'src/infrastructure/storage/storage.interface';
 import { AuthService } from 'src/features/auth/auth.service';
 
@@ -47,6 +48,7 @@ const parseResponse = (res: request.Response) => {
 
 describe('MCP API - File Tools', () => {
   let app: INestApplication;
+  let prismaService: PrismaService;
   let authService: AuthService;
   let preparedData: PrepareDataReturnType;
   let token: string;
@@ -77,6 +79,7 @@ describe('MCP API - File Tools', () => {
       .compile();
 
     app = moduleFixture.createNestApplication();
+    prismaService = app.get(PrismaService);
     authService = app.get(AuthService);
     await app.init();
   });
@@ -88,12 +91,19 @@ describe('MCP API - File Tools', () => {
   beforeEach(async () => {
     preparedData = await prepareData(app);
 
-    const { draftRevisionId, projectId, branchName } = preparedData.project;
-
-    const table = await prepareTableWithSchema(app, {
-      projectId,
-      branchName,
+    const {
+      headRevisionId,
       draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+    } = preparedData.project;
+
+    const table = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
       schema: getObjectSchema({
         title: getStringSchema(),
         document: getRefSchema(SystemSchemaIds.File),
@@ -103,28 +113,22 @@ describe('MCP API - File Tools', () => {
 
     const data = {
       title: 'Test Document',
-      document: createEmptyFile(),
+      document: createPreviousFile(),
       attachments: [],
     };
 
-    const rowResult = await prepareRow(app, {
-      projectId,
-      branchName,
-      draftRevisionId: table.draftRevisionId,
-      tableId: table.tableId,
+    const { rowDraft } = await prepareRow({
+      prismaService,
+      headTableVersionId: table.headTableVersionId,
+      draftTableVersionId: table.draftTableVersionId,
+      schema: table.schema,
       data,
       dataDraft: data,
     });
-    const { rowDraft } = rowResult;
 
     tableId = table.tableId;
     rowId = rowDraft.id;
-    fileId = (rowDraft.data as { document: { fileId: string } }).document
-      .fileId;
-    preparedData.project.headRevisionId = rowResult.headRevisionId;
-    preparedData.project.draftRevisionId = rowResult.draftRevisionId;
-    preparedData.project.tableId = table.tableId;
-    preparedData.project.rowId = rowDraft.id;
+    fileId = data.document.fileId;
 
     token = authService.login({
       username: preparedData.owner.user.username,

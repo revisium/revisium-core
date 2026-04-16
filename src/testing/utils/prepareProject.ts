@@ -1,5 +1,7 @@
 import type { INestApplicationContext } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
+import hash from 'object-hash';
 import {
   getArraySchema,
   getObjectSchema,
@@ -17,91 +19,44 @@ import {
 } from 'src/testing/utils/test-schemas';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
-import { JsonSchema } from '@revisium/schema-toolkit/types';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { ProjectApiService } from 'src/features/project/project-api.service';
-import { BranchApiService } from 'src/features/branch/branch-api.service';
-import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import { TableApiService } from 'src/features/table/table-api.service';
-import { RowApiService } from 'src/features/row/row-api.service';
+import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { SystemTables } from 'src/features/share/system-tables.consts';
+import {
+  JsonPatchAdd,
+  InitMigration,
+  JsonSchema,
+} from '@revisium/schema-toolkit/types';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 export type PrepareDataReturnType = Awaited<ReturnType<typeof prepareData>>;
+
 export type PrepareProjectReturnType = Awaited<
   ReturnType<typeof prepareProject>
 >;
 
-type TestingContainer = Pick<INestApplicationContext, 'get'>;
+export type PrismaOrContainer =
+  | PrismaService
+  | Pick<INestApplicationContext, 'get'>;
 
-type TestingServices = {
-  prismaService: PrismaService;
-  authService: AuthService;
-  projectApi: ProjectApiService;
-  branchApi: BranchApiService;
-  revisionsApi: RevisionsApiService;
-  tableApi: TableApiService;
-  rowApi: RowApiService;
-};
-
-type ProjectBase = {
-  organizationId: string;
-  projectId: string;
-  projectName: string;
-  branchId: string;
-  branchName: string;
-  headRevisionId: string;
-  draftRevisionId: string;
-  schemaTableVersionId: string;
-  schemaTableCreatedId: string;
-  sharedSchemasTableVersionId: string;
-  sharedSchemasTableCreatedId: string;
-  migrationTableVersionId: string;
-  migrationTableCreatedId: string;
-};
-
-type CommittedTableScenario = {
-  headRevisionId: string;
-  draftRevisionId: string;
-  tableId: string;
-  tableCreatedId: string;
-  headTableVersionId: string;
-  draftTableVersionId: string;
-  schemaRowVersionId: string;
-  schema: JsonSchema;
-};
-
-type CommittedRowScenario = {
-  headRevisionId: string;
-  draftRevisionId: string;
-  rowId: string;
-  rowCreatedId: string;
-  headRowVersionId: string;
-  draftRowVersionId: string;
-  row: Awaited<ReturnType<PrismaService['row']['findUniqueOrThrow']>>;
-  rowDraft: Awaited<ReturnType<PrismaService['row']['findUniqueOrThrow']>>;
+const resolvePrisma = (source: PrismaOrContainer): PrismaService => {
+  if (typeof (source as { get?: unknown }).get === 'function') {
+    return (source as Pick<INestApplicationContext, 'get'>).get(PrismaService);
+  }
+  return source as PrismaService;
 };
 
 export const hashedPassword =
   '$2a$10$Uj1aVmkVJh4ZV9Ij54bFLexeFcYz71QtySoosQ5V.txpETjOgG0bW';
 
-function getTestingServices(container: TestingContainer): TestingServices {
-  return {
-    prismaService: container.get(PrismaService),
-    authService: container.get(AuthService),
-    projectApi: container.get(ProjectApiService),
-    branchApi: container.get(BranchApiService),
-    revisionsApi: container.get(RevisionsApiService),
-    tableApi: container.get(TableApiService),
-    rowApi: container.get(RowApiService),
-  };
-}
-
 const prepareOrganizationUser = async (
-  container: TestingContainer,
+  app: INestApplication,
   organizationId: string,
   roleId: UserRole,
 ) => {
-  const { prismaService, authService } = getTestingServices(container);
+  const prismaService = app.get(PrismaService);
+  const authService = app.get(AuthService);
+
   const userId = nanoid();
 
   const user = await prismaService.user.create({
@@ -130,115 +85,151 @@ const prepareOrganizationUser = async (
   };
 };
 
-async function createOrganization(prismaService: PrismaService) {
-  return prismaService.organization.create({
-    data: {
-      id: `org-${nanoid()}`,
-      createdId: nanoid(),
-    },
-  });
-}
+export const prepareData = async (
+  app: INestApplication,
+  options?: { createLinkedTable?: boolean },
+) => {
+  const prismaService = app.get(PrismaService);
 
-async function getRevisionSystemTables(
-  prismaService: PrismaService,
-  revisionId: string,
-) {
-  const tables = await prismaService.table.findMany({
-    where: {
-      revisions: {
-        some: {
-          id: revisionId,
+  const project = await prepareProject(prismaService, options);
+  const anotherProject = await prepareProject(prismaService, options);
+
+  return {
+    project,
+    owner: await prepareOrganizationUser(
+      app,
+      project.organizationId,
+      UserRole.organizationOwner,
+    ),
+    anotherProject,
+    anotherOwner: await prepareOrganizationUser(
+      app,
+      anotherProject.organizationId,
+      UserRole.organizationOwner,
+    ),
+  };
+};
+
+export async function prepareBranch(source: PrismaOrContainer) {
+  const prismaService = resolvePrisma(source);
+  const organizationId = `org-${nanoid()}`;
+  const projectId = `project-${nanoid()}`;
+  const projectName = `name-${projectId}`;
+  const branchId = `branch-${nanoid()}`;
+  const branchName = `name-${branchId}`;
+  const headRevisionId = nanoid();
+  const draftRevisionId = nanoid();
+
+  await prismaService.branch.create({
+    data: {
+      id: branchId,
+      name: branchName,
+      isRoot: true,
+      project: {
+        create: {
+          id: projectId,
+          name: projectName,
+          organization: {
+            create: {
+              id: organizationId,
+              createdId: nanoid(),
+            },
+          },
         },
       },
-      id: {
-        in: [
-          SystemTables.Schema,
-          SystemTables.SharedSchemas,
-          SystemTables.Migration,
-        ],
+      revisions: {
+        createMany: {
+          data: [
+            {
+              id: headRevisionId,
+              isStart: true,
+              isHead: true,
+              hasChanges: false,
+            },
+            {
+              id: draftRevisionId,
+              parentId: headRevisionId,
+              hasChanges: true,
+              isDraft: true,
+            },
+          ],
+        },
       },
     },
-    select: {
-      id: true,
-      versionId: true,
-      createdId: true,
+  });
+
+  // schema table
+
+  const schemaTableVersionId = nanoid();
+  const schemaTableCreatedId = nanoid();
+
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.Schema,
+      versionId: schemaTableVersionId,
+      createdId: schemaTableCreatedId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
     },
   });
 
-  const schemaTable = tables.find((table) => table.id === SystemTables.Schema);
-  const sharedSchemasTable = tables.find(
-    (table) => table.id === SystemTables.SharedSchemas,
-  );
-  const migrationTable = tables.find(
-    (table) => table.id === SystemTables.Migration,
-  );
+  // shared schemas table
 
-  if (!schemaTable || !sharedSchemasTable || !migrationTable) {
-    throw new Error(
-      `System tables were not created for revision ${revisionId}`,
-    );
-  }
+  const sharedSchemasTableVersionId = nanoid();
+  const sharedSchemasTableCreatedId = nanoid();
 
-  return {
-    schemaTableVersionId: schemaTable.versionId,
-    schemaTableCreatedId: schemaTable.createdId,
-    sharedSchemasTableVersionId: sharedSchemasTable.versionId,
-    sharedSchemasTableCreatedId: sharedSchemasTable.createdId,
-    migrationTableVersionId: migrationTable.versionId,
-    migrationTableCreatedId: migrationTable.createdId,
-  };
-}
-
-async function loadProjectBase(
-  container: TestingContainer,
-  organizationId: string,
-): Promise<ProjectBase> {
-  const { prismaService, projectApi, branchApi } =
-    getTestingServices(container);
-  const projectName = `project-${nanoid()}`;
-
-  const project = await projectApi.apiCreateProject({
-    organizationId,
-    projectName,
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.SharedSchemas,
+      versionId: sharedSchemasTableVersionId,
+      createdId: sharedSchemasTableCreatedId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
+    },
   });
-  const branch = await projectApi.getRootBranchByProject(project.id);
-  const headRevision = await branchApi.getHeadRevision(branch.id);
-  const draftRevision = await branchApi.getDraftRevision(branch.id);
-  const systemTables = await getRevisionSystemTables(
-    prismaService,
-    headRevision.id,
-  );
+
+  // migration table
+
+  const migrationTableVersionId = nanoid();
+  const migrationTableCreatedId = nanoid();
+
+  await prismaService.table.create({
+    data: {
+      id: SystemTables.Migration,
+      versionId: migrationTableVersionId,
+      createdId: migrationTableCreatedId,
+      readonly: true,
+      system: true,
+      revisions: {
+        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+      },
+    },
+  });
 
   return {
     organizationId,
-    projectId: project.id,
+    projectId,
     projectName,
-    branchId: branch.id,
-    branchName: branch.name,
-    headRevisionId: headRevision.id,
-    draftRevisionId: draftRevision.id,
-    ...systemTables,
+    branchId,
+    branchName,
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    schemaTableCreatedId,
+    sharedSchemasTableVersionId,
+    sharedSchemasTableCreatedId,
+    migrationTableVersionId,
+    migrationTableCreatedId,
   };
 }
 
-async function resolveCurrentBranchState(
-  container: TestingContainer,
-  projectId: string,
-  branchName: string,
-) {
-  const { branchApi } = getTestingServices(container);
-  const branch = await branchApi.getBranch({ projectId, branchName });
-  const headRevision = await branchApi.getHeadRevision(branch.id);
-  const draftRevision = await branchApi.getDraftRevision(branch.id);
-
-  return {
-    branch,
-    headRevision,
-    draftRevision,
-  };
-}
-
-async function createEndpoints({
+async function prepareEndpoint({
   prismaService,
   headRevisionId,
   draftRevisionId,
@@ -250,6 +241,7 @@ async function createEndpoints({
   const headEndpointId = nanoid();
   const draftEndpointId = nanoid();
 
+  // endpoint
   await prismaService.endpoint.create({
     data: {
       id: headEndpointId,
@@ -269,7 +261,6 @@ async function createEndpoints({
       },
     },
   });
-
   await prismaService.endpoint.create({
     data: {
       id: draftEndpointId,
@@ -296,464 +287,308 @@ async function createEndpoints({
   };
 }
 
-async function loadTableVersionForRevision(
-  prismaService: PrismaService,
-  revisionId: string,
-  tableId: string,
-) {
-  return prismaService.table.findFirstOrThrow({
-    where: {
+export async function prepareTableWithSchema({
+  prismaService,
+  headRevisionId,
+  draftRevisionId,
+  schemaTableVersionId,
+  migrationTableVersionId,
+  schema,
+}: {
+  prismaService: PrismaService;
+  headRevisionId: string;
+  draftRevisionId: string;
+  schemaTableVersionId: string;
+  migrationTableVersionId: string;
+  schema: JsonSchema;
+}) {
+  const schemaRowVersionId = nanoid();
+  const migrationRowVersionId = nanoid();
+  const tableId = `table-${nanoid()}`;
+  const createdIdForTableInSchemaTable = `table-${nanoid()}`;
+  const tableCreatedId = nanoid();
+  const headTableVersionId = nanoid();
+  const draftTableVersionId = nanoid();
+
+  // table
+  await prismaService.table.create({
+    data: {
       id: tableId,
+      createdId: tableCreatedId,
+      versionId: headTableVersionId,
+      readonly: true,
       revisions: {
-        some: {
-          id: revisionId,
-        },
+        connect: { id: headRevisionId },
       },
     },
   });
-}
-
-async function loadSchemaRowVersion(
-  prismaService: PrismaService,
-  schemaTableVersionId: string,
-  tableId: string,
-) {
-  return prismaService.row.findFirstOrThrow({
-    where: {
+  await prismaService.table.create({
+    data: {
       id: tableId,
+      createdId: tableCreatedId,
+      versionId: draftTableVersionId,
+      readonly: false,
+      revisions: {
+        connect: { id: draftRevisionId },
+      },
+    },
+  });
+
+  // schema for table in SystemTable.schema
+  await prismaService.row.create({
+    data: {
+      id: tableId,
+      versionId: schemaRowVersionId,
+      createdId: createdIdForTableInSchemaTable,
+      readonly: true,
       tables: {
-        some: {
+        connect: {
           versionId: schemaTableVersionId,
         },
       },
+      data: schema,
+      meta: [
+        {
+          patches: [
+            {
+              op: 'add',
+              path: '',
+              value: schema,
+            } as JsonPatchAdd,
+          ],
+          hash: hash(schema),
+          date: new Date(),
+        },
+      ],
+      hash: hash(schema),
+      schemaHash: hash(metaSchema),
     },
   });
-}
 
-async function loadRowVersionForRevision(
-  prismaService: PrismaService,
-  revisionId: string,
-  tableId: string,
-  rowId: string,
-) {
-  return prismaService.row.findFirstOrThrow({
-    where: {
-      id: rowId,
+  // migration
+
+  const migration: InitMigration = {
+    changeType: 'init',
+    id: '2025-01-01T00:00:00Z',
+    tableId,
+    hash: hash(schema),
+    schema,
+  };
+
+  await prismaService.row.create({
+    data: {
+      id: migration.id,
+      versionId: migrationRowVersionId,
+      createdId: nanoid(),
+      readonly: true,
       tables: {
-        some: {
-          id: tableId,
-          revisions: {
-            some: {
-              id: revisionId,
-            },
-          },
+        connect: {
+          versionId: migrationTableVersionId,
         },
       },
+      data: migration,
+      hash: hash(migration),
+      schemaHash: hash(tableMigrationsSchema),
+      publishedAt: migration.id,
     },
   });
-}
-
-async function commitRevision(
-  container: TestingContainer,
-  projectId: string,
-  branchName: string,
-) {
-  const { revisionsApi } = getTestingServices(container);
-  await revisionsApi.createRevision({
-    projectId,
-    branchName,
-    comment: 'test-seed',
-  });
-
-  return resolveCurrentBranchState(container, projectId, branchName);
-}
-
-export const prepareData = async (
-  container: TestingContainer,
-  options?: { createLinkedTable?: boolean },
-) => {
-  const project = await prepareProject(container, options);
-  const anotherProject = await prepareProject(container, options);
 
   return {
-    project,
-    owner: await prepareOrganizationUser(
-      container,
-      project.organizationId,
-      UserRole.organizationOwner,
-    ),
-    anotherProject,
-    anotherOwner: await prepareOrganizationUser(
-      container,
-      anotherProject.organizationId,
-      UserRole.organizationOwner,
-    ),
-  };
-};
-
-export async function prepareBranch(container: TestingContainer) {
-  const { prismaService } = getTestingServices(container);
-  const organization = await createOrganization(prismaService);
-  return loadProjectBase(container, organization.id);
-}
-
-export async function prepareTableWithSchema(
-  container: TestingContainer,
-  {
-    projectId,
-    branchName,
-    draftRevisionId,
-    schema,
-    tableId = `table-${nanoid()}`,
-  }: {
-    projectId: string;
-    branchName: string;
-    draftRevisionId: string;
-    schema: JsonSchema;
-    tableId?: string;
-  },
-): Promise<CommittedTableScenario> {
-  const { prismaService, tableApi } = getTestingServices(container);
-
-  await tableApi.createTable({
-    revisionId: draftRevisionId,
+    schemaRowVersionId,
     tableId,
-    schema,
-  });
-
-  const { headRevision, draftRevision } = await commitRevision(
-    container,
-    projectId,
-    branchName,
-  );
-
-  const systemTables = await getRevisionSystemTables(
-    prismaService,
-    headRevision.id,
-  );
-  const headTable = await loadTableVersionForRevision(
-    prismaService,
-    headRevision.id,
-    tableId,
-  );
-  const draftTable = await loadTableVersionForRevision(
-    prismaService,
-    draftRevision.id,
-    tableId,
-  );
-  const schemaRow = await loadSchemaRowVersion(
-    prismaService,
-    systemTables.schemaTableVersionId,
-    tableId,
-  );
-
-  return {
-    headRevisionId: headRevision.id,
-    draftRevisionId: draftRevision.id,
-    tableId,
-    tableCreatedId: headTable.createdId,
-    headTableVersionId: headTable.versionId,
-    draftTableVersionId: draftTable.versionId,
-    schemaRowVersionId: schemaRow.versionId,
+    createdIdForTableInSchemaTable,
+    tableCreatedId,
+    headTableVersionId,
+    draftTableVersionId,
     schema,
   };
 }
 
-export async function prepareRow(
-  container: TestingContainer,
-  {
-    projectId,
-    branchName,
-    draftRevisionId,
-    tableId,
-    data,
-    dataDraft,
-    rowId = `row-${nanoid()}`,
-  }: {
-    projectId: string;
-    branchName: string;
-    draftRevisionId: string;
-    tableId: string;
-    data: object;
-    dataDraft: object;
-    rowId?: string;
-  },
-): Promise<CommittedRowScenario> {
-  const { prismaService, rowApi } = getTestingServices(container);
+export async function prepareRow({
+  prismaService,
+  headTableVersionId,
+  draftTableVersionId,
+  data,
+  dataDraft,
+  schema,
+}: {
+  prismaService: PrismaService;
+  headTableVersionId: string;
+  draftTableVersionId: string;
+  data: object;
+  dataDraft: object;
+  schema: JsonSchema;
+}) {
+  const rowId = `row-${nanoid()}`;
+  const rowCreatedId = nanoid();
+  const headRowVersionId = nanoid();
+  const draftRowVersionId = nanoid();
 
-  await rowApi.createRow({
-    revisionId: draftRevisionId,
-    tableId,
-    rowId,
-    data,
+  // row
+  const now = new Date();
+  const row = await prismaService.row.create({
+    data: {
+      createdAt: now,
+      updatedAt: now,
+      publishedAt: now,
+      id: rowId,
+      versionId: headRowVersionId,
+      createdId: rowCreatedId,
+      readonly: true,
+      tables: {
+        connect: {
+          versionId: headTableVersionId,
+        },
+      },
+      data,
+      hash: hash(data),
+      schemaHash: hash(schema),
+    },
   });
-
-  const committed = await commitRevision(container, projectId, branchName);
-
-  if (JSON.stringify(dataDraft) !== JSON.stringify(data)) {
-    await rowApi.updateRow({
-      revisionId: committed.draftRevision.id,
-      tableId,
-      rowId,
+  const rowDraft = await prismaService.row.create({
+    data: {
+      createdAt: row.createdAt,
+      updatedAt: new Date(),
+      publishedAt: row.publishedAt,
+      id: rowId,
+      versionId: draftRowVersionId,
+      createdId: rowCreatedId,
+      readonly: false,
+      tables: {
+        connect: {
+          versionId: draftTableVersionId,
+        },
+      },
       data: dataDraft,
-    });
-  }
-
-  const row = await loadRowVersionForRevision(
-    prismaService,
-    committed.headRevision.id,
-    tableId,
-    rowId,
-  );
-  const rowDraft = await loadRowVersionForRevision(
-    prismaService,
-    committed.draftRevision.id,
-    tableId,
-    rowId,
-  );
+      hash: hash(dataDraft),
+      schemaHash: hash(testSchema),
+    },
+  });
 
   return {
-    headRevisionId: committed.headRevision.id,
-    draftRevisionId: committed.draftRevision.id,
-    rowId,
-    rowCreatedId: row.createdId,
-    headRowVersionId: row.versionId,
-    draftRowVersionId: rowDraft.versionId,
     row,
     rowDraft,
+    rowId,
+    rowCreatedId,
+    headRowVersionId,
+    draftRowVersionId,
   };
 }
 
 export const prepareProject = async (
-  container: TestingContainer,
+  source: PrismaOrContainer,
   options?: { createLinkedTable?: boolean },
 ) => {
-  const { prismaService, tableApi, rowApi } = getTestingServices(container);
-  const organization = await createOrganization(prismaService);
-  const projectBase = await loadProjectBase(container, organization.id);
-
-  const endpoints = await createEndpoints({
+  const prismaService = resolvePrisma(source);
+  const prepareBranchResult = await prepareBranch(prismaService);
+  const {
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    migrationTableVersionId,
+  } = prepareBranchResult;
+  const resultPrepareTableWithSchema = await prepareTableWithSchema({
     prismaService,
-    headRevisionId: projectBase.headRevisionId,
-    draftRevisionId: projectBase.draftRevisionId,
-  });
-
-  const tableId = `table-${nanoid()}`;
-  const rowId = `row-${nanoid()}`;
-
-  await tableApi.createTable({
-    revisionId: projectBase.draftRevisionId,
-    tableId,
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    migrationTableVersionId,
     schema: testSchema,
   });
-  await rowApi.createRow({
-    revisionId: projectBase.draftRevisionId,
-    tableId,
-    rowId,
+  const { headTableVersionId, draftTableVersionId, tableId } =
+    resultPrepareTableWithSchema;
+  const resultPrepareRow = await prepareRow({
+    prismaService,
+    headTableVersionId,
+    draftTableVersionId,
     data: { ver: 1 },
+    dataDraft: { ver: 2 },
+    schema: testSchema,
   });
+  const { rowId } = resultPrepareRow;
 
-  let linkedTable: CommittedTableScenario | undefined;
-  let linkedRow: CommittedRowScenario | undefined;
+  let linkedTable:
+    | Awaited<ReturnType<typeof prepareTableWithSchema>>
+    | undefined = undefined;
+
+  let linkedRow: Awaited<ReturnType<typeof prepareRow>> | undefined = undefined;
 
   if (options?.createLinkedTable) {
-    const linkedTableId = `table-${nanoid()}`;
     const linkedSchema = getTestLinkedSchema(tableId);
+    linkedTable = await prepareTableWithSchema({
+      prismaService,
+      headRevisionId,
+      draftRevisionId,
+      schemaTableVersionId,
+      migrationTableVersionId,
+      schema: getTestLinkedSchema(tableId),
+    });
 
-    await tableApi.createTable({
-      revisionId: projectBase.draftRevisionId,
-      tableId: linkedTableId,
+    linkedRow = await prepareRow({
+      prismaService,
+      headTableVersionId: linkedTable.headTableVersionId,
+      draftTableVersionId: linkedTable.draftTableVersionId,
+      data: { link: rowId },
+      dataDraft: { link: rowId },
       schema: linkedSchema,
     });
-    await rowApi.createRow({
-      revisionId: projectBase.draftRevisionId,
-      tableId: linkedTableId,
-      rowId: `row-${nanoid()}`,
-      data: { link: rowId },
-    });
   }
 
-  const committed = await commitRevision(
-    container,
-    projectBase.projectId,
-    projectBase.branchName,
-  );
-
-  await rowApi.updateRow({
-    revisionId: committed.draftRevision.id,
-    tableId,
-    rowId,
-    data: { ver: 2 },
+  const prepareEndpointResult = await prepareEndpoint({
+    prismaService,
+    headRevisionId,
+    draftRevisionId,
   });
 
-  const systemTables = await getRevisionSystemTables(
-    prismaService,
-    committed.headRevision.id,
-  );
-  const schemaRow = await loadSchemaRowVersion(
-    prismaService,
-    systemTables.schemaTableVersionId,
-    tableId,
-  );
-  const headTable = await loadTableVersionForRevision(
-    prismaService,
-    committed.headRevision.id,
-    tableId,
-  );
-  const draftTable = await loadTableVersionForRevision(
-    prismaService,
-    committed.draftRevision.id,
-    tableId,
-  );
-  const row = await loadRowVersionForRevision(
-    prismaService,
-    committed.headRevision.id,
-    tableId,
-    rowId,
-  );
-  const rowDraft = await loadRowVersionForRevision(
-    prismaService,
-    committed.draftRevision.id,
-    tableId,
-    rowId,
-  );
-
-  if (options?.createLinkedTable) {
-    const linkedDraftTables = await prismaService.table.findMany({
-      where: {
-        revisions: {
-          some: {
-            id: committed.draftRevision.id,
-          },
-        },
-        id: {
-          not: tableId,
-        },
-        system: false,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-      take: 1,
-    });
-
-    const linkedCurrent = linkedDraftTables[0];
-    if (linkedCurrent) {
-      const linkedHeadTable = await loadTableVersionForRevision(
-        prismaService,
-        committed.headRevision.id,
-        linkedCurrent.id,
-      );
-      const linkedDraftTable = await loadTableVersionForRevision(
-        prismaService,
-        committed.draftRevision.id,
-        linkedCurrent.id,
-      );
-      const linkedSchemaRow = await loadSchemaRowVersion(
-        prismaService,
-        systemTables.schemaTableVersionId,
-        linkedCurrent.id,
-      );
-      const linkedHeadRow = await prismaService.row.findFirstOrThrow({
-        where: {
-          tables: {
-            some: {
-              versionId: linkedHeadTable.versionId,
-            },
-          },
-        },
-      });
-      const linkedDraftRow = await prismaService.row.findFirstOrThrow({
-        where: {
-          id: linkedHeadRow.id,
-          tables: {
-            some: {
-              versionId: linkedDraftTable.versionId,
-            },
-          },
-        },
-      });
-
-      linkedTable = {
-        headRevisionId: committed.headRevision.id,
-        draftRevisionId: committed.draftRevision.id,
-        tableId: linkedCurrent.id,
-        tableCreatedId: linkedHeadTable.createdId,
-        headTableVersionId: linkedHeadTable.versionId,
-        draftTableVersionId: linkedDraftTable.versionId,
-        schemaRowVersionId: linkedSchemaRow.versionId,
-        schema: getTestLinkedSchema(tableId),
-      };
-      linkedRow = {
-        headRevisionId: committed.headRevision.id,
-        draftRevisionId: committed.draftRevision.id,
-        rowId: linkedHeadRow.id,
-        rowCreatedId: linkedHeadRow.createdId,
-        headRowVersionId: linkedHeadRow.versionId,
-        draftRowVersionId: linkedDraftRow.versionId,
-        row: linkedHeadRow,
-        rowDraft: linkedDraftRow,
-      };
-    }
-  }
-
   return {
-    organizationId: projectBase.organizationId,
-    projectId: projectBase.projectId,
-    projectName: projectBase.projectName,
-    branchId: projectBase.branchId,
-    branchName: projectBase.branchName,
-    headRevisionId: committed.headRevision.id,
-    draftRevisionId: committed.draftRevision.id,
-    ...systemTables,
-    ...endpoints,
-    schemaRowVersionId: schemaRow.versionId,
-    tableId,
-    tableCreatedId: headTable.createdId,
-    headTableVersionId: headTable.versionId,
-    draftTableVersionId: draftTable.versionId,
-    rowId,
-    rowCreatedId: row.createdId,
-    headRowVersionId: row.versionId,
-    draftRowVersionId: rowDraft.versionId,
-    row,
-    rowDraft,
+    ...prepareBranchResult,
+    ...prepareEndpointResult,
+    ...resultPrepareTableWithSchema,
+    ...resultPrepareRow,
     linkedTable,
     linkedRow,
   };
 };
 
 export const prepareTableAndRowWithFile = async (
-  container: TestingContainer,
+  source: PrismaOrContainer,
   data: object,
 ) => {
-  const project = await prepareProject(container);
+  const prismaService = resolvePrisma(source);
+  const {
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    migrationTableVersionId,
+  } = await prepareProject(prismaService);
 
-  const table = await prepareTableWithSchema(container, {
-    projectId: project.projectId,
-    branchName: project.branchName,
-    draftRevisionId: project.draftRevisionId,
+  const table = await prepareTableWithSchema({
+    prismaService,
+    headRevisionId,
+    draftRevisionId,
+    schemaTableVersionId,
+    migrationTableVersionId,
     schema: getObjectSchema({
       file: getRefSchema(SystemSchemaIds.File),
       files: getArraySchema(getRefSchema(SystemSchemaIds.File)),
     }),
   });
 
-  const rowResult = await prepareRow(container, {
-    projectId: project.projectId,
-    branchName: project.branchName,
-    draftRevisionId: table.draftRevisionId,
-    tableId: table.tableId,
-    data,
+  const { row, rowDraft } = await prepareRow({
+    prismaService,
+    headTableVersionId: table.headTableVersionId,
+    draftTableVersionId: table.draftTableVersionId,
+    schema: table.schema,
+    data: data,
     dataDraft: data,
   });
 
   return {
-    headRevisionId: rowResult.headRevisionId,
-    draftRevisionId: rowResult.draftRevisionId,
+    headRevisionId,
+    draftRevisionId,
     table,
-    row: rowResult.row,
-    rowDraft: rowResult.rowDraft,
+    row,
+    rowDraft,
   };
 };
 
@@ -778,13 +613,15 @@ export const createEmptyFile = () => ({
 });
 
 export const prepareProjectUser = async (
-  container: TestingContainer,
+  app: INestApplication,
   organizationId: string,
   projectId: string,
   organizationRole: UserOrganizationRoles,
   projectRole: UserProjectRoles,
 ) => {
-  const { prismaService, authService } = getTestingServices(container);
+  const prismaService = app.get(PrismaService);
+  const authService = app.get(AuthService);
+
   const userId = nanoid();
 
   const user = await prismaService.user.create({
@@ -825,19 +662,21 @@ export type PrepareProjectUserReturnType = Awaited<
 >;
 
 export const prepareDataWithRoles = async (
-  container: TestingContainer,
+  app: INestApplication,
   options?: { createLinkedTable?: boolean },
 ) => {
-  const project = await prepareProject(container, options);
+  const prismaService = app.get(PrismaService);
+
+  const project = await prepareProject(prismaService, options);
 
   const owner = await prepareOrganizationUser(
-    container,
+    app,
     project.organizationId,
     UserRole.organizationOwner,
   );
 
   const developer = await prepareProjectUser(
-    container,
+    app,
     project.organizationId,
     project.projectId,
     UserOrganizationRoles.developer,
@@ -845,7 +684,7 @@ export const prepareDataWithRoles = async (
   );
 
   const editor = await prepareProjectUser(
-    container,
+    app,
     project.organizationId,
     project.projectId,
     UserOrganizationRoles.editor,
@@ -853,16 +692,16 @@ export const prepareDataWithRoles = async (
   );
 
   const reader = await prepareProjectUser(
-    container,
+    app,
     project.organizationId,
     project.projectId,
     UserOrganizationRoles.reader,
     UserProjectRoles.reader,
   );
 
-  const anotherProject = await prepareProject(container, options);
+  const anotherProject = await prepareProject(prismaService, options);
   const anotherOwner = await prepareOrganizationUser(
-    container,
+    app,
     anotherProject.organizationId,
     UserRole.organizationOwner,
   );

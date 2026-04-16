@@ -36,21 +36,23 @@ export async function givenDraftRevision(
         },
       },
       revisions: {
-        create: [
-          {
-            id: headRevisionId,
-            isStart: true,
-            isHead: true,
-            hasChanges: false,
-          },
-          {
-            id: draftRevisionId,
-            parentId: headRevisionId,
-            hasChanges: false,
-            isDraft: true,
-          },
-        ],
+        create: {
+          id: headRevisionId,
+          isStart: true,
+          isHead: true,
+          hasChanges: false,
+        },
       },
+    },
+  });
+
+  await prismaService.revision.create({
+    data: {
+      id: draftRevisionId,
+      branchId,
+      parentId: headRevisionId,
+      hasChanges: false,
+      isDraft: true,
     },
   });
 

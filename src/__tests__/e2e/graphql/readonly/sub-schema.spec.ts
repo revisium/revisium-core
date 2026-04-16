@@ -3,6 +3,7 @@ import { nanoid } from 'nanoid';
 import hash from 'object-hash';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { getObjectSchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
+import { FileStatus } from 'src/features/plugin/file/consts';
 import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { gql } from 'src/testing/utils/gql';
@@ -13,13 +14,8 @@ import {
   gqlQueryExpectError,
   getPrismaService,
 } from 'src/testing/e2e';
-import {
-  createEmptyFile,
-  prepareData,
-  prepareRow,
-  prepareTableWithSchema,
-} from 'src/testing/utils/prepareProject';
-import { InitMigration } from '@revisium/schema-toolkit/types';
+import { prepareData, prepareRow } from 'src/testing/utils/prepareProject';
+import { JsonPatchAdd, InitMigration } from '@revisium/schema-toolkit/types';
 
 const FILE_SCHEMA_ID = SystemSchemaIds.File;
 
@@ -30,15 +26,18 @@ const createFileData = (
     mimeType: string;
     size: number;
     status: string;
-    hash: string;
-    extension: string;
-    width: number;
-    height: number;
-    url: string;
   }> = {},
 ) => ({
-  ...createEmptyFile(),
-  ...overrides,
+  fileId: overrides.fileId ?? nanoid(),
+  fileName: overrides.fileName ?? 'test.png',
+  mimeType: overrides.mimeType ?? 'image/png',
+  size: overrides.size ?? 1024,
+  status: overrides.status ?? FileStatus.uploaded,
+  url: '',
+  hash: '',
+  extension: 'png',
+  width: 100,
+  height: 100,
 });
 
 describe('graphql - subSchemaItems (readonly)', () => {
@@ -303,38 +302,154 @@ describe('graphql - subSchemaItems (readonly)', () => {
 });
 
 async function prepareFixtureWithFiles(app: INestApplication) {
+  const prismaService = getPrismaService();
+
   const baseFixture = await prepareData(app);
 
   const fileSchema = getObjectSchema({
     file: getRefSchema(SystemSchemaIds.File),
   });
 
-  const fileTableResult = await prepareTableWithSchema(app, {
-    projectId: baseFixture.project.projectId,
-    branchName: baseFixture.project.branchName,
+  const fileTableResult = await prepareTableWithFileSchema({
+    prismaService,
+    headRevisionId: baseFixture.project.headRevisionId,
     draftRevisionId: baseFixture.project.draftRevisionId,
+    schemaTableVersionId: baseFixture.project.schemaTableVersionId,
+    migrationTableVersionId: baseFixture.project.migrationTableVersionId,
     schema: fileSchema,
   });
 
-  const fileData = createEmptyFile();
+  const fileData = createFileData();
 
-  const rowResult = await prepareRow(app, {
-    projectId: baseFixture.project.projectId,
-    branchName: baseFixture.project.branchName,
-    draftRevisionId: fileTableResult.draftRevisionId,
-    tableId: fileTableResult.tableId,
+  const rowResult = await prepareRow({
+    prismaService,
+    headTableVersionId: fileTableResult.headTableVersionId,
+    draftTableVersionId: fileTableResult.draftTableVersionId,
     data: { file: fileData },
     dataDraft: { file: fileData },
+    schema: fileSchema,
   });
 
   return {
     ...baseFixture,
     project: {
       ...baseFixture.project,
-      headRevisionId: rowResult.headRevisionId,
-      draftRevisionId: rowResult.draftRevisionId,
       tableId: fileTableResult.tableId,
       rowId: rowResult.rowId,
     },
+  };
+}
+
+async function prepareTableWithFileSchema({
+  prismaService,
+  headRevisionId,
+  draftRevisionId,
+  schemaTableVersionId,
+  migrationTableVersionId,
+  schema,
+}: {
+  prismaService: ReturnType<typeof getPrismaService>;
+  headRevisionId: string;
+  draftRevisionId: string;
+  schemaTableVersionId: string;
+  migrationTableVersionId: string;
+  schema: object;
+}) {
+  const schemaRowVersionId = nanoid();
+  const migrationRowVersionId = nanoid();
+  const tableId = `file-table-${nanoid()}`;
+  const createdIdForTableInSchemaTable = `table-${nanoid()}`;
+  const tableCreatedId = nanoid();
+  const headTableVersionId = nanoid();
+  const draftTableVersionId = nanoid();
+
+  await prismaService.table.create({
+    data: {
+      id: tableId,
+      createdId: tableCreatedId,
+      versionId: headTableVersionId,
+      readonly: true,
+      revisions: {
+        connect: { id: headRevisionId },
+      },
+    },
+  });
+
+  await prismaService.table.create({
+    data: {
+      id: tableId,
+      createdId: tableCreatedId,
+      versionId: draftTableVersionId,
+      readonly: false,
+      revisions: {
+        connect: { id: draftRevisionId },
+      },
+    },
+  });
+
+  await prismaService.row.create({
+    data: {
+      id: tableId,
+      versionId: schemaRowVersionId,
+      createdId: createdIdForTableInSchemaTable,
+      readonly: true,
+      tables: {
+        connect: {
+          versionId: schemaTableVersionId,
+        },
+      },
+      data: schema,
+      meta: [
+        {
+          patches: [
+            {
+              op: 'add',
+              path: '',
+              value: schema,
+            } as JsonPatchAdd,
+          ],
+          hash: hash(schema),
+          date: new Date(),
+        },
+      ],
+      hash: hash(schema),
+      schemaHash: hash(metaSchema),
+    },
+  });
+
+  const migration: InitMigration = {
+    changeType: 'init',
+    id: new Date().toISOString(),
+    tableId,
+    hash: hash(schema),
+    schema: schema as InitMigration['schema'],
+  };
+
+  await prismaService.row.create({
+    data: {
+      id: migration.id,
+      versionId: migrationRowVersionId,
+      createdId: nanoid(),
+      readonly: true,
+      tables: {
+        connect: {
+          versionId: migrationTableVersionId,
+        },
+      },
+      data: migration,
+      hash: hash(migration),
+      schemaHash: hash(tableMigrationsSchema),
+      publishedAt: migration.id,
+    },
+  });
+
+  return {
+    schemaRowVersionId,
+    tableId,
+    createdIdForTableInSchemaTable,
+    tableCreatedId,
+    headTableVersionId,
+    draftTableVersionId,
+    schema,
   };
 }
