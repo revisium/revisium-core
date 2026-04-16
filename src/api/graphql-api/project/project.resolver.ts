@@ -182,9 +182,7 @@ export class ProjectResolver {
     organizationId: string,
     ctx: ProjectResolverContext,
   ) {
-    if (!ctx.endpointUsageLimitByOrg) {
-      ctx.endpointUsageLimitByOrg = new Map();
-    }
+    ctx.endpointUsageLimitByOrg ??= new Map();
 
     const existing = ctx.endpointUsageLimitByOrg.get(organizationId);
     if (existing) {
