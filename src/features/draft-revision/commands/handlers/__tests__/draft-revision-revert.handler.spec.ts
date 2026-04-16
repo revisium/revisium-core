@@ -1,45 +1,45 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import { DraftRevisionCreateTableCommand } from 'src/features/draft-revision/commands/impl/draft-revision-create-table.command';
 import { DraftRevisionRevertCommand } from 'src/features/draft-revision/commands/impl/draft-revision-revert.command';
-import { DraftRevisionRevertCommandReturnType } from 'src/features/draft-revision/commands/impl';
+import {
+  DraftRevisionCreateTableCommandReturnType,
+  DraftRevisionRevertCommandReturnType,
+} from 'src/features/draft-revision/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { createDraftRevisionCommandTestKit } from 'src/testing/kit/create-draft-revision-command-test-kit';
+import {
+  createDraftRevisionCommandTestKit,
+  type DraftRevisionCommandTestKit,
+} from 'src/testing/kit/create-draft-revision-command-test-kit';
 import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionRevertHandler', () => {
+  let kit: DraftRevisionCommandTestKit;
   let prismaService: PrismaService;
-  let commandBus: CommandBus;
-  let transactionService: TransactionPrismaService;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionCommandTestKit();
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    transactionService = result.transactionService;
+    kit = await createDraftRevisionCommandTestKit();
+    prismaService = kit.prismaService;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 
   function runInTransaction(
     command: DraftRevisionRevertCommand,
   ): Promise<DraftRevisionRevertCommandReturnType> {
-    return transactionService.runSerializable(() =>
-      commandBus.execute(command),
-    );
+    return kit.executeSerializable(command);
   }
 
-  async function createChange(draftRevisionId: string, tableId: string) {
-    return transactionService.runSerializable(() =>
-      commandBus.execute(
-        new DraftRevisionCreateTableCommand({
-          revisionId: draftRevisionId,
-          tableId,
-        }),
-      ),
+  async function createChange(
+    draftRevisionId: string,
+    tableId: string,
+  ): Promise<DraftRevisionCreateTableCommandReturnType> {
+    return kit.executeSerializable(
+      new DraftRevisionCreateTableCommand({
+        revisionId: draftRevisionId,
+        tableId,
+      }),
     );
   }
 

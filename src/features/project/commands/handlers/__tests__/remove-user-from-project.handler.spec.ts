@@ -107,6 +107,7 @@ describe('RemoveUserFromProject', () => {
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
   let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: RemoveUserFromProjectCommand,
@@ -120,6 +121,7 @@ describe('RemoveUserFromProject', () => {
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+    closeModule = result.close;
   });
 
   beforeEach(() => {
@@ -127,6 +129,6 @@ describe('RemoveUserFromProject', () => {
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

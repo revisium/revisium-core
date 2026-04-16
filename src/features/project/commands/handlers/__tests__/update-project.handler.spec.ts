@@ -52,6 +52,7 @@ describe('UpdateProjectHandler', () => {
   let commandBus: CommandBus;
   let authCacheService: AuthCacheService;
   let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: UpdateProjectCommand,
@@ -65,9 +66,10 @@ describe('UpdateProjectHandler', () => {
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     authCacheService = result.module.get(AuthCacheService);
+    closeModule = result.close;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

@@ -79,6 +79,7 @@ describe('AddUserToProject', () => {
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
   let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: AddUserToProjectCommand,
@@ -92,6 +93,7 @@ describe('AddUserToProject', () => {
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+    closeModule = result.close;
   });
 
   beforeEach(() => {
@@ -99,6 +101,6 @@ describe('AddUserToProject', () => {
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

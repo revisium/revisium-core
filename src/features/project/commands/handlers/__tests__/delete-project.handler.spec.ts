@@ -74,6 +74,7 @@ describe('DeleteProjectHandler', () => {
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
   let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: DeleteProjectCommand,
@@ -87,6 +88,7 @@ describe('DeleteProjectHandler', () => {
     prismaService = result.prismaService;
     commandBus = result.commandBus;
     endpointNotificationService = result.endpointNotificationService;
+    closeModule = result.close;
   });
 
   beforeEach(() => {
@@ -94,6 +96,6 @@ describe('DeleteProjectHandler', () => {
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

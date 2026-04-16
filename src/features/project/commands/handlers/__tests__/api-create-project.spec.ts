@@ -8,7 +8,6 @@ import {
   ApiCreateProjectCommand,
   ApiCreateProjectCommandReturnType,
 } from 'src/features/project/commands/impl';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('ApiCreateProjectHandler', () => {
   it('should create a new project', async () => {
@@ -29,9 +28,9 @@ describe('ApiCreateProjectHandler', () => {
     expect(result.isPublic).toBe(false);
   });
 
-  let prismaService: PrismaService;
   let commandBus: CommandBus;
   let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: ApiCreateProjectCommand,
@@ -42,11 +41,11 @@ describe('ApiCreateProjectHandler', () => {
   beforeAll(async () => {
     const result = await createTestingModule();
     moduleFixture = result.module;
-    prismaService = result.prismaService;
     commandBus = result.commandBus;
+    closeModule = result.close;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

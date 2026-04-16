@@ -21,6 +21,9 @@ export const createTestingModule = async () => {
     transactionService: module.get(TransactionPrismaService),
     shareTransactionalQueries: module.get(ShareTransactionalQueries),
     endpointNotificationService: module.get(EndpointNotificationService),
+    async close() {
+      await module.close();
+    },
   };
 };
 

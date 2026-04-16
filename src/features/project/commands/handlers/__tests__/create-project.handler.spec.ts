@@ -246,6 +246,7 @@ describe('CreateProjectHandler', () => {
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let moduleFixture: TestingModule;
+  let closeModule: () => Promise<void>;
 
   function execute(
     command: CreateProjectCommand,
@@ -258,9 +259,10 @@ describe('CreateProjectHandler', () => {
     moduleFixture = result.module;
     prismaService = result.prismaService;
     commandBus = result.commandBus;
+    closeModule = result.close;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await closeModule();
   });
 });

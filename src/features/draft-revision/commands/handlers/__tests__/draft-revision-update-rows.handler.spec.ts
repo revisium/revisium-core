@@ -1,5 +1,4 @@
 import { BadRequestException } from '@nestjs/common';
-import { CommandBus } from '@nestjs/cqrs';
 import objectHash from 'object-hash';
 import { DraftRevisionCreateRowsCommand } from 'src/features/draft-revision/commands/impl/draft-revision-create-rows.command';
 import { DraftRevisionCreateTableCommand } from 'src/features/draft-revision/commands/impl/draft-revision-create-table.command';
@@ -10,24 +9,23 @@ import {
   DraftRevisionUpdateRowsCommandReturnType,
 } from 'src/features/draft-revision/commands/impl';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
-import { createDraftRevisionCommandTestKit } from 'src/testing/kit/create-draft-revision-command-test-kit';
+import {
+  createDraftRevisionCommandTestKit,
+  type DraftRevisionCommandTestKit,
+} from 'src/testing/kit/create-draft-revision-command-test-kit';
 import { givenDraftRevision } from 'src/testing/scenarios/given-draft-revision';
 
 describe('DraftRevisionUpdateRowsHandler', () => {
+  let kit: DraftRevisionCommandTestKit;
   let prismaService: PrismaService;
-  let commandBus: CommandBus;
-  let transactionService: TransactionPrismaService;
 
   beforeAll(async () => {
-    const result = await createDraftRevisionCommandTestKit();
-    prismaService = result.prismaService;
-    commandBus = result.commandBus;
-    transactionService = result.transactionService;
+    kit = await createDraftRevisionCommandTestKit();
+    prismaService = kit.prismaService;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 
   async function createTableAndRows(
@@ -38,13 +36,13 @@ describe('DraftRevisionUpdateRowsHandler', () => {
     tableResult: DraftRevisionCreateTableCommandReturnType;
     rowsResult: DraftRevisionCreateRowsCommandReturnType;
   }> {
-    return transactionService.runSerializable(async () => {
+    return kit.transactionService.runSerializable(async () => {
       const tableResult: DraftRevisionCreateTableCommandReturnType =
-        await commandBus.execute(
+        await kit.commandBus.execute(
           new DraftRevisionCreateTableCommand({ revisionId, tableId }),
         );
       const rowsResult: DraftRevisionCreateRowsCommandReturnType =
-        await commandBus.execute(
+        await kit.commandBus.execute(
           new DraftRevisionCreateRowsCommand({
             revisionId,
             tableId,
@@ -58,9 +56,7 @@ describe('DraftRevisionUpdateRowsHandler', () => {
   function runInTransaction(
     command: DraftRevisionUpdateRowsCommand,
   ): Promise<DraftRevisionUpdateRowsCommandReturnType> {
-    return transactionService.runSerializable(() =>
-      commandBus.execute(command),
-    );
+    return kit.executeSerializable(command);
   }
 
   describe('validation', () => {
