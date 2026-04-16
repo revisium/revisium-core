@@ -5,9 +5,10 @@ import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { ENDPOINT_COMMANDS } from 'src/features/endpoint/commands/handlers';
 import { ENDPOINT_QUERIES } from 'src/features/endpoint/queries/handlers';
 import { NotificationModule } from 'src/infrastructure/notification/notification.module';
+import { SharedModule } from 'src/core/shared/shared.module';
 
 @Module({
-  imports: [CqrsModule, DatabaseModule, NotificationModule],
+  imports: [CqrsModule, DatabaseModule, NotificationModule, SharedModule],
   providers: [EndpointApiService, ...ENDPOINT_COMMANDS, ...ENDPOINT_QUERIES],
   exports: [EndpointApiService],
 })

@@ -14,6 +14,7 @@ export enum LimitMetric {
   ROWS_PER_TABLE = 'rows_per_table',
   TABLES_PER_REVISION = 'tables_per_revision',
   BRANCHES_PER_PROJECT = 'branches_per_project',
+  ENDPOINTS_PER_PROJECT = 'endpoints_per_project',
 }
 
 export interface LimitCheckResult {

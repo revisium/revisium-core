@@ -53,6 +53,7 @@ describe('BillingClient', () => {
         rows_per_table: null,
         tables_per_revision: null,
         branches_per_project: null,
+        endpoints_per_project: null,
       },
     };
     mockFetch(200, limits);

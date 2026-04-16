@@ -26,6 +26,7 @@ const PRO_LIMITS: OrgLimits = {
     rows_per_table: 10_000,
     tables_per_revision: 100,
     branches_per_project: 20,
+    endpoints_per_project: 10,
   },
 };
 
@@ -41,6 +42,7 @@ const FREE_LIMITS: OrgLimits = {
     rows_per_table: 1_000,
     tables_per_revision: 10,
     branches_per_project: 3,
+    endpoints_per_project: 2,
   },
 };
 
@@ -145,6 +147,7 @@ describe('LimitsService (Ultra-Thin)', () => {
         rows_per_table: null,
         tables_per_revision: null,
         branches_per_project: null,
+        endpoints_per_project: null,
       },
     };
     mockBillingClient.getOrgLimits.mockResolvedValue(unlimited);
@@ -315,7 +318,11 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     await service.checkLimit('test-org', LimitMetric.PROJECTS, 1);
 
-    expect(computeSpy).toHaveBeenCalledWith('test-org', LimitMetric.PROJECTS, undefined);
+    expect(computeSpy).toHaveBeenCalledWith(
+      'test-org',
+      LimitMetric.PROJECTS,
+      undefined,
+    );
     expect(cacheSpy).not.toHaveBeenCalled();
   });
 
@@ -326,7 +333,11 @@ describe('LimitsService (Ultra-Thin)', () => {
 
     await service.checkLimit('test-org', LimitMetric.SEATS, 1);
 
-    expect(computeSpy).toHaveBeenCalledWith('test-org', LimitMetric.SEATS, undefined);
+    expect(computeSpy).toHaveBeenCalledWith(
+      'test-org',
+      LimitMetric.SEATS,
+      undefined,
+    );
     expect(cacheSpy).not.toHaveBeenCalled();
   });
 
@@ -348,7 +359,12 @@ describe('LimitsService (Ultra-Thin)', () => {
     mockBillingClient.getOrgLimits.mockResolvedValue(PRO_LIMITS);
 
     const context = { revisionId: 'rev-1', tableId: 'tbl-1' };
-    await service.checkLimit('test-org', LimitMetric.ROWS_PER_TABLE, 1, context);
+    await service.checkLimit(
+      'test-org',
+      LimitMetric.ROWS_PER_TABLE,
+      1,
+      context,
+    );
 
     expect(cacheSpy).toHaveBeenCalledWith(
       'test-org',
@@ -386,5 +402,29 @@ describe('LimitsService (Ultra-Thin)', () => {
     expect(result.current).toBe(3);
     expect(result.limit).toBe(3);
     expect(result.metric).toBe(LimitMetric.BRANCHES_PER_PROJECT);
+  });
+
+  it('should deny when endpoints_per_project limit reached', async () => {
+    mockBillingClient.getOrgLimits.mockResolvedValue(FREE_LIMITS);
+    const computeSpy = jest
+      .spyOn(usageService, 'computeUsage')
+      .mockResolvedValueOnce(2);
+
+    const result = await service.checkLimit(
+      'test-org',
+      LimitMetric.ENDPOINTS_PER_PROJECT,
+      1,
+      { projectId: 'proj-1' },
+    );
+
+    expect(result.allowed).toBe(false);
+    expect(result.current).toBe(2);
+    expect(result.limit).toBe(2);
+    expect(result.metric).toBe(LimitMetric.ENDPOINTS_PER_PROJECT);
+    expect(computeSpy).toHaveBeenCalledWith(
+      'test-org',
+      LimitMetric.ENDPOINTS_PER_PROJECT,
+      { projectId: 'proj-1' },
+    );
   });
 });

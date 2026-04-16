@@ -26,6 +26,9 @@ export class PlanLimitsModel {
 
   @Field(() => Int, { nullable: true })
   branchesPerProject: number | null;
+
+  @Field(() => Int, { nullable: true })
+  endpointsPerProject: number | null;
 }
 
 @ObjectType()

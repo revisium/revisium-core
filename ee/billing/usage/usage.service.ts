@@ -2,18 +2,38 @@ import { Injectable } from '@nestjs/common';
 import { countOrgRowVersions } from 'src/__generated__/client/sql';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { buildMetric } from './build-metric';
 
 export interface UsageSummary {
-  rowVersions: { current: number; limit: number | null; percentage: number | null };
-  projects: { current: number; limit: number | null; percentage: number | null };
+  rowVersions: {
+    current: number;
+    limit: number | null;
+    percentage: number | null;
+  };
+  projects: {
+    current: number;
+    limit: number | null;
+    percentage: number | null;
+  };
   seats: { current: number; limit: number | null; percentage: number | null };
-  storageBytes: { current: number; limit: number | null; percentage: number | null };
+  storageBytes: {
+    current: number;
+    limit: number | null;
+    percentage: number | null;
+  };
 }
 
 @Injectable()
 export class UsageService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly transactionService: TransactionPrismaService,
+  ) {}
+
+  private get db() {
+    return this.transactionService.getTransactionOrPrisma();
+  }
 
   async computeUsageSummary(
     organizationId: string,
@@ -57,7 +77,9 @@ export class UsageService {
         return this.countApiCalls(organizationId);
       case LimitMetric.ROWS_PER_TABLE: {
         if (!context?.revisionId || !context?.tableId) {
-          throw new Error('ROWS_PER_TABLE requires revisionId and tableId in context');
+          throw new Error(
+            'ROWS_PER_TABLE requires revisionId and tableId in context',
+          );
         }
         return this.countRowsInTable(context.revisionId, context.tableId);
       }
@@ -73,6 +95,14 @@ export class UsageService {
         }
         return this.countBranchesInProject(context.projectId);
       }
+      case LimitMetric.ENDPOINTS_PER_PROJECT: {
+        if (!context?.projectId) {
+          throw new Error(
+            'ENDPOINTS_PER_PROJECT requires projectId in context',
+          );
+        }
+        return this.countEndpointsInProject(context.projectId);
+      }
       default: {
         const _exhaustive: never = metric;
         throw new Error(`Unknown limit metric: ${_exhaustive}`);
@@ -85,20 +115,20 @@ export class UsageService {
    * Copy-on-write: unchanged rows share versionId - counted once.
    */
   private async countRowVersions(organizationId: string): Promise<number> {
-    const result = await this.prisma.$queryRawTyped(
+    const result = await this.db.$queryRawTyped(
       countOrgRowVersions(organizationId),
     );
     return Number(result[0].count);
   }
 
   private async countProjects(organizationId: string): Promise<number> {
-    return this.prisma.project.count({
+    return this.db.project.count({
       where: { organizationId, isDeleted: false },
     });
   }
 
   private async countSeats(organizationId: string): Promise<number> {
-    return this.prisma.userOrganization.count({
+    return this.db.userOrganization.count({
       where: { organizationId },
     });
   }
@@ -117,7 +147,7 @@ export class UsageService {
     revisionId: string,
     tableId: string,
   ): Promise<number> {
-    const table = await this.prisma.table.findFirst({
+    const table = await this.db.table.findFirst({
       where: {
         id: tableId,
         revisions: { some: { id: revisionId } },
@@ -128,7 +158,7 @@ export class UsageService {
   }
 
   private async countTablesInRevision(projectId: string): Promise<number> {
-    const revision = await this.prisma.revision.findFirst({
+    const revision = await this.db.revision.findFirst({
       where: {
         isDraft: true,
         branch: { projectId, isRoot: true },
@@ -139,6 +169,15 @@ export class UsageService {
   }
 
   private async countBranchesInProject(projectId: string): Promise<number> {
-    return this.prisma.branch.count({ where: { projectId } });
+    return this.db.branch.count({ where: { projectId } });
+  }
+
+  private async countEndpointsInProject(projectId: string): Promise<number> {
+    return this.db.endpoint.count({
+      where: {
+        revision: { branch: { projectId } },
+        isDeleted: false,
+      },
+    });
   }
 }

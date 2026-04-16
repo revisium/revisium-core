@@ -833,6 +833,7 @@ type PermissionModel {
 type PlanLimitsModel {
   apiCallsPerDay: Int
   branchesPerProject: Int
+  endpointsPerProject: Int
   projects: Int
   rowVersions: Int
   rowsPerTable: Int
@@ -858,6 +859,7 @@ type PluginsModel {
 type ProjectModel {
   allBranches(data: GetProjectBranchesInput!): BranchesConnection!
   createdAt: DateTime!
+  endpointUsage: UsageMetricModel
   id: String!
   isPublic: Boolean!
   name: String!

@@ -7,8 +7,11 @@ import {
   PaymentProviderResult,
   PlanResult,
   SubscriptionResult,
+  UsageMetricResult,
   UsageSummaryResult,
 } from 'src/features/billing/billing-graphql.interface';
+import { LimitMetric } from 'src/features/billing/limits.interface';
+import { buildMetric } from './usage/build-metric';
 import {
   BILLING_CLIENT_TOKEN,
   IBillingClient,
@@ -48,6 +51,7 @@ export class BillingGraphqlService implements IBillingGraphqlService {
         rowsPerTable: p.limits.rows_per_table,
         tablesPerRevision: p.limits.tables_per_revision,
         branchesPerProject: p.limits.branches_per_project,
+        endpointsPerProject: p.limits.endpoints_per_project,
       },
       features: p.features ?? {},
     }));
@@ -80,13 +84,45 @@ export class BillingGraphqlService implements IBillingGraphqlService {
 
   async getUsage(organizationId: string): Promise<UsageSummaryResult | null> {
     if (!this.billingClient.configured) return null;
-    const orgLimits =
-      await this.billingClient.getOrgLimits(organizationId);
+    const orgLimits = await this.billingClient.getOrgLimits(organizationId);
 
     return this.usageService.computeUsageSummary(
       organizationId,
       orgLimits.limits,
     );
+  }
+
+  async getProjectEndpointUsage(
+    organizationId: string,
+    projectId: string,
+    options?: { endpointLimit?: number | null },
+  ): Promise<UsageMetricResult | null> {
+    if (!this.billingClient.configured) {
+      return null;
+    }
+
+    const limit =
+      options?.endpointLimit !== undefined
+        ? options.endpointLimit
+        : await this.getProjectEndpointLimit(organizationId);
+    const current = await this.usageService.computeUsage(
+      organizationId,
+      LimitMetric.ENDPOINTS_PER_PROJECT,
+      { projectId },
+    );
+
+    return buildMetric(current, limit ?? null);
+  }
+
+  async getProjectEndpointLimit(
+    organizationId: string,
+  ): Promise<number | null | undefined> {
+    if (!this.billingClient.configured) {
+      return undefined;
+    }
+
+    const orgLimits = await this.billingClient.getOrgLimits(organizationId);
+    return orgLimits.limits.endpoints_per_project;
   }
 
   async activateEarlyAccess(
@@ -158,5 +194,4 @@ export class BillingGraphqlService implements IBillingGraphqlService {
       throw new BadRequestException(`${field} must be a valid HTTP(S) URL`);
     }
   }
-
 }
