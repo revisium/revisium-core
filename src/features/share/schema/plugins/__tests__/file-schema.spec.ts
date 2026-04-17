@@ -1,6 +1,6 @@
 import Ajv from 'ajv/dist/2020';
 import addFormats from 'ajv-formats';
-import { fileSchema } from 'src/features/share/schema/plugins/file-schema';
+import { fileSchema } from 'src/features/share/schema/plugins';
 
 describe('file-schema', () => {
   const ajv = new Ajv();

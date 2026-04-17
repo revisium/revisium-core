@@ -1,6 +1,6 @@
 import addFormats from 'ajv-formats';
 import Ajv from 'ajv/dist/2020';
-import { rowIdSchema } from 'src/features/share/schema/plugins/row-id.schema';
+import { rowIdSchema } from 'src/features/share/schema/plugins';
 
 describe('row-id-schema', () => {
   const ajv = new Ajv();
