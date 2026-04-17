@@ -348,16 +348,16 @@ describe('InternalKeyBootstrapService', () => {
       const module = await createModule('microservice');
       await cleanupInternalKeys();
       const service = module.get(InternalKeyBootstrapService);
+      const upsertSpy = jest.spyOn(prisma.apiKey, 'upsert');
 
       await service.onModuleInit();
 
-      const keys = await prisma.apiKey.findMany({
-        where: {
-          type: ApiKeyType.INTERNAL,
-          internalServiceName: 'endpoint',
-        },
-      });
-      expect(keys).toHaveLength(0);
+      // Assert the service did not touch the apiKey table. We cannot rely on
+      // findMany().toHaveLength(0) because parallel Jest workers may be
+      // creating their own 'endpoint' internal keys concurrently in the
+      // shared test DB.
+      expect(upsertSpy).not.toHaveBeenCalled();
+      upsertSpy.mockRestore();
     });
 
     it('should skip service with invalid key format', async () => {
@@ -367,20 +367,15 @@ describe('InternalKeyBootstrapService', () => {
       await cleanupInternalKeys();
       const service = module.get(InternalKeyBootstrapService);
       const errorSpy = jest.spyOn((service as any).logger, 'error');
+      const upsertSpy = jest.spyOn(prisma.apiKey, 'upsert');
 
       await service.onModuleInit();
 
       expect(errorSpy).toHaveBeenCalledWith(
         expect.stringContaining('invalid format'),
       );
-
-      const keys = await prisma.apiKey.findMany({
-        where: {
-          type: ApiKeyType.INTERNAL,
-          internalServiceName: 'endpoint',
-        },
-      });
-      expect(keys).toHaveLength(0);
+      expect(upsertSpy).not.toHaveBeenCalled();
+      upsertSpy.mockRestore();
     });
 
     it('should be idempotent on restart with same key', async () => {

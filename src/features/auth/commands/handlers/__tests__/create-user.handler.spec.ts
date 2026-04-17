@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 import { CreateUserHandler } from 'src/features/auth/commands/handlers/create-user.handler';
 import { CreateUserCommand } from 'src/features/auth/commands/impl';
 import { UserRole, UserSystemRoles } from 'src/features/auth/consts';

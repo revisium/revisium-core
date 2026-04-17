@@ -7,7 +7,7 @@ import {
 } from 'src/features/billing/limits.interface';
 import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import { isValidOrganizationRole } from 'src/features/auth/consts';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   AddUserToOrganizationCommand,

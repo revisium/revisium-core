@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException } from '@nestjs/common';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 import { SetUsernameHandler } from 'src/features/user/commands/handlers/set-username.handler';
 import { SetUsernameCommand } from 'src/features/user/commands/impl';
 

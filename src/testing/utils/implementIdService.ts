@@ -1,6 +1,6 @@
 import { DeepMockProxy } from 'jest-mock-extended';
 import { nanoid } from 'nanoid';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 
 export const implementIdService = (
   idService: DeepMockProxy<IdService>,
