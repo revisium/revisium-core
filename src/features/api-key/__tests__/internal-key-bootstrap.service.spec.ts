@@ -400,25 +400,23 @@ describe('InternalKeyBootstrapService', () => {
     });
 
     it('should skip when no INTERNAL_API_KEY_* env vars are set', async () => {
-      // We own process.env in this process (Jest workers are separate Node
-      // processes), so asserting that onModuleInit made no INTERNAL_API_KEY_*
-      // env var appear is a faithful proxy for 'the service did nothing':
-      // microservice mode never writes to process.env, and if scanEnvForServices
-      // found no matching var the loop does not run at all.
-      const beforeEnvKeys = Object.keys(process.env).filter((k) =>
-        k.startsWith('INTERNAL_API_KEY_'),
-      );
-      expect(beforeEnvKeys).toEqual([]);
+      // Microservice mode never writes to process.env, so comparing the
+      // INTERNAL_API_KEY_* set before/after is a faithful proxy for 'the
+      // service did nothing'. Compare the before/after sets instead of
+      // asserting against [] because the parent Node env may legitimately
+      // carry unrelated INTERNAL_API_KEY_* vars (CI secrets, dev .env).
+      const snapshotInternalEnvKeys = () =>
+        Object.keys(process.env)
+          .filter((k) => k.startsWith('INTERNAL_API_KEY_'))
+          .sort();
+      const before = snapshotInternalEnvKeys();
 
       const module = await createModule('microservice');
       const service = module.get(InternalKeyBootstrapService);
 
       await service.onModuleInit();
 
-      const afterEnvKeys = Object.keys(process.env).filter((k) =>
-        k.startsWith('INTERNAL_API_KEY_'),
-      );
-      expect(afterEnvKeys).toEqual([]);
+      expect(snapshotInternalEnvKeys()).toEqual(before);
     });
 
     it('should skip service with invalid key format', async () => {
