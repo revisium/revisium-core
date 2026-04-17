@@ -3,10 +3,13 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Prisma } from 'src/__generated__/client';
 import Ajv, { ErrorObject, Schema, ValidateFunction } from 'ajv/dist/2020';
 import hash from 'object-hash';
-import { CustomSchemeKeywords } from 'src/features/share/schema/consts';
-import { historyPatchesSchema } from 'src/features/share/schema/history-patches-schema';
-import { jsonPatchSchema } from 'src/features/share/schema/json-patch-schema';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
+import {
+  CustomSchemeKeywords,
+  historyPatchesSchema,
+  jsonPatchSchema,
+  metaSchema,
+  tableMigrationsSchema,
+} from '@revisium/engine';
 import {
   ajvFileSchema,
   ajvRowCreatedAtSchema,
@@ -18,7 +21,6 @@ import {
   ajvRowUpdatedAtSchema,
   ajvRowVersionIdSchema,
 } from 'src/features/share/schema/plugins';
-import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { Migration, JsonSchema } from '@revisium/schema-toolkit/types';
 
 const DEFAULT_TIME_EXPIRATION = 24 * 60 * 60 * 1000;

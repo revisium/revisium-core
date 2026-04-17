@@ -1,5 +1,5 @@
 import { EndpointType } from 'src/__generated__/client';
-import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { IPaginatedType } from '@revisium/engine';
 
 export type GetProjectEndpointsData = {
   organizationId: string;

@@ -1,6 +1,6 @@
 import { GetUsersProjectQueryReturnType } from 'src/features/project/queries/impl';
 import { UsersProjectModel } from 'src/api/rest-api/project/model';
-import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { IPaginatedType } from '@revisium/engine';
 
 export const transformFromPrismaToUserProjectModel = (
   data: GetUsersProjectQueryReturnType['edges'][number]['node'],

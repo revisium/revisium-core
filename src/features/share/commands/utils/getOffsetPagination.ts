@@ -1,4 +1,4 @@
-import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { IPaginatedType } from '@revisium/engine';
 
 type PageDataType = { readonly first: number; after?: string };
 

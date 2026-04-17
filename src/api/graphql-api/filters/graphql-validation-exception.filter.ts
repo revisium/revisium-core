@@ -1,7 +1,7 @@
 import { Catch, ArgumentsHost, BadRequestException } from '@nestjs/common';
 import { GqlExceptionFilter, GqlContextType } from '@nestjs/graphql';
 import { GraphQLError } from 'graphql';
-import { ValidationErrorCode } from 'src/features/share/exceptions';
+import { ValidationErrorCode } from '@revisium/engine';
 
 interface StructuredErrorResponse {
   code?: string;

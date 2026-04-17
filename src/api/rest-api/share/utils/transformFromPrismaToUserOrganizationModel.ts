@@ -1,6 +1,6 @@
 import { GetUsersOrganizationQueryReturnType } from 'src/features/organization/queries/impl';
 import { UsersOrganizationModel } from 'src/api/rest-api/organization/model';
-import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { IPaginatedType } from '@revisium/engine';
 
 export const transformFromPrismaToUserOrganizationModel = (
   data: GetUsersOrganizationQueryReturnType['edges'][number]['node'],

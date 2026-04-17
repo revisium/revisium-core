@@ -1,9 +1,6 @@
 import { Field, ObjectType, Int } from '@nestjs/graphql';
 import { Type } from '@nestjs/common';
-import {
-  IPageInfo,
-  IPaginatedType,
-} from 'src/features/share/pagination.interface';
+import { IPageInfo, IPaginatedType } from '@revisium/engine';
 
 @ObjectType()
 export class PageInfo implements IPageInfo {

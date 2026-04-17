@@ -10,7 +10,7 @@ import {
   buildKeysetCondition,
   generateOrderByParts,
 } from '@revisium/prisma-pg-json';
-import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { IPaginatedType } from '@revisium/engine';
 import {
   getRowsSql,
   getRowsCountSql,
