@@ -85,6 +85,7 @@ describe('InternalKeyBootstrapService', () => {
         JWT_SECRET: jwtSecret,
       });
       await cleanupInternalKeys();
+      const apiKeyService = module.get(ApiKeyService);
       const service = module.get(InternalKeyBootstrapService);
 
       await service.onModuleInit();
@@ -92,15 +93,18 @@ describe('InternalKeyBootstrapService', () => {
       const expectedKey = deriveKey(jwtSecret, 'endpoint');
       expect(process.env.INTERNAL_API_KEY_ENDPOINT).toBe(expectedKey);
 
-      const keys = await prisma.apiKey.findMany({
+      // Scoped to the specific key hash this test produced — other Jest
+      // workers may be creating 'endpoint' internal keys concurrently.
+      const ourKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: null,
+          keyHash: apiKeyService.hashKey(expectedKey),
         },
       });
-      expect(keys).toHaveLength(1);
-      expect(keys[0].name).toBe('internal-endpoint');
+      expect(ourKey).not.toBeNull();
+      expect(ourKey?.revokedAt).toBeNull();
+      expect(ourKey?.name).toBe('internal-endpoint');
     });
 
     it('should produce the same derived key across restarts (deterministic)', async () => {
@@ -110,6 +114,7 @@ describe('InternalKeyBootstrapService', () => {
         JWT_SECRET: jwtSecret,
       });
       await cleanupInternalKeys();
+      const apiKeyService = module1.get(ApiKeyService);
       await module1.get(InternalKeyBootstrapService).onModuleInit();
       const key1 = process.env.INTERNAL_API_KEY_ENDPOINT;
 
@@ -123,19 +128,21 @@ describe('InternalKeyBootstrapService', () => {
 
       expect(key1).toBe(key2);
 
-      const keys = await prisma.apiKey.findMany({
+      const ourKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: null,
+          keyHash: apiKeyService.hashKey(key1 as string),
         },
       });
-      expect(keys).toHaveLength(1);
+      expect(ourKey).not.toBeNull();
+      expect(ourKey?.revokedAt).toBeNull();
     });
 
     it('should generate random key when JWT_SECRET is not set', async () => {
       const module = await createModule('monolith');
       await cleanupInternalKeys();
+      const apiKeyService = module.get(ApiKeyService);
       const service = module.get(InternalKeyBootstrapService);
 
       await service.onModuleInit();
@@ -145,14 +152,17 @@ describe('InternalKeyBootstrapService', () => {
         /^rev_[A-Za-z0-9_-]{22}$/,
       );
 
-      const keys = await prisma.apiKey.findMany({
+      const ourKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: null,
+          keyHash: apiKeyService.hashKey(
+            process.env.INTERNAL_API_KEY_ENDPOINT as string,
+          ),
         },
       });
-      expect(keys).toHaveLength(1);
+      expect(ourKey).not.toBeNull();
+      expect(ourKey?.revokedAt).toBeNull();
     });
 
     it('should rotate key when JWT_SECRET changes', async () => {
@@ -164,6 +174,7 @@ describe('InternalKeyBootstrapService', () => {
       await module1.get(InternalKeyBootstrapService).onModuleInit();
 
       const oldKey = deriveKey('secret-v1', 'endpoint');
+      const oldKeyHash = apiKeyService.hashKey(oldKey);
 
       const module2 = await createModule('monolith', {
         JWT_SECRET: 'secret-v2',
@@ -171,26 +182,31 @@ describe('InternalKeyBootstrapService', () => {
       await module2.get(InternalKeyBootstrapService).onModuleInit();
 
       const newKey = deriveKey('secret-v2', 'endpoint');
+      const newKeyHash = apiKeyService.hashKey(newKey);
 
-      const activeKeys = await prisma.apiKey.findMany({
+      // Assert by key hash rather than global row count: other Jest workers
+      // bootstrap CoreModule in parallel and also create 'endpoint' internal
+      // keys in the shared test DB. We only care about the two keys this
+      // test produced.
+      const ownNewKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: null,
+          keyHash: newKeyHash,
         },
       });
-      expect(activeKeys).toHaveLength(1);
-      expect(activeKeys[0].keyHash).toBe(apiKeyService.hashKey(newKey));
+      expect(ownNewKey).not.toBeNull();
+      expect(ownNewKey?.revokedAt).toBeNull();
 
-      const revokedKeys = await prisma.apiKey.findMany({
+      const ownOldKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: { not: null },
+          keyHash: oldKeyHash,
         },
       });
-      expect(revokedKeys).toHaveLength(1);
-      expect(revokedKeys[0].keyHash).toBe(apiKeyService.hashKey(oldKey));
+      expect(ownOldKey).not.toBeNull();
+      expect(ownOldKey?.revokedAt).not.toBeNull();
     });
 
     it('should ignore INTERNAL_API_KEY_* env vars and log warning', async () => {
@@ -307,29 +323,25 @@ describe('InternalKeyBootstrapService', () => {
       const module2 = await createModule('microservice');
       await module2.get(InternalKeyBootstrapService).onModuleInit();
 
-      const endpointKeys = await prisma.apiKey.findMany({
+      const ourEndpointKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: null,
+          keyHash: apiKeyService.hashKey('rev_abcdefghijklmnopqrstuv'),
         },
       });
-      expect(endpointKeys).toHaveLength(1);
-      expect(endpointKeys[0].keyHash).toBe(
-        apiKeyService.hashKey('rev_abcdefghijklmnopqrstuv'),
-      );
+      expect(ourEndpointKey).not.toBeNull();
+      expect(ourEndpointKey?.revokedAt).toBeNull();
 
-      const workerKeys = await prisma.apiKey.findMany({
+      const ourWorkerKey = await prisma.apiKey.findFirst({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'worker',
-          revokedAt: null,
+          keyHash: apiKeyService.hashKey('rev_newworkerkey1234567890'),
         },
       });
-      expect(workerKeys).toHaveLength(1);
-      expect(workerKeys[0].keyHash).toBe(
-        apiKeyService.hashKey('rev_newworkerkey1234567890'),
-      );
+      expect(ourWorkerKey).not.toBeNull();
+      expect(ourWorkerKey?.revokedAt).toBeNull();
     });
 
     it('should skip when no INTERNAL_API_KEY_* env vars are set', async () => {
@@ -377,19 +389,21 @@ describe('InternalKeyBootstrapService', () => {
 
       const module1 = await createModule('microservice');
       await cleanupInternalKeys();
+      const apiKeyService = module1.get(ApiKeyService);
       await module1.get(InternalKeyBootstrapService).onModuleInit();
 
       const module2 = await createModule('microservice');
       await module2.get(InternalKeyBootstrapService).onModuleInit();
 
-      const keys = await prisma.apiKey.findMany({
+      const ourKeys = await prisma.apiKey.findMany({
         where: {
           type: ApiKeyType.INTERNAL,
           internalServiceName: 'endpoint',
-          revokedAt: null,
+          keyHash: apiKeyService.hashKey(envKey),
         },
       });
-      expect(keys).toHaveLength(1);
+      expect(ourKeys).toHaveLength(1);
+      expect(ourKeys[0].revokedAt).toBeNull();
     });
   });
 });
