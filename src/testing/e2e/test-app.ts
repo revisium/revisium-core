@@ -10,13 +10,6 @@ let cachedApp: INestApplication | null = null;
 let cachedPrismaService: PrismaService | null = null;
 
 async function buildApp(): Promise<INestApplication> {
-  // Per-worker, per-bootstrap: clear the prom-client default registry so
-  // that rebuilding CoreModule inside the same Node process (e.g. after a
-  // previous spec closed its app) does not hit "metric already registered"
-  // when GraphqlMetricsService / RestMetricsService register their
-  // histograms and counters.
-  promClient.register.clear();
-
   registerGraphqlEnums();
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -63,5 +56,12 @@ export async function closeTestApp(): Promise<void> {
 }
 
 export async function createFreshTestApp(): Promise<INestApplication> {
+  // Clear the prom-client default registry before rebuilding CoreModule in
+  // the same Node process so GraphqlMetricsService / RestMetricsService can
+  // re-register their histograms and counters without hitting "metric
+  // already registered". Scoped to createFreshTestApp so a cached getTestApp
+  // (called in the same worker) does not get its metrics wiped by a later
+  // fresh app build.
+  promClient.register.clear();
   return buildApp();
 }
