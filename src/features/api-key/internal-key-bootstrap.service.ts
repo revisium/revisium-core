@@ -31,12 +31,30 @@ export class InternalKeyBootstrapService implements OnModuleInit {
     }
   }
 
+  private resolveMonolithServices(): string[] {
+    // Allow the monolith services list to be overridden via env/config.
+    // Production falls back to DEFAULT_SERVICES. Tests use this hook to
+    // namespace each spec so parallel-worker writes to the shared DB do
+    // not collide with per-spec assertions.
+    const override = this.configService.get<string>(
+      'INTERNAL_MONOLITH_SERVICES',
+    );
+    if (!override) {
+      return DEFAULT_SERVICES;
+    }
+    const parsed = override
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    return parsed.length > 0 ? parsed : DEFAULT_SERVICES;
+  }
+
   private async bootstrapMonolith() {
     this.warnIfEnvVarsSet();
 
     const jwtSecret = this.configService.get<string>('JWT_SECRET');
 
-    for (const serviceName of DEFAULT_SERVICES) {
+    for (const serviceName of this.resolveMonolithServices()) {
       let key: string;
 
       if (jwtSecret) {
