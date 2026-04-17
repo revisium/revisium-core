@@ -1,13 +1,15 @@
-import { CqrsModule, QueryBus } from '@nestjs/cqrs';
-import { Test, TestingModule } from '@nestjs/testing';
+import { QueryBus } from '@nestjs/cqrs';
 import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/testing/factories/create-models';
+import {
+  createUserQueryTestKit,
+  type UserQueryTestKit,
+} from 'src/testing/kit/create-user-query-test-kit';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   SearchUsersQuery,
   SearchUsersQueryReturnType,
 } from 'src/features/user/queries/impl';
-import { SearchUsersHandler } from 'src/features/user/queries/handlers/search-users.handler';
 
 describe('SearchUsersHandler', () => {
   describe('basic search functionality', () => {
@@ -234,23 +236,18 @@ describe('SearchUsersHandler', () => {
     });
   });
 
+  let kit: UserQueryTestKit;
   let queryBus: QueryBus;
   let prismaService: PrismaService;
 
   beforeAll(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      imports: [CqrsModule],
-      providers: [PrismaService, SearchUsersHandler],
-    }).compile();
-
-    await module.init();
-
-    prismaService = module.get(PrismaService);
-    queryBus = module.get(QueryBus);
+    kit = await createUserQueryTestKit();
+    prismaService = kit.prismaService;
+    queryBus = kit.queryBus;
   });
 
   afterAll(async () => {
-    await prismaService.$disconnect();
+    await kit.close();
   });
 
   const createQuery = (
