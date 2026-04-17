@@ -7,9 +7,11 @@ import { FileStatus } from 'src/features/plugin/file/consts';
 import { metaSchema, tableMigrationsSchema } from '@revisium/engine';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
-  gqlQuery,
-  gqlQueryExpectError,
+  describeAuthMatrix,
+  getTestApp,
+  gqlKit,
+  PRIVATE_RESOURCE_MATRIX,
+  type GqlKit,
 } from 'src/testing/e2e';
 import { prepareData, prepareRow } from 'src/testing/utils/prepareProject';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -38,44 +40,41 @@ const createFileData = (
   height: 100,
 });
 
-describe('graphql - subSchemaItems (readonly)', () => {
-  let app: INestApplication;
-
-  beforeAll(async () => {
-    app = await createFreshTestApp();
-  });
-
-  afterAll(async () => {
-    await app.close();
-  });
-
-  const getSubSchemaItemsQuery = (revisionId: string, schemaId: string) => ({
-    query: gql`
-      query subSchemaItems($data: GetSubSchemaItemsInput!) {
-        subSchemaItems(data: $data) {
-          totalCount
-          pageInfo {
-            hasNextPage
-            hasPreviousPage
+const subSchemaItemsQuery = gql`
+  query subSchemaItems($data: GetSubSchemaItemsInput!) {
+    subSchemaItems(data: $data) {
+      totalCount
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        node {
+          fieldPath
+          data
+          row {
+            id
           }
-          edges {
-            node {
-              fieldPath
-              data
-              row {
-                id
-              }
-              table {
-                id
-              }
-            }
+          table {
+            id
           }
         }
       }
-    `,
-    variables: {
-      data: { revisionId, schemaId, first: 100 },
-    },
+    }
+  }
+`;
+
+const subSchemaVars = (revisionId: string, schemaId: string) => ({
+  data: { revisionId, schemaId, first: 100 },
+});
+
+describe('graphql - subSchemaItems (readonly)', () => {
+  let app: INestApplication;
+  let kit: GqlKit;
+
+  beforeAll(async () => {
+    app = await getTestApp();
+    kit = gqlKit(app);
   });
 
   describe('private project access', () => {
@@ -85,52 +84,41 @@ describe('graphql - subSchemaItems (readonly)', () => {
       fixture = await prepareFixtureWithFiles(app);
     });
 
-    it('owner can query subSchemaItems', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getSubSchemaItemsQuery(
+    describeAuthMatrix(
+      'private project',
+      PRIVATE_RESOURCE_MATRIX,
+      async ({ role, outcome }) => {
+        const actor = kit.roleFor(fixture, role);
+        const vars = subSchemaVars(
           fixture.project.draftRevisionId,
           FILE_SCHEMA_ID,
-        ),
-      });
-
-      expect(result.subSchemaItems.totalCount).toBe(1);
-      expect(result.subSchemaItems.edges[0].node.fieldPath).toBe('file');
-      expect(result.subSchemaItems.edges[0].node.table.id).toBe(
-        fixture.project.tableId,
-      );
-      expect(result.subSchemaItems.edges[0].node.row.id).toBe(
-        fixture.project.rowId,
-      );
-    });
-
-    it('cross-owner cannot query subSchemaItems from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          token: fixture.anotherOwner.token,
-          ...getSubSchemaItemsQuery(
-            fixture.project.draftRevisionId,
-            FILE_SCHEMA_ID,
-          ),
-        },
-        /You are not allowed to read on Project/,
-      );
-    });
-
-    it('unauthenticated cannot query subSchemaItems from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getSubSchemaItemsQuery(
-            fixture.project.draftRevisionId,
-            FILE_SCHEMA_ID,
-          ),
-        },
-        /You are not allowed to read on Project/,
-      );
-    });
+        );
+        if (outcome === 'ok') {
+          const result = await actor.expectOk<{
+            subSchemaItems: {
+              totalCount: number;
+              edges: Array<{
+                node: {
+                  fieldPath: string;
+                  row: { id: string };
+                  table: { id: string };
+                };
+              }>;
+            };
+          }>(subSchemaItemsQuery, vars);
+          expect(result.subSchemaItems.totalCount).toBe(1);
+          expect(result.subSchemaItems.edges[0].node.fieldPath).toBe('file');
+          expect(result.subSchemaItems.edges[0].node.table.id).toBe(
+            fixture.project.tableId,
+          );
+          expect(result.subSchemaItems.edges[0].node.row.id).toBe(
+            fixture.project.rowId,
+          );
+        } else {
+          await actor.expectForbidden(subSchemaItemsQuery, vars);
+        }
+      },
+    );
   });
 
   describe('public project access', () => {
@@ -145,28 +133,17 @@ describe('graphql - subSchemaItems (readonly)', () => {
       });
     });
 
-    it('unauthenticated can query subSchemaItems from public project', async () => {
-      const result = await gqlQuery({
-        app,
-        ...getSubSchemaItemsQuery(
-          fixture.project.draftRevisionId,
-          FILE_SCHEMA_ID,
-        ),
-      });
-
+    it('anon can query subSchemaItems', async () => {
+      const result = await kit.anon().expectOk<{
+        subSchemaItems: { totalCount: number };
+      }>(subSchemaItemsQuery, subSchemaVars(fixture.project.draftRevisionId, FILE_SCHEMA_ID));
       expect(result.subSchemaItems.totalCount).toBe(1);
     });
 
-    it('cross-owner can query subSchemaItems from public project', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.anotherOwner.token,
-        ...getSubSchemaItemsQuery(
-          fixture.project.draftRevisionId,
-          FILE_SCHEMA_ID,
-        ),
-      });
-
+    it('cross-owner can query subSchemaItems', async () => {
+      const result = await kit.crossOwner(fixture).expectOk<{
+        subSchemaItems: { totalCount: number };
+      }>(subSchemaItemsQuery, subSchemaVars(fixture.project.draftRevisionId, FILE_SCHEMA_ID));
       expect(result.subSchemaItems.totalCount).toBe(1);
     });
   });
@@ -282,14 +259,14 @@ describe('graphql - subSchemaItems (readonly)', () => {
         },
       });
 
-      const result = await gqlQuery({
-        app,
-        token: baseFixture.owner.token,
-        ...getSubSchemaItemsQuery(
-          baseFixture.project.draftRevisionId,
-          FILE_SCHEMA_ID,
-        ),
-      });
+      const result = await kit.actor(baseFixture.owner.token).expectOk<{
+        subSchemaItems: {
+          totalCount: number;
+          edges: Array<{
+            node: { row: { id: string }; table: { id: string } };
+          }>;
+        };
+      }>(subSchemaItemsQuery, subSchemaVars(baseFixture.project.draftRevisionId, FILE_SCHEMA_ID));
 
       expect(result.subSchemaItems.totalCount).toBe(1);
       expect(result.subSchemaItems.edges.length).toBe(1);

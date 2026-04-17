@@ -31,3 +31,20 @@ export {
   type GraphQLQueryOptions,
   type GraphQLErrorResponse,
 } from './graphql-helpers';
+
+export {
+  gqlKit,
+  type GqlKit,
+  type GqlActor,
+  type ActorRole,
+  type AuthFixture,
+} from './gql-query-kit';
+
+export {
+  describeAuthMatrix,
+  PRIVATE_RESOURCE_MATRIX,
+  PUBLIC_RESOURCE_MATRIX,
+  type AuthMatrixCase,
+  type AuthMatrixOptions,
+  type AuthOutcome,
+} from './auth-matrix';

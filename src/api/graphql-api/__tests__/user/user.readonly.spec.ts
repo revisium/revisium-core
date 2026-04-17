@@ -1,192 +1,142 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
+  getTestApp,
   getReadonlyFixture,
-  gqlQuery,
-  gqlQueryExpectError,
+  gqlKit,
+  type GqlKit,
   type PrepareDataReturnType,
 } from 'src/testing/e2e';
 
+const UNAUTHORIZED = /Unauthorized/;
+
+const meQuery = gql`
+  query me {
+    me {
+      id
+      username
+      email
+    }
+  }
+`;
+
+const meProjectsQuery = gql`
+  query meProjects($data: GetMeProjectsInput!) {
+    meProjects(data: $data) {
+      totalCount
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+const searchUsersQuery = gql`
+  query searchUsers($data: SearchUsersInput!) {
+    searchUsers(data: $data) {
+      totalCount
+      edges {
+        node {
+          id
+          username
+        }
+      }
+    }
+  }
+`;
+
 describe('graphql - user (readonly)', () => {
   let app: INestApplication;
+  let kit: GqlKit;
   let fixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
+    kit = gqlKit(app);
     fixture = await getReadonlyFixture(app);
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
-
   describe('me query', () => {
-    const getQuery = () => ({
-      query: gql`
-        query me {
-          me {
-            id
-            username
-            email
-          }
-        }
-      `,
-    });
-
-    it('authenticated user can get own info', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(),
-      });
+    it('owner gets own info', async () => {
+      const result = await kit.owner(fixture).expectOk<{
+        me: { id: string; username: string };
+      }>(meQuery);
 
       expect(result.me.id).toBe(fixture.owner.user.id);
       expect(result.me.username).toBe(fixture.owner.user.username);
     });
 
-    it('unauthenticated cannot get me', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery(),
-        },
-        /Unauthorized/,
-      );
+    it('anon is unauthorized', async () => {
+      await kit.anon().expectError(meQuery, undefined, UNAUTHORIZED);
     });
   });
 
-  describe('me with @ResolveField', () => {
-    describe('organizationId field', () => {
-      const getQuery = () => ({
-        query: gql`
-          query me {
-            me {
-              id
-              organizationId
-            }
+  describe('@ResolveField on me', () => {
+    it('resolves organizationId', async () => {
+      const query = gql`
+        query me {
+          me {
+            id
+            organizationId
           }
-        `,
-      });
-
-      it('resolves organizationId field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(),
-        });
-
-        expect(result.me).toHaveProperty('organizationId');
-      });
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        me: { organizationId: string };
+      }>(query);
+      expect(result.me).toHaveProperty('organizationId');
     });
 
-    describe('role field', () => {
-      const getQuery = () => ({
-        query: gql`
-          query me {
-            me {
+    it('resolves role', async () => {
+      const query = gql`
+        query me {
+          me {
+            id
+            role {
               id
-              role {
-                id
-                name
-              }
+              name
             }
           }
-        `,
-      });
-
-      it('resolves role field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(),
-        });
-
-        expect(result.me).toHaveProperty('role');
-      });
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        me: { role: { id: string; name: string } };
+      }>(query);
+      expect(result.me).toHaveProperty('role');
     });
   });
 
   describe('meProjects query', () => {
-    const getQuery = () => ({
-      query: gql`
-        query meProjects($data: GetMeProjectsInput!) {
-          meProjects(data: $data) {
-            totalCount
-            edges {
-              node {
-                id
-                name
-              }
-            }
-          }
-        }
-      `,
-      variables: {
-        data: { first: 10 },
-      },
-    });
+    const vars = { data: { first: 10 } };
 
-    it('authenticated user can get own projects', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(),
-      });
-
+    it('owner lists own projects', async () => {
+      const result = await kit.owner(fixture).expectOk<{
+        meProjects: { totalCount: number };
+      }>(meProjectsQuery, vars);
       expect(result.meProjects.totalCount).toBeGreaterThanOrEqual(1);
     });
 
-    it('unauthenticated cannot get meProjects', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery(),
-        },
-        /Unauthorized/,
-      );
+    it('anon is unauthorized', async () => {
+      await kit.anon().expectError(meProjectsQuery, vars, UNAUTHORIZED);
     });
   });
 
   describe('searchUsers query', () => {
-    const getQuery = (search: string) => ({
-      query: gql`
-        query searchUsers($data: SearchUsersInput!) {
-          searchUsers(data: $data) {
-            totalCount
-            edges {
-              node {
-                id
-                username
-              }
-            }
-          }
-        }
-      `,
-      variables: {
-        data: { search, first: 10 },
-      },
-    });
+    const vars = { data: { search: 'user', first: 10 } };
 
-    it('authenticated user can search users', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery('user'),
-      });
-
+    it('owner can search users', async () => {
+      const result = await kit.owner(fixture).expectOk<{
+        searchUsers: { totalCount: number; edges: unknown[] };
+      }>(searchUsersQuery, vars);
       expect(result.searchUsers).toHaveProperty('totalCount');
       expect(result.searchUsers).toHaveProperty('edges');
     });
 
-    it('unauthenticated cannot search users', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery('user'),
-        },
-        /Unauthorized/,
-      );
+    it('anon is unauthorized', async () => {
+      await kit.anon().expectError(searchUsersQuery, vars, UNAUTHORIZED);
     });
   });
 });

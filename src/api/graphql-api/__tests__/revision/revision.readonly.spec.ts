@@ -1,217 +1,150 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
+  describeAuthMatrix,
+  getTestApp,
   getReadonlyFixture,
   getPublicProjectFixture,
-  gqlQuery,
-  gqlQueryExpectError,
+  gqlKit,
+  PRIVATE_RESOURCE_MATRIX,
+  type GqlKit,
   type PrepareDataReturnType,
 } from 'src/testing/e2e';
 
+const revisionQuery = gql`
+  query revision($data: GetRevisionInput!) {
+    revision(data: $data) {
+      id
+      createdAt
+      isHead
+      isDraft
+      isStart
+    }
+  }
+`;
+
+const revisionVars = (revisionId: string) => ({ data: { revisionId } });
+
 describe('graphql - revision (readonly)', () => {
   let app: INestApplication;
+  let kit: GqlKit;
   let fixture: PrepareDataReturnType;
   let publicFixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
+    kit = gqlKit(app);
     fixture = await getReadonlyFixture(app);
     publicFixture = await getPublicProjectFixture(app);
   });
 
-  afterAll(async () => {
-    await app.close();
+  describe('revision query', () => {
+    describeAuthMatrix(
+      'private project access',
+      PRIVATE_RESOURCE_MATRIX,
+      async ({ role, outcome }) => {
+        const actor = kit.roleFor(fixture, role);
+        const vars = revisionVars(fixture.project.draftRevisionId);
+        if (outcome === 'ok') {
+          const result = await actor.expectOk<{
+            revision: { id: string; isDraft: boolean };
+          }>(revisionQuery, vars);
+          expect(result.revision.id).toBe(fixture.project.draftRevisionId);
+          expect(result.revision.isDraft).toBe(true);
+        } else {
+          await actor.expectForbidden(revisionQuery, vars);
+        }
+      },
+    );
+
+    it('anon can read revision from public project', async () => {
+      const result = await kit.anon().expectOk<{
+        revision: { id: string };
+      }>(revisionQuery, revisionVars(publicFixture.project.draftRevisionId));
+      expect(result.revision.id).toBe(publicFixture.project.draftRevisionId);
+    });
   });
 
-  describe('revision query', () => {
-    const getQuery = (revisionId: string) => ({
-      query: gql`
+  describe('@ResolveField', () => {
+    it('resolves branch', async () => {
+      const query = gql`
         query revision($data: GetRevisionInput!) {
           revision(data: $data) {
             id
-            createdAt
-            isHead
-            isDraft
-            isStart
+            branch {
+              id
+              name
+            }
           }
         }
-      `,
-      variables: {
-        data: { revisionId },
-      },
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        revision: { branch: { id: string } };
+      }>(query, revisionVars(fixture.project.draftRevisionId));
+      expect(result.revision.branch.id).toBe(fixture.project.branchId);
     });
 
-    it('owner can get revision', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(fixture.project.draftRevisionId),
-      });
-
-      expect(result.revision.id).toBe(fixture.project.draftRevisionId);
-      expect(result.revision.isDraft).toBe(true);
-    });
-
-    it('cross-owner cannot get revision from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          token: fixture.anotherOwner.token,
-          ...getQuery(fixture.project.draftRevisionId),
-        },
-        /You are not allowed to read on Project/,
-      );
-    });
-
-    it('unauthenticated cannot get revision from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery(fixture.project.draftRevisionId),
-        },
-        /You are not allowed to read on Project/,
-      );
-    });
-
-    describe('public project', () => {
-      it('unauthenticated can get revision from public project', async () => {
-        const result = await gqlQuery({
-          app,
-          ...getQuery(publicFixture.project.draftRevisionId),
-        });
-
-        expect(result.revision.id).toBe(publicFixture.project.draftRevisionId);
-      });
-    });
-  });
-
-  describe('revision with @ResolveField', () => {
-    describe('branch field', () => {
-      const getQuery = (revisionId: string) => ({
-        query: gql`
-          query revision($data: GetRevisionInput!) {
-            revision(data: $data) {
+    it('resolves parent', async () => {
+      const query = gql`
+        query revision($data: GetRevisionInput!) {
+          revision(data: $data) {
+            id
+            parent {
               id
-              branch {
-                id
-                name
-              }
             }
           }
-        `,
-        variables: {
-          data: { revisionId },
-        },
-      });
-
-      it('resolves branch field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId),
-        });
-
-        expect(result.revision.branch).toBeDefined();
-        expect(result.revision.branch.id).toBe(fixture.project.branchId);
-      });
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        revision: { parent: { id: string } };
+      }>(query, revisionVars(fixture.project.draftRevisionId));
+      expect(result.revision.parent.id).toBe(fixture.project.headRevisionId);
     });
 
-    describe('parent field', () => {
-      const getQuery = (revisionId: string) => ({
-        query: gql`
-          query revision($data: GetRevisionInput!) {
-            revision(data: $data) {
-              id
-              parent {
-                id
-              }
-            }
-          }
-        `,
-        variables: {
-          data: { revisionId },
-        },
-      });
-
-      it('resolves parent field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId),
-        });
-
-        expect(result.revision.parent).toBeDefined();
-        expect(result.revision.parent.id).toBe(fixture.project.headRevisionId);
-      });
-    });
-
-    describe('tables field', () => {
-      const getQuery = (revisionId: string) => ({
-        query: gql`
-          query revision(
-            $data: GetRevisionInput!
-            $tablesData: GetRevisionTablesInput!
-          ) {
-            revision(data: $data) {
-              id
-              tables(data: $tablesData) {
-                totalCount
-                edges {
-                  node {
-                    id
-                  }
+    it('resolves tables', async () => {
+      const query = gql`
+        query revision(
+          $data: GetRevisionInput!
+          $tablesData: GetRevisionTablesInput!
+        ) {
+          revision(data: $data) {
+            id
+            tables(data: $tablesData) {
+              totalCount
+              edges {
+                node {
+                  id
                 }
               }
             }
           }
-        `,
-        variables: {
-          data: { revisionId },
-          tablesData: { first: 10 },
-        },
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        revision: { tables: { totalCount: number } };
+      }>(query, {
+        ...revisionVars(fixture.project.draftRevisionId),
+        tablesData: { first: 10 },
       });
-
-      it('resolves tables field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId),
-        });
-
-        expect(result.revision.tables).toBeDefined();
-        expect(result.revision.tables.totalCount).toBeGreaterThanOrEqual(1);
-      });
+      expect(result.revision.tables.totalCount).toBeGreaterThanOrEqual(1);
     });
 
-    describe('endpoints field', () => {
-      const getQuery = (revisionId: string) => ({
-        query: gql`
-          query revision($data: GetRevisionInput!) {
-            revision(data: $data) {
+    it('resolves endpoints', async () => {
+      const query = gql`
+        query revision($data: GetRevisionInput!) {
+          revision(data: $data) {
+            id
+            endpoints {
               id
-              endpoints {
-                id
-                type
-              }
+              type
             }
           }
-        `,
-        variables: {
-          data: { revisionId },
-        },
-      });
-
-      it('resolves endpoints field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId),
-        });
-
-        expect(result.revision.endpoints).toBeDefined();
-        expect(Array.isArray(result.revision.endpoints)).toBe(true);
-      });
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        revision: { endpoints: unknown[] };
+      }>(query, revisionVars(fixture.project.draftRevisionId));
+      expect(Array.isArray(result.revision.endpoints)).toBe(true);
     });
   });
 });

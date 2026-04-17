@@ -1,174 +1,146 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
+  describeAuthMatrix,
+  getTestApp,
   getReadonlyFixture,
   getPublicProjectFixture,
-  gqlQuery,
-  gqlQueryExpectError,
-  expectGraphQLFields,
+  gqlKit,
+  PRIVATE_RESOURCE_MATRIX,
+  type GqlKit,
   type PrepareDataReturnType,
 } from 'src/testing/e2e';
 
+const projectQuery = gql`
+  query project($data: GetProjectInput!) {
+    project(data: $data) {
+      id
+      name
+      isPublic
+      createdAt
+      organizationId
+    }
+  }
+`;
+
+const projectVars = (organizationId: string, projectName: string) => ({
+  data: { organizationId, projectName },
+});
+
 describe('graphql - project (readonly)', () => {
   let app: INestApplication;
+  let kit: GqlKit;
   let fixture: PrepareDataReturnType;
   let publicFixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
+    kit = gqlKit(app);
     fixture = await getReadonlyFixture(app);
     publicFixture = await getPublicProjectFixture(app);
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
-
   describe('project query', () => {
-    const getQuery = (organizationId: string, projectName: string) => ({
-      query: gql`
-        query project($data: GetProjectInput!) {
-          project(data: $data) {
-            id
-            name
-            isPublic
-            createdAt
-            organizationId
-          }
+    const varsFor = (f: PrepareDataReturnType) =>
+      projectVars(f.project.organizationId, f.project.projectName);
+
+    describeAuthMatrix(
+      'private project access',
+      PRIVATE_RESOURCE_MATRIX,
+      async ({ role, outcome }) => {
+        const actor = kit.roleFor(fixture, role);
+        if (outcome === 'ok') {
+          const result = await actor.expectOk<{
+            project: { id: string };
+          }>(projectQuery, varsFor(fixture));
+          expect(result.project.id).toBe(fixture.project.projectId);
+        } else {
+          await actor.expectForbidden(projectQuery, varsFor(fixture));
         }
-      `,
-      variables: {
-        data: { organizationId, projectName },
       },
-    });
+    );
 
-    it('owner can get project', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(
-          fixture.project.organizationId,
-          fixture.project.projectName,
-        ),
-      });
+    it('owner sees all requested fields', async () => {
+      const result = await kit.owner(fixture).expectOk<{
+        project: Record<string, unknown>;
+      }>(projectQuery, varsFor(fixture));
 
-      expectGraphQLFields(result, 'project', [
-        'id',
-        'name',
-        'isPublic',
-        'createdAt',
-        'organizationId',
-      ]);
-      expect(result.project.id).toBe(fixture.project.projectId);
-    });
-
-    it('cross-owner cannot get private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          token: fixture.anotherOwner.token,
-          ...getQuery(
-            fixture.project.organizationId,
-            fixture.project.projectName,
-          ),
-        },
-        /You are not allowed to read on Project/,
+      expect(result.project).toEqual(
+        expect.objectContaining({
+          id: fixture.project.projectId,
+          name: fixture.project.projectName,
+          isPublic: false,
+          organizationId: fixture.project.organizationId,
+          createdAt: expect.any(String),
+        }),
       );
     });
 
-    it('unauthenticated cannot get private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery(
-            fixture.project.organizationId,
-            fixture.project.projectName,
-          ),
-        },
-        /You are not allowed to read on Project/,
-      );
+    it('owner hitting a non-existent project returns not found', async () => {
+      await kit
+        .owner(fixture)
+        .expectNotFound(
+          projectQuery,
+          projectVars(fixture.project.organizationId, 'non-existent-project'),
+        );
     });
 
-    it('non-existent project returns not found error', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.organizationId, 'non-existent-project'),
-        },
-        /Project not found/,
-      );
-    });
-
-    it('unauthenticated non-existent project returns not found error', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery(fixture.project.organizationId, 'non-existent-project'),
-        },
-        /Project not found/,
-      );
+    it('anon hitting a non-existent project returns not found', async () => {
+      await kit
+        .anon()
+        .expectNotFound(
+          projectQuery,
+          projectVars(fixture.project.organizationId, 'non-existent-project'),
+        );
     });
 
     describe('public project', () => {
-      it('unauthenticated can get public project', async () => {
-        const result = await gqlQuery({
-          app,
-          ...getQuery(
-            publicFixture.project.organizationId,
-            publicFixture.project.projectName,
-          ),
-        });
+      it('anon can read', async () => {
+        const result = await kit.anon().expectOk<{
+          project: { id: string; isPublic: boolean };
+        }>(projectQuery, varsFor(publicFixture));
 
         expect(result.project.id).toBe(publicFixture.project.projectId);
         expect(result.project.isPublic).toBe(true);
       });
 
-      it('unauthenticated gets null userProject on public project', async () => {
-        const result = await gqlQuery({
-          app,
-          ...{
-            query: gql`
-              query project($data: GetProjectInput!) {
-                project(data: $data) {
+      it('anon sees null userProject and userOrganization', async () => {
+        const result = await kit.anon().expectOk<{
+          project: {
+            id: string;
+            userProject: unknown;
+            organization: { userOrganization: unknown };
+          };
+        }>(
+          gql`
+            query project($data: GetProjectInput!) {
+              project(data: $data) {
+                id
+                isPublic
+                userProject {
                   id
-                  isPublic
-                  userProject {
+                }
+                organization {
+                  id
+                  userOrganization {
                     id
-                  }
-                  organization {
-                    id
-                    userOrganization {
-                      id
-                    }
                   }
                 }
               }
-            `,
-            variables: {
-              data: {
-                organizationId: publicFixture.project.organizationId,
-                projectName: publicFixture.project.projectName,
-              },
-            },
-          },
-        });
+            }
+          `,
+          varsFor(publicFixture),
+        );
 
         expect(result.project.id).toBe(publicFixture.project.projectId);
         expect(result.project.userProject).toBeNull();
         expect(result.project.organization.userOrganization).toBeNull();
       });
 
-      it('cross-owner can get public project', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.anotherOwner.token,
-          ...getQuery(
-            publicFixture.project.organizationId,
-            publicFixture.project.projectName,
-          ),
-        });
+      it('cross-owner can read', async () => {
+        const result = await kit.crossOwner(fixture).expectOk<{
+          project: { id: string; isPublic: boolean };
+        }>(projectQuery, varsFor(publicFixture));
 
         expect(result.project.id).toBe(publicFixture.project.projectId);
         expect(result.project.isPublic).toBe(true);
@@ -176,9 +148,9 @@ describe('graphql - project (readonly)', () => {
     });
   });
 
-  describe('project with rootBranch @ResolveField', () => {
-    const getQuery = (organizationId: string, projectName: string) => ({
-      query: gql`
+  describe('@ResolveField', () => {
+    it('resolves rootBranch', async () => {
+      const query = gql`
         query project($data: GetProjectInput!) {
           project(data: $data) {
             id
@@ -189,31 +161,17 @@ describe('graphql - project (readonly)', () => {
             }
           }
         }
-      `,
-      variables: {
-        data: { organizationId, projectName },
-      },
-    });
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        project: { rootBranch: { id: string; isRoot: boolean } };
+      }>(query, projectVars(fixture.project.organizationId, fixture.project.projectName));
 
-    it('resolves rootBranch field', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(
-          fixture.project.organizationId,
-          fixture.project.projectName,
-        ),
-      });
-
-      expect(result.project.rootBranch).toBeDefined();
       expect(result.project.rootBranch.id).toBe(fixture.project.branchId);
       expect(result.project.rootBranch.isRoot).toBe(true);
     });
-  });
 
-  describe('project with organization @ResolveField', () => {
-    const getQuery = (organizationId: string, projectName: string) => ({
-      query: gql`
+    it('resolves organization', async () => {
+      const query = gql`
         query project($data: GetProjectInput!) {
           project(data: $data) {
             id
@@ -222,32 +180,18 @@ describe('graphql - project (readonly)', () => {
             }
           }
         }
-      `,
-      variables: {
-        data: { organizationId, projectName },
-      },
-    });
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        project: { organization: { id: string } };
+      }>(query, projectVars(fixture.project.organizationId, fixture.project.projectName));
 
-    it('resolves organization field', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(
-          fixture.project.organizationId,
-          fixture.project.projectName,
-        ),
-      });
-
-      expect(result.project.organization).toBeDefined();
       expect(result.project.organization.id).toBe(
         fixture.project.organizationId,
       );
     });
-  });
 
-  describe('project with allBranches @ResolveField', () => {
-    const getQuery = (organizationId: string, projectName: string) => ({
-      query: gql`
+    it('resolves allBranches', async () => {
+      const query = gql`
         query project(
           $data: GetProjectInput!
           $branchesData: GetProjectBranchesInput!
@@ -265,24 +209,19 @@ describe('graphql - project (readonly)', () => {
             }
           }
         }
-      `,
-      variables: {
-        data: { organizationId, projectName },
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        project: {
+          allBranches: { totalCount: number; edges: unknown[] };
+        };
+      }>(query, {
+        data: {
+          organizationId: fixture.project.organizationId,
+          projectName: fixture.project.projectName,
+        },
         branchesData: { first: 10 },
-      },
-    });
-
-    it('resolves allBranches field', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(
-          fixture.project.organizationId,
-          fixture.project.projectName,
-        ),
       });
 
-      expect(result.project.allBranches).toBeDefined();
       expect(result.project.allBranches.totalCount).toBeGreaterThanOrEqual(1);
       expect(result.project.allBranches.edges).toBeDefined();
     });

@@ -1,71 +1,64 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
+  getTestApp,
   getReadonlyFixture,
-  gqlQuery,
+  gqlKit,
+  type GqlKit,
   type PrepareDataReturnType,
 } from 'src/testing/e2e';
 
+const projectsQuery = gql`
+  query projects($data: GetProjectsInput!) {
+    projects(data: $data) {
+      totalCount
+      edges {
+        node {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+const projectsVars = (organizationId: string) => ({
+  data: { organizationId, first: 10 },
+});
+
 describe('graphql - organization (readonly)', () => {
   let app: INestApplication;
+  let kit: GqlKit;
   let fixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
+    kit = gqlKit(app);
     fixture = await getReadonlyFixture(app);
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
-
   describe('projects query', () => {
-    const getQuery = (organizationId: string) => ({
-      query: gql`
-        query projects($data: GetProjectsInput!) {
-          projects(data: $data) {
-            totalCount
-            edges {
-              node {
-                id
-                name
-              }
-            }
-          }
-        }
-      `,
-      variables: {
-        data: { organizationId, first: 10 },
-      },
-    });
-
-    it('owner can get projects', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(fixture.project.organizationId),
-      });
+    it('owner lists own-org projects', async () => {
+      const result = await kit.owner(fixture).expectOk<{
+        projects: { totalCount: number; edges: unknown[] };
+      }>(projectsQuery, projectsVars(fixture.project.organizationId));
 
       expect(result.projects.totalCount).toBeGreaterThanOrEqual(1);
       expect(result.projects.edges).toBeDefined();
     });
 
-    it('cross-owner can only see own organization projects', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.anotherOwner.token,
-        ...getQuery(fixture.anotherProject.organizationId),
-      });
+    it('cross-owner only sees own-org projects', async () => {
+      const result = await kit.crossOwner(fixture).expectOk<{
+        projects: { totalCount: number };
+      }>(projectsQuery, projectsVars(fixture.anotherProject.organizationId));
 
       expect(result.projects.totalCount).toBeGreaterThanOrEqual(1);
     });
 
-    it('unauthenticated gets empty list (no user access)', async () => {
-      const result = await gqlQuery({
-        app,
-        ...getQuery(fixture.project.organizationId),
-      });
+    it('anon sees empty list', async () => {
+      const result = await kit.anon().expectOk<{
+        projects: { totalCount: number };
+      }>(projectsQuery, projectsVars(fixture.project.organizationId));
 
       expect(result.projects.totalCount).toBe(0);
     });

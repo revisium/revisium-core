@@ -6,28 +6,73 @@ import { UserSystemRoles } from 'src/features/auth/consts';
 import { AuthService } from 'src/features/auth/auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
-  createFreshTestApp,
+  getTestApp,
   getReadonlyFixture,
-  gqlQuery,
-  gqlQueryRaw,
+  gqlKit,
+  type GqlKit,
   type PrepareDataReturnType,
 } from 'src/testing/e2e';
 
+const NOT_ALLOWED = /not allowed/i;
+const UNAUTHORIZED = /Unauthorized/i;
+
+const adminUsersQuery = gql`
+  query adminUsers($data: SearchUsersInput!) {
+    adminUsers(data: $data) {
+      totalCount
+      edges {
+        node {
+          id
+          username
+          email
+          roleId
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+`;
+
+const adminUserQuery = gql`
+  query adminUser($data: AdminUserInput!) {
+    adminUser(data: $data) {
+      id
+      username
+      email
+      roleId
+    }
+  }
+`;
+
+const adminUserWithRoleQuery = gql`
+  query adminUser($data: AdminUserInput!) {
+    adminUser(data: $data) {
+      id
+      roleId
+      role {
+        id
+        name
+      }
+    }
+  }
+`;
+
 describe('graphql - admin user (readonly)', () => {
   let app: INestApplication;
+  let kit: GqlKit;
   let fixture: PrepareDataReturnType;
   let prismaService: PrismaService;
   let authService: AuthService;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
+    kit = gqlKit(app);
     fixture = await getReadonlyFixture(app);
     prismaService = app.get(PrismaService);
     authService = app.get(AuthService);
-  });
-
-  afterAll(async () => {
-    await app.close();
   });
 
   const createAdminUser = async () => {
@@ -46,206 +91,88 @@ describe('graphql - admin user (readonly)', () => {
   };
 
   describe('adminUsers query', () => {
-    const getQuery = (search?: string) => ({
-      query: gql`
-        query adminUsers($data: SearchUsersInput!) {
-          adminUsers(data: $data) {
-            totalCount
-            edges {
-              node {
-                id
-                username
-                email
-                roleId
-              }
-            }
-            pageInfo {
-              hasNextPage
-              endCursor
-            }
-          }
-        }
-      `,
-      variables: {
-        data: { search, first: 10 },
-      },
+    const listVars = (search?: string) => ({
+      data: { search, first: 10 },
     });
 
-    it('admin user can list all users', async () => {
+    it('admin lists all users', async () => {
       const admin = await createAdminUser();
+      const result = await kit.actor(admin.token).expectOk<{
+        adminUsers: { totalCount: number; edges: unknown[] };
+      }>(adminUsersQuery, listVars());
 
-      const result = await gqlQuery({
-        app,
-        token: admin.token,
-        ...getQuery(),
-      });
-
-      expect(result.adminUsers).toHaveProperty('totalCount');
+      expect(result.adminUsers.totalCount).toBeGreaterThanOrEqual(1);
       expect(result.adminUsers).toHaveProperty('edges');
-      expect(result.adminUsers.totalCount).toBeGreaterThanOrEqual(1);
     });
 
-    it('admin user can search users', async () => {
+    it('admin can search users and sees roleId', async () => {
       const admin = await createAdminUser();
-
-      const result = await gqlQuery({
-        app,
-        token: admin.token,
-        ...getQuery(admin.user.username ?? undefined),
-      });
+      const result = await kit.actor(admin.token).expectOk<{
+        adminUsers: {
+          totalCount: number;
+          edges: Array<{ node: { id: string; roleId: string } }>;
+        };
+      }>(adminUsersQuery, listVars(admin.user.username ?? undefined));
 
       expect(result.adminUsers.totalCount).toBeGreaterThanOrEqual(1);
-      const foundUser = result.adminUsers.edges.find(
-        (edge: { node: { id: string } }) => edge.node.id === admin.user.id,
+      const found = result.adminUsers.edges.find(
+        (e) => e.node.id === admin.user.id,
       );
-      expect(foundUser).toBeDefined();
+      expect(found?.node.roleId).toBe(UserSystemRoles.systemAdmin);
     });
 
-    it('includes roleId field in response', async () => {
-      const admin = await createAdminUser();
-
-      const result = await gqlQuery({
-        app,
-        token: admin.token,
-        ...getQuery(admin.user.username ?? undefined),
-      });
-
-      const foundUser = result.adminUsers.edges.find(
-        (edge: { node: { id: string } }) => edge.node.id === admin.user.id,
-      );
-      expect(foundUser?.node.roleId).toBe(UserSystemRoles.systemAdmin);
+    it('regular user is not allowed', async () => {
+      await kit
+        .owner(fixture)
+        .expectError(adminUsersQuery, listVars(), NOT_ALLOWED);
     });
 
-    it('regular user cannot access adminUsers', async () => {
-      const result = await gqlQueryRaw({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(),
-      });
-
-      expect(result.errors).toBeDefined();
-      expect(result.errors?.[0].message).toMatch(/not allowed/i);
-    });
-
-    it('unauthenticated cannot access adminUsers', async () => {
-      const result = await gqlQueryRaw({
-        app,
-        ...getQuery(),
-      });
-
-      expect(result.errors).toBeDefined();
-      expect(result.errors?.[0].message).toMatch(/Unauthorized/i);
+    it('anon is unauthorized', async () => {
+      await kit.anon().expectError(adminUsersQuery, listVars(), UNAUTHORIZED);
     });
   });
 
   describe('adminUser query', () => {
-    const getQuery = (userId: string) => ({
-      query: gql`
-        query adminUser($data: AdminUserInput!) {
-          adminUser(data: $data) {
-            id
-            username
-            email
-            roleId
-          }
-        }
-      `,
-      variables: {
-        data: { userId },
-      },
-    });
+    const vars = (userId: string) => ({ data: { userId } });
 
-    it('admin user can get user by id', async () => {
+    it('admin gets user by id', async () => {
       const admin = await createAdminUser();
+      const result = await kit.actor(admin.token).expectOk<{
+        adminUser: { id: string; username: string; roleId: string };
+      }>(adminUserQuery, vars(admin.user.id));
 
-      const result = await gqlQuery({
-        app,
-        token: admin.token,
-        ...getQuery(admin.user.id),
-      });
-
-      expect(result.adminUser).toBeDefined();
       expect(result.adminUser.id).toBe(admin.user.id);
       expect(result.adminUser.username).toBe(admin.user.username);
-    });
-
-    it('includes roleId field in response', async () => {
-      const admin = await createAdminUser();
-
-      const result = await gqlQuery({
-        app,
-        token: admin.token,
-        ...getQuery(admin.user.id),
-      });
-
       expect(result.adminUser.roleId).toBe(UserSystemRoles.systemAdmin);
     });
 
-    it('throws error for non-existent user', async () => {
+    it('admin hitting non-existent user gets not-found', async () => {
       const admin = await createAdminUser();
-      const nonExistentUserId = nanoid();
-
-      const result = await gqlQueryRaw({
-        app,
-        token: admin.token,
-        ...getQuery(nonExistentUserId),
-      });
-
-      expect(result.errors).toBeDefined();
-      expect(result.errors?.[0].message).toMatch(/Not found user/i);
+      await kit
+        .actor(admin.token)
+        .expectError(adminUserQuery, vars(nanoid()), /Not found user/i);
     });
 
-    it('regular user cannot access adminUser', async () => {
-      const result = await gqlQueryRaw({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(fixture.owner.user.id),
-      });
-
-      expect(result.errors).toBeDefined();
-      expect(result.errors?.[0].message).toMatch(/not allowed/i);
+    it('regular user is not allowed', async () => {
+      await kit
+        .owner(fixture)
+        .expectError(adminUserQuery, vars(fixture.owner.user.id), NOT_ALLOWED);
     });
 
-    it('unauthenticated cannot access adminUser', async () => {
-      const result = await gqlQueryRaw({
-        app,
-        ...getQuery(fixture.owner.user.id),
-      });
-
-      expect(result.errors).toBeDefined();
-      expect(result.errors?.[0].message).toMatch(/Unauthorized/i);
+    it('anon is unauthorized', async () => {
+      await kit
+        .anon()
+        .expectError(adminUserQuery, vars(fixture.owner.user.id), UNAUTHORIZED);
     });
   });
 
   describe('role field resolution via adminUser', () => {
-    const getQueryWithRole = (userId: string) => ({
-      query: gql`
-        query adminUser($data: AdminUserInput!) {
-          adminUser(data: $data) {
-            id
-            roleId
-            role {
-              id
-              name
-            }
-          }
-        }
-      `,
-      variables: {
-        data: { userId },
-      },
-    });
-
     it('resolves role field for admin user', async () => {
       const admin = await createAdminUser();
+      const result = await kit.actor(admin.token).expectOk<{
+        adminUser: { role: { id: string } };
+      }>(adminUserWithRoleQuery, { data: { userId: admin.user.id } });
 
-      const result = await gqlQuery({
-        app,
-        token: admin.token,
-        ...getQueryWithRole(admin.user.id),
-      });
-
-      expect(result.adminUser.role).toBeDefined();
       expect(result.adminUser.role.id).toBe(UserSystemRoles.systemAdmin);
     });
   });

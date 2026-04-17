@@ -1,220 +1,164 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
+  describeAuthMatrix,
+  getTestApp,
   getReadonlyFixture,
   getPublicProjectFixture,
-  gqlQuery,
-  gqlQueryExpectError,
+  gqlKit,
+  PRIVATE_RESOURCE_MATRIX,
+  type GqlKit,
   type PrepareDataReturnType,
 } from 'src/testing/e2e';
 
+const tableQuery = gql`
+  query table($data: GetTableInput!) {
+    table(data: $data) {
+      id
+      versionId
+      createdAt
+      readonly
+    }
+  }
+`;
+
+const tablesQuery = gql`
+  query tables($data: GetTablesInput!) {
+    tables(data: $data) {
+      totalCount
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }
+`;
+
+const tableVars = (revisionId: string, tableId: string) => ({
+  data: { revisionId, tableId },
+});
+
+const tablesVars = (revisionId: string) => ({
+  data: { revisionId, first: 10 },
+});
+
 describe('graphql - table (readonly)', () => {
   let app: INestApplication;
+  let kit: GqlKit;
   let fixture: PrepareDataReturnType;
   let publicFixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
+    kit = gqlKit(app);
     fixture = await getReadonlyFixture(app);
     publicFixture = await getPublicProjectFixture(app);
   });
 
-  afterAll(async () => {
-    await app.close();
-  });
-
   describe('table query', () => {
-    const getQuery = (revisionId: string, tableId: string) => ({
-      query: gql`
-        query table($data: GetTableInput!) {
-          table(data: $data) {
-            id
-            versionId
-            createdAt
-            readonly
-          }
+    describeAuthMatrix(
+      'private project access',
+      PRIVATE_RESOURCE_MATRIX,
+      async ({ role, outcome }) => {
+        const actor = kit.roleFor(fixture, role);
+        const vars = tableVars(
+          fixture.project.draftRevisionId,
+          fixture.project.tableId,
+        );
+        if (outcome === 'ok') {
+          const result = await actor.expectOk<{ table: { id: string } }>(
+            tableQuery,
+            vars,
+          );
+          expect(result.table.id).toBe(fixture.project.tableId);
+        } else {
+          await actor.expectForbidden(tableQuery, vars);
         }
-      `,
-      variables: {
-        data: { revisionId, tableId },
       },
-    });
+    );
 
-    it('owner can get table', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(fixture.project.draftRevisionId, fixture.project.tableId),
-      });
-
-      expect(result.table.id).toBe(fixture.project.tableId);
-    });
-
-    it('cross-owner cannot get table from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          token: fixture.anotherOwner.token,
-          ...getQuery(fixture.project.draftRevisionId, fixture.project.tableId),
-        },
-        /You are not allowed to read on Project/,
-      );
-    });
-
-    it('unauthenticated cannot get table from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          ...getQuery(fixture.project.draftRevisionId, fixture.project.tableId),
-        },
-        /You are not allowed to read on Project/,
-      );
-    });
-
-    describe('public project', () => {
-      it('unauthenticated can get table from public project', async () => {
-        const result = await gqlQuery({
-          app,
-          ...getQuery(
-            publicFixture.project.draftRevisionId,
-            publicFixture.project.tableId,
-          ),
-        });
-
-        expect(result.table.id).toBe(publicFixture.project.tableId);
-      });
+    it('anon can read table from public project', async () => {
+      const result = await kit.anon().expectOk<{
+        table: { id: string };
+      }>(tableQuery, tableVars(publicFixture.project.draftRevisionId, publicFixture.project.tableId));
+      expect(result.table.id).toBe(publicFixture.project.tableId);
     });
   });
 
   describe('tables query', () => {
-    const getQuery = (revisionId: string) => ({
-      query: gql`
-        query tables($data: GetTablesInput!) {
-          tables(data: $data) {
-            totalCount
-            edges {
-              node {
-                id
-              }
-            }
-          }
-        }
-      `,
-      variables: {
-        data: { revisionId, first: 10 },
-      },
-    });
-
-    it('owner can get tables', async () => {
-      const result = await gqlQuery({
-        app,
-        token: fixture.owner.token,
-        ...getQuery(fixture.project.draftRevisionId),
-      });
-
+    it('owner can list tables', async () => {
+      const result = await kit.owner(fixture).expectOk<{
+        tables: { totalCount: number };
+      }>(tablesQuery, tablesVars(fixture.project.draftRevisionId));
       expect(result.tables.totalCount).toBeGreaterThanOrEqual(1);
     });
 
-    it('cross-owner cannot get tables from private project', async () => {
-      await gqlQueryExpectError(
-        {
-          app,
-          token: fixture.anotherOwner.token,
-          ...getQuery(fixture.project.draftRevisionId),
-        },
-        /You are not allowed to read on Project/,
-      );
+    it('cross-owner is forbidden from listing tables', async () => {
+      await kit
+        .crossOwner(fixture)
+        .expectForbidden(
+          tablesQuery,
+          tablesVars(fixture.project.draftRevisionId),
+        );
     });
   });
 
-  describe('table with @ResolveField', () => {
-    describe('rows field', () => {
-      const getQuery = (revisionId: string, tableId: string) => ({
-        query: gql`
-          query table($data: GetTableInput!, $rowsData: GetTableRowsInput!) {
-            table(data: $data) {
-              id
-              rows(data: $rowsData) {
-                totalCount
-                edges {
-                  node {
-                    id
-                    versionId
-                  }
+  describe('@ResolveField', () => {
+    it('resolves rows', async () => {
+      const query = gql`
+        query table($data: GetTableInput!, $rowsData: GetTableRowsInput!) {
+          table(data: $data) {
+            id
+            rows(data: $rowsData) {
+              totalCount
+              edges {
+                node {
+                  id
+                  versionId
                 }
               }
             }
           }
-        `,
-        variables: {
-          data: { revisionId, tableId },
-          rowsData: { first: 10 },
-        },
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        table: { rows: { totalCount: number } };
+      }>(query, {
+        ...tableVars(fixture.project.draftRevisionId, fixture.project.tableId),
+        rowsData: { first: 10 },
       });
-
-      it('resolves rows field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId, fixture.project.tableId),
-        });
-
-        expect(result.table.rows).toBeDefined();
-        expect(result.table.rows.totalCount).toBeGreaterThanOrEqual(1);
-      });
+      expect(result.table.rows.totalCount).toBeGreaterThanOrEqual(1);
     });
 
-    describe('schema field', () => {
-      const getQuery = (revisionId: string, tableId: string) => ({
-        query: gql`
-          query table($data: GetTableInput!) {
-            table(data: $data) {
-              id
-              schema
-            }
+    it('resolves schema', async () => {
+      const query = gql`
+        query table($data: GetTableInput!) {
+          table(data: $data) {
+            id
+            schema
           }
-        `,
-        variables: {
-          data: { revisionId, tableId },
-        },
-      });
-
-      it('resolves schema field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId, fixture.project.tableId),
-        });
-
-        expect(result.table).toHaveProperty('schema');
-      });
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        table: { schema: unknown };
+      }>(query, tableVars(fixture.project.draftRevisionId, fixture.project.tableId));
+      expect(result.table).toHaveProperty('schema');
     });
 
-    describe('count field', () => {
-      const getQuery = (revisionId: string, tableId: string) => ({
-        query: gql`
-          query table($data: GetTableInput!) {
-            table(data: $data) {
-              id
-              count
-            }
+    it('resolves count', async () => {
+      const query = gql`
+        query table($data: GetTableInput!) {
+          table(data: $data) {
+            id
+            count
           }
-        `,
-        variables: {
-          data: { revisionId, tableId },
-        },
-      });
-
-      it('resolves count field', async () => {
-        const result = await gqlQuery({
-          app,
-          token: fixture.owner.token,
-          ...getQuery(fixture.project.draftRevisionId, fixture.project.tableId),
-        });
-
-        expect(result.table.count).toBeGreaterThanOrEqual(1);
-      });
+        }
+      `;
+      const result = await kit.owner(fixture).expectOk<{
+        table: { count: number };
+      }>(query, tableVars(fixture.project.draftRevisionId, fixture.project.tableId));
+      expect(result.table.count).toBeGreaterThanOrEqual(1);
     });
   });
 });
