@@ -14,7 +14,7 @@ import {
 import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import { validateBranchName } from 'src/features/share/utils/validateUrlLikeId/validateBranchName';
 import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import {
   CreateProjectCommand,

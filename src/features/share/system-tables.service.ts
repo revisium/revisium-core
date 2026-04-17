@@ -5,7 +5,7 @@ import {
   SystemTables,
 } from 'src/features/share/system-tables.consts';
 import { FindTableInRevisionType } from 'src/features/share/queries/types';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 export type EnsureSystemTableResult = FindTableInRevisionType;

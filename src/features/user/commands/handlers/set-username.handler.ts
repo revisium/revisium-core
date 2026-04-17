@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserRole } from 'src/features/auth/consts';
 import { validateUsername } from 'src/features/share/utils/validateUrlLikeId/validateUsername';
-import { IdService } from 'src/infrastructure/database/id.service';
+import { IdService } from '@revisium/engine';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   SetUsernameCommand,

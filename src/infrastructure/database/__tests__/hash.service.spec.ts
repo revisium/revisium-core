@@ -1,4 +1,4 @@
-import { HashService } from 'src/infrastructure/database/hash.service';
+import { HashService } from '@revisium/engine';
 
 describe('HashService', () => {
   let hashService: HashService;
