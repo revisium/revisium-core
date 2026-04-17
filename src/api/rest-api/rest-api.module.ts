@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
-import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
 import { ProjectModule } from 'src/features/project/project.module';
@@ -34,7 +33,6 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
     ProjectModule,
     RevisionChangesModule,
     RevisionModule,
-    DraftModule,
     RowModule,
     TableModule,
     UserModule,

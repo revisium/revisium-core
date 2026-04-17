@@ -6,7 +6,7 @@ import {
   RowWithTableId,
 } from 'src/features/plugin/types';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 
 describe('PluginService', () => {

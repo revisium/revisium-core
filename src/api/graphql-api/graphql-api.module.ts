@@ -13,7 +13,6 @@ import { RoleResolver } from 'src/api/graphql-api/role/role.resolver';
 import { ViewsResolver } from 'src/api/graphql-api/views/views.resolver';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
-import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { AuthResolver } from 'src/api/graphql-api/auth/auth.resolver';
 import { BranchResolver } from 'src/api/graphql-api/branch/branch.resolver';
@@ -69,7 +68,6 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
     AuthModule,
     BranchModule,
     ConfigurationModule,
-    DraftModule,
     EndpointModule,
     UserModule,
     OrganizationModule,

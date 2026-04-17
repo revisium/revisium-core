@@ -17,7 +17,6 @@ import { RevisiumCacheModule } from 'src/infrastructure/cache';
 import { CleanModule } from 'src/infrastructure/clean/clean.module';
 import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
-import { DraftModule } from 'src/features/draft/draft.module';
 import { EmailModule } from 'src/infrastructure/email/email.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { GraphqlApiModule } from 'src/api/graphql-api/graphql-api.module';
@@ -74,7 +73,6 @@ export class CoreModule {
         RoleModule,
         TableModule,
         RowModule,
-        DraftModule,
         EndpointModule,
         MetricsModule,
         McpModule,
