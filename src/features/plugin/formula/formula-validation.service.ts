@@ -4,7 +4,7 @@ import {
   type SchemaValidationResult,
 } from '@revisium/schema-toolkit/formula';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 
 type InputJsonSchema = JsonSchema | Record<string, unknown>;
 

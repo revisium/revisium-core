@@ -5,7 +5,7 @@ import {
 } from '@revisium/schema-toolkit/lib';
 import { JsonSchema } from '@revisium/schema-toolkit/types';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 import {
   TableViewsData,
   View,

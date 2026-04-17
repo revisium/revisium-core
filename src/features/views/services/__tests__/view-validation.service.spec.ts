@@ -7,7 +7,7 @@ import {
 } from '@revisium/schema-toolkit/mocks';
 import { ViewValidationService } from 'src/features/views/services/view-validation.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 
 describe('ViewValidationService', () => {
   let service: ViewValidationService;

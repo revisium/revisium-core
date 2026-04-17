@@ -13,7 +13,7 @@ import {
   AfterUpdateRowOptions,
   RowWithTableId,
 } from 'src/features/plugin/types';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ShareTransactionalQueries } from 'src/features/share/share.transactional.queries';
 import { systemTablesIds } from 'src/features/share/system-tables.consts';

@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
-import { DraftModule } from 'src/features/draft/draft.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
 import { OAuthModule } from 'src/features/oauth/oauth.module';
 import { OrganizationModule } from 'src/features/organization/organization.module';
@@ -26,7 +25,6 @@ import { McpAuthService } from './mcp-auth.service';
     OrganizationModule,
     ProjectModule,
     BranchModule,
-    DraftModule,
     EndpointModule,
     TableModule,
     RowModule,

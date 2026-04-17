@@ -1,5 +1,5 @@
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 import { FormulaValidationService } from '../formula-validation.service';
 
 describe('FormulaValidationService', () => {

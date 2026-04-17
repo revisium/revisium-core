@@ -1,7 +1,7 @@
 import { Row } from 'src/__generated__/client';
 import { FormulaPlugin } from '../formula.plugin';
 import { JsonSchema, JsonValue } from '@revisium/schema-toolkit/types';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 import { createJsonValueStore } from '@revisium/schema-toolkit/lib';
 
 const createRow = (id: string, data: Record<string, unknown>): Row => ({

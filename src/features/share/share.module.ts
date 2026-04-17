@@ -2,7 +2,7 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { DiffService } from 'src/features/share/diff.service';
-import { JsonSchemaStoreService } from 'src/features/share/json-schema-store.service';
+import { JsonSchemaStoreService } from '@revisium/engine';
 import { JsonSchemaValidatorService } from 'src/features/share/json-schema-validator.service';
 import { ViewsMigrationService } from 'src/features/share/views-migration.service';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
