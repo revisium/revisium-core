@@ -1,26 +1,17 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { gql } from 'src/testing/utils/gql';
 import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
 import { graphqlQuery, graphqlQueryError } from 'src/testing/utils/queryTest';
-import { CoreModule } from 'src/core/core.module';
-import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { createFreshTestApp } from 'src/testing/e2e';
 
 describe('graphql - organization', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    registerGraphqlEnums();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    app = await createFreshTestApp();
   });
 
   afterAll(async () => {

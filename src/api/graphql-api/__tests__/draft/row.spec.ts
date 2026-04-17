@@ -1,5 +1,4 @@
 import { INestApplication } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
 import { Prisma } from 'src/__generated__/client';
 import { gql } from 'src/testing/utils/gql';
 import {
@@ -8,8 +7,7 @@ import {
 } from 'src/testing/utils/prepareProject';
 import { graphqlQuery, graphqlQueryError } from 'src/testing/utils/queryTest';
 import { OrderByField, OrderDataType } from 'src/api/graphql-api/row/inputs';
-import { CoreModule } from 'src/core/core.module';
-import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { createFreshTestApp } from 'src/testing/e2e';
 
 describe('row', () => {
   describe('row', () => {
@@ -166,21 +164,11 @@ describe('row', () => {
   let preparedData: PrepareDataReturnType;
 
   beforeAll(async () => {
-    registerGraphqlEnums();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    app = await createFreshTestApp();
+    preparedData = await prepareData(app, { createLinkedTable: true });
   });
 
   afterAll(async () => {
     await app.close();
-  });
-
-  beforeAll(async () => {
-    preparedData = await prepareData(app, { createLinkedTable: true });
   });
 });

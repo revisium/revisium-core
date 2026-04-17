@@ -8,13 +8,12 @@ import { metaSchema } from 'src/features/share/schema/meta-schema';
 import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
 import { gql } from 'src/testing/utils/gql';
 import {
-  getTestApp,
-  closeTestApp,
+  createFreshTestApp,
   gqlQuery,
   gqlQueryExpectError,
-  getPrismaService,
 } from 'src/testing/e2e';
 import { prepareData, prepareRow } from 'src/testing/utils/prepareProject';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { JsonPatchAdd, InitMigration } from '@revisium/schema-toolkit/types';
 
 const FILE_SCHEMA_ID = SystemSchemaIds.File;
@@ -44,11 +43,11 @@ describe('graphql - subSchemaItems (readonly)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await getTestApp();
+    app = await createFreshTestApp();
   });
 
   afterAll(async () => {
-    await closeTestApp();
+    await app.close();
   });
 
   const getSubSchemaItemsQuery = (revisionId: string, schemaId: string) => ({
@@ -140,7 +139,7 @@ describe('graphql - subSchemaItems (readonly)', () => {
 
     beforeAll(async () => {
       fixture = await prepareFixtureWithFiles(app);
-      const prisma = getPrismaService();
+      const prisma = app.get(PrismaService);
       await prisma.project.update({
         where: { id: fixture.project.projectId },
         data: { isPublic: true },
@@ -175,7 +174,7 @@ describe('graphql - subSchemaItems (readonly)', () => {
 
   describe('duplicate row prevention', () => {
     it('should not return duplicates when row is connected to multiple table versions', async () => {
-      const prisma = getPrismaService();
+      const prisma = app.get(PrismaService);
       const baseFixture = await prepareData(app);
 
       const fileSchema = getObjectSchema({
@@ -302,7 +301,7 @@ describe('graphql - subSchemaItems (readonly)', () => {
 });
 
 async function prepareFixtureWithFiles(app: INestApplication) {
-  const prismaService = getPrismaService();
+  const prismaService = app.get(PrismaService);
 
   const baseFixture = await prepareData(app);
 
@@ -348,7 +347,7 @@ async function prepareTableWithFileSchema({
   migrationTableVersionId,
   schema,
 }: {
-  prismaService: ReturnType<typeof getPrismaService>;
+  prismaService: PrismaService;
   headRevisionId: string;
   draftRevisionId: string;
   schemaTableVersionId: string;

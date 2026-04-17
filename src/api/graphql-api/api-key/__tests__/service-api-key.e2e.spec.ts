@@ -1,12 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
 } from 'src/testing/utils/prepareProject';
-import { CoreModule } from 'src/core/core.module';
-import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { createFreshTestApp } from 'src/testing/e2e';
 
 const CREATE_SERVICE_API_KEY = `
   mutation CreateServiceApiKey($data: CreateServiceApiKeyInput!) {
@@ -74,15 +72,7 @@ describe('Service API Key Management (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    registerGraphqlEnums();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true }));
-    await app.init();
+    app = await createFreshTestApp();
   });
 
   afterAll(async () => {

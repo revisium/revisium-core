@@ -1,8 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  getTestApp,
-  closeTestApp,
+  createFreshTestApp,
   getReadonlyFixture,
   gqlQuery,
   type PrepareDataReturnType,
@@ -13,12 +12,12 @@ describe('graphql - organization (readonly)', () => {
   let fixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await getTestApp();
+    app = await createFreshTestApp();
     fixture = await getReadonlyFixture(app);
   });
 
   afterAll(async () => {
-    await closeTestApp();
+    await app.close();
   });
 
   describe('projects query', () => {

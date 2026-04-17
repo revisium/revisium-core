@@ -1,13 +1,11 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import request from 'supertest';
 import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import { CoreModule } from 'src/core/core.module';
-import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const DELETE_BRANCH_MUTATION = `
@@ -241,16 +239,8 @@ describe('graphql - BranchResolver', () => {
   });
 
   beforeAll(async () => {
-    registerGraphqlEnums();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true }));
+    app = await createFreshTestApp();
     prismaService = app.get(PrismaService);
-    await app.init();
   });
 
   afterAll(async () => {
