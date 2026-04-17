@@ -1,9 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
+import { VALIDATE_URL_LIKE_ID_ERROR_MESSAGE } from '@revisium/engine';
 import {
   validateUsername,
   RESERVED_USERNAME_ERROR_MESSAGE,
 } from './validateUsername';
-import { VALIDATE_URL_LIKE_ID_ERROR_MESSAGE } from './validateUrlLikeId';
 
 describe('validateUsername', () => {
   describe('valid usernames', () => {

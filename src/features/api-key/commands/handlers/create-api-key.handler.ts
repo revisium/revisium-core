@@ -12,7 +12,7 @@ import {
   CreateApiKeyCommandReturnType,
 } from 'src/features/api-key/commands/impl';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import { validateUrlLikeId } from 'src/features/share/utils/validateUrlLikeId/validateUrlLikeId';
+import { validateUrlLikeId } from '@revisium/engine';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const MAX_NAME_LENGTH = 255;

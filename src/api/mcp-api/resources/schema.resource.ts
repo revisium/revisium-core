@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { formulaSpec } from '@revisium/schema-toolkit/formula';
 import { SchemaObject } from 'ajv';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
+import { metaSchema } from '@revisium/engine';
 import { McpResourceRegistrar } from '../types';
 
 /**

@@ -4,8 +4,7 @@ import hash from 'object-hash';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
 import { getObjectSchema, getRefSchema } from '@revisium/schema-toolkit/mocks';
 import { FileStatus } from 'src/features/plugin/file/consts';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
-import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
+import { metaSchema, tableMigrationsSchema } from '@revisium/engine';
 import { gql } from 'src/testing/utils/gql';
 import {
   createFreshTestApp,

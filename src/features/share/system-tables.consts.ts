@@ -1,7 +1,9 @@
 import { Schema } from 'ajv/dist/2020';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
-import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
-import { tableViewsSchema } from 'src/features/share/schema/table-views-schema';
+import {
+  metaSchema,
+  tableMigrationsSchema,
+  tableViewsSchema,
+} from '@revisium/engine';
 
 export const SYSTEM_TABLE_PREFIX = 'revisium_';
 

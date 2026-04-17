@@ -19,8 +19,7 @@ import {
 } from 'src/testing/utils/test-schemas';
 import { FileStatus } from 'src/features/plugin/file/consts';
 import { SystemSchemaIds } from '@revisium/schema-toolkit/consts';
-import { metaSchema } from 'src/features/share/schema/meta-schema';
-import { tableMigrationsSchema } from 'src/features/share/schema/table-migrations-schema';
+import { metaSchema, tableMigrationsSchema } from '@revisium/engine';
 import { SystemTables } from 'src/features/share/system-tables.consts';
 import {
   JsonPatchAdd,

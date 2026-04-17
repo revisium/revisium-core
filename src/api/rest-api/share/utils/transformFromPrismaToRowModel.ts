@@ -1,7 +1,7 @@
 import { Row } from 'src/__generated__/client';
 import { RowModel } from 'src/api/rest-api/row/model';
 import { FormulaFieldError } from 'src/features/plugin/types';
-import { IPaginatedType } from 'src/features/share/pagination.interface';
+import { IPaginatedType } from '@revisium/engine';
 
 type RowWithFormulaErrors = Row & {
   formulaErrors?: FormulaFieldError[];
