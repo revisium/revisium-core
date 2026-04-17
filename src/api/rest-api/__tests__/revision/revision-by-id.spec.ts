@@ -1,12 +1,10 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import { CoreModule } from 'src/core/core.module';
-import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { EndpointType } from 'src/api/graphql-api/endpoint/model/endpoint.model';
 import request from 'supertest';
@@ -16,20 +14,8 @@ describe('restapi - revision-by-id', () => {
   let prismaService: PrismaService;
 
   beforeAll(async () => {
-    registerGraphqlEnums();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
+    app = await createFreshTestApp();
     prismaService = app.get(PrismaService);
-    app.useGlobalPipes(
-      new ValidationPipe({
-        transform: true,
-      }),
-    );
-    await app.init();
   });
 
   afterAll(async () => {

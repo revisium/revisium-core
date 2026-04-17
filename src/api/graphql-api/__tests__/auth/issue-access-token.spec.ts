@@ -1,5 +1,4 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common';
-import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import {
   prepareData,
@@ -7,8 +6,7 @@ import {
 } from 'src/testing/utils/prepareProject';
 import { gql } from 'src/testing/utils/gql';
 import { graphqlQuery, graphqlQueryError } from 'src/testing/utils/queryTest';
-import { CoreModule } from 'src/core/core.module';
-import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
+import { createFreshTestApp } from 'src/testing/e2e';
 
 const ISSUE_ACCESS_TOKEN = gql`
   query issueAccessToken {
@@ -33,15 +31,7 @@ describe('graphql - issueAccessToken', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    registerGraphqlEnums();
-
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [CoreModule.forRoot({ mode: 'monolith' })],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe({ transform: true }));
-    await app.init();
+    app = await createFreshTestApp();
   });
 
   afterAll(async () => {
