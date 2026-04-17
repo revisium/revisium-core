@@ -22,7 +22,6 @@ for the principles that govern this layout.
 
 Current kits:
 
-- `create-draft-revision-command-test-kit.ts` — CQRS + `RevisionModule`, `BranchModule`, `EngineModule`, cache + draft-revision handlers. Exposes `executeSerializable` for command execution inside `TransactionPrismaService.runSerializable`.
 - `create-project-command-test-kit.ts` — full `CoreModule` + the services a project-command spec usually needs (`EndpointNotificationService`, `ShareTransactionalQueries`). Exposes `executeSerializable`.
 - `create-api-key-command-test-kit.ts` — `CqrsModule` + `RevisiumCacheModule` + all api-key handlers. Accepts `configValues` for limit-related tests.
 - `create-user-query-test-kit.ts` — `CqrsModule` + `PrismaService` + all user query handlers.
@@ -35,7 +34,6 @@ wire `afterAll(() => kit.close())` so `module.close()` runs every provider's
 
 Current scenarios (all take a `PrismaService` and return business IDs):
 
-- `givenDraftRevision` — minimal branch + root head revision + draft revision.
 - `givenOrganizationWithOwner` — user + organization + owner membership.
 - `givenProjectWithOwner` — above plus project with user attached as owner.
 - `givenApiKeyForProject` — above plus a personal API key scoped to the project.
