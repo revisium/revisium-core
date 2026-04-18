@@ -120,7 +120,7 @@ describe('API Key Management (e2e)', () => {
     let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      preparedData = await prepareData(app);
+      preparedData = await prepareData(app, { fullAnotherProject: true });
     });
 
     it('should create a personal API key', async () => {
@@ -417,7 +417,7 @@ describe('API Key Management (e2e)', () => {
     let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      preparedData = await prepareData(app);
+      preparedData = await prepareData(app, { fullAnotherProject: true });
     });
 
     it('should authenticate with API key via Authorization: Bearer header', async () => {
@@ -527,7 +527,7 @@ describe('API Key Management (e2e)', () => {
     let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      preparedData = await prepareData(app);
+      preparedData = await prepareData(app, { fullAnotherProject: true });
     });
 
     it('should allow access to scoped organization', async () => {

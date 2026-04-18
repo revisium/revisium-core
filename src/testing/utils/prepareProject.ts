@@ -89,43 +89,91 @@ const prepareOrganizationUser = async (
   return result;
 };
 
+/**
+ * Seed just an organization (no project/branch/tables/rows) so we can
+ * attach a `anotherOwner` user whose JWT token represents a "user from a
+ * different org". That's all the `crossOwner` auth actor ever needs, and
+ * it cuts the seeding cost roughly in half vs. a full second project.
+ */
+const prepareStandaloneOrgWithOwner = async (app: INestApplication) => {
+  const prismaService = app.get(PrismaService);
+  const organizationId = `org-${nanoid()}`;
+  await prismaService.organization.create({
+    data: { id: organizationId, createdId: nanoid() },
+  });
+  const user = await prepareOrganizationUser(
+    app,
+    organizationId,
+    UserRole.organizationOwner,
+  );
+  return { organizationId, owner: user };
+};
+
 export const prepareData = async (
   app: INestApplication,
-  options?: { createLinkedTable?: boolean },
+  options?: { createLinkedTable?: boolean; fullAnotherProject?: boolean },
 ) => {
   const tStart = Date.now();
   const prismaService = app.get(PrismaService);
 
-  // The two projects and their owners are fully independent (each creates
-  // its own org, project, users, etc.), so we can seed them in parallel.
-  const tProjectsStart = Date.now();
-  const [project, anotherProject] = await Promise.all([
-    prepareProject(prismaService, options),
-    prepareProject(prismaService, options),
-  ]);
-  recordTiming('prepareData:bothProjects', Date.now() - tProjectsStart);
+  if (options?.fullAnotherProject) {
+    // Legacy path: two full projects and two org owners. Required for
+    // specs that read fields like `anotherProject.draftRevisionId`,
+    // `anotherProject.tableId`, etc.
+    const tProjectsStart = Date.now();
+    const [project, anotherProject] = await Promise.all([
+      prepareProject(prismaService, options),
+      prepareProject(prismaService, options),
+    ]);
+    recordTiming('prepareData:bothProjects', Date.now() - tProjectsStart);
 
-  const tOwnersStart = Date.now();
-  const [owner, anotherOwner] = await Promise.all([
-    prepareOrganizationUser(
-      app,
-      project.organizationId,
-      UserRole.organizationOwner,
-    ),
-    prepareOrganizationUser(
-      app,
-      anotherProject.organizationId,
-      UserRole.organizationOwner,
-    ),
+    const tOwnersStart = Date.now();
+    const [owner, anotherOwner] = await Promise.all([
+      prepareOrganizationUser(
+        app,
+        project.organizationId,
+        UserRole.organizationOwner,
+      ),
+      prepareOrganizationUser(
+        app,
+        anotherProject.organizationId,
+        UserRole.organizationOwner,
+      ),
+    ]);
+    recordTiming('prepareData:bothOwners', Date.now() - tOwnersStart);
+    recordTiming('prepareData:TOTAL', Date.now() - tStart);
+
+    return { project, owner, anotherProject, anotherOwner };
+  }
+
+  // Default path: one full project (the `project` under test) plus a
+  // lightweight standalone org + user for the `crossOwner` actor. The
+  // auth kit only ever reads `anotherOwner.token`, so there's no reason
+  // to seed a full second project by default.
+  const tProjectStart = Date.now();
+  const [project, anotherOrgOwner] = await Promise.all([
+    prepareProject(prismaService, options),
+    prepareStandaloneOrgWithOwner(app),
   ]);
-  recordTiming('prepareData:bothOwners', Date.now() - tOwnersStart);
+  recordTiming('prepareData:project', Date.now() - tProjectStart);
+
+  const tOwnerStart = Date.now();
+  const owner = await prepareOrganizationUser(
+    app,
+    project.organizationId,
+    UserRole.organizationOwner,
+  );
+  recordTiming('prepareData:owner', Date.now() - tOwnerStart);
+
   recordTiming('prepareData:TOTAL', Date.now() - tStart);
 
   return {
     project,
     owner,
-    anotherProject,
-    anotherOwner,
+    // `anotherProject` is intentionally null — use `fullAnotherProject: true`
+    // if a spec needs the full second project's state.
+    anotherProject: null as unknown as PrepareProjectReturnType,
+    anotherOwner: anotherOrgOwner.owner,
   };
 };
 
@@ -701,44 +749,41 @@ export const prepareDataWithRoles = async (
 ) => {
   const prismaService = app.get(PrismaService);
 
-  const project = await prepareProject(prismaService, options);
+  // The main project and the standalone org+user for `crossOwner` are
+  // independent — build them in parallel.
+  const [project, anotherOrgOwner] = await Promise.all([
+    prepareProject(prismaService, options),
+    prepareStandaloneOrgWithOwner(app),
+  ]);
 
-  const owner = await prepareOrganizationUser(
-    app,
-    project.organizationId,
-    UserRole.organizationOwner,
-  );
-
-  const developer = await prepareProjectUser(
-    app,
-    project.organizationId,
-    project.projectId,
-    UserOrganizationRoles.developer,
-    UserProjectRoles.developer,
-  );
-
-  const editor = await prepareProjectUser(
-    app,
-    project.organizationId,
-    project.projectId,
-    UserOrganizationRoles.editor,
-    UserProjectRoles.editor,
-  );
-
-  const reader = await prepareProjectUser(
-    app,
-    project.organizationId,
-    project.projectId,
-    UserOrganizationRoles.reader,
-    UserProjectRoles.reader,
-  );
-
-  const anotherProject = await prepareProject(prismaService, options);
-  const anotherOwner = await prepareOrganizationUser(
-    app,
-    anotherProject.organizationId,
-    UserRole.organizationOwner,
-  );
+  const [owner, developer, editor, reader] = await Promise.all([
+    prepareOrganizationUser(
+      app,
+      project.organizationId,
+      UserRole.organizationOwner,
+    ),
+    prepareProjectUser(
+      app,
+      project.organizationId,
+      project.projectId,
+      UserOrganizationRoles.developer,
+      UserProjectRoles.developer,
+    ),
+    prepareProjectUser(
+      app,
+      project.organizationId,
+      project.projectId,
+      UserOrganizationRoles.editor,
+      UserProjectRoles.editor,
+    ),
+    prepareProjectUser(
+      app,
+      project.organizationId,
+      project.projectId,
+      UserOrganizationRoles.reader,
+      UserProjectRoles.reader,
+    ),
+  ]);
 
   return {
     project,
@@ -746,8 +791,8 @@ export const prepareDataWithRoles = async (
     developer,
     editor,
     reader,
-    anotherProject,
-    anotherOwner,
+    anotherProject: null as unknown as PrepareProjectReturnType,
+    anotherOwner: anotherOrgOwner.owner,
   };
 };
 
