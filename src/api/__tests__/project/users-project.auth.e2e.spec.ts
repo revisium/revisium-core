@@ -32,6 +32,10 @@ const usersProject = operation<UsersProjectParams>({
           edges {
             node {
               id
+              role {
+                id
+                name
+              }
             }
           }
         }
