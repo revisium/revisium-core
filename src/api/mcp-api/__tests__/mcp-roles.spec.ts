@@ -8,7 +8,7 @@ import {
   PrepareProjectUserReturnType,
 } from 'src/testing/utils/prepareProject';
 import { UserSystemRoles } from 'src/features/auth/consts';
-import { getTestApp } from 'src/testing/e2e';
+import { createFreshTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
 
@@ -25,7 +25,7 @@ describe('mcp-api - role-based permissions', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
-    app = await getTestApp();
+    app = await createFreshTestApp();
     prismaService = app.get(PrismaService);
     authService = app.get(AuthService);
   });
