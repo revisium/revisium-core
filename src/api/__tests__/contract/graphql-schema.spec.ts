@@ -28,7 +28,10 @@ describe('GraphQL Schema Introspection (e2e)', () => {
 
     const sdlFromServer = normalizeLineEndings(printSchema(clientSchema));
 
-    const localPath = path.resolve(__dirname, '../schema.graphql');
+    const localPath = path.resolve(
+      __dirname,
+      '../../graphql-api/schema.graphql',
+    );
     const localSDL = normalizeLineEndings(fs.readFileSync(localPath, 'utf-8'));
 
     expect(sdlFromServer).toBe(localSDL);
