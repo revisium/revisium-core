@@ -5,9 +5,12 @@ import * as promClient from 'prom-client';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { readSharedAppInfo } from './shared-app/shared-app-info';
+import { getSharedTestApp } from './shared-app/shared-app-client';
 
 let cachedApp: INestApplication | null = null;
 let cachedPrismaService: PrismaService | null = null;
+let cachedAppIsShared = false;
 
 async function buildApp(): Promise<INestApplication> {
   registerGraphqlEnums();
@@ -34,9 +37,64 @@ export async function getTestApp(): Promise<INestApplication> {
     return cachedApp;
   }
 
+  // Prefer the shared app started by jest globalSetup. Falls back to a full
+  // per-file Nest bootstrap if the info file is not present (e.g., when
+  // running a single spec via an IDE without globalSetup wiring).
+  const sharedInfo = readSharedAppInfo();
+  if (sharedInfo) {
+    if (process.env.DEBUG_TEST_APP) {
+      console.log(
+        `[testApp] using SHARED app (port ${sharedInfo.port}) pid=${process.pid} wid=${process.env.JEST_WORKER_ID ?? '-'}`,
+      );
+    }
+    cachedApp = getSharedTestApp();
+    cachedPrismaService = cachedApp.get(PrismaService);
+    cachedAppIsShared = true;
+    return cachedApp;
+  }
+
+  if (process.env.DEBUG_TEST_APP) {
+    console.log(
+      `[testApp] building FULL app pid=${process.pid} wid=${process.env.JEST_WORKER_ID ?? '-'}`,
+    );
+  }
   cachedApp = await buildApp();
   cachedPrismaService = cachedApp.get(PrismaService);
+  cachedAppIsShared = false;
 
+  return cachedApp;
+}
+
+/**
+ * Forces a full in-process Nest app build for the current file. Use this in
+ * specs that resolve providers beyond PrismaService/AuthService via app.get()
+ * or override providers via Test.createTestingModule.
+ *
+ * If a shared-app stub has already been cached for this file (e.g., because
+ * `usingFreshProject` ran its `beforeEach` first), it is discarded.
+ */
+export async function getFullTestApp(): Promise<INestApplication> {
+  if (cachedApp && !cachedAppIsShared) {
+    return cachedApp;
+  }
+  if (cachedApp && cachedAppIsShared) {
+    try {
+      await cachedApp.close();
+    } catch {
+      // best effort
+    }
+    cachedApp = null;
+    cachedPrismaService = null;
+    cachedAppIsShared = false;
+  }
+  if (process.env.DEBUG_TEST_APP) {
+    console.log(
+      `[testApp] building FULL app (getFullTestApp) pid=${process.pid} wid=${process.env.JEST_WORKER_ID ?? '-'}`,
+    );
+  }
+  cachedApp = await buildApp();
+  cachedPrismaService = cachedApp.get(PrismaService);
+  cachedAppIsShared = false;
   return cachedApp;
 }
 

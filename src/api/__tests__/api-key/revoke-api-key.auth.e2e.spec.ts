@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { nanoid } from 'nanoid';
 import { gql } from 'src/testing/utils/gql';
-import { getTestApp } from 'src/testing/e2e';
+import { getFullTestApp as getTestApp } from 'src/testing/e2e/test-app';
 import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import {
   operation,
