@@ -306,45 +306,34 @@ async function prepareEndpoint({
   const headEndpointId = nanoid();
   const draftEndpointId = nanoid();
 
-  // endpoint
-  await prismaService.endpoint.create({
-    data: {
-      id: headEndpointId,
-      revision: {
-        connect: {
-          id: headRevisionId,
-        },
-      },
-      type: 'REST_API',
-      version: {
-        connect: {
-          type_version: {
-            type: 'REST_API',
-            version: 1,
+  // Both endpoints are independent (different revisions, different types),
+  // so run their inserts in parallel.
+  await Promise.all([
+    prismaService.endpoint.create({
+      data: {
+        id: headEndpointId,
+        revision: { connect: { id: headRevisionId } },
+        type: 'REST_API',
+        version: {
+          connect: {
+            type_version: { type: 'REST_API', version: 1 },
           },
         },
       },
-    },
-  });
-  await prismaService.endpoint.create({
-    data: {
-      id: draftEndpointId,
-      revision: {
-        connect: {
-          id: draftRevisionId,
-        },
-      },
-      type: 'GRAPHQL',
-      version: {
-        connect: {
-          type_version: {
-            type: 'GRAPHQL',
-            version: 1,
+    }),
+    prismaService.endpoint.create({
+      data: {
+        id: draftEndpointId,
+        revision: { connect: { id: draftRevisionId } },
+        type: 'GRAPHQL',
+        version: {
+          connect: {
+            type_version: { type: 'GRAPHQL', version: 1 },
           },
         },
       },
-    },
-  });
+    }),
+  ]);
 
   return {
     headEndpointId,
@@ -375,63 +364,9 @@ export async function prepareTableWithSchema({
   const headTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
 
-  // table
-  await prismaService.table.create({
-    data: {
-      id: tableId,
-      createdId: tableCreatedId,
-      versionId: headTableVersionId,
-      readonly: true,
-      revisions: {
-        connect: { id: headRevisionId },
-      },
-    },
-  });
-  await prismaService.table.create({
-    data: {
-      id: tableId,
-      createdId: tableCreatedId,
-      versionId: draftTableVersionId,
-      readonly: false,
-      revisions: {
-        connect: { id: draftRevisionId },
-      },
-    },
-  });
-
-  // schema for table in SystemTable.schema
-  await prismaService.row.create({
-    data: {
-      id: tableId,
-      versionId: schemaRowVersionId,
-      createdId: createdIdForTableInSchemaTable,
-      readonly: true,
-      tables: {
-        connect: {
-          versionId: schemaTableVersionId,
-        },
-      },
-      data: schema,
-      meta: [
-        {
-          patches: [
-            {
-              op: 'add',
-              path: '',
-              value: schema,
-            } as JsonPatchAdd,
-          ],
-          hash: hash(schema),
-          date: new Date(),
-        },
-      ],
-      hash: hash(schema),
-      schemaHash: hash(metaSchema),
-    },
-  });
-
-  // migration
-
+  // Head table, draft table, schema row, migration row are mutually
+  // independent (different IDs, different FKs, no cross-references), so
+  // we can run all four inserts in parallel.
   const migration: InitMigration = {
     changeType: 'init',
     id: '2025-01-01T00:00:00Z',
@@ -440,23 +375,64 @@ export async function prepareTableWithSchema({
     schema,
   };
 
-  await prismaService.row.create({
-    data: {
-      id: migration.id,
-      versionId: migrationRowVersionId,
-      createdId: nanoid(),
-      readonly: true,
-      tables: {
-        connect: {
-          versionId: migrationTableVersionId,
-        },
+  await Promise.all([
+    prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: headTableVersionId,
+        readonly: true,
+        revisions: { connect: { id: headRevisionId } },
       },
-      data: migration,
-      hash: hash(migration),
-      schemaHash: hash(tableMigrationsSchema),
-      publishedAt: migration.id,
-    },
-  });
+    }),
+    prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: draftTableVersionId,
+        readonly: false,
+        revisions: { connect: { id: draftRevisionId } },
+      },
+    }),
+    prismaService.row.create({
+      data: {
+        id: tableId,
+        versionId: schemaRowVersionId,
+        createdId: createdIdForTableInSchemaTable,
+        readonly: true,
+        tables: { connect: { versionId: schemaTableVersionId } },
+        data: schema,
+        meta: [
+          {
+            patches: [
+              {
+                op: 'add',
+                path: '',
+                value: schema,
+              } as JsonPatchAdd,
+            ],
+            hash: hash(schema),
+            date: new Date(),
+          },
+        ],
+        hash: hash(schema),
+        schemaHash: hash(metaSchema),
+      },
+    }),
+    prismaService.row.create({
+      data: {
+        id: migration.id,
+        versionId: migrationRowVersionId,
+        createdId: nanoid(),
+        readonly: true,
+        tables: { connect: { versionId: migrationTableVersionId } },
+        data: migration,
+        hash: hash(migration),
+        schemaHash: hash(tableMigrationsSchema),
+        publishedAt: migration.id,
+      },
+    }),
+  ]);
 
   return {
     schemaRowVersionId,
