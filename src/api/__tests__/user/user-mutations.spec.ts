@@ -12,6 +12,7 @@ import {
   type ActorDescriptor,
 } from 'src/testing/kit/auth-permission';
 import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+import { testPlaintextPassword } from 'src/testing/utils/prepareProject';
 
 const updatePassword = operation<{
   oldPassword: string;
@@ -56,61 +57,137 @@ describe('user mutations resolver coverage', () => {
   const fresh = usingFreshProject();
   let app: INestApplication;
   let admin: ActorDescriptor;
+  const pendingUserIds: string[] = [];
 
   beforeEach(async () => {
     app = await getTestApp();
     admin = await actors.admin(app);
   });
 
-  it('updatePassword: authenticated user rotates own password', async () => {
-    await expectAccess({
-      app,
-      transport: 'gql',
-      actor: actors.owner(fresh.fixture),
-      op: updatePassword,
-      params: { oldPassword: 'password', newPassword: `pwd-${nanoid()}` },
-      expected: 'allowed',
-    });
-  });
-
-  it('setUsername: user without a username claims a fresh one', async () => {
+  afterEach(async () => {
+    if (pendingUserIds.length === 0) {
+      return;
+    }
     const prisma = app.get(PrismaService);
-    const auth = app.get(AuthService);
-    const unnamedId = nanoid();
-    await prisma.user.create({
-      data: {
-        id: unnamedId,
-        username: null,
-        email: `${unnamedId}@example.com`,
-        password: '',
-        role: { connect: { id: UserSystemRoles.systemUser } },
-      },
+    await prisma.userOrganization.deleteMany({
+      where: { userId: { in: pendingUserIds } },
     });
-    const token = auth.login({ username: '', sub: unnamedId });
+    await prisma.user.deleteMany({ where: { id: { in: pendingUserIds } } });
+    pendingUserIds.length = 0;
+  });
 
-    await expectAccess({
-      app,
-      transport: 'gql',
-      actor: { token, label: 'unnamed' },
-      op: setUsername,
-      params: {
-        username: `u${Math.random().toString(36).slice(2, 12)}${Date.now().toString(36)}`,
-      },
-      expected: 'allowed',
+  describe('updatePassword', () => {
+    it('authenticated user rotates own password', async () => {
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: actors.owner(fresh.fixture),
+        op: updatePassword,
+        params: {
+          oldPassword: testPlaintextPassword,
+          newPassword: `pwd-${nanoid()}`,
+        },
+        expected: 'allowed',
+      });
+    });
+
+    it('anonymous rejected as unauthorized', async () => {
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: actors.anonymous(),
+        op: updatePassword,
+        params: {
+          oldPassword: testPlaintextPassword,
+          newPassword: `pwd-${nanoid()}`,
+        },
+        expected: 'unauthorized',
+      });
     });
   });
 
-  it('resetPassword: admin resets an arbitrary user', async () => {
-    await expectAccess({
-      app,
-      transport: 'gql',
-      actor: admin,
-      op: resetPassword,
-      params: {
-        userId: fresh.fixture.owner.user.id,
-        newPassword: `reset-${nanoid()}`,
-      },
-      expected: 'allowed',
+  describe('setUsername', () => {
+    it('user without a username claims a fresh one', async () => {
+      const prisma = app.get(PrismaService);
+      const auth = app.get(AuthService);
+      const unnamedId = nanoid();
+      pendingUserIds.push(unnamedId);
+      await prisma.user.create({
+        data: {
+          id: unnamedId,
+          username: null,
+          email: `${unnamedId}@example.com`,
+          password: '',
+          role: { connect: { id: UserSystemRoles.systemUser } },
+        },
+      });
+      const token = auth.login({ username: '', sub: unnamedId });
+
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: { token, label: 'unnamed' },
+        op: setUsername,
+        params: {
+          username: `u${Math.random().toString(36).slice(2, 12)}${Date.now().toString(36)}`,
+        },
+        expected: 'allowed',
+      });
+    });
+
+    it('anonymous rejected as unauthorized', async () => {
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: actors.anonymous(),
+        op: setUsername,
+        params: { username: `u${nanoid(10)}` },
+        expected: 'unauthorized',
+      });
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('admin resets an arbitrary user', async () => {
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: admin,
+        op: resetPassword,
+        params: {
+          userId: fresh.fixture.owner.user.id,
+          newPassword: `reset-${nanoid()}`,
+        },
+        expected: 'allowed',
+      });
+    });
+
+    it('non-admin authenticated actor rejected as forbidden', async () => {
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: actors.owner(fresh.fixture),
+        op: resetPassword,
+        params: {
+          userId: fresh.fixture.owner.user.id,
+          newPassword: `reset-${nanoid()}`,
+        },
+        expected: 'forbidden',
+      });
+    });
+
+    it('anonymous rejected as unauthorized', async () => {
+      await expectAccess({
+        app,
+        transport: 'gql',
+        actor: actors.anonymous(),
+        op: resetPassword,
+        params: {
+          userId: fresh.fixture.owner.user.id,
+          newPassword: `reset-${nanoid()}`,
+        },
+        expected: 'unauthorized',
+      });
     });
   });
 });

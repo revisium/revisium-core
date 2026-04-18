@@ -170,6 +170,8 @@ describe('MCP URI parameter', () => {
       });
 
       expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.type || content.properties).toBeDefined();
     });
 
     it('get_table_changes with URI works', async () => {
@@ -178,6 +180,8 @@ describe('MCP URI parameter', () => {
       });
 
       expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(Array.isArray(content.edges)).toBe(true);
     });
 
     it('get_row_changes with URI works', async () => {
@@ -186,6 +190,8 @@ describe('MCP URI parameter', () => {
       });
 
       expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(Array.isArray(content.edges)).toBe(true);
     });
   });
 

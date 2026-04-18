@@ -45,6 +45,7 @@ const resolvePrisma = (source: PrismaOrContainer): PrismaService => {
   return source as PrismaService;
 };
 
+export const testPlaintextPassword = 'password';
 export const hashedPassword =
   '$2a$10$Uj1aVmkVJh4ZV9Ij54bFLexeFcYz71QtySoosQ5V.txpETjOgG0bW';
 

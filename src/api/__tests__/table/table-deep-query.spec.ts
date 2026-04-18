@@ -87,6 +87,9 @@ describe('table deep-query GraphQL resolvers', () => {
           revisionId: fixture.project.draftRevisionId,
           tableId: fixture.project.tableId,
           rowId: fixture.project.rowId,
+          // No related table in the default fixture; the goal here is to
+          // exercise the FK resolver's auth path + happy-path execution, not
+          // cross-table FK resolution. Returns totalCount: 0, which is fine.
           fkTableId: fixture.project.tableId,
         },
       };
