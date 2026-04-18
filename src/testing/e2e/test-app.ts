@@ -7,17 +7,21 @@ import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { readSharedAppInfo } from './shared-app/shared-app-info';
 import { getSharedTestApp } from './shared-app/shared-app-client';
+import { recordTiming } from './shared-app/timings';
 
 let cachedApp: INestApplication | null = null;
 let cachedPrismaService: PrismaService | null = null;
 let cachedAppIsShared = false;
 
 async function buildApp(): Promise<INestApplication> {
+  const t0 = Date.now();
   registerGraphqlEnums();
+  const tEnums = Date.now();
 
   const moduleFixture: TestingModule = await Test.createTestingModule({
     imports: [CoreModule.forRoot({ mode: 'monolith' })],
   }).compile();
+  const tCompile = Date.now();
 
   const app = moduleFixture.createNestApplication();
   app.use(cookieParser());
@@ -28,6 +32,12 @@ async function buildApp(): Promise<INestApplication> {
   );
 
   await app.init();
+  const tInit = Date.now();
+
+  recordTiming('buildApp:graphqlEnums', tEnums - t0);
+  recordTiming('buildApp:moduleCompile', tCompile - tEnums);
+  recordTiming('buildApp:appInit', tInit - tCompile);
+  recordTiming('buildApp:TOTAL', tInit - t0);
 
   return app;
 }

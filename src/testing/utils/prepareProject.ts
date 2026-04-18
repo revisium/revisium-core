@@ -27,6 +27,7 @@ import {
   JsonSchema,
 } from '@revisium/schema-toolkit/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { recordTiming } from 'src/testing/e2e/shared-app/timings';
 
 export type PrepareDataReturnType = Awaited<ReturnType<typeof prepareData>>;
 
@@ -54,6 +55,7 @@ const prepareOrganizationUser = async (
   organizationId: string,
   roleId: UserRole,
 ) => {
+  const tStart = Date.now();
   const prismaService = app.get(PrismaService);
   const authService = app.get(AuthService);
 
@@ -76,28 +78,34 @@ const prepareOrganizationUser = async (
     },
   });
 
-  return {
+  const result = {
     user,
     token: authService.login({
       username: user.username,
       sub: user.id,
     }),
   };
+  recordTiming('prepareOrganizationUser:TOTAL', Date.now() - tStart);
+  return result;
 };
 
 export const prepareData = async (
   app: INestApplication,
   options?: { createLinkedTable?: boolean },
 ) => {
+  const tStart = Date.now();
   const prismaService = app.get(PrismaService);
 
   // The two projects and their owners are fully independent (each creates
   // its own org, project, users, etc.), so we can seed them in parallel.
+  const tProjectsStart = Date.now();
   const [project, anotherProject] = await Promise.all([
     prepareProject(prismaService, options),
     prepareProject(prismaService, options),
   ]);
+  recordTiming('prepareData:bothProjects', Date.now() - tProjectsStart);
 
+  const tOwnersStart = Date.now();
   const [owner, anotherOwner] = await Promise.all([
     prepareOrganizationUser(
       app,
@@ -110,6 +118,8 @@ export const prepareData = async (
       UserRole.organizationOwner,
     ),
   ]);
+  recordTiming('prepareData:bothOwners', Date.now() - tOwnersStart);
+  recordTiming('prepareData:TOTAL', Date.now() - tStart);
 
   return {
     project,
@@ -120,6 +130,7 @@ export const prepareData = async (
 };
 
 export async function prepareBranch(source: PrismaOrContainer) {
+  const tStart = Date.now();
   const prismaService = resolvePrisma(source);
   const organizationId = `org-${nanoid()}`;
   const projectId = `project-${nanoid()}`;
@@ -129,6 +140,7 @@ export async function prepareBranch(source: PrismaOrContainer) {
   const headRevisionId = nanoid();
   const draftRevisionId = nanoid();
 
+  const tBranchInsert = Date.now();
   await prismaService.branch.create({
     data: {
       id: branchId,
@@ -166,6 +178,7 @@ export async function prepareBranch(source: PrismaOrContainer) {
       },
     },
   });
+  recordTiming('prepareBranch:branchInsert', Date.now() - tBranchInsert);
 
   // 3 independent system tables — all reference the same revisions so we
   // can run their inserts in parallel.
@@ -180,6 +193,7 @@ export async function prepareBranch(source: PrismaOrContainer) {
     connect: [{ id: headRevisionId }, { id: draftRevisionId }],
   };
 
+  const tSystemTables = Date.now();
   await Promise.all([
     prismaService.table.create({
       data: {
@@ -212,6 +226,8 @@ export async function prepareBranch(source: PrismaOrContainer) {
       },
     }),
   ]);
+  recordTiming('prepareBranch:systemTables', Date.now() - tSystemTables);
+  recordTiming('prepareBranch:TOTAL', Date.now() - tStart);
 
   return {
     organizationId,
@@ -480,8 +496,11 @@ export const prepareProject = async (
   source: PrismaOrContainer,
   options?: { createLinkedTable?: boolean },
 ) => {
+  const tStart = Date.now();
   const prismaService = resolvePrisma(source);
+  const tBranch = Date.now();
   const prepareBranchResult = await prepareBranch(prismaService);
+  recordTiming('prepareProject:prepareBranch', Date.now() - tBranch);
   const {
     headRevisionId,
     draftRevisionId,
@@ -491,12 +510,17 @@ export const prepareProject = async (
 
   // Endpoint only depends on revisions, so run it in parallel with the
   // table → row chain.
+  const tEndpointStart = Date.now();
   const endpointPromise = prepareEndpoint({
     prismaService,
     headRevisionId,
     draftRevisionId,
+  }).then((r) => {
+    recordTiming('prepareProject:prepareEndpoint', Date.now() - tEndpointStart);
+    return r;
   });
 
+  const tTable = Date.now();
   const resultPrepareTableWithSchema = await prepareTableWithSchema({
     prismaService,
     headRevisionId,
@@ -505,8 +529,10 @@ export const prepareProject = async (
     migrationTableVersionId,
     schema: testSchema,
   });
+  recordTiming('prepareProject:prepareTableWithSchema', Date.now() - tTable);
   const { headTableVersionId, draftTableVersionId, tableId } =
     resultPrepareTableWithSchema;
+  const tRow = Date.now();
   const resultPrepareRow = await prepareRow({
     prismaService,
     headTableVersionId,
@@ -515,6 +541,7 @@ export const prepareProject = async (
     dataDraft: { ver: 2 },
     schema: testSchema,
   });
+  recordTiming('prepareProject:prepareRow', Date.now() - tRow);
   const { rowId } = resultPrepareRow;
 
   let linkedTable:
@@ -545,6 +572,7 @@ export const prepareProject = async (
   }
 
   const prepareEndpointResult = await endpointPromise;
+  recordTiming('prepareProject:TOTAL', Date.now() - tStart);
 
   return {
     ...prepareBranchResult,

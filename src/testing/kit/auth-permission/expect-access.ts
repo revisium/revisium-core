@@ -1,6 +1,7 @@
 import type { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { gqlQueryRaw } from 'src/testing/e2e/graphql-helpers';
+import { recordTiming } from 'src/testing/e2e/shared-app/timings';
 import type { ActorDescriptor, Operation, Outcome, Transport } from './types';
 
 const GQL_ERROR_CODE_BY_OUTCOME: Record<Exclude<Outcome, 'allowed'>, string> = {
@@ -56,12 +57,14 @@ async function dispatchGql<TParams>(
       `expectAccess: operation "${op.id}" has no gql transport defined`,
     );
   }
+  const tHttp = Date.now();
   const response = await gqlQueryRaw({
     app,
     query: op.gql.query,
     variables: op.gql.variables(params),
     token: actor.token ?? undefined,
   });
+  recordTiming('http:gql', Date.now() - tHttp);
 
   if (expected === 'allowed') {
     if (response.errors && response.errors.length > 0) {
@@ -107,7 +110,9 @@ async function dispatchRest<TParams>(
     req.send(op.rest.body(params) as object);
   }
 
+  const tHttp = Date.now();
   const response = await req;
+  recordTiming('http:rest', Date.now() - tHttp);
 
   if (expected === 'allowed') {
     if (response.status >= 400) {

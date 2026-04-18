@@ -18,9 +18,17 @@ const dotenv = require('dotenv');
 const { nanoid } = require('nanoid');
 import { AddressInfo } from 'node:net';
 import { writeSharedAppInfo } from './shared-app-info';
+import { resetTimingsFile, recordTiming, enableTimings } from './timings';
 
 export default async function globalSetup(): Promise<void> {
   dotenv.config({ path: '.env.test' });
+
+  if (process.env.TEST_TIMINGS === '1') {
+    enableTimings();
+    resetTimingsFile();
+  }
+
+  const tSetupStart = Date.now();
 
   // Ensure a deterministic JWT secret so worker-side token signing matches
   // the shared app's verification.
@@ -71,6 +79,8 @@ export default async function globalSetup(): Promise<void> {
   // Keep a reference on globalThis for teardown (Jest runs globalSetup and
   // globalTeardown in the same main process).
   (globalThis as Record<string, unknown>).__revisiumSharedApp = app;
+
+  recordTiming('globalSetup:TOTAL', Date.now() - tSetupStart);
 
   console.log(`[sharedApp] listening on port ${port}`);
 }
