@@ -32,7 +32,7 @@ import { SearchRowsResolver } from 'src/api/graphql-api/row/resolver/search-rows
 import { TableResolver } from 'src/api/graphql-api/table/table.resolver';
 import { MeResolver } from 'src/api/graphql-api/user/me.resolver';
 import { UserResolver } from 'src/api/graphql-api/user/user.resolver';
-import { RevisionModule } from 'src/features/revision';
+import { RevisionModule } from 'src/features/revision/revision.module';
 import { RoleModule } from 'src/features/role/role.module';
 import { RowModule } from 'src/features/row/row.module';
 import { UserModule } from 'src/features/user/user.module';
@@ -45,7 +45,7 @@ import { GraphqlMetricsPlugin } from 'src/infrastructure/metrics/graphql/graphql
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
 import { RevisionChangesModule } from 'src/features/revision-changes/revision-changes.module';
 import { ApiKeyModule } from 'src/features/api-key/api-key.module';
-import { SubSchemaModule } from 'src/features/sub-schema';
+import { SubSchemaModule } from 'src/features/sub-schema/sub-schema.module';
 import { ApiKeyResolver } from 'src/api/graphql-api/api-key/api-key.resolver';
 import { CacheResolver } from 'src/api/graphql-api/cache/cache.resolver';
 import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.resolver';

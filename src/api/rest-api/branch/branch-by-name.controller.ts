@@ -31,11 +31,9 @@ import { ProjectApiService } from 'src/features/project/project-api.service';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import {
-  CreateRevisionDto,
-  GetBranchRevisionsDto,
-  TouchedModelDto,
-} from 'src/api/rest-api/branch/dto';
+import { CreateRevisionDto } from 'src/api/rest-api/branch/dto/create-revision.dto';
+import { GetBranchRevisionsDto } from 'src/api/rest-api/branch/dto/get-branch-revisions.dto';
+import { TouchedModelDto } from 'src/api/rest-api/branch/dto/touched.model';
 import {
   BranchModel,
   ParentBranchResponse,

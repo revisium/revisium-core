@@ -1,12 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EngineApiService } from '@revisium/engine';
-import {
-  CreateTableCommand,
-  UpdateTableCommand,
-  RenameTableCommand,
-  RemoveTableCommand,
-} from './commands/impl';
+import { CreateTableCommand } from './commands/impl/create-table.command';
+import { RemoveTableCommand } from './commands/impl/remove-table.command';
+import { RenameTableCommand } from './commands/impl/rename-table.command';
+import { UpdateTableCommand } from './commands/impl/update-table.command';
 
 @Injectable()
 export class TableApiService {

@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { FormulaValidationService } from 'src/features/plugin/formula';
+import { FormulaValidationService } from 'src/features/plugin/formula/formula-validation.service';
 import { PLUGINS } from 'src/features/plugin/index';
 import { PluginListService } from 'src/features/plugin/plugin.list.service';
 import { PluginService } from 'src/features/plugin/plugin.service';

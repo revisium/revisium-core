@@ -175,7 +175,6 @@ Preferred names:
 
 - `givenDraftRevision`
 - `givenProjectWithOwner`
-- `givenApiKeyForProject`
 - `givenAuthenticatedAdmin`
 
 Primitive helpers can still exist, but they should support scenarios rather than

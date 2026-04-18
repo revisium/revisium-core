@@ -1,5 +1,5 @@
 import { GetUsersOrganizationQueryReturnType } from 'src/features/organization/queries/impl';
-import { UsersOrganizationModel } from 'src/api/rest-api/organization/model';
+import { UsersOrganizationModel } from 'src/api/rest-api/organization/model/users-organization.model';
 import { IPaginatedType } from '@revisium/engine';
 
 export const transformFromPrismaToUserOrganizationModel = (

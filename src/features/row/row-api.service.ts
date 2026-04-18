@@ -2,18 +2,16 @@ import { Injectable, Logger } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EngineApiService } from '@revisium/engine';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
-import {
-  CreateRowCommand,
-  CreateRowsCommand,
-  UpdateRowCommand,
-  UpdateRowsCommand,
-  PatchRowCommand,
-  PatchRowsCommand,
-  RenameRowCommand,
-  RemoveRowCommand,
-  RemoveRowsCommand,
-  UploadFileCommand,
-} from './commands/impl';
+import { CreateRowCommand } from './commands/impl/create-row.command';
+import { CreateRowsCommand } from './commands/impl/create-rows.command';
+import { PatchRowCommand } from './commands/impl/patch-row.command';
+import { PatchRowsCommand } from './commands/impl/patch-rows.command';
+import { RemoveRowCommand } from './commands/impl/remove-row.command';
+import { RemoveRowsCommand } from './commands/impl/remove-rows.command';
+import { RenameRowCommand } from './commands/impl/rename-row.command';
+import { UpdateRowCommand } from './commands/impl/update-row.command';
+import { UpdateRowsCommand } from './commands/impl/update-rows.command';
+import { UploadFileCommand } from './commands/impl/upload-file.command';
 
 @Injectable()
 export class RowApiService {

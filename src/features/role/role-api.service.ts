@@ -4,10 +4,12 @@ import {
   GetRolePermissionsQuery,
   GetRolePermissionsQueryData,
   GetRolePermissionsQueryReturnType,
+} from 'src/features/role/queries/impl/get-role-permissions.query';
+import {
   GetRoleQuery,
   GetRoleQueryData,
   GetRoleQueryReturnType,
-} from 'src/features/role/queries/impl';
+} from 'src/features/role/queries/impl/get-role.query';
 
 @Injectable()
 export class RoleApiService {

@@ -18,7 +18,7 @@ import {
   ApiEndpointIdParam,
   ApiNotFoundError,
 } from 'src/api/rest-api/share/decorators';
-import { GetEndpointResultDto } from 'src/api/rest-api/endpoint/dto';
+import { GetEndpointResultDto } from 'src/api/rest-api/endpoint/dto/get-endpoint-result.dto';
 import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { HttpJwtAuthGuard } from 'src/features/auth/guards/jwt/http-jwt-auth-guard.service';

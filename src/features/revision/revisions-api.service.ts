@@ -4,9 +4,10 @@ import { EngineApiService } from '@revisium/engine';
 import {
   GetEndpointsByRevisionIdQuery,
   GetEndpointsByRevisionIdQueryData,
-} from 'src/features/revision/queries/impl';
+} from 'src/features/revision/queries/impl/get-endpoints-by-revision-id.query';
 import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
-import { CreateRevisionCommand, RevertChangesCommand } from './commands/impl';
+import { CreateRevisionCommand } from './commands/impl/create-revision.command';
+import { RevertChangesCommand } from './commands/impl/revert-changes.command';
 
 @Injectable()
 export class RevisionsApiService {

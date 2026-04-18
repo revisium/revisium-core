@@ -15,16 +15,14 @@ import { GQLOrganizationGuard } from 'src/features/auth/guards/organization.guar
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { IOptionalAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
-import {
-  AddUserToOrganizationInput,
-  GetOrganizationInput,
-  GetUsersOrganizationInput,
-  RemoveUserFromOrganizationInput,
-} from 'src/api/graphql-api/organization/inputs';
+import { AddUserToOrganizationInput } from 'src/api/graphql-api/organization/inputs/add-user-to-organization.input';
+import { GetOrganizationInput } from 'src/api/graphql-api/organization/inputs/get-organization.input';
+import { GetUsersOrganizationInput } from 'src/api/graphql-api/organization/inputs/get-users-organization.input';
+import { RemoveUserFromOrganizationInput } from 'src/api/graphql-api/organization/inputs/remove-user-from-organization.input';
 import { UsersOrganizationConnection } from 'src/api/graphql-api/organization/model/users-organization.connection';
-import { CreateProjectInput } from 'src/api/graphql-api/project/inputs';
+import { CreateProjectInput } from 'src/api/graphql-api/project/inputs/create-project.input';
 import { GetProjectsInput } from 'src/api/graphql-api/project/inputs/get-projects.input';
-import { ProjectModel } from 'src/api/graphql-api/project/model';
+import { ProjectModel } from 'src/api/graphql-api/project/model/project.model';
 import { ProjectsConnection } from 'src/api/graphql-api/project/model/projects.connection';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';

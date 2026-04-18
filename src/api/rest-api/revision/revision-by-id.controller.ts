@@ -36,17 +36,15 @@ import { TableApiService } from 'src/features/table/table-api.service';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { Migration } from '@revisium/schema-toolkit/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto';
+import { CreateBranchByRevisionDto } from 'src/api/rest-api/branch/dto/create-branch-by-revision.dto';
 import { BranchModel } from 'src/api/rest-api/branch/model';
 import { EndpointModel } from 'src/api/rest-api/endpoint/model';
-import {
-  CreateTableDto,
-  GetRevisionChangesDto,
-  GetRevisionTablesDto,
-  GetRowChangesDto,
-  GetTableChangesDto,
-} from 'src/api/rest-api/revision/dto';
+import { CreateTableDto } from 'src/api/rest-api/revision/dto/create-table.dto';
 import { CreateEndpointDto } from 'src/api/rest-api/revision/dto/create-endpoint.dto';
+import { GetRevisionChangesDto } from 'src/api/rest-api/revision/dto/get-revision-changes.dto';
+import { GetRevisionTablesDto } from 'src/api/rest-api/revision/dto/get-revision-tables.dto';
+import { GetRowChangesDto } from 'src/api/rest-api/revision/dto/get-row-changes.dto';
+import { GetTableChangesDto } from 'src/api/rest-api/revision/dto/get-table-changes.dto';
 import {
   ApplyMigrationsResponseDto,
   CreateTableResponse,

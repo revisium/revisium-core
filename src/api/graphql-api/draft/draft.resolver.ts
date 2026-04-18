@@ -15,19 +15,17 @@ import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { TableApiService } from 'src/features/table/table-api.service';
 import { RowApiService } from 'src/features/row/row-api.service';
-import {
-  CreateRowInput,
-  CreateRowsInput,
-  CreateTableInput,
-  DeleteRowInput,
-  DeleteRowsInput,
-  DeleteTableInput,
-  RenameRowInput,
-  RenameTableInput,
-  UpdateRowInput,
-  UpdateRowsInput,
-} from 'src/api/graphql-api/draft/input';
+import { CreateRowInput } from 'src/api/graphql-api/draft/input/create-row.input';
+import { CreateRowsInput } from 'src/api/graphql-api/draft/input/create-rows.input';
+import { CreateTableInput } from 'src/api/graphql-api/draft/input/create-table.input';
+import { DeleteRowInput } from 'src/api/graphql-api/draft/input/delete-row.input';
+import { DeleteRowsInput } from 'src/api/graphql-api/draft/input/delete-rows.input';
+import { DeleteTableInput } from 'src/api/graphql-api/draft/input/delete-table.input';
+import { RenameRowInput } from 'src/api/graphql-api/draft/input/rename-row.input';
+import { RenameTableInput } from 'src/api/graphql-api/draft/input/rename-table.input';
 import { UpdateTableInput } from 'src/api/graphql-api/draft/input/update-table.input';
+import { UpdateRowInput } from 'src/api/graphql-api/draft/input/update-row.input';
+import { UpdateRowsInput } from 'src/api/graphql-api/draft/input/update-rows.input';
 import { CreateRowResultModel } from 'src/api/graphql-api/draft/model/create-row-result.model';
 import { CreateRowsResultModel } from 'src/api/graphql-api/draft/model/create-rows-result.model';
 import { CreateTableResultModel } from 'src/api/graphql-api/draft/model/create-table-result.model';

@@ -3,7 +3,7 @@ import { QueryBus } from '@nestjs/cqrs';
 import {
   GetConfigurationQuery,
   GetConfigurationQueryReturnType,
-} from 'src/infrastructure/configuration/queries/impl';
+} from 'src/infrastructure/configuration/queries/impl/get-configuration.query';
 
 @Injectable()
 export class ConfigurationApiService {

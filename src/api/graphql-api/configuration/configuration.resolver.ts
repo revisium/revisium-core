@@ -1,6 +1,6 @@
 import { Query, Resolver } from '@nestjs/graphql';
 import { ConfigurationApiService } from 'src/infrastructure/configuration/configuration-api.service';
-import { ConfigurationModel } from 'src/api/graphql-api/configuration/model';
+import { ConfigurationModel } from 'src/api/graphql-api/configuration/model/configuration.model';
 
 @Resolver(() => ConfigurationModel)
 export class ConfigurationResolver {

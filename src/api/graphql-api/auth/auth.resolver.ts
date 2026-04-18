@@ -9,15 +9,13 @@ import { GQLSystemGuard } from 'src/features/auth/guards/system.guard';
 import { CookieService } from 'src/features/auth/services/cookie.service';
 import { IAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
-import {
-  ConfirmEmailCodeInput,
-  CreateUserInput,
-  LoginGithubInput,
-  LoginGoogleInput,
-  LoginInput,
-  SignUpInput,
-} from 'src/api/graphql-api/auth/inputs';
-import { LoginModel } from 'src/api/graphql-api/auth/model';
+import { ConfirmEmailCodeInput } from 'src/api/graphql-api/auth/inputs/confirm-email-code.input';
+import { CreateUserInput } from 'src/api/graphql-api/auth/inputs/create-user.input';
+import { LoginGithubInput } from 'src/api/graphql-api/auth/inputs/login-github.input';
+import { LoginGoogleInput } from 'src/api/graphql-api/auth/inputs/login-google.input';
+import { LoginInput } from 'src/api/graphql-api/auth/inputs/login.input';
+import { SignUpInput } from 'src/api/graphql-api/auth/inputs/sign-up.input';
+import { LoginModel } from 'src/api/graphql-api/auth/model/login.model';
 
 type RequestWithCookies = ExpressRequest & {
   cookies?: Record<string, string>;
