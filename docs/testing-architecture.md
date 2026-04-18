@@ -199,19 +199,154 @@ Shared helpers should absorb repeated operational detail:
 - common database assertions
 - polling/waiting for async feature work when needed
 
+## Auth / permission matrix tests
+
+Auth and permission rules are shared across transports (REST, GraphQL, and later
+MCP) but enforced by separate guards and resolvers. The same rule can drift
+silently between transports when tested twice, so auth coverage follows a single
+shared pattern.
+
+### Goal
+
+Describe each endpoint's auth contract once and run it against every transport
+it is exposed on.
+
+### Layers
+
+Four layers, each replaceable in isolation:
+
+- **Operation** — what is being called, per transport. An operation defines a
+  `rest` and/or `gql` call signature taking a typed params object. An operation
+  may declare only one transport when the endpoint is transport-exclusive.
+- **Actor** — who is calling. `actors.anonymous()`, `actors.user({ orgRole,
+  inOrg })`, `actors.apiKey({ scopes, inOrg, branches, ... })`. Actors return a
+  transport-agnostic token/header bundle. They wrap existing `prepareData`
+  primitives rather than reseeding from scratch.
+- **Outcome** — what correct means, normalized per transport:
+  `unauthorized`, `forbidden`, `not_found`, `allowed`. REST status codes and
+  GraphQL `errors[0].extensions.code` are mapped inside the kit. Tests never
+  branch on transport.
+- **Matrix** — `describe.each(op.transports)` over `it.each(cases)`. Rows
+  describe *actor → expected* in business terms.
+
+### Kit location
+
+- kit code: `src/testing/kit/auth-permission/`
+- test files: co-located with the subject as `*.auth.e2e.spec.ts`
+- one shared spec per feature when both REST and GraphQL expose the operation,
+  transport-exclusive spec when only one transport does
+
+No shared support files under `__tests__`; imports go to
+`src/testing/kit/auth-permission/*` (consistent with the rule above).
+
+### Customization
+
+Transport coverage is not uniform. The kit must express that honestly:
+
+- **Endpoint exists on one transport only** — omit the missing transport on the
+  operation. The matrix auto-skips it. No `describe.skip` needed.
+- **Rule differs by transport** — add `transports: ['rest']` or `['gql']` to a
+  row. Rows without `transports:` run on all transports the operation supports.
+  Asymmetric rules stay explicit at the row level, not hidden in setup.
+- **Outcome differs by transport** — two rows with different `expected` and
+  disjoint `transports:`. Link an ADR when the asymmetry is intentional.
+- **Content assertions on the `allowed` path** — per-transport `assert:`
+  callbacks on a row. Only run when `expected === 'allowed'`. Never attach
+  content assertions to forbidden/not_found rows; content leakage lives in a
+  separate spec.
+- **Per-row params override** — `authCase` accepts a partial `params:` that
+  merges over the matrix defaults. Useful for scope-violation cases (API key
+  scoped to a different branch or project).
+
+### When this kit is not a fit
+
+- CASL ability rules → `casl-ability-factory.spec.ts`
+- Guard scope resolution → `permission-guard-scope.spec.ts`
+- Request-body / DTO validation → dedicated DTO specs
+- Multi-step business flows → regular feature integration or e2e tests
+
+The kit verifies that the decision is wired to every transport correctly. It is
+not a replacement for unit-testing the decision itself.
+
+### Example shape
+
+```ts
+// src/api/__tests__/project.auth.e2e.spec.ts
+const updateProject = operation({
+  id: 'project.update',
+  rest: {
+    method: 'patch',
+    url:    ({ org, project }) => `/-/organization/${org}/projects/${project}`,
+    body:   ({ newName }) => ({ name: newName }),
+  },
+  gql: {
+    query:     UPDATE_PROJECT_GQL,
+    variables: ({ org, project, newName }) => ({
+      data: { organizationId: org, projectName: project, name: newName },
+    }),
+  },
+});
+
+describe('updateProject auth', () => {
+  const ctx = buildAuthTestApp();
+  const org = 'acme';
+  const project = 'website';
+  const params = { org, project, newName: 'Renamed' };
+
+  beforeEach(() => ctx.givenProject({ org, project }));
+
+  const cases = [
+    authCase('anonymous → unauthorized',       { actor: actors.anonymous(),                                   expected: 'unauthorized' }),
+    authCase('outsider → forbidden',           { actor: actors.user({ orgRole: 'owner',  inOrg: 'other' }),   expected: 'forbidden' }),
+    authCase('viewer in org → forbidden',      { actor: actors.user({ orgRole: 'viewer', inOrg: org }),       expected: 'forbidden' }),
+    authCase('editor in org → allowed',        { actor: actors.user({ orgRole: 'editor', inOrg: org }),       expected: 'allowed' }),
+    authCase('read-only api key → forbidden',  { actor: actors.apiKey({ inOrg: org, scopes: ['project:read'] }),  expected: 'forbidden' }),
+    authCase('write api key → allowed',        { actor: actors.apiKey({ inOrg: org, scopes: ['project:write'] }), expected: 'allowed' }),
+  ];
+
+  describe.each(updateProject.transports)('via %s', (transport) => {
+    it.each(cases.filter((c) => !c.transports || c.transports.includes(transport)))(
+      '$name',
+      async ({ actor, expected, assert }) =>
+        expectAccess({ ctx, transport, actor, op: updateProject, params, expected, assert }),
+    );
+  });
+});
+```
+
+### Migration from current supertest/GraphQL specs
+
+Current e2e specs (`endpoint-by-id.controller.spec.ts`, `api-key.e2e.spec.ts`,
+`branch.resolver.spec.ts`, and similar) already use `createFreshTestApp` and
+`prepareData`. Migration is mechanical:
+
+1. Identify the auth-only cases: those whose only assertion is a status code
+   plus the auth header.
+2. Extract them into a new `*.auth.e2e.spec.ts` using the matrix form.
+3. Leave content-level assertions in the original spec. Those specs become
+   smaller and focused on business behavior.
+4. When REST and GraphQL cover the same policy, merge into one shared spec that
+   fans out over both transports.
+
 ## Current Direction
 
-The first refactor slice is `draft-revision` handler specs.
+Two parallel refactor slices:
 
-Why this area first:
+- `draft-revision` handler specs — feature-integration kit pattern
+- auth/permission matrix — transport-layer pattern, introducing
+  `src/testing/kit/auth-permission/`
+
+Why these two first:
 
 - many tests rebuild the same Nest module
 - the current setup is primitive-heavy
-- the feature is central enough to establish naming and boundaries for later suites
+- auth rules duplicated between REST and GraphQL specs risk silent drift
+- both areas are central enough to establish naming and boundaries for later suites
 
 The intended steady state is:
 
 - new DB-backed feature tests start from shared kits and scenarios by default
+- new auth tests go through the auth-permission matrix from the start
 - old tests are migrated opportunistically when touched
 - direct low-level setup stays only where it makes the subject clearer
 
