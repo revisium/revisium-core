@@ -19,6 +19,11 @@ const me = operation<Record<string, never>>({
         me {
           id
           username
+          organizationId
+          role {
+            id
+            name
+          }
         }
       }
     `,
