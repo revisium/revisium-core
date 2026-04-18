@@ -28,11 +28,19 @@ function getInfo(): SharedAppInfo {
   return info;
 }
 
+const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 5);
+
 function getPrismaClient(): PrismaClient {
   const info = getInfo();
   if (cached && cached.prisma) return cached.prisma;
+  if (process.env.DEBUG_TEST_APP) {
+    console.log(
+      `[testApp] new PrismaClient pid=${process.pid} wid=${process.env.JEST_WORKER_ID ?? '-'}`,
+    );
+  }
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
+    max: STUB_POOL_MAX,
   });
   const prisma = new PrismaClient({ adapter });
   cached = { info, prisma };
