@@ -19,6 +19,38 @@ jobs:
       run:
         shell: bash
 
+    # Service containers boot in parallel with the earlier job steps (checkout,
+    # npm ci, lint, tsc), so by the time we need them they're already warm.
+    # This replaces the sequential `docker compose up` cost.
+    services:
+      postgres:
+        image: postgres:15.4
+        env:
+          POSTGRES_USER: prisma
+          POSTGRES_PASSWORD: prisma
+          POSTGRES_DB: tests
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U prisma -d tests"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7.2-alpine
+        ports:
+          - 6381:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      mailhog:
+        image: mailhog/mailhog:latest
+        ports:
+          - 1025:1025
+          - 8025:8025
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,7 +73,10 @@ jobs:
 
       - run: npm run tsc
 
-      - run: npm run docker:test-container-up
+      - name: Apply migrations + seed (pg service container is warm by now)
+        run: |
+          npx dotenv-cli -e .env.test -- npm run prisma:migrate:deploy
+          npx dotenv-cli -e .env.test -- npm run seed
       - run: npm run test:cov
 
       - name: SonarQube Scan
