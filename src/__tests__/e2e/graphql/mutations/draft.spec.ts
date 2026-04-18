@@ -5,7 +5,7 @@ import {
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
 import {
-  createFreshTestApp,
+  getTestApp,
   gqlQuery,
   gqlQueryExpectError,
   gqlQueryRaw,
@@ -15,7 +15,7 @@ describe('graphql - draft mutations', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {

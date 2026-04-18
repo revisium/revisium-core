@@ -4,7 +4,7 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import { createFreshTestApp } from 'src/testing/e2e';
+import { getTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const CREATE_PERSONAL_API_KEY = `
@@ -100,7 +100,7 @@ describe('API Key Management (e2e)', () => {
   let prismaService: PrismaService;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
     prismaService = app.get(PrismaService);
   });
 

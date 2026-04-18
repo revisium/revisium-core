@@ -6,7 +6,7 @@ import { UserSystemRoles } from 'src/features/auth/consts';
 import { AuthService } from 'src/features/auth/auth.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
-  getTestApp,
+  createFreshTestApp,
   getReadonlyFixture,
   gqlQuery,
   gqlQueryRaw,
@@ -20,7 +20,7 @@ describe('graphql - admin cache (readonly)', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
-    app = await getTestApp();
+    app = await createFreshTestApp();
     fixture = await getReadonlyFixture(app);
     prismaService = app.get(PrismaService);
     authService = app.get(AuthService);

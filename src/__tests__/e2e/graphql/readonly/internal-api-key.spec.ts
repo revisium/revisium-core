@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import {
-  createFreshTestApp,
+  getTestApp,
   getReadonlyFixture,
   gqlQuery,
   gqlQueryExpectError,
@@ -14,7 +14,7 @@ describe('graphql - internal API key auth (readonly)', () => {
   let internalKeyHeaders: Record<string, string>;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
     fixture = await getReadonlyFixture(app);
     const internalKey = process.env.INTERNAL_API_KEY_ENDPOINT!;
     expect(internalKey).toBeDefined();

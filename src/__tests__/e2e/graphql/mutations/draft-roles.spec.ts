@@ -5,7 +5,7 @@ import {
   PrepareDataWithRolesReturnType,
 } from 'src/testing/utils/prepareProject';
 import {
-  createFreshTestApp,
+  getTestApp,
   gqlQuery,
   gqlQueryExpectError,
 } from 'src/testing/e2e';
@@ -14,7 +14,7 @@ describe('graphql - draft mutations (role-based)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {
