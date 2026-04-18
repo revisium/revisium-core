@@ -1,9 +1,15 @@
 import * as path from 'node:path';
+import { AddressInfo } from 'node:net';
+import * as dotenv from 'dotenv';
+import { nanoid } from 'nanoid';
 import { register as registerTsconfigPaths } from 'tsconfig-paths';
+import { writeSharedAppInfo } from './shared-app-info';
+import { enableTimings, recordTiming, resetTimingsFile } from './timings';
 
-// Resolve tsconfig `src/*` alias so dynamic imports below work the same way
-// as in-test imports. Jest's globalSetup runs outside the test transform
-// pipeline so we must register aliases manually.
+// Resolve tsconfig `src/*` alias so the dynamic `src/...` imports inside
+// globalSetup resolve the same way they do in test files. Jest runs
+// globalSetup outside its transform pipeline so we must register
+// aliases ourselves.
 registerTsconfigPaths({
   baseUrl: path.resolve(__dirname, '../../../..'),
   paths: {
@@ -11,14 +17,6 @@ registerTsconfigPaths({
     'ee/*': ['ee/*'],
   },
 });
-
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const dotenv = require('dotenv');
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const { nanoid } = require('nanoid');
-import { AddressInfo } from 'node:net';
-import { writeSharedAppInfo } from './shared-app-info';
-import { resetTimingsFile, recordTiming, enableTimings } from './timings';
 
 export default async function globalSetup(): Promise<void> {
   dotenv.config({ path: '.env.test' });
@@ -70,11 +68,7 @@ export default async function globalSetup(): Promise<void> {
   if (!jwtSecret) {
     throw new Error('JWT_SECRET missing after globalSetup initialization');
   }
-  writeSharedAppInfo({
-    port,
-    pid: process.pid,
-    jwtSecret,
-  });
+  writeSharedAppInfo({ port, jwtSecret });
 
   // Keep a reference on globalThis for teardown (Jest runs globalSetup and
   // globalTeardown in the same main process).

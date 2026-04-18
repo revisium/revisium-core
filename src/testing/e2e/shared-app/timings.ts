@@ -2,26 +2,37 @@ import * as fs from 'node:fs';
 import * as os from 'node:os';
 import * as path from 'node:path';
 
+/**
+ * Opt-in (`TEST_TIMINGS=1`) fine-grained test-timing collector. Every
+ * worker appends one jsonl line per observed event to a shared tempfile;
+ * `globalTeardown` reads it and prints a per-kind summary.
+ *
+ * Points hooked so far:
+ *   buildApp:*                      bootstrap phases of a full Nest app
+ *   globalSetup:TOTAL               shared-app boot in jest globalSetup
+ *   prepareData:*                   fixture seeding layers
+ *   prepareProject:*                project sub-seeding (branch, tables, row, endpoint)
+ *   prepareBranch:*                 branch + system-table inserts
+ *   prepareOrganizationUser:TOTAL   user + org-membership row
+ *   http:gql / http:rest            per-request HTTP round-trip in expect-access
+ *
+ * The collector is a no-op when the env var is unset, so these hooks
+ * cost ~nothing in normal runs.
+ */
+
 const FILE = path.join(os.tmpdir(), 'revisium-test-timings.jsonl');
 
-export const TIMINGS_FILE = FILE;
-
-export interface TimingEvent {
+interface TimingEvent {
   kind: string;
   ms: number;
-  pid?: number;
-  wid?: string;
-  file?: string;
+  pid: number;
+  wid: string;
 }
 
 let enabled = process.env.TEST_TIMINGS === '1';
 
 export function enableTimings(): void {
   enabled = true;
-}
-
-export function isTimingsEnabled(): boolean {
-  return enabled;
 }
 
 export function resetTimingsFile(): void {
@@ -32,29 +43,18 @@ export function resetTimingsFile(): void {
   }
 }
 
-export function recordTiming(kind: string, ms: number, file?: string): void {
+export function recordTiming(kind: string, ms: number): void {
   if (!enabled) return;
   const evt: TimingEvent = {
     kind,
     ms,
     pid: process.pid,
     wid: process.env.JEST_WORKER_ID ?? '-',
-    file,
   };
   fs.appendFileSync(FILE, JSON.stringify(evt) + '\n');
 }
 
-export async function time<T>(kind: string, fn: () => Promise<T>): Promise<T> {
-  if (!enabled) return fn();
-  const t0 = Date.now();
-  try {
-    return await fn();
-  } finally {
-    recordTiming(kind, Date.now() - t0);
-  }
-}
-
-export interface KindStats {
+interface KindStats {
   kind: string;
   count: number;
   total: number;
@@ -64,16 +64,12 @@ export interface KindStats {
   max: number;
 }
 
-export function summarize(): {
-  wallClockRange: number;
-  totalEvents: number;
-  perKind: KindStats[];
-} {
+function summarize(): { totalEvents: number; perKind: KindStats[] } {
   let raw = '';
   try {
     raw = fs.readFileSync(FILE, 'utf8');
   } catch {
-    return { wallClockRange: 0, totalEvents: 0, perKind: [] };
+    return { totalEvents: 0, perKind: [] };
   }
 
   const events: TimingEvent[] = raw
@@ -83,8 +79,9 @@ export function summarize(): {
 
   const byKind = new Map<string, number[]>();
   for (const e of events) {
-    if (!byKind.has(e.kind)) byKind.set(e.kind, []);
-    byKind.get(e.kind)!.push(e.ms);
+    const bucket = byKind.get(e.kind) ?? [];
+    bucket.push(e.ms);
+    byKind.set(e.kind, bucket);
   }
 
   const perKind: KindStats[] = [];
@@ -97,18 +94,14 @@ export function summarize(): {
       count,
       total,
       avg: total / count,
-      p50: sorted[Math.floor(count / 2)] || 0,
-      p95: sorted[Math.floor(count * 0.95)] || 0,
-      max: sorted[count - 1] || 0,
+      p50: sorted[Math.floor(count / 2)] ?? 0,
+      p95: sorted[Math.floor(count * 0.95)] ?? 0,
+      max: sorted[count - 1] ?? 0,
     });
   }
   perKind.sort((a, b) => b.total - a.total);
 
-  return {
-    wallClockRange: 0,
-    totalEvents: events.length,
-    perKind,
-  };
+  return { totalEvents: events.length, perKind };
 }
 
 export function formatSummary(): string {

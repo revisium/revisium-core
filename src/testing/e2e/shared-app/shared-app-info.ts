@@ -6,7 +6,6 @@ const FILE = path.join(os.tmpdir(), 'revisium-test-shared-app.json');
 
 export interface SharedAppInfo {
   port: number;
-  pid: number;
   jwtSecret: string;
 }
 

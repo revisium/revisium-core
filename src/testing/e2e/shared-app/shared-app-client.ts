@@ -47,13 +47,15 @@ function getPrismaClient(): PrismaClient {
   return prisma;
 }
 
+/**
+ * Minimal AuthService stub — only `login` is used by the test kit (to
+ * mint an access token for `prepareOrganizationUser`). Signs the JWT
+ * directly with the same secret the shared app is running with.
+ */
 function makeFakeAuthService(): Pick<AuthService, 'login'> {
   return {
-    login(payload) {
-      const info = getInfo();
-      return sign(payload as object, info.jwtSecret);
-    },
-  } as Pick<AuthService, 'login'>;
+    login: (payload) => sign(payload as object, getInfo().jwtSecret),
+  };
 }
 
 function makeFakeHttpServer(port: number): {
