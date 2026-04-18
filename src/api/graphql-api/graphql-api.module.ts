@@ -1,6 +1,8 @@
 import { YogaDriver, YogaDriverConfig } from '@graphql-yoga/nestjs';
 import { Module } from '@nestjs/common';
+import { APP_FILTER } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
+import { GraphQLHttpExceptionFilter } from 'src/api/graphql-api/filters/graphql-http-exception.filter';
 import { DateTimeResolver, JSONResolver } from 'graphql-scalars';
 import { BillingConfigurationResolver } from 'src/api/graphql-api/billing/billing-configuration.resolver';
 import { BillingMutationResolver } from 'src/api/graphql-api/billing/billing-mutation.resolver';
@@ -82,6 +84,7 @@ import { SubSchemaResolver } from 'src/api/graphql-api/sub-schema/sub-schema.res
     ApiKeyModule,
   ],
   providers: [
+    { provide: APP_FILTER, useClass: GraphQLHttpExceptionFilter },
     BillingConfigurationResolver,
     BillingOrganizationResolver,
     BillingQueryResolver,
