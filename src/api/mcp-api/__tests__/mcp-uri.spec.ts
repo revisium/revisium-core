@@ -151,6 +151,42 @@ describe('MCP URI parameter', () => {
       const content = JSON.parse(data.result.content[0].text);
       expect(typeof content.count).toBe('number');
     });
+
+    it('get_table with URI works', async () => {
+      const data = await callTool(app, token, 'get_table', {
+        uri: shortUri(),
+        tableId: fixture.project.tableId,
+      });
+
+      expect(data.result.isError).toBeFalsy();
+      const content = JSON.parse(data.result.content[0].text);
+      expect(content.id).toBe(fixture.project.tableId);
+    });
+
+    it('get_table_schema with URI works', async () => {
+      const data = await callTool(app, token, 'get_table_schema', {
+        uri: shortUri(),
+        tableId: fixture.project.tableId,
+      });
+
+      expect(data.result.isError).toBeFalsy();
+    });
+
+    it('get_table_changes with URI works', async () => {
+      const data = await callTool(app, token, 'get_table_changes', {
+        uri: shortUri(),
+      });
+
+      expect(data.result.isError).toBeFalsy();
+    });
+
+    it('get_row_changes with URI works', async () => {
+      const data = await callTool(app, token, 'get_row_changes', {
+        uri: shortUri(),
+      });
+
+      expect(data.result.isError).toBeFalsy();
+    });
   });
 
   describe('read tools with full URI', () => {
