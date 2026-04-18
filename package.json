@@ -206,6 +206,7 @@
     ],
     "testTimeout": 30000,
     "testEnvironment": "node",
+    "cacheDirectory": "<rootDir>/.jest-cache",
     "setupFiles": [
       "<rootDir>/jest.setup.ts"
     ],

@@ -42,3 +42,4 @@ initial-backup.sql
 initial-backup.dump
 /.uploads
 .claude-flow/
+.jest-cache/

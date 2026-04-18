@@ -69,6 +69,15 @@ jobs:
 
       - run: npm ci
 
+      - name: Restore jest cache
+        uses: actions/cache@v4
+        with:
+          path: .jest-cache
+          key: jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            jest-cache-${{ runner.os }}-
+
       - run: npm run lint:ci
 
       - run: npm run tsc
