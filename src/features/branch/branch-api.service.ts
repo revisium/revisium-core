@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { CommandBus } from '@nestjs/cqrs';
 import { EngineApiService } from '@revisium/engine';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
-import { CreateBranchCommand } from './commands/impl';
+import { CreateBranchCommand } from './commands/impl/create-branch.command';
 
 @Injectable()
 export class BranchApiService {

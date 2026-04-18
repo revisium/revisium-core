@@ -36,7 +36,6 @@ Current scenarios (all take a `PrismaService` and return business IDs):
 
 - `givenOrganizationWithOwner` — user + organization + owner membership.
 - `givenProjectWithOwner` — above plus project with user attached as owner.
-- `givenApiKeyForProject` — above plus a personal API key scoped to the project.
 
 Add a new scenario whenever two or more specs are building the same data
 graph inline.

@@ -38,9 +38,13 @@ import { RefreshTokenService } from 'src/features/auth/services/refresh-token.se
 import { IAuthUser } from 'src/features/auth/types';
 import { UserApiService } from 'src/features/user/user-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import { CreateUserDto, LoginDto } from 'src/api/rest-api/auth/dto';
+import { CreateUserDto } from 'src/api/rest-api/auth/dto/create-user.dto';
+import { LoginDto } from 'src/api/rest-api/auth/dto/login.dto';
 import { UpdatePasswordDto } from 'src/api/rest-api/auth/dto/update-password.dto';
-import { LoginResponse, RefreshResponse } from 'src/api/rest-api/auth/model';
+import {
+  LoginResponse,
+  RefreshResponse,
+} from 'src/api/rest-api/auth/model/login.response';
 import { ErrorModel } from 'src/api/rest-api/share/model/error.model';
 import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 

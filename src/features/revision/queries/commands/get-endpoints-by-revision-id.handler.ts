@@ -1,6 +1,6 @@
 import { IQueryHandler, QueryHandler } from '@nestjs/cqrs';
-import { GetEndpointsByRevisionIdQuery } from 'src/features/revision/queries/impl';
-import { GetEndpointsByRevisionId } from 'src/features/revision/queries/types';
+import { GetEndpointsByRevisionIdQuery } from 'src/features/revision/queries/impl/get-endpoints-by-revision-id.query';
+import { GetEndpointsByRevisionId } from 'src/features/revision/queries/types/get-endpoints-by-revision-id';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 
 @QueryHandler(GetEndpointsByRevisionIdQuery)

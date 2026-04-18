@@ -32,17 +32,13 @@ import { IOptionalAuthUser } from 'src/features/auth/types';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
 import { OrganizationApiService } from 'src/features/organization/organization-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
-import {
-  AddUserToOrganizationDto,
-  CreateProjectDto,
-  GetProjectsDto,
-  GetUsersOrganizationDto,
-  RemoveUserFromOrganizationDto,
-} from 'src/api/rest-api/organization/dto';
-import {
-  ProjectsConnection,
-  UsersOrganizationConnection,
-} from 'src/api/rest-api/organization/model';
+import { AddUserToOrganizationDto } from 'src/api/rest-api/organization/dto/add-user-to-organization.dto';
+import { CreateProjectDto } from 'src/api/rest-api/organization/dto/create-project.dto';
+import { GetProjectsDto } from 'src/api/rest-api/organization/dto/get-projects.dto';
+import { GetUsersOrganizationDto } from 'src/api/rest-api/organization/dto/get-users-organization.dto';
+import { RemoveUserFromOrganizationDto } from 'src/api/rest-api/organization/dto/remove-user-from-organization.dto';
+import { ProjectsConnection } from 'src/api/rest-api/organization/model/project.connection';
+import { UsersOrganizationConnection } from 'src/api/rest-api/organization/model/users-organization.connection';
 import { ProjectModel } from 'src/api/rest-api/project/model';
 import { SuccessModelDto } from 'src/api/rest-api/share/model/success.model';
 import { transformFromPaginatedPrismaToUserOrganizationModel } from 'src/api/rest-api/share/utils/transformFromPrismaToUserOrganizationModel';

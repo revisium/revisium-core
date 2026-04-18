@@ -7,7 +7,7 @@ import { FilePlugin } from 'src/features/plugin/file/file.plugin';
 import {
   GetConfigurationQuery,
   GetConfigurationQueryReturnType,
-} from 'src/infrastructure/configuration/queries/impl';
+} from 'src/infrastructure/configuration/queries/impl/get-configuration.query';
 import { EmailService } from 'src/infrastructure/email/email.service';
 import { getEnvWithDeprecation } from 'src/utils/env';
 import { parseBool } from 'src/utils/utils/parse-bool';

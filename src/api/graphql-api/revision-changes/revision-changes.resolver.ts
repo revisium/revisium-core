@@ -4,11 +4,9 @@ import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-g
 import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
-import {
-  GetRevisionChangesInput,
-  GetRowChangesInput,
-  GetTableChangesInput,
-} from './input';
+import { GetRevisionChangesInput } from './input/get-revision-changes.input';
+import { GetRowChangesInput } from './input/get-row-changes.input';
+import { GetTableChangesInput } from './input/get-table-changes.input';
 import {
   RevisionChangesModel,
   RowChangesConnection,

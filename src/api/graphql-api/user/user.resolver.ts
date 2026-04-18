@@ -14,14 +14,12 @@ import { GQLSystemGuard } from 'src/features/auth/guards/system.guard';
 import { IAuthUser } from 'src/features/auth/types';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ProjectsConnection } from 'src/api/graphql-api/project/model/projects.connection';
-import {
-  AdminUserInput,
-  GetMeProjectsInput,
-  ResetPasswordInput,
-  SearchUsersInput,
-  SetUsernameInput,
-  UpdatePasswordInput,
-} from 'src/api/graphql-api/user/inputs';
+import { AdminUserInput } from 'src/api/graphql-api/user/inputs/admin-user.input';
+import { GetMeProjectsInput } from 'src/api/graphql-api/user/inputs/me-projects.input';
+import { ResetPasswordInput } from 'src/api/graphql-api/user/inputs/reset-password.input';
+import { SearchUsersInput } from 'src/api/graphql-api/user/inputs/search-users.input';
+import { SetUsernameInput } from 'src/api/graphql-api/user/inputs/set-username.input';
+import { UpdatePasswordInput } from 'src/api/graphql-api/user/inputs/update-password.input';
 import { SearchUsersConnection } from 'src/api/graphql-api/user/model/search-users.connection';
 import { UserModel } from 'src/api/graphql-api/user/model/user.model';
 import { UsersConnection } from 'src/api/graphql-api/user/model/users.connection';

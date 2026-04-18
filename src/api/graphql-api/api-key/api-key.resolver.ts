@@ -12,10 +12,8 @@ import { Prisma } from 'src/__generated__/client';
 import { ApiKeyWithSecretModel } from 'src/api/graphql-api/api-key/model/api-key-with-secret.model';
 import { ApiKeyModel } from 'src/api/graphql-api/api-key/model/api-key.model';
 import { ProjectModel } from 'src/api/graphql-api/project/model/project.model';
-import {
-  CreatePersonalApiKeyInput,
-  CreateServiceApiKeyInput,
-} from 'src/api/graphql-api/api-key/inputs';
+import { CreatePersonalApiKeyInput } from 'src/api/graphql-api/api-key/inputs/create-personal-api-key.input';
+import { CreateServiceApiKeyInput } from 'src/api/graphql-api/api-key/inputs/create-service-api-key.input';
 import { CurrentUser } from 'src/api/graphql-api/current-user.decorator';
 import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';

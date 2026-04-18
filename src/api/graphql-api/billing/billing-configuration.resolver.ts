@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { Parent, ResolveField, Resolver } from '@nestjs/graphql';
-import { ConfigurationModel } from 'src/api/graphql-api/configuration/model';
+import { ConfigurationModel } from 'src/api/graphql-api/configuration/model/configuration.model';
 import {
   BILLING_GRAPHQL_SERVICE_TOKEN,
   IBillingGraphqlService,

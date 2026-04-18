@@ -7,15 +7,11 @@ import {
   ResolveField,
   Resolver,
 } from '@nestjs/graphql';
-import {
-  CreateEndpointInput,
-  DeleteEndpointInput,
-  GetProjectEndpointsInput,
-} from 'src/api/graphql-api/endpoint/inputs';
-import {
-  EndpointModel,
-  EndpointsConnection,
-} from 'src/api/graphql-api/endpoint/model';
+import { CreateEndpointInput } from 'src/api/graphql-api/endpoint/inputs/create-endpoint.input';
+import { DeleteEndpointInput } from 'src/api/graphql-api/endpoint/inputs/delete-endpoint.input';
+import { GetProjectEndpointsInput } from 'src/api/graphql-api/endpoint/inputs/get-project-endpoints.input';
+import { EndpointsConnection } from 'src/api/graphql-api/endpoint/model/endpoints-connection.model';
+import { EndpointModel } from 'src/api/graphql-api/endpoint/model/endpoint.model';
 import { PermissionAction, PermissionSubject } from 'src/features/auth/consts';
 import { GqlJwtAuthGuard } from 'src/features/auth/guards/jwt/gql-jwt-auth-guard.service';
 import { OptionalGqlJwtAuthGuard } from 'src/features/auth/guards/jwt/optional-gql-jwt-auth-guard.service';

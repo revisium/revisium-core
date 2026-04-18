@@ -6,16 +6,14 @@ import { nanoid } from 'nanoid';
 import { testCreateUser } from 'src/testing/factories/create-models';
 import { ApiKeyApiService } from 'src/features/api-key/api-key-api.service';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
-import { CreateApiKeyHandler } from 'src/features/api-key/commands/handlers';
-import { RevokeApiKeyHandler } from 'src/features/api-key/commands/handlers';
-import { RotateApiKeyHandler } from 'src/features/api-key/commands/handlers';
+import { CreateApiKeyHandler } from 'src/features/api-key/commands/handlers/create-api-key.handler';
+import { RevokeApiKeyHandler } from 'src/features/api-key/commands/handlers/revoke-api-key.handler';
+import { RotateApiKeyHandler } from 'src/features/api-key/commands/handlers/rotate-api-key.handler';
 import { GetApiKeyByIdHandler } from 'src/features/api-key/queries/handlers';
 import { GetApiKeysHandler } from 'src/features/api-key/queries/handlers';
 import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
-import {
-  CheckOrganizationPermissionHandler,
-  CheckProjectPermissionHandler,
-} from 'src/features/auth/commands/handlers';
+import { CheckOrganizationPermissionHandler } from 'src/features/auth/commands/handlers/check-organization-permission.handler';
+import { CheckProjectPermissionHandler } from 'src/features/auth/commands/handlers/check-project-permission.handler';
 import {
   UserOrganizationRoles,
   UserProjectRoles,

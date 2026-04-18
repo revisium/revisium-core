@@ -19,7 +19,7 @@ import { GetRevisionTablesInput } from 'src/api/graphql-api/revision/inputs/get-
 import { GetRevisionInput } from 'src/api/graphql-api/revision/inputs/get-revision.input';
 import { ApplyMigrationResultModel } from 'src/api/graphql-api/revision/model/apply-migration-result.model';
 import { RevisionModel } from 'src/api/graphql-api/revision/model/revision.model';
-import { RevisionsApiService } from 'src/features/revision';
+import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { TableApiService } from 'src/features/table/table-api.service';
 

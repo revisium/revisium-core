@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { RoleModel } from 'src/api/rest-api/role/model';
+import { RoleModel } from 'src/api/rest-api/role/model/role.model';
 import { UserModel } from 'src/api/rest-api/user/model';
 
 export class UsersProjectModel {

@@ -39,13 +39,11 @@ import { PermissionParams } from 'src/features/auth/guards/permission-params';
 import { HTTPProjectGuard } from 'src/features/auth/guards/project.guard';
 import { RowApiService } from 'src/features/row/row-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import {
-  GetRowForeignKeysByDto,
-  PatchRowDto,
-  RenameRowDto,
-  UpdateRowDto,
-} from 'src/api/rest-api/row/dto';
+import { GetRowForeignKeysByDto } from 'src/api/rest-api/row/dto/get-row-foreign-keys-by.dto';
 import { GetRowForeignKeysToDto } from 'src/api/rest-api/row/dto/get-row-foreign-keys-to.dto';
+import { PatchRowDto } from 'src/api/rest-api/row/dto/patch-row.dto';
+import { RenameRowDto } from 'src/api/rest-api/row/dto/rename-row.dto';
+import { UpdateRowDto } from 'src/api/rest-api/row/dto/update-row.dto';
 import {
   PatchRowResponse,
   RemoveRowResponse,

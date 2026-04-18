@@ -2,7 +2,7 @@ import { Controller, Get, UseInterceptors } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { ConfigurationApiService } from 'src/infrastructure/configuration/configuration-api.service';
 import { RestMetricsInterceptor } from 'src/infrastructure/metrics/rest/rest-metrics.interceptor';
-import { ConfigurationResponse } from 'src/api/rest-api/configuration/model';
+import { ConfigurationResponse } from 'src/api/rest-api/configuration/model/configuration.response';
 
 @UseInterceptors(RestMetricsInterceptor)
 @ApiTags('Configuration')

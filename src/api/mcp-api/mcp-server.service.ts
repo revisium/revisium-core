@@ -15,26 +15,22 @@ import { McpUserContext } from './mcp-auth.service';
 import { McpAuthHelpers, McpPermissionCheck } from './types';
 import { UriRevisionResolver } from './uri';
 
-import {
-  SchemaResource,
-  QueryResource,
-  MigrationResource,
-  FileResource,
-} from './resources';
+import { FileResource } from './resources/file.resource';
+import { MigrationResource } from './resources/migration.resource';
+import { QueryResource } from './resources/query.resource';
+import { SchemaResource } from './resources/schema.resource';
 
-import {
-  OrganizationTools,
-  ProjectTools,
-  BranchTools,
-  TableTools,
-  RowTools,
-  RevisionTools,
-  RevisionChangesTools,
-  MigrationTools,
-  UserTools,
-  EndpointTools,
-  FileTools,
-} from './tools';
+import { BranchTools } from './tools/branch.tools';
+import { EndpointTools } from './tools/endpoint.tools';
+import { FileTools } from './tools/file.tools';
+import { MigrationTools } from './tools/migration.tools';
+import { OrganizationTools } from './tools/organization.tools';
+import { ProjectTools } from './tools/project.tools';
+import { RevisionChangesTools } from './tools/revision-changes.tools';
+import { RevisionTools } from './tools/revision.tools';
+import { RowTools } from './tools/row.tools';
+import { TableTools } from './tools/table.tools';
+import { UserTools } from './tools/user.tools';
 
 @Injectable()
 export class McpServerService {

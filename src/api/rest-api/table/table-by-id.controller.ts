@@ -50,25 +50,21 @@ import {
   transformFromPaginatedPrismaToTableModel,
   transformFromPrismaToTableModel,
 } from 'src/api/rest-api/share/utils/transformFromPrismaToTableModel';
-import {
-  CreateRowDto,
-  CreateRowsDto,
-  GetTableForeignKeysByDto,
-  GetTableForeignKeysToDto,
-  GetTableRowsDto,
-  PatchRowsDto,
-  RemoveRowsDto,
-  RenameTableDto,
-  UpdateRowsDto,
-  UpdateTableDto,
-} from 'src/api/rest-api/table/dto';
-import {
-  CreateRowResponse,
-  CreateRowsResponse,
-  PatchRowsResponse,
-  RemoveRowsResponse,
-  UpdateRowsResponse,
-} from 'src/api/rest-api/table/model';
+import { CreateRowDto } from 'src/api/rest-api/table/dto/create-row.dto';
+import { CreateRowsDto } from 'src/api/rest-api/table/dto/create-rows.dto';
+import { GetTableForeignKeysByDto } from 'src/api/rest-api/table/dto/get-table-foreign-keys-by.dto';
+import { GetTableForeignKeysToDto } from 'src/api/rest-api/table/dto/get-table-foreign-keys-to.dto';
+import { GetTableRowsDto } from 'src/api/rest-api/table/dto/get-table-rows.dto';
+import { PatchRowsDto } from 'src/api/rest-api/table/dto/patch-rows.dto';
+import { RemoveRowsDto } from 'src/api/rest-api/table/dto/remove-rows.dto';
+import { RenameTableDto } from 'src/api/rest-api/table/dto/rename-table.dto';
+import { UpdateRowsDto } from 'src/api/rest-api/table/dto/update-rows.dto';
+import { UpdateTableDto } from 'src/api/rest-api/table/dto/update-table.dto';
+import { CreateRowResponse } from 'src/api/rest-api/table/model/create-row.response';
+import { CreateRowsResponse } from 'src/api/rest-api/table/model/create-rows.response';
+import { PatchRowsResponse } from 'src/api/rest-api/table/model/patch-rows.response';
+import { RemoveRowsResponse } from 'src/api/rest-api/table/model/remove-rows.response';
+import { UpdateRowsResponse } from 'src/api/rest-api/table/model/update-rows.response';
 import {
   TableModel,
   TablesConnection,

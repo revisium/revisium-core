@@ -15,14 +15,12 @@ import { GQLProjectGuard } from 'src/features/auth/guards/project.guard';
 import { ProjectApiService } from 'src/features/project/project-api.service';
 import { BranchApiService } from 'src/features/branch/branch-api.service';
 import { RevisionsApiService } from 'src/features/revision/revisions-api.service';
-import {
-  CreateBranchInput,
-  DeleteBranchInput,
-  GetBranchesInput,
-  GetBranchInput,
-  RevertChangesInput,
-} from 'src/api/graphql-api/branch/inputs';
+import { CreateBranchInput } from 'src/api/graphql-api/branch/inputs/create-branch.input';
+import { DeleteBranchInput } from 'src/api/graphql-api/branch/inputs/delete-branch.input';
+import { GetBranchInput } from 'src/api/graphql-api/branch/inputs/get-branch.input';
+import { GetBranchesInput } from 'src/api/graphql-api/branch/inputs/get-branches.input';
 import { GetBranchRevisionsInput } from 'src/api/graphql-api/branch/inputs/get-branch-revisions.input';
+import { RevertChangesInput } from 'src/api/graphql-api/branch/inputs/revert-changes.input';
 import {
   BranchesConnection,
   BranchModel,
