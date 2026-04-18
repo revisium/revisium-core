@@ -33,7 +33,11 @@ export interface GivenFileSchemaProjectOptions {
  * does — no hand-rolled `prismaService.table.create` / row-version wiring.
  *
  * Returns a superset of `PrepareDataReturnType` with the extra
- * `fileTableId`, `fileRowId`, `fileData` fields that tests need.
+ * `fileTableId` and `fileRowId` fields that tests need. Note that
+ * `PrepareDataReturnType.project` does not expose `isPublic`; the
+ * `options.isPublic` flag persists the change via Prisma but is not
+ * echoed back on the fixture object — consumers reading visibility
+ * should re-query the DB if they need to verify.
  */
 export async function givenFileSchemaProject(
   app: INestApplication,

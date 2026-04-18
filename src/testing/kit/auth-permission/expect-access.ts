@@ -27,7 +27,9 @@ export interface ExpectAccessOptions<TParams> {
    * Never attach to forbidden/not_found/unauthorized — content-leakage
    * concerns belong in a dedicated spec.
    */
-  assert?: Partial<Record<Transport, (result: unknown) => void>>;
+  assert?: Partial<
+    Record<Transport, (result: unknown) => void | Promise<void>>
+  >;
 }
 
 export async function expectAccess<TParams>(
@@ -67,7 +69,7 @@ async function dispatchGql<TParams>(
         `expectAccess(${op.id}, gql): expected allowed but got errors: ${JSON.stringify(response.errors)}`,
       );
     }
-    assert?.gql?.(response.data);
+    await assert?.gql?.(response.data);
     return;
   }
 
@@ -113,7 +115,7 @@ async function dispatchRest<TParams>(
         `expectAccess(${op.id}, rest ${op.rest.method.toUpperCase()} ${url}): expected allowed but got ${response.status}: ${JSON.stringify(response.body)}`,
       );
     }
-    assert?.rest?.(response.body);
+    await assert?.rest?.(response.body);
     return;
   }
 

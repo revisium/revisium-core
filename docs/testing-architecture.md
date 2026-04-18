@@ -218,10 +218,19 @@ Four layers, each replaceable in isolation:
 - **Operation** — what is being called, per transport. An operation defines a
   `rest` and/or `gql` call signature taking a typed params object. An operation
   may declare only one transport when the endpoint is transport-exclusive.
-- **Actor** — who is calling. `actors.anonymous()`, `actors.user({ orgRole,
-  inOrg })`, `actors.apiKey({ scopes, inOrg, branches, ... })`. Actors return a
-  transport-agnostic token/header bundle. They wrap existing `prepareData`
-  primitives rather than reseeding from scratch.
+- **Actor** — who is calling. Current kit exports:
+  - `actors.anonymous()` — no token.
+  - `actors.fromToken(token, label?)` — wrap an arbitrary token.
+  - `actors.owner(fixture)` / `actors.crossOwner(fixture)` — resolve the
+    owner / anotherOwner tokens out of a `prepareData`-backed fixture.
+  - `actors.resolveRole(fixture, role)` — dispatch a `'owner' | 'crossOwner'
+    | 'anonymous'` matrix row to the right helper.
+  - `actors.admin(app)` — seed a systemAdmin on demand for admin endpoints.
+
+  Actors return a transport-agnostic `{ token, label? }` bundle. Richer
+  variants (`actors.user({ orgRole, inOrg, projectRole? })`,
+  `actors.apiKey({ scopes, readOnly, ... })`) land when the first spec
+  actually needs them.
 - **Outcome** — what correct means, normalized per transport:
   `unauthorized`, `forbidden`, `not_found`, `allowed`. REST status codes and
   GraphQL `errors[0].extensions.code` are mapped inside the kit. Tests never
@@ -254,9 +263,10 @@ Transport coverage is not uniform. The kit must express that honestly:
   callbacks on a row. Only run when `expected === 'allowed'`. Never attach
   content assertions to forbidden/not_found rows; content leakage lives in a
   separate spec.
-- **Per-row params override** — `authCase` accepts a partial `params:` that
-  merges over the matrix defaults. Useful for scope-violation cases (API key
-  scoped to a different branch or project).
+- **Per-row extras** — extend `AuthMatrixCaseBase` with extra columns via
+  intersection (e.g. `AuthMatrixCaseBase & { project: 'private' | 'public' }`)
+  and branch inside the `build(c)` callback. Keeps asymmetric inputs explicit
+  at the row level, not hidden in setup.
 
 ### When this kit is not a fit
 
@@ -271,48 +281,75 @@ not a replacement for unit-testing the decision itself.
 ### Example shape
 
 ```ts
-// src/api/__tests__/project.auth.e2e.spec.ts
-const updateProject = operation({
+// src/api/__tests__/project/update-project.auth.e2e.spec.ts
+import { gql } from 'src/testing/utils/gql';
+import {
+  booleanMutationAssert,
+  operation,
+  runAuthMatrix,
+  PROJECT_MUTATION_MATRIX,
+} from 'src/testing/kit/auth-permission';
+import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+
+const updateProject = operation<{
+  organizationId: string;
+  projectName: string;
+  isPublic: boolean;
+}>({
   id: 'project.update',
   rest: {
-    method: 'patch',
-    url:    ({ org, project }) => `/-/organization/${org}/projects/${project}`,
-    body:   ({ newName }) => ({ name: newName }),
+    method: 'put',
+    url: ({ organizationId, projectName }) =>
+      `/api/organization/${organizationId}/projects/${projectName}`,
+    body: ({ isPublic }) => ({ isPublic }),
   },
   gql: {
-    query:     UPDATE_PROJECT_GQL,
-    variables: ({ org, project, newName }) => ({
-      data: { organizationId: org, projectName: project, name: newName },
-    }),
+    query: gql`
+      mutation updateProject($data: UpdateProjectInput!) {
+        updateProject(data: $data)
+      }
+    `,
+    variables: (params) => ({ data: params }),
   },
 });
 
-describe('updateProject auth', () => {
-  const ctx = buildAuthTestApp();
-  const org = 'acme';
-  const project = 'website';
-  const params = { org, project, newName: 'Renamed' };
+describe('update project auth', () => {
+  const fresh = usingFreshProject();
 
-  beforeEach(() => ctx.givenProject({ org, project }));
-
-  const cases = [
-    authCase('anonymous → unauthorized',       { actor: actors.anonymous(),                                   expected: 'unauthorized' }),
-    authCase('outsider → forbidden',           { actor: actors.user({ orgRole: 'owner',  inOrg: 'other' }),   expected: 'forbidden' }),
-    authCase('viewer in org → forbidden',      { actor: actors.user({ orgRole: 'viewer', inOrg: org }),       expected: 'forbidden' }),
-    authCase('editor in org → allowed',        { actor: actors.user({ orgRole: 'editor', inOrg: org }),       expected: 'allowed' }),
-    authCase('read-only api key → forbidden',  { actor: actors.apiKey({ inOrg: org, scopes: ['project:read'] }),  expected: 'forbidden' }),
-    authCase('write api key → allowed',        { actor: actors.apiKey({ inOrg: org, scopes: ['project:write'] }), expected: 'allowed' }),
-  ];
-
-  describe.each(updateProject.transports)('via %s', (transport) => {
-    it.each(cases.filter((c) => !c.transports || c.transports.includes(transport)))(
-      '$name',
-      async ({ actor, expected, assert }) =>
-        expectAccess({ ctx, transport, actor, op: updateProject, params, expected, assert }),
-    );
+  runAuthMatrix({
+    op: updateProject,
+    cases: PROJECT_MUTATION_MATRIX,
+    build: () => ({
+      fixture: fresh.fixture,
+      params: {
+        organizationId: fresh.fixture.project.organizationId,
+        projectName: fresh.fixture.project.projectName,
+        isPublic: true,
+      },
+      assert: booleanMutationAssert('updateProject'),
+    }),
   });
 });
 ```
+
+The `runAuthMatrix` helper wraps
+`describe.each(op.transports).it.each(cases)` and dispatches through
+`actors.resolveRole(fixture, c.role)` internally; specs declare intent
+(operation + matrix + per-case params/assert), not the plumbing.
+
+Matrix presets shipped with the kit:
+
+- `PROJECT_MUTATION_MATRIX` / `ORG_MUTATION_MATRIX` — owner allowed,
+  cross-owner forbidden, anon unauthorized.
+- `PROJECT_VISIBILITY_MATRIX` — 6 cases: private × {owner, crossOwner,
+  anon} + public × {owner, crossOwner, anon}. For readonly endpoints
+  whose public-project path grants anon read.
+- `PROJECT_PII_READ_MATRIX` — same shape as the mutation matrix; used
+  for sub-resources (user lists, keys) where private/public visibility
+  does not relax membership.
+
+When none of these fit, declare an explicit `AuthMatrixCaseBase[]`
+inline and point `runAuthMatrix`'s `cases` at it.
 
 ### Migration from current supertest/GraphQL specs
 

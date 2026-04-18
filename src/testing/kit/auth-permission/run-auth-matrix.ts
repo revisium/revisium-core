@@ -6,7 +6,9 @@ import type { AuthMatrixCaseBase, Operation, Transport } from './types';
 export interface AuthMatrixBuild<TParams> {
   fixture: AuthActorFixture;
   params: TParams;
-  assert?: Partial<Record<Transport, (result: unknown) => void>>;
+  assert?: Partial<
+    Record<Transport, (result: unknown) => void | Promise<void>>
+  >;
 }
 
 export interface RunAuthMatrixConfig<
