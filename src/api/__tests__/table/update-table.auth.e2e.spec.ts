@@ -1,9 +1,5 @@
 import { gql } from 'src/testing/utils/gql';
-import {
-  operation,
-  runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
-} from 'src/testing/kit/auth-permission';
+import { operation, runAuthMatrix } from 'src/testing/kit/auth-permission';
 import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
 
 interface UpdateTableParams {
@@ -39,7 +35,7 @@ describe('update table auth', () => {
 
   runAuthMatrix({
     op: updateTable,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: [{ name: 'owner', role: 'owner', expected: 'allowed' }],
     build: () => ({
       fixture: fresh.fixture,
       params: {

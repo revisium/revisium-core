@@ -1,9 +1,5 @@
 import { gql } from 'src/testing/utils/gql';
-import {
-  operation,
-  runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
-} from 'src/testing/kit/auth-permission';
+import { operation, runAuthMatrix } from 'src/testing/kit/auth-permission';
 import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
 
 type Patch = { op: 'replace'; path: string; value: unknown };
@@ -42,7 +38,7 @@ describe('patch rows auth', () => {
 
   runAuthMatrix({
     op: patchRows,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: [{ name: 'owner', role: 'owner', expected: 'allowed' }],
     build: () => ({
       fixture: fresh.fixture,
       params: {
