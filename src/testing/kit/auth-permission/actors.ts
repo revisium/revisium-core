@@ -14,6 +14,10 @@ import type { ActorDescriptor, ActorRole } from './types';
 export interface AuthActorFixture {
   owner: { token: string };
   anotherOwner: { token: string };
+  /** Present on fixtures seeded via `prepareDataWithRoles` / `usingProjectWithRoles`. */
+  developer?: { token: string };
+  editor?: { token: string };
+  reader?: { token: string };
 }
 
 /**
@@ -34,11 +38,44 @@ export const actors = {
   crossOwner(fixture: AuthActorFixture): ActorDescriptor {
     return { token: fixture.anotherOwner.token, label: 'cross-owner' };
   },
+  developer(fixture: AuthActorFixture): ActorDescriptor {
+    if (!fixture.developer) {
+      throw new Error(
+        'actors.developer: fixture is missing the `developer` member. ' +
+          'Use `usingProjectWithRoles()` instead of `usingFreshProject()`.',
+      );
+    }
+    return { token: fixture.developer.token, label: 'developer' };
+  },
+  editor(fixture: AuthActorFixture): ActorDescriptor {
+    if (!fixture.editor) {
+      throw new Error(
+        'actors.editor: fixture is missing the `editor` member. ' +
+          'Use `usingProjectWithRoles()` instead of `usingFreshProject()`.',
+      );
+    }
+    return { token: fixture.editor.token, label: 'editor' };
+  },
+  reader(fixture: AuthActorFixture): ActorDescriptor {
+    if (!fixture.reader) {
+      throw new Error(
+        'actors.reader: fixture is missing the `reader` member. ' +
+          'Use `usingProjectWithRoles()` instead of `usingFreshProject()`.',
+      );
+    }
+    return { token: fixture.reader.token, label: 'reader' };
+  },
   /** Dispatches a role to the right actor factory. */
   resolveRole(fixture: AuthActorFixture, role: ActorRole): ActorDescriptor {
     switch (role) {
       case 'owner':
         return actors.owner(fixture);
+      case 'developer':
+        return actors.developer(fixture);
+      case 'editor':
+        return actors.editor(fixture);
+      case 'reader':
+        return actors.reader(fixture);
       case 'crossOwner':
         return actors.crossOwner(fixture);
       case 'anonymous':

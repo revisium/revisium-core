@@ -14,7 +14,13 @@ export type Outcome = 'unauthorized' | 'forbidden' | 'not_found' | 'allowed';
 
 export type RestMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
-export type ActorRole = 'owner' | 'crossOwner' | 'anonymous';
+export type ActorRole =
+  | 'owner'
+  | 'developer'
+  | 'editor'
+  | 'reader'
+  | 'crossOwner'
+  | 'anonymous';
 
 export interface GqlOperationShape<TParams> {
   query: string;

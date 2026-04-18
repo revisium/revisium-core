@@ -24,7 +24,7 @@ describe('Swagger OpenAPI JSON (e2e)', () => {
   });
 
   it('GET /api-json should match the local openapi.json', async () => {
-    const specPath = path.resolve(__dirname, '../openapi.json');
+    const specPath = path.resolve(__dirname, '../../rest-api/openapi.json');
     const expectedSpec = JSON.parse(fs.readFileSync(specPath, 'utf-8'));
 
     const res = await request(app.getHttpServer())
