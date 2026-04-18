@@ -4,7 +4,7 @@ import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
 } from 'src/testing/utils/prepareProject';
-import { createFreshTestApp } from 'src/testing/e2e';
+import { getTestApp } from 'src/testing/e2e';
 
 const CREATE_SERVICE_API_KEY = `
   mutation CreateServiceApiKey($data: CreateServiceApiKeyInput!) {
@@ -72,7 +72,7 @@ describe('Service API Key Management (e2e)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {

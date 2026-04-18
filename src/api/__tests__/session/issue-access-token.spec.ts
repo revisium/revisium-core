@@ -6,7 +6,7 @@ import {
 } from 'src/testing/utils/prepareProject';
 import { gql } from 'src/testing/utils/gql';
 import { graphqlQuery, graphqlQueryError } from 'src/testing/utils/queryTest';
-import { createFreshTestApp } from 'src/testing/e2e';
+import { getTestApp } from 'src/testing/e2e';
 
 const ISSUE_ACCESS_TOKEN = gql`
   query issueAccessToken {
@@ -31,7 +31,7 @@ describe('graphql - issueAccessToken', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {

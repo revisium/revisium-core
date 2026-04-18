@@ -4,7 +4,7 @@ import {
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
 import {
-  createFreshTestApp,
+  getTestApp,
   anonPost,
   authPost,
   authPut,
@@ -14,7 +14,7 @@ describe('restapi - auth', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {
