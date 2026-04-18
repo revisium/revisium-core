@@ -4,11 +4,7 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import {
-  getTestApp,
-  gqlQuery,
-  gqlQueryExpectError,
-} from 'src/testing/e2e';
+import { getTestApp, gqlQuery, gqlQueryExpectError } from 'src/testing/e2e';
 
 describe('graphql - branch mutations', () => {
   let app: INestApplication;

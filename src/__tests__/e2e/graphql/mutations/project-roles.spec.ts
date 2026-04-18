@@ -4,11 +4,7 @@ import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
 } from 'src/testing/utils/prepareProject';
-import {
-  getTestApp,
-  gqlQuery,
-  gqlQueryExpectError,
-} from 'src/testing/e2e';
+import { getTestApp, gqlQuery, gqlQueryExpectError } from 'src/testing/e2e';
 
 describe('graphql - project mutations (role-based)', () => {
   let app: INestApplication;

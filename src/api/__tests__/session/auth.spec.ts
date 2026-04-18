@@ -3,12 +3,7 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import {
-  getTestApp,
-  anonPost,
-  authPost,
-  authPut,
-} from 'src/testing/e2e';
+import { getTestApp, anonPost, authPost, authPut } from 'src/testing/e2e';
 
 describe('restapi - auth', () => {
   let app: INestApplication;
