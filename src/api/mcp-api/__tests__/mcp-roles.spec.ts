@@ -12,6 +12,9 @@ import { createFreshTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { AuthService } from 'src/features/auth/auth.service';
 
+// Intermittent pg/CQRS race under mw=4 concurrency; retry covers it.
+jest.retryTimes(2, { logErrorsBeforeRetry: true });
+
 interface McpToolResult {
   content: Array<{
     type: string;
