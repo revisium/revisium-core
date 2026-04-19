@@ -281,6 +281,9 @@ export class TransactionPrismaService implements OnModuleInit {
    * PostgreSQL error codes:
    * - 40001: serialization_failure
    * - 40P01: deadlock_detected
+   * - 25P02: in_failed_sql_transaction (an earlier statement in the
+   *         transaction aborted; re-running the whole transaction
+   *         fresh is the correct recovery)
    *
    * Prisma error codes:
    * - P2034: Transaction write conflict
@@ -288,7 +291,7 @@ export class TransactionPrismaService implements OnModuleInit {
    */
   private isRetryableError(error: Error): boolean {
     const code = (error as { code?: string }).code || '';
-    const retryableCodes = ['40001', '40P01', 'P2034', 'P2003'];
+    const retryableCodes = ['40001', '40P01', '25P02', 'P2034', 'P2003'];
 
     if (retryableCodes.includes(code)) {
       return true;
@@ -298,6 +301,7 @@ export class TransactionPrismaService implements OnModuleInit {
     const retryableMessages = [
       'could not serialize access',
       'deadlock detected',
+      'current transaction is aborted',
       'TransactionWriteConflict',
       'Please retry your transaction',
       'Foreign key constraint',
