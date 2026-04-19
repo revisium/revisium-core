@@ -4,7 +4,7 @@ const js = require('@eslint/js');
 const tseslint = require('typescript-eslint');
 const prettierPlugin = require('eslint-plugin-prettier');
 
-/** @type {import('eslint').Linter.FlatConfig[]} */
+/** @type {import('eslint').Linter.Config[]} */
 module.exports = [
   js.configs.recommended,
   ...tseslint.configs.recommended,

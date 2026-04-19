@@ -7,6 +7,8 @@ import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';
 import { IApiKeyScope, IAuthUser, ICaslRule } from 'src/features/auth/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
+type HeaderMap = Record<string, string | string[] | undefined>;
+
 @Injectable()
 export class UniversalAuthService {
   constructor(
@@ -17,7 +19,7 @@ export class UniversalAuthService {
   ) {}
 
   authenticateRequest(request: {
-    headers: Record<string, string | string[] | undefined>;
+    headers: HeaderMap;
     query: Record<string, string | undefined>;
     ip: string;
     user?: IAuthUser;
@@ -49,7 +51,7 @@ export class UniversalAuthService {
   }
 
   async authenticate(
-    headers: Record<string, string | string[] | undefined>,
+    headers: HeaderMap,
     query: Record<string, string | undefined>,
     ip: string,
   ): Promise<IAuthUser | null> {
@@ -99,25 +101,8 @@ export class UniversalAuthService {
       throw new UnauthorizedException('Invalid API key');
     }
 
-    if (source === 'internal' && apiKey.type !== ApiKeyType.INTERNAL) {
-      throw new UnauthorizedException(
-        'Internal keys must use X-Internal-Api-Key header',
-      );
-    }
-
-    if (source === 'external' && apiKey.type === ApiKeyType.INTERNAL) {
-      throw new UnauthorizedException(
-        'Internal keys must use X-Internal-Api-Key header',
-      );
-    }
-
-    if (apiKey.revokedAt) {
-      throw new UnauthorizedException('API key has been revoked');
-    }
-
-    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
-      throw new UnauthorizedException('API key has expired');
-    }
+    this.assertApiKeySourceMatches(apiKey.type, source);
+    this.assertApiKeyActive(apiKey);
 
     const scope: IApiKeyScope = {
       organizationId: apiKey.organizationId,
@@ -126,23 +111,70 @@ export class UniversalAuthService {
       tableIds: apiKey.tableIds,
     };
 
-    let user: IAuthUser;
-    if (apiKey.type === ApiKeyType.PERSONAL) {
-      user = await this.buildPersonalKeyUser(apiKey, scope);
-      if (apiKey.readOnly) {
-        user.apiKeyReadOnly = true;
-      }
-    } else if (apiKey.type === ApiKeyType.SERVICE) {
-      user = this.buildServiceKeyUser(apiKey, scope);
-      if (apiKey.readOnly) {
-        user.apiKeyReadOnly = true;
-      }
-    } else {
-      user = this.buildInternalKeyUser(apiKey);
-    }
+    const user = await this.buildUserForApiKey(apiKey, scope);
 
     this.apiKeyTracking.track(apiKey.id, ip);
     return user;
+  }
+
+  private assertApiKeySourceMatches(
+    keyType: ApiKeyType,
+    source: 'internal' | 'external',
+  ): void {
+    const isInternalKey = keyType === ApiKeyType.INTERNAL;
+    const mismatched =
+      (source === 'internal' && !isInternalKey) ||
+      (source === 'external' && isInternalKey);
+    if (mismatched) {
+      throw new UnauthorizedException(
+        'Internal keys must use X-Internal-Api-Key header',
+      );
+    }
+  }
+
+  private assertApiKeyActive(apiKey: {
+    revokedAt: Date | null;
+    expiresAt: Date | null;
+  }): void {
+    if (apiKey.revokedAt) {
+      throw new UnauthorizedException('API key has been revoked');
+    }
+    if (apiKey.expiresAt && apiKey.expiresAt < new Date()) {
+      throw new UnauthorizedException('API key has expired');
+    }
+  }
+
+  private async buildUserForApiKey(
+    apiKey: {
+      id: string;
+      type: ApiKeyType;
+      userId: string | null;
+      serviceId: string | null;
+      internalServiceName: string | null;
+      permissions: unknown;
+      organizationId: string | null;
+      readOnly: boolean;
+    },
+    scope: IApiKeyScope,
+  ): Promise<IAuthUser> {
+    if (apiKey.type === ApiKeyType.PERSONAL) {
+      const user = await this.buildPersonalKeyUser(apiKey, scope);
+      if (apiKey.readOnly) {
+        user.apiKeyReadOnly = true;
+      }
+      return user;
+    }
+    if (apiKey.type === ApiKeyType.SERVICE) {
+      const user = this.buildServiceKeyUser(apiKey, scope);
+      if (apiKey.readOnly) {
+        user.apiKeyReadOnly = true;
+      }
+      return user;
+    }
+    if (apiKey.type === ApiKeyType.INTERNAL) {
+      return this.buildInternalKeyUser(apiKey);
+    }
+    throw new UnauthorizedException('Unsupported API key type');
   }
 
   private async buildPersonalKeyUser(
@@ -208,10 +240,7 @@ export class UniversalAuthService {
     };
   }
 
-  private getHeader(
-    headers: Record<string, string | string[] | undefined>,
-    name: string,
-  ): string | undefined {
+  private getHeader(headers: HeaderMap, name: string): string | undefined {
     const value = headers[name];
     if (Array.isArray(value)) {
       return value[0];

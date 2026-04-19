@@ -146,7 +146,7 @@ export class InternalKeyBootstrapService implements OnModuleInit {
       },
     });
 
-    if (existing && existing.keyHash === newHash) {
+    if (existing?.keyHash === newHash) {
       this.logger.log(
         `Internal API key for '${serviceName}' service initialized`,
       );

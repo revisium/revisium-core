@@ -3,5 +3,5 @@
  * e.g. '"avatar"' → 'avatar', '"media"."thumbnail"' → 'media.thumbnail'
  */
 export function unquoteFieldPath(fieldPath: string): string {
-  return fieldPath.replace(/"([^"]+)"/g, '$1');
+  return fieldPath.replaceAll(/"([^"]+)"/g, '$1');
 }

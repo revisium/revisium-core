@@ -396,14 +396,13 @@ Full meta-schema available via resource: revisium://specs/schema`,
 
         if (rows?.length) {
           try {
-            const schemaObj = schema as Record<string, unknown>;
             const rowsResult = await this.rows.createRows({
               revisionId,
               tableId,
               rows: rows.map((r) => ({
                 rowId: r.rowId,
                 data: fillFormulaDefaults(
-                  schemaObj,
+                  schema,
                   r.data,
                 ) as Prisma.InputJsonValue,
               })),
