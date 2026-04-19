@@ -2,9 +2,9 @@ import { gql } from 'src/testing/utils/gql';
 import {
   operation,
   runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
+  PROJECT_MUTATION_DENIAL_MATRIX,
 } from 'src/testing/kit/auth-permission';
-import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+import { usingSharedProject } from 'src/testing/scenarios/using-shared-project';
 
 const deleteEndpoint = operation<{ endpointId: string }>({
   id: 'endpoint.delete',
@@ -23,14 +23,14 @@ const deleteEndpoint = operation<{ endpointId: string }>({
 });
 
 describe('delete endpoint auth', () => {
-  const fresh = usingFreshProject();
+  const shared = usingSharedProject();
 
   runAuthMatrix({
     op: deleteEndpoint,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: PROJECT_MUTATION_DENIAL_MATRIX,
     build: () => ({
-      fixture: fresh.fixture,
-      params: { endpointId: fresh.fixture.project.headEndpointId },
+      fixture: shared.fixture,
+      params: { endpointId: shared.fixture.project.headEndpointId },
     }),
   });
 });

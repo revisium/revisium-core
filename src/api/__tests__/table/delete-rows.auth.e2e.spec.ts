@@ -2,9 +2,9 @@ import { gql } from 'src/testing/utils/gql';
 import {
   operation,
   runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
+  PROJECT_MUTATION_DENIAL_MATRIX,
 } from 'src/testing/kit/auth-permission';
-import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+import { usingSharedProject } from 'src/testing/scenarios/using-shared-project';
 
 const deleteRows = operation<{
   revisionId: string;
@@ -33,17 +33,17 @@ const deleteRows = operation<{
 });
 
 describe('delete rows (bulk) auth', () => {
-  const fresh = usingFreshProject();
+  const shared = usingSharedProject();
 
   runAuthMatrix({
     op: deleteRows,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: PROJECT_MUTATION_DENIAL_MATRIX,
     build: () => ({
-      fixture: fresh.fixture,
+      fixture: shared.fixture,
       params: {
-        revisionId: fresh.fixture.project.draftRevisionId,
-        tableId: fresh.fixture.project.tableId,
-        rowIds: [fresh.fixture.project.rowId],
+        revisionId: shared.fixture.project.draftRevisionId,
+        tableId: shared.fixture.project.tableId,
+        rowIds: [shared.fixture.project.rowId],
       },
     }),
   });

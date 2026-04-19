@@ -4,7 +4,7 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import { createFreshTestApp } from 'src/testing/e2e';
+import { getTestApp } from 'src/testing/e2e';
 import { AuthService } from 'src/features/auth/auth.service';
 
 const mcpPost = (app: INestApplication, body: object, token?: string) => {
@@ -60,7 +60,7 @@ describe('MCP URI parameter', () => {
   let token: string;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
     authService = app.get(AuthService);
   });
 

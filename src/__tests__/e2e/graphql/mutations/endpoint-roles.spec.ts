@@ -4,11 +4,7 @@ import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
 } from 'src/testing/utils/prepareProject';
-import {
-  createFreshTestApp,
-  gqlQuery,
-  gqlQueryExpectError,
-} from 'src/testing/e2e';
+import { getTestApp, gqlQuery, gqlQueryExpectError } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 describe('graphql - endpoint mutations (role-based)', () => {
@@ -16,7 +12,7 @@ describe('graphql - endpoint mutations (role-based)', () => {
   let prismaService: PrismaService;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
     prismaService = app.get(PrismaService);
   });
 

@@ -85,28 +85,64 @@ const prepareOrganizationUser = async (
   };
 };
 
+const prepareStandaloneOrgWithOwner = async (app: INestApplication) => {
+  const prismaService = app.get(PrismaService);
+  const organizationId = `org-${nanoid()}`;
+  await prismaService.organization.create({
+    data: { id: organizationId, createdId: nanoid() },
+  });
+  const user = await prepareOrganizationUser(
+    app,
+    organizationId,
+    UserRole.organizationOwner,
+  );
+  return { organizationId, owner: user };
+};
+
 export const prepareData = async (
   app: INestApplication,
-  options?: { createLinkedTable?: boolean },
+  options?: { createLinkedTable?: boolean; fullAnotherProject?: boolean },
 ) => {
   const prismaService = app.get(PrismaService);
 
-  const project = await prepareProject(prismaService, options);
-  const anotherProject = await prepareProject(prismaService, options);
+  if (options?.fullAnotherProject) {
+    const [project, anotherProject] = await Promise.all([
+      prepareProject(prismaService, options),
+      prepareProject(prismaService, options),
+    ]);
+
+    const [owner, anotherOwner] = await Promise.all([
+      prepareOrganizationUser(
+        app,
+        project.organizationId,
+        UserRole.organizationOwner,
+      ),
+      prepareOrganizationUser(
+        app,
+        anotherProject.organizationId,
+        UserRole.organizationOwner,
+      ),
+    ]);
+
+    return { project, owner, anotherProject, anotherOwner };
+  }
+
+  const [project, anotherOrgOwner] = await Promise.all([
+    prepareProject(prismaService, options),
+    prepareStandaloneOrgWithOwner(app),
+  ]);
+
+  const owner = await prepareOrganizationUser(
+    app,
+    project.organizationId,
+    UserRole.organizationOwner,
+  );
 
   return {
     project,
-    owner: await prepareOrganizationUser(
-      app,
-      project.organizationId,
-      UserRole.organizationOwner,
-    ),
-    anotherProject,
-    anotherOwner: await prepareOrganizationUser(
-      app,
-      anotherProject.organizationId,
-      UserRole.organizationOwner,
-    ),
+    owner,
+    anotherProject: null,
+    anotherOwner: anotherOrgOwner.owner,
   };
 };
 
@@ -158,59 +194,49 @@ export async function prepareBranch(source: PrismaOrContainer) {
     },
   });
 
-  // schema table
-
   const schemaTableVersionId = nanoid();
   const schemaTableCreatedId = nanoid();
-
-  await prismaService.table.create({
-    data: {
-      id: SystemTables.Schema,
-      versionId: schemaTableVersionId,
-      createdId: schemaTableCreatedId,
-      readonly: true,
-      system: true,
-      revisions: {
-        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
-      },
-    },
-  });
-
-  // shared schemas table
-
   const sharedSchemasTableVersionId = nanoid();
   const sharedSchemasTableCreatedId = nanoid();
-
-  await prismaService.table.create({
-    data: {
-      id: SystemTables.SharedSchemas,
-      versionId: sharedSchemasTableVersionId,
-      createdId: sharedSchemasTableCreatedId,
-      readonly: true,
-      system: true,
-      revisions: {
-        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
-      },
-    },
-  });
-
-  // migration table
-
   const migrationTableVersionId = nanoid();
   const migrationTableCreatedId = nanoid();
 
-  await prismaService.table.create({
-    data: {
-      id: SystemTables.Migration,
-      versionId: migrationTableVersionId,
-      createdId: migrationTableCreatedId,
-      readonly: true,
-      system: true,
-      revisions: {
-        connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+  const revisionConnect = {
+    connect: [{ id: headRevisionId }, { id: draftRevisionId }],
+  };
+
+  await Promise.all([
+    prismaService.table.create({
+      data: {
+        id: SystemTables.Schema,
+        versionId: schemaTableVersionId,
+        createdId: schemaTableCreatedId,
+        readonly: true,
+        system: true,
+        revisions: revisionConnect,
       },
-    },
-  });
+    }),
+    prismaService.table.create({
+      data: {
+        id: SystemTables.SharedSchemas,
+        versionId: sharedSchemasTableVersionId,
+        createdId: sharedSchemasTableCreatedId,
+        readonly: true,
+        system: true,
+        revisions: revisionConnect,
+      },
+    }),
+    prismaService.table.create({
+      data: {
+        id: SystemTables.Migration,
+        versionId: migrationTableVersionId,
+        createdId: migrationTableCreatedId,
+        readonly: true,
+        system: true,
+        revisions: revisionConnect,
+      },
+    }),
+  ]);
 
   return {
     organizationId,
@@ -241,45 +267,34 @@ async function prepareEndpoint({
   const headEndpointId = nanoid();
   const draftEndpointId = nanoid();
 
-  // endpoint
-  await prismaService.endpoint.create({
-    data: {
-      id: headEndpointId,
-      revision: {
-        connect: {
-          id: headRevisionId,
-        },
-      },
-      type: 'REST_API',
-      version: {
-        connect: {
-          type_version: {
-            type: 'REST_API',
-            version: 1,
+  // Both endpoints are independent (different revisions, different types),
+  // so run their inserts in parallel.
+  await Promise.all([
+    prismaService.endpoint.create({
+      data: {
+        id: headEndpointId,
+        revision: { connect: { id: headRevisionId } },
+        type: 'REST_API',
+        version: {
+          connect: {
+            type_version: { type: 'REST_API', version: 1 },
           },
         },
       },
-    },
-  });
-  await prismaService.endpoint.create({
-    data: {
-      id: draftEndpointId,
-      revision: {
-        connect: {
-          id: draftRevisionId,
-        },
-      },
-      type: 'GRAPHQL',
-      version: {
-        connect: {
-          type_version: {
-            type: 'GRAPHQL',
-            version: 1,
+    }),
+    prismaService.endpoint.create({
+      data: {
+        id: draftEndpointId,
+        revision: { connect: { id: draftRevisionId } },
+        type: 'GRAPHQL',
+        version: {
+          connect: {
+            type_version: { type: 'GRAPHQL', version: 1 },
           },
         },
       },
-    },
-  });
+    }),
+  ]);
 
   return {
     headEndpointId,
@@ -310,63 +325,9 @@ export async function prepareTableWithSchema({
   const headTableVersionId = nanoid();
   const draftTableVersionId = nanoid();
 
-  // table
-  await prismaService.table.create({
-    data: {
-      id: tableId,
-      createdId: tableCreatedId,
-      versionId: headTableVersionId,
-      readonly: true,
-      revisions: {
-        connect: { id: headRevisionId },
-      },
-    },
-  });
-  await prismaService.table.create({
-    data: {
-      id: tableId,
-      createdId: tableCreatedId,
-      versionId: draftTableVersionId,
-      readonly: false,
-      revisions: {
-        connect: { id: draftRevisionId },
-      },
-    },
-  });
-
-  // schema for table in SystemTable.schema
-  await prismaService.row.create({
-    data: {
-      id: tableId,
-      versionId: schemaRowVersionId,
-      createdId: createdIdForTableInSchemaTable,
-      readonly: true,
-      tables: {
-        connect: {
-          versionId: schemaTableVersionId,
-        },
-      },
-      data: schema,
-      meta: [
-        {
-          patches: [
-            {
-              op: 'add',
-              path: '',
-              value: schema,
-            } as JsonPatchAdd,
-          ],
-          hash: hash(schema),
-          date: new Date(),
-        },
-      ],
-      hash: hash(schema),
-      schemaHash: hash(metaSchema),
-    },
-  });
-
-  // migration
-
+  // Head table, draft table, schema row, migration row are mutually
+  // independent (different IDs, different FKs, no cross-references), so
+  // we can run all four inserts in parallel.
   const migration: InitMigration = {
     changeType: 'init',
     id: '2025-01-01T00:00:00Z',
@@ -375,23 +336,64 @@ export async function prepareTableWithSchema({
     schema,
   };
 
-  await prismaService.row.create({
-    data: {
-      id: migration.id,
-      versionId: migrationRowVersionId,
-      createdId: nanoid(),
-      readonly: true,
-      tables: {
-        connect: {
-          versionId: migrationTableVersionId,
-        },
+  await Promise.all([
+    prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: headTableVersionId,
+        readonly: true,
+        revisions: { connect: { id: headRevisionId } },
       },
-      data: migration,
-      hash: hash(migration),
-      schemaHash: hash(tableMigrationsSchema),
-      publishedAt: migration.id,
-    },
-  });
+    }),
+    prismaService.table.create({
+      data: {
+        id: tableId,
+        createdId: tableCreatedId,
+        versionId: draftTableVersionId,
+        readonly: false,
+        revisions: { connect: { id: draftRevisionId } },
+      },
+    }),
+    prismaService.row.create({
+      data: {
+        id: tableId,
+        versionId: schemaRowVersionId,
+        createdId: createdIdForTableInSchemaTable,
+        readonly: true,
+        tables: { connect: { versionId: schemaTableVersionId } },
+        data: schema,
+        meta: [
+          {
+            patches: [
+              {
+                op: 'add',
+                path: '',
+                value: schema,
+              } as JsonPatchAdd,
+            ],
+            hash: hash(schema),
+            date: new Date(),
+          },
+        ],
+        hash: hash(schema),
+        schemaHash: hash(metaSchema),
+      },
+    }),
+    prismaService.row.create({
+      data: {
+        id: migration.id,
+        versionId: migrationRowVersionId,
+        createdId: nanoid(),
+        readonly: true,
+        tables: { connect: { versionId: migrationTableVersionId } },
+        data: migration,
+        hash: hash(migration),
+        schemaHash: hash(tableMigrationsSchema),
+        publishedAt: migration.id,
+      },
+    }),
+  ]);
 
   return {
     schemaRowVersionId,
@@ -487,6 +489,15 @@ export const prepareProject = async (
     schemaTableVersionId,
     migrationTableVersionId,
   } = prepareBranchResult;
+
+  // Endpoint only depends on revisions, so it runs in parallel with the
+  // table → row chain below.
+  const endpointPromise = prepareEndpoint({
+    prismaService,
+    headRevisionId,
+    draftRevisionId,
+  });
+
   const resultPrepareTableWithSchema = await prepareTableWithSchema({
     prismaService,
     headRevisionId,
@@ -534,11 +545,7 @@ export const prepareProject = async (
     });
   }
 
-  const prepareEndpointResult = await prepareEndpoint({
-    prismaService,
-    headRevisionId,
-    draftRevisionId,
-  });
+  const prepareEndpointResult = await endpointPromise;
 
   return {
     ...prepareBranchResult,
@@ -667,44 +674,41 @@ export const prepareDataWithRoles = async (
 ) => {
   const prismaService = app.get(PrismaService);
 
-  const project = await prepareProject(prismaService, options);
+  // The main project and the standalone org+user for `crossOwner` are
+  // independent — build them in parallel.
+  const [project, anotherOrgOwner] = await Promise.all([
+    prepareProject(prismaService, options),
+    prepareStandaloneOrgWithOwner(app),
+  ]);
 
-  const owner = await prepareOrganizationUser(
-    app,
-    project.organizationId,
-    UserRole.organizationOwner,
-  );
-
-  const developer = await prepareProjectUser(
-    app,
-    project.organizationId,
-    project.projectId,
-    UserOrganizationRoles.developer,
-    UserProjectRoles.developer,
-  );
-
-  const editor = await prepareProjectUser(
-    app,
-    project.organizationId,
-    project.projectId,
-    UserOrganizationRoles.editor,
-    UserProjectRoles.editor,
-  );
-
-  const reader = await prepareProjectUser(
-    app,
-    project.organizationId,
-    project.projectId,
-    UserOrganizationRoles.reader,
-    UserProjectRoles.reader,
-  );
-
-  const anotherProject = await prepareProject(prismaService, options);
-  const anotherOwner = await prepareOrganizationUser(
-    app,
-    anotherProject.organizationId,
-    UserRole.organizationOwner,
-  );
+  const [owner, developer, editor, reader] = await Promise.all([
+    prepareOrganizationUser(
+      app,
+      project.organizationId,
+      UserRole.organizationOwner,
+    ),
+    prepareProjectUser(
+      app,
+      project.organizationId,
+      project.projectId,
+      UserOrganizationRoles.developer,
+      UserProjectRoles.developer,
+    ),
+    prepareProjectUser(
+      app,
+      project.organizationId,
+      project.projectId,
+      UserOrganizationRoles.editor,
+      UserProjectRoles.editor,
+    ),
+    prepareProjectUser(
+      app,
+      project.organizationId,
+      project.projectId,
+      UserOrganizationRoles.reader,
+      UserProjectRoles.reader,
+    ),
+  ]);
 
   return {
     project,
@@ -712,8 +716,8 @@ export const prepareDataWithRoles = async (
     developer,
     editor,
     reader,
-    anotherProject,
-    anotherOwner,
+    anotherProject: null,
+    anotherOwner: anotherOrgOwner.owner,
   };
 };
 

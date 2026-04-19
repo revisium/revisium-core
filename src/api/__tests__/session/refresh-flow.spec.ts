@@ -5,7 +5,7 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import { createFreshTestApp, anonPost } from 'src/testing/e2e';
+import { getTestApp, anonPost } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 type SetCookieHeader = string[] | string | undefined;
@@ -83,7 +83,7 @@ describe('restapi - auth cookie flow', () => {
   let fixture: PrepareDataReturnType;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {

@@ -4,7 +4,7 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import { createFreshTestApp } from 'src/testing/e2e';
+import { getTestApp } from 'src/testing/e2e';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
 const CREATE_PERSONAL_API_KEY = `
@@ -100,7 +100,7 @@ describe('API Key Management (e2e)', () => {
   let prismaService: PrismaService;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
     prismaService = app.get(PrismaService);
   });
 
@@ -120,7 +120,7 @@ describe('API Key Management (e2e)', () => {
     let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      preparedData = await prepareData(app);
+      preparedData = await prepareData(app, { fullAnotherProject: true });
     });
 
     it('should create a personal API key', async () => {
@@ -417,7 +417,7 @@ describe('API Key Management (e2e)', () => {
     let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      preparedData = await prepareData(app);
+      preparedData = await prepareData(app, { fullAnotherProject: true });
     });
 
     it('should authenticate with API key via Authorization: Bearer header', async () => {
@@ -527,7 +527,7 @@ describe('API Key Management (e2e)', () => {
     let preparedData: PrepareDataReturnType;
 
     beforeEach(async () => {
-      preparedData = await prepareData(app);
+      preparedData = await prepareData(app, { fullAnotherProject: true });
     });
 
     it('should allow access to scoped organization', async () => {
@@ -568,7 +568,7 @@ describe('API Key Management (e2e)', () => {
 
       const apiKey = createResponse.body.data.createPersonalApiKey.secret;
 
-      const rowUrl = `/api/revision/${preparedData.anotherProject.draftRevisionId}/tables/${preparedData.anotherProject.tableId}/rows/${preparedData.anotherProject.rowId}`;
+      const rowUrl = `/api/revision/${preparedData.anotherProject!.draftRevisionId}/tables/${preparedData.anotherProject!.tableId}/rows/${preparedData.anotherProject!.rowId}`;
 
       await request(app.getHttpServer())
         .get(rowUrl)
@@ -614,7 +614,7 @@ describe('API Key Management (e2e)', () => {
 
       const apiKey = createResponse.body.data.createPersonalApiKey.secret;
 
-      const rowUrl = `/api/revision/${preparedData.anotherProject.draftRevisionId}/tables/${preparedData.anotherProject.tableId}/rows/${preparedData.anotherProject.rowId}`;
+      const rowUrl = `/api/revision/${preparedData.anotherProject!.draftRevisionId}/tables/${preparedData.anotherProject!.tableId}/rows/${preparedData.anotherProject!.rowId}`;
 
       await request(app.getHttpServer())
         .get(rowUrl)

@@ -4,17 +4,13 @@ import {
   prepareDataWithRoles,
   PrepareDataWithRolesReturnType,
 } from 'src/testing/utils/prepareProject';
-import {
-  createFreshTestApp,
-  gqlQuery,
-  gqlQueryExpectError,
-} from 'src/testing/e2e';
+import { getTestApp, gqlQuery, gqlQueryExpectError } from 'src/testing/e2e';
 
 describe('graphql - branch mutations (role-based)', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {

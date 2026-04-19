@@ -15,7 +15,12 @@ export async function getReadonlyFixture(
     return cachedFixture;
   }
 
-  cachedFixture = await prepareData(app, { createLinkedTable: true });
+  cachedFixture = await prepareData(app, {
+    createLinkedTable: true,
+    // internal-api-key.spec.ts reads anotherProject.* for cross-project
+    // access checks; need the full second project here.
+    fullAnotherProject: true,
+  });
 
   return cachedFixture;
 }

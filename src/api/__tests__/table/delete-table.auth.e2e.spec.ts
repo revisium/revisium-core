@@ -2,9 +2,9 @@ import { gql } from 'src/testing/utils/gql';
 import {
   operation,
   runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
+  PROJECT_MUTATION_DENIAL_MATRIX,
 } from 'src/testing/kit/auth-permission';
-import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+import { usingSharedProject } from 'src/testing/scenarios/using-shared-project';
 
 const deleteTable = operation<{ revisionId: string; tableId: string }>({
   id: 'table.delete',
@@ -28,16 +28,16 @@ const deleteTable = operation<{ revisionId: string; tableId: string }>({
 });
 
 describe('delete table auth', () => {
-  const fresh = usingFreshProject();
+  const shared = usingSharedProject();
 
   runAuthMatrix({
     op: deleteTable,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: PROJECT_MUTATION_DENIAL_MATRIX,
     build: () => ({
-      fixture: fresh.fixture,
+      fixture: shared.fixture,
       params: {
-        revisionId: fresh.fixture.project.draftRevisionId,
-        tableId: fresh.fixture.project.tableId,
+        revisionId: shared.fixture.project.draftRevisionId,
+        tableId: shared.fixture.project.tableId,
       },
     }),
   });

@@ -3,18 +3,13 @@ import {
   prepareData,
   PrepareDataReturnType,
 } from 'src/testing/utils/prepareProject';
-import {
-  createFreshTestApp,
-  anonPost,
-  authPost,
-  authPut,
-} from 'src/testing/e2e';
+import { getTestApp, anonPost, authPost, authPut } from 'src/testing/e2e';
 
 describe('restapi - auth', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
   });
 
   afterAll(async () => {

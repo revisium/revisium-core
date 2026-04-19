@@ -1,9 +1,9 @@
 import {
   operation,
   runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
+  PROJECT_MUTATION_DENIAL_MATRIX,
 } from 'src/testing/kit/auth-permission';
-import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+import { usingSharedProject } from 'src/testing/scenarios/using-shared-project';
 
 // REST-only here; GQL exposes branch.createRevision via the mutation
 // bound to CreateBranchInput (tested in create-branch spec).
@@ -21,17 +21,17 @@ const createRevision = operation<{
 });
 
 describe('create revision (commit) auth', () => {
-  const fresh = usingFreshProject();
+  const shared = usingSharedProject();
 
   runAuthMatrix({
     op: createRevision,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: PROJECT_MUTATION_DENIAL_MATRIX,
     build: () => ({
-      fixture: fresh.fixture,
+      fixture: shared.fixture,
       params: {
-        organizationId: fresh.fixture.project.organizationId,
-        projectName: fresh.fixture.project.projectName,
-        branchName: fresh.fixture.project.branchName,
+        organizationId: shared.fixture.project.organizationId,
+        projectName: shared.fixture.project.projectName,
+        branchName: shared.fixture.project.branchName,
       },
     }),
   });

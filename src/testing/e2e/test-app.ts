@@ -5,9 +5,12 @@ import * as promClient from 'prom-client';
 import { CoreModule } from 'src/core/core.module';
 import { registerGraphqlEnums } from 'src/api/graphql-api/registerGraphqlEnums';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { readSharedAppInfo } from './shared-app/shared-app-info';
+import { getSharedTestApp } from './shared-app/shared-app-client';
 
 let cachedApp: INestApplication | null = null;
 let cachedPrismaService: PrismaService | null = null;
+let cachedAppIsShared = false;
 
 async function buildApp(): Promise<INestApplication> {
   registerGraphqlEnums();
@@ -18,11 +21,7 @@ async function buildApp(): Promise<INestApplication> {
 
   const app = moduleFixture.createNestApplication();
   app.use(cookieParser());
-  app.useGlobalPipes(
-    new ValidationPipe({
-      transform: true,
-    }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ transform: true }));
 
   await app.init();
 
@@ -30,13 +29,40 @@ async function buildApp(): Promise<INestApplication> {
 }
 
 export async function getTestApp(): Promise<INestApplication> {
-  if (cachedApp) {
+  if (cachedApp) return cachedApp;
+
+  const sharedInfo = readSharedAppInfo();
+  if (sharedInfo) {
+    cachedApp = getSharedTestApp();
+    cachedPrismaService = cachedApp.get(PrismaService);
+    cachedAppIsShared = true;
     return cachedApp;
   }
 
   cachedApp = await buildApp();
   cachedPrismaService = cachedApp.get(PrismaService);
+  cachedAppIsShared = false;
+  return cachedApp;
+}
 
+/**
+ * Builds a full in-process Nest app. Use for specs that resolve
+ * non-stub services via `app.get()` or override providers.
+ */
+export async function getFullTestApp(): Promise<INestApplication> {
+  if (cachedApp && !cachedAppIsShared) return cachedApp;
+  if (cachedApp && cachedAppIsShared) {
+    try {
+      await cachedApp.close();
+    } catch {
+      // ignore
+    }
+    cachedApp = null;
+    cachedPrismaService = null;
+  }
+  cachedApp = await buildApp();
+  cachedPrismaService = cachedApp.get(PrismaService);
+  cachedAppIsShared = false;
   return cachedApp;
 }
 
@@ -56,12 +82,8 @@ export async function closeTestApp(): Promise<void> {
 }
 
 export async function createFreshTestApp(): Promise<INestApplication> {
-  // Clear the prom-client default registry before rebuilding CoreModule in
-  // the same Node process so GraphqlMetricsService / RestMetricsService can
-  // re-register their histograms and counters without hitting "metric
-  // already registered". Scoped to createFreshTestApp so a cached getTestApp
-  // (called in the same worker) does not get its metrics wiped by a later
-  // fresh app build.
+  // Prom-client's default registry is process-global; without clearing,
+  // rebuilding CoreModule throws "metric already registered".
   promClient.register.clear();
   return buildApp();
 }

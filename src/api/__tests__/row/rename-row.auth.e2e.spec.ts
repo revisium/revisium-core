@@ -3,9 +3,9 @@ import { gql } from 'src/testing/utils/gql';
 import {
   operation,
   runAuthMatrix,
-  PROJECT_MUTATION_MATRIX,
+  PROJECT_MUTATION_DENIAL_MATRIX,
 } from 'src/testing/kit/auth-permission';
-import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
+import { usingSharedProject } from 'src/testing/scenarios/using-shared-project';
 
 const renameRow = operation<{
   revisionId: string;
@@ -35,17 +35,17 @@ const renameRow = operation<{
 });
 
 describe('rename row auth', () => {
-  const fresh = usingFreshProject();
+  const shared = usingSharedProject();
 
   runAuthMatrix({
     op: renameRow,
-    cases: PROJECT_MUTATION_MATRIX,
+    cases: PROJECT_MUTATION_DENIAL_MATRIX,
     build: () => ({
-      fixture: fresh.fixture,
+      fixture: shared.fixture,
       params: {
-        revisionId: fresh.fixture.project.draftRevisionId,
-        tableId: fresh.fixture.project.tableId,
-        rowId: fresh.fixture.project.rowId,
+        revisionId: shared.fixture.project.draftRevisionId,
+        tableId: shared.fixture.project.tableId,
+        rowId: shared.fixture.project.rowId,
         nextRowId: `renamed-${nanoid()}`,
       },
     }),

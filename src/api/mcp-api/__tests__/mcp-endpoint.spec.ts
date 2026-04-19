@@ -1,7 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { prepareData } from 'src/testing/utils/prepareProject';
-import { createFreshTestApp } from 'src/testing/e2e';
+import { getTestApp } from 'src/testing/e2e';
 import { AuthService } from 'src/features/auth/auth.service';
 
 interface McpToolResult {
@@ -51,7 +51,7 @@ describe('mcp-api - endpoint tools', () => {
   let authService: AuthService;
 
   beforeAll(async () => {
-    app = await createFreshTestApp();
+    app = await getTestApp();
     authService = app.get(AuthService);
   });
 

@@ -17,6 +17,18 @@ export const PROJECT_MUTATION_MATRIX: AuthMatrixCaseBase[] = [
 /** Mutation at org scope — same shape as project mutations. */
 export const ORG_MUTATION_MATRIX = PROJECT_MUTATION_MATRIX;
 
+/**
+ * Denial-only subset of PROJECT_MUTATION_MATRIX. The owner-allowed case
+ * actually runs the mutation (DB write, slow), so when the happy path
+ * is already covered elsewhere (e.g. draft-roles.spec.ts) we use this
+ * to verify just the guard behavior. Pairs naturally with
+ * `usingSharedProject()` since no case mutates state.
+ */
+export const PROJECT_MUTATION_DENIAL_MATRIX: AuthMatrixCaseBase[] = [
+  { name: 'cross-owner', role: 'crossOwner', expected: 'forbidden' },
+  { name: 'anonymous', role: 'anonymous', expected: 'unauthorized' },
+];
+
 export type ProjectVisibility = 'private' | 'public';
 
 export interface ProjectVisibilityCase extends AuthMatrixCaseBase {
