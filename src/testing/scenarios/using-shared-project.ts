@@ -9,16 +9,9 @@ export interface SharedProjectHandle {
 }
 
 /**
- * Registers a `beforeAll` that seeds one project via `prepareData` and
- * reuses it across every test in the enclosing describe block.
- *
- * Use this in **read-only** or **denial-only** auth specs (e.g. cases
- * from `PROJECT_VISIBILITY_MATRIX` or just cross-owner/anonymous on any
- * mutation endpoint) — the fixture isn't mutated, so a single seeding
- * is enough.
- *
- * For specs where any case mutates state (e.g. owner-allowed running a
- * DELETE), keep `usingFreshProject()` so each test gets a clean slate.
+ * `beforeAll`-based fixture for describe blocks whose cases never
+ * mutate state (read-only or denial-only auth checks). For mutation
+ * specs use `usingFreshProject()` so each case gets a clean slate.
  */
 export function usingSharedProject(): SharedProjectHandle {
   let current: PrepareDataReturnType | null = null;

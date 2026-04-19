@@ -19,9 +19,6 @@ jobs:
       run:
         shell: bash
 
-    # Service containers boot in parallel with the earlier job steps (checkout,
-    # npm ci, lint, tsc), so by the time we need them they're already warm.
-    # This replaces the sequential `docker compose up` cost.
     services:
       postgres:
         image: postgres:15.4
@@ -82,7 +79,7 @@ jobs:
 
       - run: npm run tsc
 
-      - name: Apply migrations + seed (pg service container is warm by now)
+      - name: Apply migrations + seed
         run: |
           npx dotenv-cli -e .env.test -- npm run prisma:migrate:deploy
           npx dotenv-cli -e .env.test -- npm run seed

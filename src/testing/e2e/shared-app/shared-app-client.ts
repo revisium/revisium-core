@@ -12,8 +12,6 @@ interface CachedResources {
   info: SharedAppInfo;
 }
 
-// Per-file cache — each test file gets a fresh module registry, so this
-// holds resources for just one file's tests.
 let cached: CachedResources | null = null;
 
 function getInfo(): SharedAppInfo {
@@ -33,11 +31,6 @@ const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 5);
 function getPrismaClient(): PrismaClient {
   const info = getInfo();
   if (cached && cached.prisma) return cached.prisma;
-  if (process.env.DEBUG_TEST_APP) {
-    console.log(
-      `[testApp] new PrismaClient pid=${process.pid} wid=${process.env.JEST_WORKER_ID ?? '-'}`,
-    );
-  }
   const adapter = new PrismaPg({
     connectionString: process.env.DATABASE_URL,
     max: STUB_POOL_MAX,
@@ -47,11 +40,6 @@ function getPrismaClient(): PrismaClient {
   return prisma;
 }
 
-/**
- * Minimal AuthService stub — only `login` is used by the test kit (to
- * mint an access token for `prepareOrganizationUser`). Signs the JWT
- * directly with the same secret the shared app is running with.
- */
 function makeFakeAuthService(): Pick<AuthService, 'login'> {
   return {
     login: (payload) => sign(payload as object, getInfo().jwtSecret),
@@ -64,11 +52,7 @@ function makeFakeHttpServer(port: number): {
   close: () => unknown;
 } {
   return {
-    address: () => ({
-      port,
-      address: '127.0.0.1',
-      family: 'IPv4',
-    }),
+    address: () => ({ port, address: '127.0.0.1', family: 'IPv4' }),
     listen() {
       return this;
     },
@@ -79,13 +63,10 @@ function makeFakeHttpServer(port: number): {
 }
 
 /**
- * Returns an `INestApplication`-compatible stub that routes HTTP calls to the
- * shared Nest app started in `globalSetup`, and provides lightweight
- * per-worker replacements for the small set of providers the test kit
- * resolves in-process (Prisma, AuthService).
- *
- * Test files that need the full Nest DI graph (overrideProvider, private
- * services) should call `getFullTestApp()` instead.
+ * `INestApplication`-compatible stub that routes HTTP to the shared
+ * Nest app started in globalSetup. Resolves PrismaService and
+ * AuthService in-process for the test kit; any other provider throws
+ * with a hint to switch to `getFullTestApp()`.
  */
 export function getSharedTestApp(): INestApplication {
   const info = getInfo();
@@ -103,13 +84,9 @@ export function getSharedTestApp(): INestApplication {
       );
     },
     close: async () => {
-      if (cached?.prisma) {
-        await cached.prisma.$disconnect();
-      }
+      if (cached?.prisma) await cached.prisma.$disconnect();
     },
-    init: async () => {
-      // no-op — app is already initialized in globalSetup
-    },
+    init: async () => {},
     use: () => stub,
     useGlobalPipes: () => stub,
   };
