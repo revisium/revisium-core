@@ -3,7 +3,7 @@ import { AddressInfo } from 'node:net';
 import * as dotenv from 'dotenv';
 import { nanoid } from 'nanoid';
 import { register as registerTsconfigPaths } from 'tsconfig-paths';
-import { writeSharedAppInfo } from './shared-app-info';
+import { acquireRunLock, writeSharedAppInfo } from './shared-app-info';
 
 // Jest runs globalSetup outside its transform pipeline, so the
 // `src/*` aliases used below have to be registered manually.
@@ -17,6 +17,8 @@ registerTsconfigPaths({
 
 export default async function globalSetup(): Promise<void> {
   dotenv.config({ path: '.env.test' });
+
+  acquireRunLock();
 
   if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = nanoid();

@@ -34,6 +34,8 @@ const STUB_POOL_MAX = (() => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
 })();
 
+let beforeExitRegistered = false;
+
 function getPrismaClient(): PrismaClient {
   const info = getInfo();
   if (cached && cached.prisma) return cached.prisma;
@@ -43,6 +45,22 @@ function getPrismaClient(): PrismaClient {
   });
   const prisma = new PrismaClient({ adapter });
   cached = { info, prisma };
+
+  // Belt-and-suspenders: even if no afterAll ever calls app.close(),
+  // drain the pool on worker exit so jest doesn't print the
+  // "did not exit one second after…" open-handle warning.
+  if (!beforeExitRegistered) {
+    beforeExitRegistered = true;
+    process.once('beforeExit', async () => {
+      if (cached?.prisma) {
+        try {
+          await cached.prisma.$disconnect();
+        } catch {
+          // ignore
+        }
+      }
+    });
+  }
   return prisma;
 }
 
@@ -89,11 +107,16 @@ export function getSharedTestApp(): INestApplication {
           `Use getFullTestApp() in this spec if you need full in-process DI access.`,
       );
     },
-    // Intentional no-op. The cached PrismaClient is reused across
-    // every file that runs in the same worker; disconnecting it on
-    // any one spec's afterAll would break the following specs in
-    // that worker. Connections close when the worker process exits.
-    close: async () => {},
+    // Release the per-worker client and clear the cache so the next
+    // spec in the worker gets a fresh one (vs. a disconnected stale
+    // reference).
+    close: async () => {
+      if (cached?.prisma) {
+        const prisma = cached.prisma;
+        cached.prisma = null;
+        await prisma.$disconnect();
+      }
+    },
     init: async () => {},
     use: () => stub,
     useGlobalPipes: () => stub,
