@@ -29,7 +29,10 @@ function getInfo(): SharedAppInfo {
 // Jest creates a fresh PrismaClient per test file and never disposes
 // the previous one; keep the pool small so accumulated per-file pools
 // don't exhaust pg's max_connections at higher worker counts.
-const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 3);
+const STUB_POOL_MAX = (() => {
+  const parsed = Number(process.env.TEST_PG_POOL_MAX);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+})();
 
 function getPrismaClient(): PrismaClient {
   const info = getInfo();
@@ -86,9 +89,11 @@ export function getSharedTestApp(): INestApplication {
           `Use getFullTestApp() in this spec if you need full in-process DI access.`,
       );
     },
-    close: async () => {
-      if (cached?.prisma) await cached.prisma.$disconnect();
-    },
+    // Intentional no-op. The cached PrismaClient is reused across
+    // every file that runs in the same worker; disconnecting it on
+    // any one spec's afterAll would break the following specs in
+    // that worker. Connections close when the worker process exits.
+    close: async () => {},
     init: async () => {},
     use: () => stub,
     useGlobalPipes: () => stub,
