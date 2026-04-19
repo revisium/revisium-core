@@ -55,7 +55,7 @@ export async function getFullTestApp(): Promise<INestApplication> {
     try {
       await cachedApp.close();
     } catch {
-      // best effort
+      // ignore
     }
     cachedApp = null;
     cachedPrismaService = null;

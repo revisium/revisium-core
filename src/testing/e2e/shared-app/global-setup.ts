@@ -56,8 +56,6 @@ export default async function globalSetup(): Promise<void> {
   }
   writeSharedAppInfo({ port, jwtSecret });
 
-  // globalTeardown runs in the same main process, so hand the app off
-  // through globalThis rather than rebuilding state from the tempfile.
   (globalThis as Record<string, unknown>).__revisiumSharedApp = app;
 
   console.log(`[sharedApp] listening on port ${port}`);
