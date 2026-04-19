@@ -141,7 +141,7 @@ export const prepareData = async (
   return {
     project,
     owner,
-    anotherProject: null as unknown as PrepareProjectReturnType,
+    anotherProject: null,
     anotherOwner: anotherOrgOwner.owner,
   };
 };
@@ -716,7 +716,7 @@ export const prepareDataWithRoles = async (
     developer,
     editor,
     reader,
-    anotherProject: null as unknown as PrepareProjectReturnType,
+    anotherProject: null,
     anotherOwner: anotherOrgOwner.owner,
   };
 };

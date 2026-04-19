@@ -1,3 +1,4 @@
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { AddressInfo } from 'node:net';
 import * as dotenv from 'dotenv';
@@ -17,6 +18,14 @@ registerTsconfigPaths({
 
 export default async function globalSetup(): Promise<void> {
   dotenv.config({ path: '.env.test' });
+
+  // Namespace the handoff file per run; workers read it via env.
+  if (!process.env.REVISIUM_TEST_APP_INFO_FILE) {
+    process.env.REVISIUM_TEST_APP_INFO_FILE = path.join(
+      os.tmpdir(),
+      `revisium-test-shared-app-${process.pid}-${nanoid(8)}.json`,
+    );
+  }
 
   if (!process.env.JWT_SECRET) {
     process.env.JWT_SECRET = nanoid();

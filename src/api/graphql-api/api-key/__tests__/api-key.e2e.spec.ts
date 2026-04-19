@@ -568,7 +568,7 @@ describe('API Key Management (e2e)', () => {
 
       const apiKey = createResponse.body.data.createPersonalApiKey.secret;
 
-      const rowUrl = `/api/revision/${preparedData.anotherProject.draftRevisionId}/tables/${preparedData.anotherProject.tableId}/rows/${preparedData.anotherProject.rowId}`;
+      const rowUrl = `/api/revision/${preparedData.anotherProject!.draftRevisionId}/tables/${preparedData.anotherProject!.tableId}/rows/${preparedData.anotherProject!.rowId}`;
 
       await request(app.getHttpServer())
         .get(rowUrl)
@@ -614,7 +614,7 @@ describe('API Key Management (e2e)', () => {
 
       const apiKey = createResponse.body.data.createPersonalApiKey.secret;
 
-      const rowUrl = `/api/revision/${preparedData.anotherProject.draftRevisionId}/tables/${preparedData.anotherProject.tableId}/rows/${preparedData.anotherProject.rowId}`;
+      const rowUrl = `/api/revision/${preparedData.anotherProject!.draftRevisionId}/tables/${preparedData.anotherProject!.tableId}/rows/${preparedData.anotherProject!.rowId}`;
 
       await request(app.getHttpServer())
         .get(rowUrl)

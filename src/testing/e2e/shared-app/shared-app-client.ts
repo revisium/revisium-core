@@ -26,10 +26,10 @@ function getInfo(): SharedAppInfo {
   return info;
 }
 
-// Kept small because jest creates a fresh PrismaClient per test file and
-// never closes the previous one. With mw=4 and 50+ files, a larger pool
-// would exhaust pg `max_connections`.
-const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 3);
+// Jest creates a fresh PrismaClient per test file and never disposes
+// the previous one; keep the pool small so accumulated per-file pools
+// don't exhaust pg's max_connections at higher worker counts.
+const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 5);
 
 function getPrismaClient(): PrismaClient {
   const info = getInfo();

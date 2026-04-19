@@ -171,13 +171,13 @@ describe('graphql - internal API key auth (readonly)', () => {
         `,
         variables: {
           data: {
-            organizationId: fixture.anotherProject.organizationId,
-            projectName: fixture.anotherProject.projectName,
+            organizationId: fixture.anotherProject!.organizationId,
+            projectName: fixture.anotherProject!.projectName,
           },
         },
       });
 
-      expect(result.project.id).toBe(fixture.anotherProject.projectId);
+      expect(result.project.id).toBe(fixture.anotherProject!.projectId);
     });
 
     it('can read another owner revision', async () => {
@@ -193,11 +193,11 @@ describe('graphql - internal API key auth (readonly)', () => {
           }
         `,
         variables: {
-          data: { revisionId: fixture.anotherProject.draftRevisionId },
+          data: { revisionId: fixture.anotherProject!.draftRevisionId },
         },
       });
 
-      expect(result.revision.id).toBe(fixture.anotherProject.draftRevisionId);
+      expect(result.revision.id).toBe(fixture.anotherProject!.draftRevisionId);
     });
 
     it('can read another owner row', async () => {
@@ -213,14 +213,14 @@ describe('graphql - internal API key auth (readonly)', () => {
         `,
         variables: {
           data: {
-            revisionId: fixture.anotherProject.draftRevisionId,
-            tableId: fixture.anotherProject.tableId,
-            rowId: fixture.anotherProject.rowId,
+            revisionId: fixture.anotherProject!.draftRevisionId,
+            tableId: fixture.anotherProject!.tableId,
+            rowId: fixture.anotherProject!.rowId,
           },
         },
       });
 
-      expect(result.row.id).toBe(fixture.anotherProject.rowId);
+      expect(result.row.id).toBe(fixture.anotherProject!.rowId);
     });
   });
 
