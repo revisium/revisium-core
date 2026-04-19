@@ -69,7 +69,7 @@ jobs:
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: node_modules
-          key: node-modules-${{ runner.os }}-node24.11.1-${{ hashFiles('package-lock.json') }}
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
 
       - if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: |
