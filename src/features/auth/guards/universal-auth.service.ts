@@ -171,7 +171,10 @@ export class UniversalAuthService {
       }
       return user;
     }
-    return this.buildInternalKeyUser(apiKey);
+    if (apiKey.type === ApiKeyType.INTERNAL) {
+      return this.buildInternalKeyUser(apiKey);
+    }
+    throw new UnauthorizedException('Unsupported API key type');
   }
 
   private async buildPersonalKeyUser(
