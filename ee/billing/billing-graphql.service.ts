@@ -102,9 +102,9 @@ export class BillingGraphqlService implements IBillingGraphqlService {
     }
 
     const limit =
-      options?.endpointLimit !== undefined
-        ? options.endpointLimit
-        : await this.getProjectEndpointLimit(organizationId);
+      options?.endpointLimit === undefined
+        ? await this.getProjectEndpointLimit(organizationId)
+        : options.endpointLimit;
     const current = await this.usageService.computeUsage(
       organizationId,
       LimitMetric.ENDPOINTS_PER_PROJECT,

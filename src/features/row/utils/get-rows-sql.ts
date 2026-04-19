@@ -27,9 +27,21 @@ const JSON_FIELDS = new Set(
     .map(([name]) => name),
 );
 
+type ClauseInput = WhereConditionsTyped<typeof DEFAULT_ROW_FIELDS>;
+
 function hasJsonFilterInClauses(clauses: unknown): boolean {
-  const arr = Array.isArray(clauses) ? clauses : clauses ? [clauses] : [];
+  const arr = toClauseArray(clauses);
   return arr.some((clause) => hasJsonFilter(clause));
+}
+
+function toClauseArray(clauses: unknown): (ClauseInput | undefined)[] {
+  if (Array.isArray(clauses)) {
+    return clauses as (ClauseInput | undefined)[];
+  }
+  if (clauses) {
+    return [clauses as ClauseInput];
+  }
+  return [];
 }
 
 export function hasJsonFilter(

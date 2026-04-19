@@ -147,6 +147,7 @@ export class RevisionTools implements McpToolRegistrar {
           branchName,
           comment,
         });
+        const resolvedComment = result.comment ?? comment;
         return {
           content: [
             {
@@ -155,11 +156,7 @@ export class RevisionTools implements McpToolRegistrar {
                 {
                   committed: true,
                   revisionId: result.id,
-                  ...(result.comment
-                    ? { comment: result.comment }
-                    : comment
-                      ? { comment }
-                      : {}),
+                  ...(resolvedComment ? { comment: resolvedComment } : {}),
                 },
                 null,
                 2,
