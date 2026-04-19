@@ -29,7 +29,7 @@ function getInfo(): SharedAppInfo {
 // Jest creates a fresh PrismaClient per test file and never disposes
 // the previous one; keep the pool small so accumulated per-file pools
 // don't exhaust pg's max_connections at higher worker counts.
-const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 5);
+const STUB_POOL_MAX = Number(process.env.TEST_PG_POOL_MAX ?? 3);
 
 function getPrismaClient(): PrismaClient {
   const info = getInfo();

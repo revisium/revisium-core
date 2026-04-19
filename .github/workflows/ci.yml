@@ -66,6 +66,13 @@ jobs:
 
       - run: npm ci
 
+      - name: Raise pg max_connections (restart service)
+        run: |
+          docker exec ${{ job.services.postgres.id }} \
+            psql -U prisma -d tests -c "ALTER SYSTEM SET max_connections = 500;"
+          docker restart ${{ job.services.postgres.id }}
+          until docker exec ${{ job.services.postgres.id }} pg_isready -U prisma -d tests; do sleep 1; done
+
       - name: Restore jest cache
         uses: actions/cache@v4
         with:

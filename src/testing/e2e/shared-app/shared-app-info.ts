@@ -1,14 +1,11 @@
 import * as fs from 'node:fs';
-import * as os from 'node:os';
 import * as path from 'node:path';
 
-// globalSetup owns the run and sets REVISIUM_TEST_APP_INFO_FILE before
-// any workers fork; workers inherit it through env. A fixed tmpdir
-// filename would let concurrent jest runs on the same host overwrite
-// each other's handoff.
-const FILE =
-  process.env.REVISIUM_TEST_APP_INFO_FILE ??
-  path.join(os.tmpdir(), `revisium-test-shared-app-${process.pid}.json`);
+// Project-local path (under .jest-cache/, which is gitignored) so
+// concurrent jest runs in different checkouts don't collide on a
+// shared /tmp filename, and so workers can compute the same path
+// without globalSetup having to forward it through env.
+const FILE = path.join(process.cwd(), '.jest-cache', 'shared-app.json');
 
 export interface SharedAppInfo {
   port: number;
@@ -16,6 +13,7 @@ export interface SharedAppInfo {
 }
 
 export function writeSharedAppInfo(info: SharedAppInfo): void {
+  fs.mkdirSync(path.dirname(FILE), { recursive: true });
   fs.writeFileSync(FILE, JSON.stringify(info), 'utf8');
 }
 
