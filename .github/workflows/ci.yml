@@ -19,35 +19,6 @@ jobs:
       run:
         shell: bash
 
-    services:
-      postgres:
-        image: postgres:15.4
-        env:
-          POSTGRES_USER: prisma
-          POSTGRES_PASSWORD: prisma
-          POSTGRES_DB: tests
-        ports:
-          - 5434:5432
-        options: >-
-          --health-cmd "pg_isready -U prisma -d tests"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-      redis:
-        image: redis:7.2-alpine
-        ports:
-          - 6381:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 5
-      mailhog:
-        image: mailhog/mailhog:v1.0.1
-        ports:
-          - 1025:1025
-          - 8025:8025
-
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -59,10 +30,30 @@ jobs:
           cache: 'npm'
 
       - name: Create test .env
-        uses: canastro/copy-file-action@ae66602ce7d214dbd2e298c1db67a81388755a0a # canastro/copy-file-action@master
+        run: cp .env.example .env
+
+      - name: Cache Docker images
+        id: docker-images-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
-          source: '.env.example'
-          target: '.env'
+          path: ~/docker-images.tar
+          key: docker-images-${{ runner.os }}-${{ hashFiles('docker-compose-test.yml') }}
+
+      - if: steps.docker-images-cache.outputs.cache-hit == 'true'
+        name: Load cached Docker images
+        run: docker load -i ~/docker-images.tar
+
+      - name: Start test services
+        run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
+
+      - if: steps.docker-images-cache.outputs.cache-hit != 'true'
+        name: Save Docker images to cache
+        run: |
+          docker save \
+            postgres:15.4 \
+            redis:7.2-alpine \
+            mailhog/mailhog:v1.0.1 \
+            -o ~/docker-images.tar
 
       - name: Cache node_modules
         id: node-modules-cache
