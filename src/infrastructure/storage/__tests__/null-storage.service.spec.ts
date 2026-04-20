@@ -16,4 +16,8 @@ describe('NullStorageService', () => {
   it('should return empty string for getPublicUrl', () => {
     expect(service.getPublicUrl('any-key')).toBe('');
   });
+
+  it('should silently no-op on deleteFile so background cleanup cron cannot crash', async () => {
+    await expect(service.deleteFile('any-key')).resolves.toBeUndefined();
+  });
 });

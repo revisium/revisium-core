@@ -1,16 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { UnauthorizedException } from '@nestjs/common';
-import { CacheService } from 'src/infrastructure/cache/services/cache.service';
+import { CoreModule } from 'src/core/core.module';
 import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
-import { DatabaseModule } from 'src/infrastructure/database/database.module';
-import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { BILLING_CLIENT_TOKEN } from '../billing-client.interface';
-import { BillingCacheService } from '../cache/billing-cache.service';
 import { BillingCallbackController } from '../callback.controller';
 import { LimitsService } from '../limits/limits.service';
-import { UsageService } from '../usage/usage.service';
 import { signRequest } from '../hmac';
 
 const TEST_SECRET = 'test-callback-secret';
@@ -26,37 +22,27 @@ describe('BillingCallbackController', () => {
 
   beforeAll(async () => {
     module = await Test.createTestingModule({
-      imports: [DatabaseModule],
-      providers: [
-        BillingCallbackController,
-        LimitsService,
-        BillingCacheService,
-        UsageService,
-        CacheService,
-        { provide: CACHE_SERVICE, useClass: NoopCacheService },
-        {
-          provide: BILLING_CLIENT_TOKEN,
-          useValue: { getOrgLimits: jest.fn() },
+      imports: [CoreModule.forRoot({ mode: 'monolith' })],
+    })
+      .overrideProvider(BILLING_CLIENT_TOKEN)
+      .useValue({ getOrgLimits: jest.fn() })
+      .overrideProvider(CACHE_SERVICE)
+      .useClass(NoopCacheService)
+      .overrideProvider(ConfigService)
+      .useValue({
+        get: (key: string, defaultValue?: string) => {
+          if (key === 'PAYMENT_SERVICE_SECRET') return TEST_SECRET;
+          return defaultValue;
         },
-        {
-          provide: ConfigService,
-          useValue: {
-            get: (key: string, defaultValue?: string) => {
-              if (key === 'PAYMENT_SERVICE_SECRET') return TEST_SECRET;
-              return defaultValue;
-            },
-          },
-        },
-      ],
-    }).compile();
+      })
+      .compile();
 
     controller = module.get(BillingCallbackController);
     limitsService = module.get(LimitsService);
   });
 
   afterAll(async () => {
-    const prisma = module.get(PrismaService);
-    await prisma.$disconnect();
+    await module.close();
   });
 
   it('should invalidate cache on valid callback', async () => {

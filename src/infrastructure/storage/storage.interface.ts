@@ -5,4 +5,5 @@ export interface IStorageService {
   readonly canServeFiles: boolean;
   uploadFile(file: Express.Multer.File, path: string): Promise<{ key: string }>;
   getPublicUrl(key: string): string;
+  deleteFile(key: string): Promise<void>;
 }

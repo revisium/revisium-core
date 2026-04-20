@@ -4,6 +4,7 @@ import {
   ICommandHandler,
   QueryBus,
 } from '@nestjs/cqrs';
+import { EngineApiService } from '@revisium/engine';
 import {
   ApiCreateProjectCommand,
   ApiCreateProjectCommandReturnType,
@@ -19,6 +20,7 @@ export class ApiCreateProjectHandler implements ICommandHandler<
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly engine: EngineApiService,
   ) {}
 
   async execute({ data }: ApiCreateProjectCommand) {
@@ -26,6 +28,10 @@ export class ApiCreateProjectHandler implements ICommandHandler<
       CreateProjectCommand,
       string
     >(new CreateProjectCommand(data));
+
+    if (data.fromRevisionId) {
+      await this.engine.backfillProjectFileBlobs({ projectId });
+    }
 
     return this.queryBus.execute(new GetProjectByIdQuery({ projectId }));
   }

@@ -223,6 +223,7 @@ export type RowWhereInput = {
   hash?: Prisma.StringFilter<"Row"> | string
   schemaHash?: Prisma.StringFilter<"Row"> | string
   tables?: Prisma.TableListRelationFilter
+  fileBlobs?: Prisma.FileBlobListRelationFilter
 }
 
 export type RowOrderByWithRelationInput = {
@@ -238,6 +239,7 @@ export type RowOrderByWithRelationInput = {
   hash?: Prisma.SortOrder
   schemaHash?: Prisma.SortOrder
   tables?: Prisma.TableOrderByRelationAggregateInput
+  fileBlobs?: Prisma.FileBlobOrderByRelationAggregateInput
   _relevance?: Prisma.RowOrderByRelevanceInput
 }
 
@@ -257,6 +259,7 @@ export type RowWhereUniqueInput = Prisma.AtLeast<{
   hash?: Prisma.StringFilter<"Row"> | string
   schemaHash?: Prisma.StringFilter<"Row"> | string
   tables?: Prisma.TableListRelationFilter
+  fileBlobs?: Prisma.FileBlobListRelationFilter
 }, "versionId">
 
 export type RowOrderByWithAggregationInput = {
@@ -306,6 +309,7 @@ export type RowCreateInput = {
   hash: string
   schemaHash: string
   tables?: Prisma.TableCreateNestedManyWithoutRowsInput
+  fileBlobs?: Prisma.FileBlobCreateNestedManyWithoutRowsInput
 }
 
 export type RowUncheckedCreateInput = {
@@ -321,6 +325,7 @@ export type RowUncheckedCreateInput = {
   hash: string
   schemaHash: string
   tables?: Prisma.TableUncheckedCreateNestedManyWithoutRowsInput
+  fileBlobs?: Prisma.FileBlobUncheckedCreateNestedManyWithoutRowsInput
 }
 
 export type RowUpdateInput = {
@@ -336,6 +341,7 @@ export type RowUpdateInput = {
   hash?: Prisma.StringFieldUpdateOperationsInput | string
   schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
   tables?: Prisma.TableUpdateManyWithoutRowsNestedInput
+  fileBlobs?: Prisma.FileBlobUpdateManyWithoutRowsNestedInput
 }
 
 export type RowUncheckedUpdateInput = {
@@ -351,6 +357,7 @@ export type RowUncheckedUpdateInput = {
   hash?: Prisma.StringFieldUpdateOperationsInput | string
   schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
   tables?: Prisma.TableUncheckedUpdateManyWithoutRowsNestedInput
+  fileBlobs?: Prisma.FileBlobUncheckedUpdateManyWithoutRowsNestedInput
 }
 
 export type RowCreateManyInput = {
@@ -487,6 +494,44 @@ export type RowUncheckedUpdateManyWithoutTablesNestedInput = {
   deleteMany?: Prisma.RowScalarWhereInput | Prisma.RowScalarWhereInput[]
 }
 
+export type RowCreateNestedManyWithoutFileBlobsInput = {
+  create?: Prisma.XOR<Prisma.RowCreateWithoutFileBlobsInput, Prisma.RowUncheckedCreateWithoutFileBlobsInput> | Prisma.RowCreateWithoutFileBlobsInput[] | Prisma.RowUncheckedCreateWithoutFileBlobsInput[]
+  connectOrCreate?: Prisma.RowCreateOrConnectWithoutFileBlobsInput | Prisma.RowCreateOrConnectWithoutFileBlobsInput[]
+  connect?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+}
+
+export type RowUncheckedCreateNestedManyWithoutFileBlobsInput = {
+  create?: Prisma.XOR<Prisma.RowCreateWithoutFileBlobsInput, Prisma.RowUncheckedCreateWithoutFileBlobsInput> | Prisma.RowCreateWithoutFileBlobsInput[] | Prisma.RowUncheckedCreateWithoutFileBlobsInput[]
+  connectOrCreate?: Prisma.RowCreateOrConnectWithoutFileBlobsInput | Prisma.RowCreateOrConnectWithoutFileBlobsInput[]
+  connect?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+}
+
+export type RowUpdateManyWithoutFileBlobsNestedInput = {
+  create?: Prisma.XOR<Prisma.RowCreateWithoutFileBlobsInput, Prisma.RowUncheckedCreateWithoutFileBlobsInput> | Prisma.RowCreateWithoutFileBlobsInput[] | Prisma.RowUncheckedCreateWithoutFileBlobsInput[]
+  connectOrCreate?: Prisma.RowCreateOrConnectWithoutFileBlobsInput | Prisma.RowCreateOrConnectWithoutFileBlobsInput[]
+  upsert?: Prisma.RowUpsertWithWhereUniqueWithoutFileBlobsInput | Prisma.RowUpsertWithWhereUniqueWithoutFileBlobsInput[]
+  set?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  disconnect?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  delete?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  connect?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  update?: Prisma.RowUpdateWithWhereUniqueWithoutFileBlobsInput | Prisma.RowUpdateWithWhereUniqueWithoutFileBlobsInput[]
+  updateMany?: Prisma.RowUpdateManyWithWhereWithoutFileBlobsInput | Prisma.RowUpdateManyWithWhereWithoutFileBlobsInput[]
+  deleteMany?: Prisma.RowScalarWhereInput | Prisma.RowScalarWhereInput[]
+}
+
+export type RowUncheckedUpdateManyWithoutFileBlobsNestedInput = {
+  create?: Prisma.XOR<Prisma.RowCreateWithoutFileBlobsInput, Prisma.RowUncheckedCreateWithoutFileBlobsInput> | Prisma.RowCreateWithoutFileBlobsInput[] | Prisma.RowUncheckedCreateWithoutFileBlobsInput[]
+  connectOrCreate?: Prisma.RowCreateOrConnectWithoutFileBlobsInput | Prisma.RowCreateOrConnectWithoutFileBlobsInput[]
+  upsert?: Prisma.RowUpsertWithWhereUniqueWithoutFileBlobsInput | Prisma.RowUpsertWithWhereUniqueWithoutFileBlobsInput[]
+  set?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  disconnect?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  delete?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  connect?: Prisma.RowWhereUniqueInput | Prisma.RowWhereUniqueInput[]
+  update?: Prisma.RowUpdateWithWhereUniqueWithoutFileBlobsInput | Prisma.RowUpdateWithWhereUniqueWithoutFileBlobsInput[]
+  updateMany?: Prisma.RowUpdateManyWithWhereWithoutFileBlobsInput | Prisma.RowUpdateManyWithWhereWithoutFileBlobsInput[]
+  deleteMany?: Prisma.RowScalarWhereInput | Prisma.RowScalarWhereInput[]
+}
+
 export type RowCreateWithoutTablesInput = {
   versionId: string
   createdId: string
@@ -499,6 +544,7 @@ export type RowCreateWithoutTablesInput = {
   meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hash: string
   schemaHash: string
+  fileBlobs?: Prisma.FileBlobCreateNestedManyWithoutRowsInput
 }
 
 export type RowUncheckedCreateWithoutTablesInput = {
@@ -513,6 +559,7 @@ export type RowUncheckedCreateWithoutTablesInput = {
   meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hash: string
   schemaHash: string
+  fileBlobs?: Prisma.FileBlobUncheckedCreateNestedManyWithoutRowsInput
 }
 
 export type RowCreateOrConnectWithoutTablesInput = {
@@ -553,6 +600,57 @@ export type RowScalarWhereInput = {
   schemaHash?: Prisma.StringFilter<"Row"> | string
 }
 
+export type RowCreateWithoutFileBlobsInput = {
+  versionId: string
+  createdId: string
+  id: string
+  readonly?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  publishedAt?: Date | string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  hash: string
+  schemaHash: string
+  tables?: Prisma.TableCreateNestedManyWithoutRowsInput
+}
+
+export type RowUncheckedCreateWithoutFileBlobsInput = {
+  versionId: string
+  createdId: string
+  id: string
+  readonly?: boolean
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  publishedAt?: Date | string
+  data: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  hash: string
+  schemaHash: string
+  tables?: Prisma.TableUncheckedCreateNestedManyWithoutRowsInput
+}
+
+export type RowCreateOrConnectWithoutFileBlobsInput = {
+  where: Prisma.RowWhereUniqueInput
+  create: Prisma.XOR<Prisma.RowCreateWithoutFileBlobsInput, Prisma.RowUncheckedCreateWithoutFileBlobsInput>
+}
+
+export type RowUpsertWithWhereUniqueWithoutFileBlobsInput = {
+  where: Prisma.RowWhereUniqueInput
+  update: Prisma.XOR<Prisma.RowUpdateWithoutFileBlobsInput, Prisma.RowUncheckedUpdateWithoutFileBlobsInput>
+  create: Prisma.XOR<Prisma.RowCreateWithoutFileBlobsInput, Prisma.RowUncheckedCreateWithoutFileBlobsInput>
+}
+
+export type RowUpdateWithWhereUniqueWithoutFileBlobsInput = {
+  where: Prisma.RowWhereUniqueInput
+  data: Prisma.XOR<Prisma.RowUpdateWithoutFileBlobsInput, Prisma.RowUncheckedUpdateWithoutFileBlobsInput>
+}
+
+export type RowUpdateManyWithWhereWithoutFileBlobsInput = {
+  where: Prisma.RowScalarWhereInput
+  data: Prisma.XOR<Prisma.RowUpdateManyMutationInput, Prisma.RowUncheckedUpdateManyWithoutFileBlobsInput>
+}
+
 export type RowUpdateWithoutTablesInput = {
   versionId?: Prisma.StringFieldUpdateOperationsInput | string
   createdId?: Prisma.StringFieldUpdateOperationsInput | string
@@ -565,6 +663,7 @@ export type RowUpdateWithoutTablesInput = {
   meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hash?: Prisma.StringFieldUpdateOperationsInput | string
   schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fileBlobs?: Prisma.FileBlobUpdateManyWithoutRowsNestedInput
 }
 
 export type RowUncheckedUpdateWithoutTablesInput = {
@@ -579,9 +678,54 @@ export type RowUncheckedUpdateWithoutTablesInput = {
   meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   hash?: Prisma.StringFieldUpdateOperationsInput | string
   schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
+  fileBlobs?: Prisma.FileBlobUncheckedUpdateManyWithoutRowsNestedInput
 }
 
 export type RowUncheckedUpdateManyWithoutTablesInput = {
+  versionId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdId?: Prisma.StringFieldUpdateOperationsInput | string
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  readonly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  hash?: Prisma.StringFieldUpdateOperationsInput | string
+  schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
+}
+
+export type RowUpdateWithoutFileBlobsInput = {
+  versionId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdId?: Prisma.StringFieldUpdateOperationsInput | string
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  readonly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  hash?: Prisma.StringFieldUpdateOperationsInput | string
+  schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
+  tables?: Prisma.TableUpdateManyWithoutRowsNestedInput
+}
+
+export type RowUncheckedUpdateWithoutFileBlobsInput = {
+  versionId?: Prisma.StringFieldUpdateOperationsInput | string
+  createdId?: Prisma.StringFieldUpdateOperationsInput | string
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  readonly?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  publishedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  data?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  meta?: Prisma.JsonNullValueInput | runtime.InputJsonValue
+  hash?: Prisma.StringFieldUpdateOperationsInput | string
+  schemaHash?: Prisma.StringFieldUpdateOperationsInput | string
+  tables?: Prisma.TableUncheckedUpdateManyWithoutRowsNestedInput
+}
+
+export type RowUncheckedUpdateManyWithoutFileBlobsInput = {
   versionId?: Prisma.StringFieldUpdateOperationsInput | string
   createdId?: Prisma.StringFieldUpdateOperationsInput | string
   id?: Prisma.StringFieldUpdateOperationsInput | string
@@ -602,10 +746,12 @@ export type RowUncheckedUpdateManyWithoutTablesInput = {
 
 export type RowCountOutputType = {
   tables: number
+  fileBlobs: number
 }
 
 export type RowCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tables?: boolean | RowCountOutputTypeCountTablesArgs
+  fileBlobs?: boolean | RowCountOutputTypeCountFileBlobsArgs
 }
 
 /**
@@ -625,6 +771,13 @@ export type RowCountOutputTypeCountTablesArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.TableWhereInput
 }
 
+/**
+ * RowCountOutputType without action
+ */
+export type RowCountOutputTypeCountFileBlobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.FileBlobWhereInput
+}
+
 
 export type RowSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   versionId?: boolean
@@ -639,6 +792,7 @@ export type RowSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = ru
   hash?: boolean
   schemaHash?: boolean
   tables?: boolean | Prisma.Row$tablesArgs<ExtArgs>
+  fileBlobs?: boolean | Prisma.Row$fileBlobsArgs<ExtArgs>
   _count?: boolean | Prisma.RowCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["row"]>
 
@@ -687,6 +841,7 @@ export type RowSelectScalar = {
 export type RowOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"versionId" | "createdId" | "id" | "readonly" | "createdAt" | "updatedAt" | "publishedAt" | "data" | "meta" | "hash" | "schemaHash", ExtArgs["result"]["row"]>
 export type RowInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   tables?: boolean | Prisma.Row$tablesArgs<ExtArgs>
+  fileBlobs?: boolean | Prisma.Row$fileBlobsArgs<ExtArgs>
   _count?: boolean | Prisma.RowCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type RowIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -696,6 +851,7 @@ export type $RowPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   name: "Row"
   objects: {
     tables: Prisma.$TablePayload<ExtArgs>[]
+    fileBlobs: Prisma.$FileBlobPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     versionId: string
@@ -1104,6 +1260,7 @@ readonly fields: RowFieldRefs;
 export interface Prisma__RowClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   tables<T extends Prisma.Row$tablesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Row$tablesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$TablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  fileBlobs<T extends Prisma.Row$fileBlobsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.Row$fileBlobsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$FileBlobPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1558,6 +1715,30 @@ export type Row$tablesArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.TableScalarFieldEnum | Prisma.TableScalarFieldEnum[]
+}
+
+/**
+ * Row.fileBlobs
+ */
+export type Row$fileBlobsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the FileBlob
+   */
+  select?: Prisma.FileBlobSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the FileBlob
+   */
+  omit?: Prisma.FileBlobOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.FileBlobInclude<ExtArgs> | null
+  where?: Prisma.FileBlobWhereInput
+  orderBy?: Prisma.FileBlobOrderByWithRelationInput | Prisma.FileBlobOrderByWithRelationInput[]
+  cursor?: Prisma.FileBlobWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.FileBlobScalarFieldEnum | Prisma.FileBlobScalarFieldEnum[]
 }
 
 /**

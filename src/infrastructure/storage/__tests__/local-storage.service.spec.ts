@@ -84,6 +84,32 @@ describe('LocalStorageService', () => {
     });
   });
 
+  describe('deleteFile', () => {
+    it('removes the uploaded file and its meta sidecar', async () => {
+      const service = createService();
+      await service.uploadFile(file, 'remove-me');
+
+      await service.deleteFile('remove-me');
+
+      expect(existsSync(resolve(TEST_DIR, 'remove-me'))).toBe(false);
+      expect(existsSync(resolve(TEST_DIR, 'remove-me.meta'))).toBe(false);
+    });
+
+    it('is a no-op when the key does not exist on disk', async () => {
+      const service = createService();
+
+      await expect(service.deleteFile('nothing-here')).resolves.toBeUndefined();
+    });
+
+    it('rejects path traversal before touching disk', async () => {
+      const service = createService();
+
+      await expect(service.deleteFile('../../../etc/passwd')).rejects.toThrow(
+        'Invalid file path',
+      );
+    });
+  });
+
   describe('getPublicUrl', () => {
     it('should use explicit endpoint when set', () => {
       const service = createService({

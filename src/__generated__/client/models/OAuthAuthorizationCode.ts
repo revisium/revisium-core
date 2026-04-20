@@ -520,10 +520,6 @@ export type OAuthAuthorizationCodeUncheckedUpdateManyWithoutClientNestedInput = 
   deleteMany?: Prisma.OAuthAuthorizationCodeScalarWhereInput | Prisma.OAuthAuthorizationCodeScalarWhereInput[]
 }
 
-export type NullableDateTimeFieldUpdateOperationsInput = {
-  set?: Date | string | null
-}
-
 export type OAuthAuthorizationCodeCreateWithoutUserInput = {
   id?: string
   code: string

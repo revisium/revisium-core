@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync } from 'node:fs';
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { dirname, relative, isAbsolute, resolve } from 'node:path';
 import {
   Injectable,
@@ -69,6 +69,13 @@ export class LocalStorageService implements IStorageService {
     }
   }
 
+  public async deleteFile(key: string): Promise<void> {
+    const filePath = this.resolveFilePath(key);
+    await this.unlinkIfExists(filePath);
+    await this.unlinkIfExists(`${filePath}.meta`);
+    this.logger.log(`File deleted from local storage: ${key}`);
+  }
+
   public getPublicUrl(key: string): string {
     const encodedKey = key
       .split('/')
@@ -114,6 +121,16 @@ export class LocalStorageService implements IStorageService {
   private ensureDirectory(): void {
     if (!existsSync(this.storagePath)) {
       mkdirSync(this.storagePath, { recursive: true });
+    }
+  }
+
+  private async unlinkIfExists(filePath: string): Promise<void> {
+    try {
+      await unlink(filePath);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw err;
+      }
     }
   }
 }

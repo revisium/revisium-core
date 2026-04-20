@@ -71,4 +71,5 @@ export enum PermissionSubject {
   User = 'User',
   ApiKey = 'ApiKey',
   Cache = 'Cache',
+  FileUsage = 'FileUsage',
 }

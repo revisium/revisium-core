@@ -1,28 +1,27 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { TestingModule } from '@nestjs/testing';
 import { nanoid } from 'nanoid';
 import { EndpointType } from 'src/__generated__/client';
 import { LimitMetric } from 'src/features/billing/limits.interface';
-import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { createProjectCommandTestKit } from 'src/testing/kit/create-project-command-test-kit';
 import { UsageService } from '../usage/usage.service';
 
 describe('UsageService', () => {
   let module: TestingModule;
   let service: UsageService;
   let prisma: PrismaService;
+  let closeModule: () => Promise<void>;
 
   beforeAll(async () => {
-    module = await Test.createTestingModule({
-      imports: [DatabaseModule],
-      providers: [UsageService],
-    }).compile();
-
+    const kit = await createProjectCommandTestKit();
+    module = kit.module;
+    prisma = kit.prismaService;
     service = module.get(UsageService);
-    prisma = module.get(PrismaService);
+    closeModule = kit.close;
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await closeModule();
   });
 
   const createOrg = async () => {
@@ -172,6 +171,35 @@ describe('UsageService', () => {
         LimitMetric.STORAGE_BYTES,
       );
       expect(result).toBe(0);
+    });
+
+    it('sums storage bytes across active and soft-deleted projects in the org', async () => {
+      const orgId = await createOrg();
+      const { projectId: activeProjectId } = await createProjectWithRows(
+        orgId,
+        0,
+      );
+      const { projectId: deletedProjectId } = await createProjectWithRows(
+        orgId,
+        0,
+      );
+      await prisma.project.update({
+        where: { id: deletedProjectId },
+        data: { isDeleted: true },
+      });
+
+      await prisma.projectFileUsage.createMany({
+        data: [
+          { projectId: activeProjectId, fileBytes: 1_000n },
+          { projectId: deletedProjectId, fileBytes: 500n },
+        ],
+      });
+
+      const result = await service.computeUsage(
+        orgId,
+        LimitMetric.STORAGE_BYTES,
+      );
+      expect(result).toBe(1_500);
     });
 
     it('should return 0 for api calls', async () => {
