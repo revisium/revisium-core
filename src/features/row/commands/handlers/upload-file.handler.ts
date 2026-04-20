@@ -2,7 +2,6 @@ import { CommandHandler, EventBus, ICommandHandler } from '@nestjs/cqrs';
 import { EngineApiService } from '@revisium/engine';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
-import { EndpointNotifierService } from 'src/core/shared/endpoint-notifier.service';
 import { RowUpdatedEvent } from 'src/infrastructure/cache';
 import { UploadFileCommand } from '../impl/upload-file.command';
 
@@ -12,7 +11,6 @@ export class UploadFileHandler implements ICommandHandler<UploadFileCommand> {
     private readonly engine: EngineApiService,
     private readonly eventBus: EventBus,
     private readonly billingCheck: BillingCheckService,
-    private readonly endpointNotifier: EndpointNotifierService,
   ) {}
 
   async execute({ data }: UploadFileCommand) {
@@ -25,7 +23,6 @@ export class UploadFileHandler implements ICommandHandler<UploadFileCommand> {
     await this.eventBus.publishAll([
       new RowUpdatedEvent(data.revisionId, data.tableId, data.rowId),
     ]);
-    await this.endpointNotifier.notify(data.revisionId);
     return result;
   }
 }

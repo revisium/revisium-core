@@ -3,7 +3,6 @@ import { EngineApiService } from '@revisium/engine';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { RowRenamedEvent } from 'src/infrastructure/cache';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
-import { EndpointNotifierService } from 'src/core/shared/endpoint-notifier.service';
 import { RenameRowCommand } from '../impl/rename-row.command';
 
 @CommandHandler(RenameRowCommand)
@@ -12,7 +11,6 @@ export class RenameRowHandler implements ICommandHandler<RenameRowCommand> {
     private readonly engine: EngineApiService,
     private readonly eventBus: EventBus,
     private readonly billingCheck: BillingCheckService,
-    private readonly endpointNotifier: EndpointNotifierService,
   ) {}
 
   async execute({ data }: RenameRowCommand) {
@@ -26,7 +24,6 @@ export class RenameRowHandler implements ICommandHandler<RenameRowCommand> {
         data.nextRowId,
       ),
     ]);
-    await this.endpointNotifier.notify(data.revisionId);
     return result;
   }
 }

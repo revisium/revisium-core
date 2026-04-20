@@ -3,7 +3,6 @@ import { EngineApiService } from '@revisium/engine';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { RowUpdatedEvent } from 'src/infrastructure/cache';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
-import { EndpointNotifierService } from 'src/core/shared/endpoint-notifier.service';
 import { PatchRowsCommand } from '../impl/patch-rows.command';
 
 @CommandHandler(PatchRowsCommand)
@@ -12,7 +11,6 @@ export class PatchRowsHandler implements ICommandHandler<PatchRowsCommand> {
     private readonly engine: EngineApiService,
     private readonly eventBus: EventBus,
     private readonly billingCheck: BillingCheckService,
-    private readonly endpointNotifier: EndpointNotifierService,
   ) {}
 
   async execute({ data }: PatchRowsCommand) {
@@ -26,7 +24,6 @@ export class PatchRowsHandler implements ICommandHandler<PatchRowsCommand> {
       (row) => new RowUpdatedEvent(data.revisionId, data.tableId, row.rowId),
     );
     await this.eventBus.publishAll(events);
-    await this.endpointNotifier.notify(data.revisionId);
     return result;
   }
 }
