@@ -18,4 +18,8 @@ export class NullStorageService implements IStorageService {
   public getPublicUrl(_key: string): string {
     return '';
   }
+
+  public async deleteFile(_key: string): Promise<void> {
+    return;
+  }
 }

@@ -12,7 +12,11 @@ export class UploadFileHandler implements ICommandHandler<UploadFileCommand> {
   ) {}
 
   async execute({ data }: UploadFileCommand) {
-    await this.billingCheck.check(data.revisionId, LimitMetric.STORAGE_BYTES);
+    await this.billingCheck.check(
+      data.revisionId,
+      LimitMetric.STORAGE_BYTES,
+      data.file.size,
+    );
     return this.engine.uploadFile(data);
   }
 }

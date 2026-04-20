@@ -1,9 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { CoreModule } from 'src/core/core.module';
 import { LimitMetric } from 'src/features/billing/limits.interface';
-import { CacheService } from 'src/infrastructure/cache/services/cache.service';
-import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
-import { DatabaseModule } from 'src/infrastructure/database/database.module';
+import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   BILLING_CLIENT_TOKEN,
@@ -70,16 +69,13 @@ describe('LimitsService (Ultra-Thin)', () => {
     };
 
     module = await Test.createTestingModule({
-      imports: [DatabaseModule],
-      providers: [
-        LimitsService,
-        BillingCacheService,
-        UsageService,
-        CacheService,
-        { provide: CACHE_SERVICE, useClass: NoopCacheService },
-        { provide: BILLING_CLIENT_TOKEN, useValue: mockBillingClient },
-      ],
-    }).compile();
+      imports: [CoreModule.forRoot({ mode: 'monolith' })],
+    })
+      .overrideProvider(BILLING_CLIENT_TOKEN)
+      .useValue(mockBillingClient)
+      .overrideProvider(CACHE_SERVICE)
+      .useClass(NoopCacheService)
+      .compile();
 
     service = module.get(LimitsService);
     prisma = module.get(PrismaService);
@@ -93,7 +89,7 @@ describe('LimitsService (Ultra-Thin)', () => {
   });
 
   afterAll(async () => {
-    await prisma.$disconnect();
+    await module.close();
   });
 
   it('should allow when under limit (pro plan)', async () => {

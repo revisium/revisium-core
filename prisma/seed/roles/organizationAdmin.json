@@ -24,6 +24,7 @@
     "read-user",
     "read-project-private",
     "read-project-public",
-    "manage-api-key"
+    "manage-api-key",
+    "read-file-usage"
   ]
 }

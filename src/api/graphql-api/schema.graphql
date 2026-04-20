@@ -674,6 +674,7 @@ type Mutation {
   addUserToOrganization(data: AddUserToOrganizationInput!): Boolean!
   addUserToProject(data: AddUserToProjectInput!): Boolean!
   adminResetAllCache: Boolean!
+  adminRestoreProjectFileBytes(data: RestoreProjectFileBytesInput!): RestoreProjectFileBytesResultModel!
   applyMigrations(data: ApplyMigrationsInput!): [ApplyMigrationResultModel!]!
   cancelSubscription(data: CancelSubscriptionInput!): Boolean!
   confirmEmailCode(data: ConfirmEmailCodeInput!): LoginModel!
@@ -856,6 +857,15 @@ type PluginsModel {
   file: Boolean!
 }
 
+type ProjectFileUsageReportModel {
+  currentFileBytes: String!
+  drift: String!
+  expectedFileBytes: String!
+  fileBlobCount: Int!
+  projectId: ID!
+  referenceCount: Int!
+}
+
 type ProjectModel {
   allBranches(data: GetProjectBranchesInput!): BranchesConnection!
   createdAt: DateTime!
@@ -884,6 +894,7 @@ type Query {
   adminCacheStats: CacheStatsModel!
   adminUser(data: AdminUserInput!): UserModel
   adminUsers(data: SearchUsersInput!): UsersConnection!
+  adminValidateProjectFileBytes(data: ValidateProjectFileBytesInput!): ProjectFileUsageReportModel!
   apiKeyById(id: ID!): ApiKeyModel!
   availableProviders(country: String, method: String): [PaymentProviderModel!]!
   branch(data: GetBranchInput!): BranchModel!
@@ -967,6 +978,19 @@ type RenameTableResultModel {
 input ResetPasswordInput {
   newPassword: String!
   userId: String!
+}
+
+input RestoreProjectFileBytesInput {
+  dryRun: Boolean! = true
+  projectId: ID!
+}
+
+type RestoreProjectFileBytesResultModel {
+  drift: String!
+  dryRun: Boolean!
+  nextFileBytes: String!
+  previousFileBytes: String!
+  projectId: ID!
 }
 
 input RevertChangesInput {
@@ -1565,6 +1589,10 @@ type UsersProjectModel {
 type UsersProjectModelEdge {
   cursor: String!
   node: UsersProjectModel!
+}
+
+input ValidateProjectFileBytesInput {
+  projectId: ID!
 }
 
 type ViewChangeModel {

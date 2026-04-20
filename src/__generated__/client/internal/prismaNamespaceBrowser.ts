@@ -65,6 +65,9 @@ export const ModelName = {
   Endpoint: 'Endpoint',
   Table: 'Table',
   Row: 'Row',
+  FileBlob: 'FileBlob',
+  ProjectFileUsage: 'ProjectFileUsage',
+  TableMigration: 'TableMigration',
   OAuthClient: 'OAuthClient',
   OAuthAuthorizationCode: 'OAuthAuthorizationCode',
   OAuthAccessToken: 'OAuthAccessToken',
@@ -252,6 +255,60 @@ export const RowScalarFieldEnum = {
 } as const
 
 export type RowScalarFieldEnum = (typeof RowScalarFieldEnum)[keyof typeof RowScalarFieldEnum]
+
+
+export const FileBlobScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt',
+  projectId: 'projectId',
+  hash: 'hash',
+  size: 'size'
+} as const
+
+export type FileBlobScalarFieldEnum = (typeof FileBlobScalarFieldEnum)[keyof typeof FileBlobScalarFieldEnum]
+
+
+export const ProjectFileUsageScalarFieldEnum = {
+  projectId: 'projectId',
+  fileBytes: 'fileBytes',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectFileUsageScalarFieldEnum = (typeof ProjectFileUsageScalarFieldEnum)[keyof typeof ProjectFileUsageScalarFieldEnum]
+
+
+export const TableMigrationScalarFieldEnum = {
+  id: 'id',
+  revisionId: 'revisionId',
+  tableId: 'tableId',
+  sourceTableVersionId: 'sourceTableVersionId',
+  shadowTableVersionId: 'shadowTableVersionId',
+  status: 'status',
+  phase: 'phase',
+  patches: 'patches',
+  previousSchema: 'previousSchema',
+  previousSchemaHash: 'previousSchemaHash',
+  targetSchemaHash: 'targetSchemaHash',
+  totalRows: 'totalRows',
+  copiedRows: 'copiedRows',
+  lastCopiedRowId: 'lastCopiedRowId',
+  batchSize: 'batchSize',
+  currentBatch: 'currentBatch',
+  totalBatches: 'totalBatches',
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  lastProgressAt: 'lastProgressAt',
+  lockedBy: 'lockedBy',
+  lockedAt: 'lockedAt',
+  heartbeatAt: 'heartbeatAt',
+  errorMessage: 'errorMessage',
+  retryCount: 'retryCount',
+  maxRetries: 'maxRetries'
+} as const
+
+export type TableMigrationScalarFieldEnum = (typeof TableMigrationScalarFieldEnum)[keyof typeof TableMigrationScalarFieldEnum]
 
 
 export const OAuthClientScalarFieldEnum = {
@@ -538,6 +595,40 @@ export const RowOrderByRelevanceFieldEnum = {
 } as const
 
 export type RowOrderByRelevanceFieldEnum = (typeof RowOrderByRelevanceFieldEnum)[keyof typeof RowOrderByRelevanceFieldEnum]
+
+
+export const FileBlobOrderByRelevanceFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  hash: 'hash'
+} as const
+
+export type FileBlobOrderByRelevanceFieldEnum = (typeof FileBlobOrderByRelevanceFieldEnum)[keyof typeof FileBlobOrderByRelevanceFieldEnum]
+
+
+export const ProjectFileUsageOrderByRelevanceFieldEnum = {
+  projectId: 'projectId'
+} as const
+
+export type ProjectFileUsageOrderByRelevanceFieldEnum = (typeof ProjectFileUsageOrderByRelevanceFieldEnum)[keyof typeof ProjectFileUsageOrderByRelevanceFieldEnum]
+
+
+export const TableMigrationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  revisionId: 'revisionId',
+  tableId: 'tableId',
+  sourceTableVersionId: 'sourceTableVersionId',
+  shadowTableVersionId: 'shadowTableVersionId',
+  status: 'status',
+  phase: 'phase',
+  previousSchemaHash: 'previousSchemaHash',
+  targetSchemaHash: 'targetSchemaHash',
+  lastCopiedRowId: 'lastCopiedRowId',
+  lockedBy: 'lockedBy',
+  errorMessage: 'errorMessage'
+} as const
+
+export type TableMigrationOrderByRelevanceFieldEnum = (typeof TableMigrationOrderByRelevanceFieldEnum)[keyof typeof TableMigrationOrderByRelevanceFieldEnum]
 
 
 export const OAuthClientOrderByRelevanceFieldEnum = {

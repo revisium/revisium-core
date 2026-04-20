@@ -122,6 +122,7 @@ export abstract class BasePermissionGuard<
       'delete',
       'revert',
       'add',
+      'manage',
     ]);
     for (const permission of permissions) {
       if (writeActions.has(permission.action)) {

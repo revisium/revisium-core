@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EngineApiService } from '@revisium/engine';
 import { countOrgRowVersions } from 'src/__generated__/client/sql';
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -29,6 +30,7 @@ export class UsageService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly transactionService: TransactionPrismaService,
+    private readonly engine: EngineApiService,
   ) {}
 
   private get db() {
@@ -133,9 +135,24 @@ export class UsageService {
     });
   }
 
-  private async countStorageBytes(_organizationId: string): Promise<number> {
-    // TODO: implement based on File plugin storage tracking
-    return 0;
+  private async countStorageBytes(organizationId: string): Promise<number> {
+    const projectIds = await this.listOrgStorageProjectIds(organizationId);
+    if (projectIds.length === 0) {
+      return 0;
+    }
+
+    const total = await this.engine.getStorageBytesForProjects({ projectIds });
+    return Number(total);
+  }
+
+  private async listOrgStorageProjectIds(
+    organizationId: string,
+  ): Promise<readonly string[]> {
+    const projects = await this.db.project.findMany({
+      where: { organizationId },
+      select: { id: true },
+    });
+    return projects.map((project) => project.id);
   }
 
   private async countApiCalls(_organizationId: string): Promise<number> {

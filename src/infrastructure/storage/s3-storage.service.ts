@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import {
   Injectable,
   InternalServerErrorException,
@@ -79,6 +83,26 @@ export class S3StorageService implements IStorageService {
 
       throw new InternalServerErrorException(
         `Error uploading file to S3: ${errorMessage}`,
+      );
+    }
+  }
+
+  public async deleteFile(key: string): Promise<void> {
+    try {
+      await this.client.send(
+        new DeleteObjectCommand({
+          Bucket: this.bucket,
+          Key: key,
+        }),
+      );
+      this.logger.log(`File deleted from S3: ${key}, bucket: ${this.bucket}`);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      this.logger.error(
+        `Error deleting file from S3: key=${key} ${errorMessage}`,
+      );
+      throw new InternalServerErrorException(
+        `Error deleting file from S3: ${errorMessage}`,
       );
     }
   }

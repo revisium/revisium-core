@@ -29,6 +29,8 @@
     "read-project-public",
     "manage-api-key",
     "read-cache",
-    "manage-cache"
+    "manage-cache",
+    "read-file-usage",
+    "manage-file-usage"
   ]
 }

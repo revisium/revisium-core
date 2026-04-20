@@ -1,6 +1,10 @@
 import { InternalServerErrorException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from '@aws-sdk/client-s3';
 import { mockClient } from 'aws-sdk-client-mock';
 import { S3StorageService } from '../s3-storage.service';
 
@@ -43,6 +47,29 @@ describe('S3StorageService', () => {
       s3Mock.on(PutObjectCommand).rejects(new Error('network failure'));
 
       await expect(service.uploadFile(file, key)).rejects.toThrow(
+        InternalServerErrorException,
+      );
+    });
+  });
+
+  describe('deleteFile', () => {
+    it('sends a DeleteObjectCommand with the bucket + key', async () => {
+      s3Mock.on(DeleteObjectCommand).resolves({});
+
+      await service.deleteFile(key);
+
+      const calls = s3Mock.commandCalls(DeleteObjectCommand);
+      expect(calls).toHaveLength(1);
+      expect(calls[0].args[0].input).toEqual({
+        Bucket: TEST_BUCKET,
+        Key: key,
+      });
+    });
+
+    it('wraps S3 errors in InternalServerErrorException', async () => {
+      s3Mock.on(DeleteObjectCommand).rejects(new Error('delete blew up'));
+
+      await expect(service.deleteFile(key)).rejects.toThrow(
         InternalServerErrorException,
       );
     });

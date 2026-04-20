@@ -398,6 +398,9 @@ export const ModelName = {
   Endpoint: 'Endpoint',
   Table: 'Table',
   Row: 'Row',
+  FileBlob: 'FileBlob',
+  ProjectFileUsage: 'ProjectFileUsage',
+  TableMigration: 'TableMigration',
   OAuthClient: 'OAuthClient',
   OAuthAuthorizationCode: 'OAuthAuthorizationCode',
   OAuthAccessToken: 'OAuthAccessToken',
@@ -420,7 +423,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "instance" | "user" | "role" | "permission" | "organization" | "userOrganization" | "project" | "userProject" | "branch" | "revision" | "endpointVersion" | "endpoint" | "table" | "row" | "oAuthClient" | "oAuthAuthorizationCode" | "oAuthAccessToken" | "oAuthRefreshToken" | "apiKey" | "licenseCache" | "refreshToken"
+    modelProps: "instance" | "user" | "role" | "permission" | "organization" | "userOrganization" | "project" | "userProject" | "branch" | "revision" | "endpointVersion" | "endpoint" | "table" | "row" | "fileBlob" | "projectFileUsage" | "tableMigration" | "oAuthClient" | "oAuthAuthorizationCode" | "oAuthAccessToken" | "oAuthRefreshToken" | "apiKey" | "licenseCache" | "refreshToken"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1460,6 +1463,228 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    FileBlob: {
+      payload: Prisma.$FileBlobPayload<ExtArgs>
+      fields: Prisma.FileBlobFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.FileBlobFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.FileBlobFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>
+        }
+        findFirst: {
+          args: Prisma.FileBlobFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.FileBlobFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>
+        }
+        findMany: {
+          args: Prisma.FileBlobFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>[]
+        }
+        create: {
+          args: Prisma.FileBlobCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>
+        }
+        createMany: {
+          args: Prisma.FileBlobCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.FileBlobCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>[]
+        }
+        delete: {
+          args: Prisma.FileBlobDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>
+        }
+        update: {
+          args: Prisma.FileBlobUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>
+        }
+        deleteMany: {
+          args: Prisma.FileBlobDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.FileBlobUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.FileBlobUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>[]
+        }
+        upsert: {
+          args: Prisma.FileBlobUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$FileBlobPayload>
+        }
+        aggregate: {
+          args: Prisma.FileBlobAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateFileBlob>
+        }
+        groupBy: {
+          args: Prisma.FileBlobGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FileBlobGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.FileBlobCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.FileBlobCountAggregateOutputType> | number
+        }
+      }
+    }
+    ProjectFileUsage: {
+      payload: Prisma.$ProjectFileUsagePayload<ExtArgs>
+      fields: Prisma.ProjectFileUsageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.ProjectFileUsageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.ProjectFileUsageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>
+        }
+        findFirst: {
+          args: Prisma.ProjectFileUsageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.ProjectFileUsageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>
+        }
+        findMany: {
+          args: Prisma.ProjectFileUsageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>[]
+        }
+        create: {
+          args: Prisma.ProjectFileUsageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>
+        }
+        createMany: {
+          args: Prisma.ProjectFileUsageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.ProjectFileUsageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>[]
+        }
+        delete: {
+          args: Prisma.ProjectFileUsageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>
+        }
+        update: {
+          args: Prisma.ProjectFileUsageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>
+        }
+        deleteMany: {
+          args: Prisma.ProjectFileUsageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.ProjectFileUsageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.ProjectFileUsageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>[]
+        }
+        upsert: {
+          args: Prisma.ProjectFileUsageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$ProjectFileUsagePayload>
+        }
+        aggregate: {
+          args: Prisma.ProjectFileUsageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateProjectFileUsage>
+        }
+        groupBy: {
+          args: Prisma.ProjectFileUsageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProjectFileUsageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.ProjectFileUsageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.ProjectFileUsageCountAggregateOutputType> | number
+        }
+      }
+    }
+    TableMigration: {
+      payload: Prisma.$TableMigrationPayload<ExtArgs>
+      fields: Prisma.TableMigrationFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TableMigrationFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TableMigrationFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>
+        }
+        findFirst: {
+          args: Prisma.TableMigrationFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TableMigrationFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>
+        }
+        findMany: {
+          args: Prisma.TableMigrationFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>[]
+        }
+        create: {
+          args: Prisma.TableMigrationCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>
+        }
+        createMany: {
+          args: Prisma.TableMigrationCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TableMigrationCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>[]
+        }
+        delete: {
+          args: Prisma.TableMigrationDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>
+        }
+        update: {
+          args: Prisma.TableMigrationUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>
+        }
+        deleteMany: {
+          args: Prisma.TableMigrationDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TableMigrationUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TableMigrationUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>[]
+        }
+        upsert: {
+          args: Prisma.TableMigrationUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TableMigrationPayload>
+        }
+        aggregate: {
+          args: Prisma.TableMigrationAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTableMigration>
+        }
+        groupBy: {
+          args: Prisma.TableMigrationGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TableMigrationGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TableMigrationCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TableMigrationCountAggregateOutputType> | number
+        }
+      }
+    }
     OAuthClient: {
       payload: Prisma.$OAuthClientPayload<ExtArgs>
       fields: Prisma.OAuthClientFieldRefs
@@ -2185,6 +2410,60 @@ export const RowScalarFieldEnum = {
 export type RowScalarFieldEnum = (typeof RowScalarFieldEnum)[keyof typeof RowScalarFieldEnum]
 
 
+export const FileBlobScalarFieldEnum = {
+  id: 'id',
+  createdAt: 'createdAt',
+  deletedAt: 'deletedAt',
+  projectId: 'projectId',
+  hash: 'hash',
+  size: 'size'
+} as const
+
+export type FileBlobScalarFieldEnum = (typeof FileBlobScalarFieldEnum)[keyof typeof FileBlobScalarFieldEnum]
+
+
+export const ProjectFileUsageScalarFieldEnum = {
+  projectId: 'projectId',
+  fileBytes: 'fileBytes',
+  updatedAt: 'updatedAt'
+} as const
+
+export type ProjectFileUsageScalarFieldEnum = (typeof ProjectFileUsageScalarFieldEnum)[keyof typeof ProjectFileUsageScalarFieldEnum]
+
+
+export const TableMigrationScalarFieldEnum = {
+  id: 'id',
+  revisionId: 'revisionId',
+  tableId: 'tableId',
+  sourceTableVersionId: 'sourceTableVersionId',
+  shadowTableVersionId: 'shadowTableVersionId',
+  status: 'status',
+  phase: 'phase',
+  patches: 'patches',
+  previousSchema: 'previousSchema',
+  previousSchemaHash: 'previousSchemaHash',
+  targetSchemaHash: 'targetSchemaHash',
+  totalRows: 'totalRows',
+  copiedRows: 'copiedRows',
+  lastCopiedRowId: 'lastCopiedRowId',
+  batchSize: 'batchSize',
+  currentBatch: 'currentBatch',
+  totalBatches: 'totalBatches',
+  createdAt: 'createdAt',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  lastProgressAt: 'lastProgressAt',
+  lockedBy: 'lockedBy',
+  lockedAt: 'lockedAt',
+  heartbeatAt: 'heartbeatAt',
+  errorMessage: 'errorMessage',
+  retryCount: 'retryCount',
+  maxRetries: 'maxRetries'
+} as const
+
+export type TableMigrationScalarFieldEnum = (typeof TableMigrationScalarFieldEnum)[keyof typeof TableMigrationScalarFieldEnum]
+
+
 export const OAuthClientScalarFieldEnum = {
   id: 'id',
   clientSecretHash: 'clientSecretHash',
@@ -2471,6 +2750,40 @@ export const RowOrderByRelevanceFieldEnum = {
 export type RowOrderByRelevanceFieldEnum = (typeof RowOrderByRelevanceFieldEnum)[keyof typeof RowOrderByRelevanceFieldEnum]
 
 
+export const FileBlobOrderByRelevanceFieldEnum = {
+  id: 'id',
+  projectId: 'projectId',
+  hash: 'hash'
+} as const
+
+export type FileBlobOrderByRelevanceFieldEnum = (typeof FileBlobOrderByRelevanceFieldEnum)[keyof typeof FileBlobOrderByRelevanceFieldEnum]
+
+
+export const ProjectFileUsageOrderByRelevanceFieldEnum = {
+  projectId: 'projectId'
+} as const
+
+export type ProjectFileUsageOrderByRelevanceFieldEnum = (typeof ProjectFileUsageOrderByRelevanceFieldEnum)[keyof typeof ProjectFileUsageOrderByRelevanceFieldEnum]
+
+
+export const TableMigrationOrderByRelevanceFieldEnum = {
+  id: 'id',
+  revisionId: 'revisionId',
+  tableId: 'tableId',
+  sourceTableVersionId: 'sourceTableVersionId',
+  shadowTableVersionId: 'shadowTableVersionId',
+  status: 'status',
+  phase: 'phase',
+  previousSchemaHash: 'previousSchemaHash',
+  targetSchemaHash: 'targetSchemaHash',
+  lastCopiedRowId: 'lastCopiedRowId',
+  lockedBy: 'lockedBy',
+  errorMessage: 'errorMessage'
+} as const
+
+export type TableMigrationOrderByRelevanceFieldEnum = (typeof TableMigrationOrderByRelevanceFieldEnum)[keyof typeof TableMigrationOrderByRelevanceFieldEnum]
+
+
 export const OAuthClientOrderByRelevanceFieldEnum = {
   id: 'id',
   clientSecretHash: 'clientSecretHash',
@@ -2654,6 +2967,20 @@ export type ListEnumEndpointTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
 
 
 /**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt[]'>
+    
+
+
+/**
  * Reference to a field of type 'ApiKeyType'
  */
 export type EnumApiKeyTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ApiKeyType'>
@@ -2789,6 +3116,9 @@ export type GlobalOmitConfig = {
   endpoint?: Prisma.EndpointOmit
   table?: Prisma.TableOmit
   row?: Prisma.RowOmit
+  fileBlob?: Prisma.FileBlobOmit
+  projectFileUsage?: Prisma.ProjectFileUsageOmit
+  tableMigration?: Prisma.TableMigrationOmit
   oAuthClient?: Prisma.OAuthClientOmit
   oAuthAuthorizationCode?: Prisma.OAuthAuthorizationCodeOmit
   oAuthAccessToken?: Prisma.OAuthAccessTokenOmit
