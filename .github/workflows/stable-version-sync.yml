@@ -1,0 +1,134 @@
+name: Stable Version Sync
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Stable version to mirror on master, without leading v.
+        required: true
+      dry_run:
+        description: Validate and show changes without opening a PR.
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: ${{ github.repository }}-stable-version-sync
+  cancel-in-progress: false
+
+# Keep GITHUB_TOKEN read-only. Branch push and PR creation use
+# PAT_TOKEN_FOR_BUMP_VERSION so the created PR runs normal CI.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  stable-version-sync:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ inputs.version }}
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.11.1
+          cache: 'npm'
+
+      - name: Validate target version
+        run: |
+          set -euo pipefail
+          git fetch origin '+refs/tags/*:refs/tags/*'
+
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Stable version sync requires X.Y.Z without prerelease suffix"
+            exit 1
+          fi
+
+          if ! git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "Stable tag does not exist: v$VERSION"
+            exit 1
+          fi
+
+          LATEST_STABLE_TAG=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1 || true)
+          if [[ "$LATEST_STABLE_TAG" != "v$VERSION" ]]; then
+            echo "Requested version v$VERSION is not the latest stable tag ($LATEST_STABLE_TAG)"
+            exit 1
+          fi
+
+      - name: Apply stable version metadata
+        run: |
+          set -euo pipefail
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'src/api/rest-api/openapi.json';
+          const version = process.env.VERSION;
+          const doc = JSON.parse(fs.readFileSync(path, 'utf8'));
+          doc.info.version = version;
+          fs.writeFileSync(path, `${JSON.stringify(doc, null, 2)}\n`);
+          NODE
+
+      - name: Validate changed files
+        run: |
+          set -euo pipefail
+          CHANGED_FILES=$(git diff --name-only)
+
+          if [[ -z "$CHANGED_FILES" ]]; then
+            echo "Master already mirrors v$VERSION"
+            exit 0
+          fi
+
+          while IFS= read -r FILE; do
+            case "$FILE" in
+              package.json|package-lock.json|src/api/rest-api/openapi.json) ;;
+              *)
+                echo "Stable version sync may not change $FILE"
+                exit 1
+                ;;
+            esac
+          done <<< "$CHANGED_FILES"
+
+      - name: Create pull request
+        if: ${{ inputs.dry_run == false }}
+        env:
+          GH_PAT: ${{ secrets.PAT_TOKEN_FOR_BUMP_VERSION }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_PAT:-}" ]]; then
+            echo "PAT_TOKEN_FOR_BUMP_VERSION is required to push the sync branch and open a PR"
+            exit 1
+          fi
+
+          if git diff --quiet; then
+            echo "No changes to publish"
+            exit 0
+          fi
+
+          BRANCH="chore/sync-stable-v$VERSION"
+          git config user.name "anton62k"
+          git config user.email "anton62k@users.noreply.github.com"
+          git switch -c "$BRANCH"
+          git add package.json package-lock.json src/api/rest-api/openapi.json
+          git commit -m "chore: sync stable version $VERSION"
+          git push "https://x-access-token:$GH_PAT@github.com/${{ github.repository }}" HEAD:"$BRANCH"
+
+          GH_TOKEN="$GH_PAT" gh pr create \
+            --base master \
+            --head "$BRANCH" \
+            --title "chore: sync stable version $VERSION" \
+            --body "Mirrors the already-published stable tag v$VERSION on master. This PR updates version metadata only."
+
+      - name: Dry run summary
+        if: ${{ inputs.dry_run }}
+        run: |
+          echo "Dry run only. No branch or PR was created."
+          git diff --stat
