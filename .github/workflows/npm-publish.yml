@@ -42,10 +42,12 @@ jobs:
           PACKAGE_VERSION=$(node -p "require('./package.json').version")
           LOCK_VERSION=$(node -p "require('./package-lock.json').version")
           LOCK_ROOT_VERSION=$(node -p "require('./package-lock.json').packages[''].version")
+          OPENAPI_VERSION=$(node -p "require('./src/api/rest-api/openapi.json').info.version")
 
           echo "package.json version: $PACKAGE_VERSION"
           echo "package-lock.json version: $LOCK_VERSION"
           echo "package-lock root version: $LOCK_ROOT_VERSION"
+          echo "OpenAPI version: $OPENAPI_VERSION"
           echo "tag version: ${{ env.version }}"
 
           if [[ "$PACKAGE_VERSION" != "${{ env.version }}" ]]; then
@@ -55,6 +57,11 @@ jobs:
 
           if [[ "$LOCK_VERSION" != "${{ env.version }}" || "$LOCK_ROOT_VERSION" != "${{ env.version }}" ]]; then
             echo "Version mismatch: package-lock.json does not match tag ${{ env.version }}"
+            exit 1
+          fi
+
+          if [[ "$OPENAPI_VERSION" != "${{ env.version }}" ]]; then
+            echo "Version mismatch: OpenAPI ($OPENAPI_VERSION) != tag (${{ env.version }})"
             exit 1
           fi
 
@@ -88,6 +95,7 @@ jobs:
           if (violations.length > 0) {
             console.error('Stable releases cannot depend on prerelease runtime dependencies:');
             for (const violation of violations) console.error(`- ${violation}`);
+            console.error('Release stable dependency versions first, or publish this package as a prerelease.');
             process.exit(1);
           }
           NODE
