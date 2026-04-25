@@ -20,7 +20,6 @@ concurrency:
 # PAT_TOKEN_FOR_BUMP_VERSION so the created PR runs normal CI.
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   stable-version-sync:
@@ -114,8 +113,8 @@ jobs:
           fi
 
           BRANCH="chore/sync-stable-v$VERSION"
-          git config user.name "anton62k"
-          git config user.email "anton62k@users.noreply.github.com"
+          git config user.name "revisium-release-bot"
+          git config user.email "release-bot@revisium.io"
           git switch -c "$BRANCH"
           git add package.json package-lock.json src/api/rest-api/openapi.json
           git commit -m "chore: sync stable version $VERSION"

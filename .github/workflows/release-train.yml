@@ -34,8 +34,9 @@ concurrency:
   group: ${{ github.repository }}-release-train
   cancel-in-progress: false
 
-# Keep GITHUB_TOKEN read-only. Release branch and tag pushes use
-# PAT_TOKEN_FOR_BUMP_VERSION so downstream tag workflows are triggered.
+# Keep GITHUB_TOKEN read-only. Release commits and branch refs are created with
+# the release GitHub App so the version commit receives GitHub's Verified badge.
+# The tag is pushed with the same App token so downstream tag workflows run.
 permissions:
   contents: read
 
@@ -58,10 +59,14 @@ jobs:
           node-version: 24.11.1
           cache: 'npm'
 
-      - name: Configure git identity
-        run: |
-          git config user.name "anton62k"
-          git config user.email "anton62k@users.noreply.github.com"
+      - name: Create release app token
+        id: app-token
+        if: ${{ inputs.dry_run == false }}
+        uses: actions/create-github-app-token@v3
+        with:
+          client-id: ${{ vars.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          permission-contents: write
 
       - name: Compute release transition
         id: release
@@ -242,6 +247,11 @@ jobs:
           echo "target_branch=$TARGET_BRANCH" >> "$GITHUB_OUTPUT"
           echo "target_version=$TARGET_VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "$ACTION" == start-* ]]; then
+            echo "ref_mode=create" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref_mode=update" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Apply version metadata
         env:
@@ -295,6 +305,7 @@ jobs:
           NODE
 
       - name: Validate release metadata
+        id: metadata
         env:
           TARGET_VERSION: ${{ steps.release.outputs.target_version }}
         run: |
@@ -321,8 +332,9 @@ jobs:
           fi
 
           if git diff --quiet; then
-            echo "No version metadata changes were produced"
-            exit 1
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install dependencies
@@ -352,33 +364,53 @@ jobs:
       - name: Build package
         run: npm run build
 
-      - name: Commit and tag release
+      - name: Create verified release commit
+        id: release-commit
         if: ${{ inputs.dry_run == false }}
         env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           TARGET_BRANCH: ${{ steps.release.outputs.target_branch }}
           TARGET_VERSION: ${{ steps.release.outputs.target_version }}
-          TAG: ${{ steps.release.outputs.tag }}
+          METADATA_CHANGED: ${{ steps.metadata.outputs.changed }}
+          REF_MODE: ${{ steps.release.outputs.ref_mode }}
         run: |
           set -euo pipefail
-          git add package.json package-lock.json src/api/rest-api/openapi.json
-          git commit -m "chore(release): $TARGET_VERSION"
-          git tag "$TAG"
-
-      - name: Push release branch and tag
-        if: ${{ inputs.dry_run == false }}
-        env:
-          GH_PAT: ${{ secrets.PAT_TOKEN_FOR_BUMP_VERSION }}
-          TARGET_BRANCH: ${{ steps.release.outputs.target_branch }}
-          TAG: ${{ steps.release.outputs.tag }}
-        run: |
-          set -euo pipefail
-          if [[ -z "${GH_PAT:-}" ]]; then
-            echo "PAT_TOKEN_FOR_BUMP_VERSION is required so tag pushes trigger publish workflows"
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "RELEASE_BOT_CLIENT_ID and RELEASE_BOT_PRIVATE_KEY are required to create verified release commits"
             exit 1
           fi
 
-          git push "https://x-access-token:$GH_PAT@github.com/${{ github.repository }}" HEAD:"$TARGET_BRANCH"
-          git push "https://x-access-token:$GH_PAT@github.com/${{ github.repository }}" "$TAG"
+          BASE_SHA=$(git rev-parse HEAD)
+          export BASE_SHA
+          export COMMIT_MESSAGE="chore(release): $TARGET_VERSION"
+          export COMMIT_FILES=$'package.json\npackage-lock.json\nsrc/api/rest-api/openapi.json'
+          export COMMIT_SUMMARY="Metadata changed: $METADATA_CHANGED"
+
+          node .github/scripts/create-github-app-commit.mjs
+
+      - name: Push release tag
+        if: ${{ inputs.dry_run == false }}
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          TARGET_BRANCH: ${{ steps.release.outputs.target_branch }}
+          TAG: ${{ steps.release.outputs.tag }}
+          COMMIT_SHA: ${{ steps.release-commit.outputs.commit_sha }}
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" || -z "${COMMIT_SHA:-}" ]]; then
+            echo "Release App token and verified commit SHA are required before pushing the tag"
+            exit 1
+          fi
+
+          git fetch origin "refs/heads/$TARGET_BRANCH:refs/remotes/origin/$TARGET_BRANCH"
+          FETCHED_SHA=$(git rev-parse "refs/remotes/origin/$TARGET_BRANCH")
+          if [[ "$FETCHED_SHA" != "$COMMIT_SHA" ]]; then
+            echo "Release branch $TARGET_BRANCH points at $FETCHED_SHA, expected $COMMIT_SHA"
+            exit 1
+          fi
+
+          git tag "$TAG" "$COMMIT_SHA"
+          git push "https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}" "$TAG"
 
       - name: Dry run summary
         if: ${{ inputs.dry_run }}
