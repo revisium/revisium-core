@@ -12,7 +12,19 @@ export class HttpJwtPassportGuard extends AuthGuard('jwt') {}
 
 @Injectable()
 export class OptionalHttpJwtPassportGuard extends AuthGuard('jwt') {
-  handleRequest(_err: any, user: any) {
+  handleRequest<TUser = unknown>(
+    err: unknown,
+    user: TUser | false | null | undefined,
+    _info?: unknown,
+    _context?: ExecutionContext,
+    _status?: unknown,
+  ): TUser {
+    if (err) {
+      throw err;
+    }
+    if (!user) {
+      throw new UnauthorizedException();
+    }
     return user;
   }
 }

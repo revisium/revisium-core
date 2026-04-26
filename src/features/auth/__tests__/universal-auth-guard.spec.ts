@@ -130,6 +130,7 @@ describe('OptionalHttpUniversalAuthGuard', () => {
     const result = await guard.canActivate(context);
 
     expect(result).toBe(true);
+    expect(jwtGuard.canActivate).not.toHaveBeenCalled();
   });
 
   it('should return true when authenticated', async () => {
@@ -220,6 +221,7 @@ describe('OptionalGqlUniversalAuthGuard', () => {
     const result = await guard.canActivate(context);
 
     expect(result).toBe(true);
+    expect(jwtGuard.canActivate).not.toHaveBeenCalled();
   });
 
   it('should return true when authenticated', async () => {
@@ -268,20 +270,36 @@ describe('OptionalGqlJwtPassportGuard', () => {
     expect(result).toBe(request);
   });
 
-  it('should return user or null', () => {
+  it('should return user', () => {
     const guard = new OptionalGqlJwtPassportGuard();
 
-    expect(guard.handleRequest(null, undefined)).toBeNull();
     expect(guard.handleRequest(null, { userId: 'u1' })).toEqual({
       userId: 'u1',
     });
   });
 
-  it('should return null on error instead of error object', () => {
+  it('should throw UnauthorizedException when JWT path returns no user', () => {
+    const guard = new OptionalGqlJwtPassportGuard();
+
+    expect(() => guard.handleRequest(null, undefined)).toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('should propagate JWT validation errors', () => {
     const guard = new OptionalGqlJwtPassportGuard();
     const error = new Error('auth failed');
 
-    expect(guard.handleRequest(error, null)).toBeNull();
+    expect(() => guard.handleRequest(error, null)).toThrow('auth failed');
+  });
+
+  it('should throw when passport reports JWT info without a user', () => {
+    const guard = new OptionalGqlJwtPassportGuard();
+    const info = new Error('jwt expired');
+
+    expect(() => guard.handleRequest(null, null, info)).toThrow(
+      UnauthorizedException,
+    );
   });
 });
 
@@ -299,6 +317,29 @@ describe('OptionalHttpJwtPassportGuard', () => {
     expect(guard.handleRequest(null, { userId: 'u1' })).toEqual({
       userId: 'u1',
     });
-    expect(guard.handleRequest(null, undefined)).toBeUndefined();
+  });
+
+  it('should throw UnauthorizedException when JWT path returns no user', () => {
+    const guard = new OptionalHttpJwtPassportGuard();
+
+    expect(() => guard.handleRequest(null, undefined)).toThrow(
+      UnauthorizedException,
+    );
+  });
+
+  it('should propagate JWT validation errors', () => {
+    const guard = new OptionalHttpJwtPassportGuard();
+    const error = new Error('auth failed');
+
+    expect(() => guard.handleRequest(error, null)).toThrow('auth failed');
+  });
+
+  it('should throw when passport reports JWT info without a user', () => {
+    const guard = new OptionalHttpJwtPassportGuard();
+    const info = new Error('jwt expired');
+
+    expect(() => guard.handleRequest(null, null, info)).toThrow(
+      UnauthorizedException,
+    );
   });
 });
