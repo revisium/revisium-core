@@ -311,7 +311,7 @@ describe('HttpJwtPassportGuard', () => {
 });
 
 describe('OptionalHttpJwtPassportGuard', () => {
-  it('should return user as-is in handleRequest', () => {
+  it('should return user when authenticated', () => {
     const guard = new OptionalHttpJwtPassportGuard();
 
     expect(guard.handleRequest(null, { userId: 'u1' })).toEqual({
