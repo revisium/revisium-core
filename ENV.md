@@ -169,9 +169,7 @@ In monolith/standalone mode, internal keys are derived automatically from `JWT_S
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `REVISIUM_LICENSE_KEY` | - | License key for `/ee/` features. If not set, all limits are disabled (unlimited). Validated against `https://licensing.revisium.io` |
-| `REVISIUM_SSO_ENABLED` | `false` | Enable SSO module (requires valid license with `sso` feature) |
-| `REVISIUM_AUDIT_ENABLED` | `false` | Enable audit log module (requires valid license with `audit` feature) |
+| `REVISIUM_LICENSE_KEY` | - | License key for `/ee/` features. If not set, licensed enterprise features are disabled. Validated against `https://licensing.revisium.io` |
 | `REVISIUM_STANDALONE` | `false` | Self-hosted mode. Disables `.env` file loading (for Docker deployments where env vars come from the container runtime) |
 
 ---
@@ -183,7 +181,7 @@ Billing is enabled automatically when `PAYMENT_SERVICE_URL` is set. When not set
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `PAYMENT_SERVICE_URL` | - | Payment service base URL (e.g. `http://payment:8082`). Core sends HMAC-signed requests to this URL for limits, plans, subscriptions, checkout, and usage reporting |
-| `PAYMENT_SERVICE_SECRET` | - | Shared HMAC secret for service-to-service auth. Must match `CORE_CALLBACK_SECRET` on the payment service side. Used for both outgoing requests (core → payment) and incoming callbacks (payment → core) |
+| `PAYMENT_SERVICE_SECRET` | - | Shared HMAC secret for service-to-service auth. Must match `CORE_CALLBACK_SECRET` on the payment service side. Used for both outgoing requests (core → payment) and incoming callbacks (payment → core). In practice this should be set whenever billing is enabled. |
 
 ---
 
