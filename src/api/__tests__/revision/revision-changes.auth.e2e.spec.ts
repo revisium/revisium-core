@@ -1,6 +1,7 @@
 import { INestApplication } from '@nestjs/common';
 import { gql } from 'src/testing/utils/gql';
 import { getTestApp } from 'src/testing/e2e';
+import { gqlQueryRaw } from 'src/testing/e2e/graphql-helpers';
 import {
   operation,
   runAuthMatrix,
@@ -91,4 +92,26 @@ describe('revision changes auth', () => {
       };
     },
   });
+
+  it.each([
+    ['private', () => projects.private.project.draftRevisionId],
+    ['public', () => projects.public.project.draftRevisionId],
+  ])(
+    'rejects invalid rev_at cookie as unauthenticated for %s project',
+    async (_name, getRevisionId) => {
+      const response = await gqlQueryRaw({
+        app,
+        query: revisionChanges.gql!.query,
+        variables: revisionChanges.gql!.variables({
+          revisionId: getRevisionId(),
+        }),
+        headers: {
+          Cookie: 'rev_at=not-a-jwt',
+        },
+      });
+
+      expect(response.errors?.[0]?.extensions?.code).toBe('UNAUTHENTICATED');
+      expect(response.data).toBeNull();
+    },
+  );
 });
