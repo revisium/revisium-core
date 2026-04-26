@@ -2,6 +2,15 @@ import fs from 'node:fs';
 
 const apiVersion = '2022-11-28';
 
+class GitHubError extends Error {
+  constructor(message, status, responseBody) {
+    super(message);
+    this.name = 'GitHubError';
+    this.status = status;
+    this.responseBody = responseBody;
+  }
+}
+
 function requiredEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -35,13 +44,17 @@ async function github(method, path, body) {
 
   const text = await response.text();
   if (!response.ok) {
-    throw new Error(`${method} ${path} failed with ${response.status}: ${text}`);
+    throw new GitHubError(`${method} ${path} failed with ${response.status}: ${text}`, response.status, text);
   }
 
   return text ? JSON.parse(text) : null;
 }
 
-function commitFiles() {
+async function sleep(ms) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function commitFiles() {
   const files = requiredEnv('COMMIT_FILES')
     .split(/\r?\n/)
     .map((file) => file.trim())
@@ -51,12 +64,56 @@ function commitFiles() {
     throw new Error('COMMIT_FILES must contain at least one path');
   }
 
-  return files.map((path) => ({
-    path,
-    mode: '100644',
-    type: 'blob',
-    content: fs.readFileSync(path, 'utf8'),
-  }));
+  const entries = [];
+  for (const path of files) {
+    const blob = await github('POST', '/git/blobs', {
+      content: fs.readFileSync(path, 'utf8'),
+      encoding: 'utf-8',
+    });
+
+    entries.push({
+      path,
+      mode: '100644',
+      type: 'blob',
+      sha: blob.sha,
+    });
+  }
+
+  return entries;
+}
+
+async function updateRef(refMode, targetBranch, commitSha) {
+  const ref = `refs/heads/${targetBranch}`;
+
+  if (refMode === 'create') {
+    await github('POST', '/git/refs', {
+      ref,
+      sha: commitSha,
+    });
+    return ref;
+  }
+
+  const maxAttempts = Number(optionalEnv('REF_UPDATE_ATTEMPTS', '3'));
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await github('PATCH', `/git/refs/heads/${targetBranch}`, {
+        sha: commitSha,
+        force: false,
+      });
+      return ref;
+    } catch (error) {
+      const retryable = error instanceof GitHubError && error.status === 409;
+      if (!retryable || attempt === maxAttempts) {
+        throw error;
+      }
+
+      const delay = attempt * 1000;
+      console.warn(`Ref update failed with ${error.status}; retrying in ${delay}ms (${attempt}/${maxAttempts})`);
+      await sleep(delay);
+    }
+  }
+
+  throw new Error(`Failed to update ${ref}`);
 }
 
 const baseSha = requiredEnv('BASE_SHA');
@@ -71,7 +128,7 @@ if (!['create', 'update'].includes(refMode)) {
 const baseCommit = await github('GET', `/git/commits/${baseSha}`);
 const tree = await github('POST', '/git/trees', {
   base_tree: baseCommit.tree.sha,
-  tree: commitFiles(),
+  tree: await commitFiles(),
 });
 
 const commit = await github('POST', '/git/commits', {
@@ -85,22 +142,15 @@ if (!commit.verification?.verified) {
   throw new Error(`GitHub did not verify the release bot commit (${reason})`);
 }
 
-const ref = `refs/heads/${targetBranch}`;
-if (refMode === 'create') {
-  await github('POST', '/git/refs', {
-    ref,
-    sha: commit.sha,
-  });
-} else {
-  await github('PATCH', `/git/refs/heads/${targetBranch}`, {
-    sha: commit.sha,
-    force: false,
-  });
-}
+const ref = await updateRef(refMode, targetBranch, commit.sha);
 
 appendOutput('commit_sha', commit.sha);
 appendOutput('verification_reason', commit.verification.reason || '');
+appendOutput('branch_ref', ref);
 
 console.log(`Created verified GitHub App commit ${commit.sha} on ${ref}`);
 console.log(`Verification reason: ${commit.verification.reason || 'unknown'}`);
-console.log(optionalEnv('COMMIT_SUMMARY'));
+const summary = optionalEnv('COMMIT_SUMMARY');
+if (summary) {
+  console.log(summary);
+}
