@@ -23,6 +23,14 @@ function optionalEnv(name, fallback = '') {
   return process.env[name] || fallback;
 }
 
+function positiveIntegerEnv(name, fallback) {
+  const raw = optionalEnv(name, fallback);
+  if (!/^[1-9][0-9]*$/.test(raw)) {
+    throw new Error(`${name} must be a positive integer, got "${raw}"`);
+  }
+  return Number.parseInt(raw, 10);
+}
+
 function appendOutput(name, value) {
   if (!process.env.GITHUB_OUTPUT) return;
   fs.appendFileSync(process.env.GITHUB_OUTPUT, `${name}=${value}\n`);
@@ -52,6 +60,11 @@ async function github(method, path, body) {
 
 async function sleep(ms) {
   await new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function retryDelayMs(attempt) {
+  const baseDelay = Math.min(15_000, 2 ** (attempt - 1) * 1000);
+  return baseDelay + Math.floor(Math.random() * 250);
 }
 
 async function commitFiles() {
@@ -93,7 +106,7 @@ async function updateRef(refMode, targetBranch, commitSha) {
     return ref;
   }
 
-  const maxAttempts = Number(optionalEnv('REF_UPDATE_ATTEMPTS', '3'));
+  const maxAttempts = positiveIntegerEnv('REF_UPDATE_ATTEMPTS', '3');
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
     try {
       await github('PATCH', `/git/refs/heads/${targetBranch}`, {
@@ -107,8 +120,10 @@ async function updateRef(refMode, targetBranch, commitSha) {
         throw error;
       }
 
-      const delay = attempt * 1000;
-      console.warn(`Ref update failed with ${error.status}; retrying in ${delay}ms (${attempt}/${maxAttempts})`);
+      const delay = retryDelayMs(attempt);
+      console.warn(
+        `Ref update failed with ${error.status}: ${error.responseBody}; retrying in ${delay}ms (${attempt}/${maxAttempts})`,
+      );
       await sleep(delay);
     }
   }

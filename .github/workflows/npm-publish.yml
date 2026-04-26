@@ -72,23 +72,16 @@ jobs:
         run: |
           node <<'NODE'
           const pkg = require('./package.json');
-          const sections = ['dependencies', 'peerDependencies', 'optionalDependencies', 'bundledDependencies', 'bundleDependencies'];
-          const prereleasePattern = /-(alpha|beta|rc)\./;
+          const sections = ['dependencies', 'peerDependencies', 'optionalDependencies'];
+          const prereleaseVersionPattern = /(?:^|[^\w.-])v?\d+\.\d+\.\d+-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*/;
           const violations = [];
 
           for (const section of sections) {
             const deps = pkg[section];
             if (!deps) continue;
 
-            if (Array.isArray(deps)) {
-              for (const dep of deps) {
-                if (prereleasePattern.test(dep)) violations.push(`${section}: ${dep}`);
-              }
-              continue;
-            }
-
             for (const [name, version] of Object.entries(deps)) {
-              if (prereleasePattern.test(String(version))) {
+              if (prereleaseVersionPattern.test(String(version))) {
                 violations.push(`${section}: ${name}@${version}`);
               }
             }
@@ -105,7 +98,14 @@ jobs:
       - name: Ensure npm version does not already exist
         run: |
           PACKAGE_NAME=$(node -p "require('./package.json').name")
-          PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME@${{ env.version }}" version 2>/dev/null || true)
+          LOOKUP_ERR=$(mktemp)
+          PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME@${{ env.version }}" version 2>"$LOOKUP_ERR" || true)
+
+          if [[ -s "$LOOKUP_ERR" ]]; then
+            echo "Warning: npm registry lookup produced stderr:"
+            cat "$LOOKUP_ERR"
+          fi
+          rm -f "$LOOKUP_ERR"
 
           if [[ -n "$PUBLISHED_VERSION" ]]; then
             echo "$PACKAGE_NAME@${{ env.version }} is already published"
