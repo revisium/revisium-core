@@ -3,7 +3,7 @@ name: Deploy
 on:
   workflow_dispatch:
   workflow_run:
-    workflows: ["Build"]
+    workflows: ['Build']
     types:
       - completed
     branches:
@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: ${{ github.repository }}
           ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
@@ -35,7 +35,7 @@ jobs:
 
       - name: Create GitHub deployment
         id: deployment
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const ref = context.eventName === 'workflow_run'
@@ -54,19 +54,19 @@ jobs:
           result-encoding: string
 
       - name: Set deployment status to in_progress
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
-              await github.rest.repos.createDeploymentStatus({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              deployment_id: ${{ steps.deployment.outputs.result }},
-              state: 'in_progress',
-              description: 'Deployment in progress'
-              });
+            await github.rest.repos.createDeploymentStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            deployment_id: ${{ steps.deployment.outputs.result }},
+            state: 'in_progress',
+            description: 'Deployment in progress'
+            });
 
       - name: Install kubectl
-        uses: azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede #azure/setup-kubectl@v4.0.1
+        uses: azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
         with:
           version: v1.29.6
 
@@ -94,7 +94,7 @@ jobs:
 
       - name: Set deployment status to success
         if: success()
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const deploymentId = Number('${{ steps.deployment.outputs.result }}');
@@ -115,7 +115,7 @@ jobs:
 
       - name: Set deployment status to failure
         if: ${{ (failure() || cancelled()) && steps.deployment.outputs.result }}
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const deploymentId = Number('${{ steps.deployment.outputs.result }}');
