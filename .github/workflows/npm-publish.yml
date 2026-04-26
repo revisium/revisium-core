@@ -1,34 +1,130 @@
 name: Publish Package to npmjs
+
 on:
-  workflow_dispatch:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
+
 jobs:
-  build:
+  publish:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24.11.1
           registry-url: 'https://registry.npmjs.org'
-      - run: npm ci
+
+      - name: Validate tag format
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
+          echo "Publishing for tag: $TAG"
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-(alpha|rc)\.[0-9]+)?$ ]]; then
+            echo "Invalid tag format: $TAG (expected vX.Y.Z, vX.Y.Z-alpha.N, or vX.Y.Z-rc.N)"
+            exit 1
+          fi
+
+          VERSION=${TAG#v}
+          echo "version=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: |
+          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+          npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+
+      - name: Validate package and lockfile versions
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          LOCK_VERSION=$(node -p "require('./package-lock.json').version")
+          LOCK_ROOT_VERSION=$(node -p "require('./package-lock.json').packages[''].version")
+          OPENAPI_VERSION=$(node -p "require('./src/api/rest-api/openapi.json').info.version")
+
+          echo "package.json version: $PACKAGE_VERSION"
+          echo "package-lock.json version: $LOCK_VERSION"
+          echo "package-lock root version: $LOCK_ROOT_VERSION"
+          echo "OpenAPI version: $OPENAPI_VERSION"
+          echo "tag version: ${{ env.version }}"
+
+          if [[ "$PACKAGE_VERSION" != "${{ env.version }}" ]]; then
+            echo "Version mismatch: package.json ($PACKAGE_VERSION) != tag (${{ env.version }})"
+            exit 1
+          fi
+
+          if [[ "$LOCK_VERSION" != "${{ env.version }}" || "$LOCK_ROOT_VERSION" != "${{ env.version }}" ]]; then
+            echo "Version mismatch: package-lock.json does not match tag ${{ env.version }}"
+            exit 1
+          fi
+
+          if [[ "$OPENAPI_VERSION" != "${{ env.version }}" ]]; then
+            echo "Version mismatch: OpenAPI ($OPENAPI_VERSION) != tag (${{ env.version }})"
+            exit 1
+          fi
+
+      - name: Ensure stable releases do not depend on prereleases
+        if: ${{ !contains(env.version, '-') }}
+        run: |
+          node <<'NODE'
+          const pkg = require('./package.json');
+          const sections = ['dependencies', 'peerDependencies', 'optionalDependencies', 'bundledDependencies', 'bundleDependencies'];
+          const prereleasePattern = /-(alpha|beta|rc)\./;
+          const violations = [];
+
+          for (const section of sections) {
+            const deps = pkg[section];
+            if (!deps) continue;
+
+            if (Array.isArray(deps)) {
+              for (const dep of deps) {
+                if (prereleasePattern.test(dep)) violations.push(`${section}: ${dep}`);
+              }
+              continue;
+            }
+
+            for (const [name, version] of Object.entries(deps)) {
+              if (prereleasePattern.test(String(version))) {
+                violations.push(`${section}: ${name}@${version}`);
+              }
+            }
+          }
+
+          if (violations.length > 0) {
+            console.error('Stable releases cannot depend on prerelease runtime dependencies:');
+            for (const violation of violations) console.error(`- ${violation}`);
+            console.error('Release stable dependency versions first, or publish this package as a prerelease.');
+            process.exit(1);
+          }
+          NODE
+
+      - name: Ensure npm version does not already exist
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          PUBLISHED_VERSION=$(npm view "$PACKAGE_NAME@${{ env.version }}" version 2>/dev/null || true)
+
+          if [[ -n "$PUBLISHED_VERSION" ]]; then
+            echo "$PACKAGE_NAME@${{ env.version }} is already published"
+            exit 1
+          fi
+
       - name: Determine npm tag
         id: npm-tag
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=${{ env.version }}
           if [[ "$VERSION" =~ -alpha ]]; then
             echo "tag=alpha" >> $GITHUB_OUTPUT
-          elif [[ "$VERSION" =~ -beta ]]; then
-            echo "tag=beta" >> $GITHUB_OUTPUT
           elif [[ "$VERSION" =~ -rc ]]; then
             echo "tag=rc" >> $GITHUB_OUTPUT
           else
             echo "tag=latest" >> $GITHUB_OUTPUT
           fi
-      - run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
+
+      - name: Publish to npm
+        run: npm publish --provenance --access public --tag ${{ steps.npm-tag.outputs.tag }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
