@@ -3,7 +3,10 @@ import { ApiKeyType } from 'src/__generated__/client';
 import { ApiKeyTrackingService } from 'src/features/api-key/api-key-tracking.service';
 import { ApiKeyService } from 'src/features/api-key/api-key.service';
 import { NoAuthService } from 'src/features/auth/no-auth.service';
-import { ACCESS_COOKIE_NAME } from 'src/features/auth/services/cookie.service';
+import {
+  ACCESS_COOKIE_NAME,
+  SESSION_COOKIE_NAME,
+} from 'src/features/auth/services/cookie.service';
 import { IApiKeyScope, IAuthUser, ICaslRule } from 'src/features/auth/types';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 
@@ -42,6 +45,10 @@ export class UniversalAuthService {
         }
 
         if (request.cookies?.[ACCESS_COOKIE_NAME]) {
+          return 'jwt' as const;
+        }
+
+        if (request.cookies?.[SESSION_COOKIE_NAME] === '1') {
           return 'jwt' as const;
         }
 

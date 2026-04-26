@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
 import { gql } from 'src/testing/utils/gql';
 import { getTestApp } from 'src/testing/e2e';
 import { gqlQueryRaw } from 'src/testing/e2e/graphql-helpers';
@@ -112,6 +113,55 @@ describe('revision changes auth', () => {
 
       expect(response.errors?.[0]?.extensions?.code).toBe('UNAUTHENTICATED');
       expect(response.data).toBeNull();
+    },
+  );
+
+  it.each([
+    ['private', () => projects.private.project.draftRevisionId],
+    ['public', () => projects.public.project.draftRevisionId],
+  ])(
+    'rejects rev_session-only cookie as unauthenticated for %s project',
+    async (_name, getRevisionId) => {
+      const response = await gqlQueryRaw({
+        app,
+        query: revisionChanges.gql!.query,
+        variables: revisionChanges.gql!.variables({
+          revisionId: getRevisionId(),
+        }),
+        headers: {
+          Cookie: 'rev_session=1',
+        },
+      });
+
+      expect(response.errors?.[0]?.extensions?.code).toBe('UNAUTHENTICATED');
+      expect(response.data).toBeNull();
+    },
+  );
+
+  it.each([
+    [
+      'private',
+      'rev_at=not-a-jwt',
+      () => projects.private.project.draftRevisionId,
+    ],
+    [
+      'public',
+      'rev_at=not-a-jwt',
+      () => projects.public.project.draftRevisionId,
+    ],
+    [
+      'private',
+      'rev_session=1',
+      () => projects.private.project.draftRevisionId,
+    ],
+    ['public', 'rev_session=1', () => projects.public.project.draftRevisionId],
+  ])(
+    'rejects %s project REST request with %s as unauthenticated',
+    async (_name, cookie, getRevisionId) => {
+      await request(app.getHttpServer())
+        .get(`/api/revision/${getRevisionId()}/changes`)
+        .set('Cookie', cookie)
+        .expect(401);
     },
   );
 });

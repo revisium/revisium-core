@@ -7,6 +7,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { UniversalAuthService } from 'src/features/auth/guards/universal-auth.service';
+import { handleOptionalJwtRequest } from 'src/features/auth/guards/universal/optional-jwt-handle-request';
 
 @Injectable()
 export class GqlJwtPassportGuard extends AuthGuard('jwt') {
@@ -30,13 +31,7 @@ export class OptionalGqlJwtPassportGuard extends AuthGuard('jwt') {
     _context?: ExecutionContext,
     _status?: unknown,
   ): TUser {
-    if (err) {
-      throw err;
-    }
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-    return user;
+    return handleOptionalJwtRequest(err, user);
   }
 }
 

@@ -132,6 +132,19 @@ describe('UniversalAuthService', () => {
       expect(result).toBe('jwt');
     });
 
+    it('should return jwt when only the rev_session cookie is present', async () => {
+      const request = {
+        headers: {},
+        query: {},
+        ip: '127.0.0.1',
+        cookies: { rev_session: '1' },
+      } as any;
+
+      const result = await service.authenticateRequest(request);
+
+      expect(result).toBe('jwt');
+    });
+
     it('returns jwt even when only the bearer header is present (no cookie)', async () => {
       // Pair test with "cookie alone" above: both independently trigger
       // 'jwt'. The downstream JwtStrategy extractor is what actually

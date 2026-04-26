@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UniversalAuthService } from 'src/features/auth/guards/universal-auth.service';
+import { handleOptionalJwtRequest } from 'src/features/auth/guards/universal/optional-jwt-handle-request';
 
 @Injectable()
 export class HttpJwtPassportGuard extends AuthGuard('jwt') {}
@@ -19,13 +20,7 @@ export class OptionalHttpJwtPassportGuard extends AuthGuard('jwt') {
     _context?: ExecutionContext,
     _status?: unknown,
   ): TUser {
-    if (err) {
-      throw err;
-    }
-    if (!user) {
-      throw new UnauthorizedException();
-    }
-    return user;
+    return handleOptionalJwtRequest(err, user);
   }
 }
 
