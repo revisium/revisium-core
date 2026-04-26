@@ -331,6 +331,17 @@ jobs:
             exit 1
           fi
 
+          while IFS= read -r FILE; do
+            [[ -z "$FILE" ]] && continue
+            case "$FILE" in
+              package.json|package-lock.json|src/api/rest-api/openapi.json) ;;
+              *)
+                echo "Release commit may not change $FILE"
+                exit 1
+                ;;
+            esac
+          done <<< "$(git diff --name-only)"
+
           if git diff --quiet; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else

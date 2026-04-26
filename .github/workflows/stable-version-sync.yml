@@ -134,11 +134,15 @@ jobs:
 
           node .github/scripts/create-github-app-commit.mjs
 
-          gh pr create \
+          if ! gh pr create \
             --base master \
             --head "$BRANCH" \
             --title "chore: sync stable version $VERSION" \
-            --body "Mirrors the already-published stable tag v$VERSION on master. This PR updates version metadata only."
+            --body "Mirrors the already-published stable tag v$VERSION on master. This PR updates version metadata only."; then
+            echo "PR creation failed; deleting orphan branch $BRANCH"
+            gh api -X DELETE "repos/${{ github.repository }}/git/refs/heads/$BRANCH" || true
+            exit 1
+          fi
 
       - name: Dry run summary
         if: ${{ inputs.dry_run }}

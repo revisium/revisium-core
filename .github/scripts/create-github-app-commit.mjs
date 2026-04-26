@@ -102,7 +102,7 @@ async function updateRef(refMode, targetBranch, commitSha) {
       });
       return ref;
     } catch (error) {
-      const retryable = error instanceof GitHubError && error.status === 409;
+      const retryable = error instanceof GitHubError && error.status >= 500 && error.status < 600;
       if (!retryable || attempt === maxAttempts) {
         throw error;
       }
