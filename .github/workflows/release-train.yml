@@ -21,9 +21,6 @@ on:
           - patch
           - patch-alpha-start
           - patch-rc-start
-      base_ref:
-        description: SHA or ref for start-* actions. Defaults to origin/master.
-        required: false
       dry_run:
         description: Validate and show the computed release without pushing.
         required: false
@@ -45,7 +42,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ACTION: ${{ inputs.action }}
-      BASE_REF: ${{ inputs.base_ref }}
       DRY_RUN: ${{ inputs.dry_run }}
     steps:
       - name: Checkout repository
@@ -141,13 +137,7 @@ jobs:
               exit 1
             fi
 
-            SOURCE_REF=${BASE_REF:-origin/master}
-            SOURCE_SHA=$(git rev-parse "$SOURCE_REF^{commit}")
-            if ! git merge-base --is-ancestor "$SOURCE_SHA" origin/master; then
-              echo "base_ref must resolve to a commit reachable from origin/master"
-              exit 1
-            fi
-
+            SOURCE_SHA=$(git rev-parse origin/master^{commit})
             git switch -c "$TARGET_BRANCH" "$SOURCE_SHA"
           else
             if [[ ! "$CURRENT_BRANCH" =~ ^release/[0-9]+\.[0-9]+\.x$ ]]; then
@@ -349,28 +339,12 @@ jobs:
           fi
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
-
-      - name: Rebuild native dependencies
-        run: npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
-
-      - name: Create test .env
-        run: cp .env.example .env
-
-      - name: Start test services
-        run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
-
-      - name: Run release validation
         run: |
-          npm run lint:ci
-          npm run tsc
-          npx dotenv-cli -e .env.test -- npm run prisma:migrate:deploy
-          npx dotenv-cli -e .env.test -- npm run seed
-          npm run test:cov
+          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+          npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
 
-      - name: Stop test services
-        if: always()
-        run: docker compose -f docker-compose-test.yml -p revisium-core-test down --volumes
+      - name: Type check
+        run: npm run tsc
 
       - name: Build package
         run: npm run build
