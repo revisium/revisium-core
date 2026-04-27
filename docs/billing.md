@@ -5,7 +5,8 @@ Plan limits and usage tracking for Revisium Cloud. Enterprise feature — self-h
 ## Quick Start
 
 - Self-hosted: nothing to configure, everything is unlimited
-- Cloud: set `PAYMENT_SERVICE_URL` + `PAYMENT_SERVICE_SECRET` (+ `REVISIUM_LICENSE_KEY` for enterprise features)
+- Cloud: set `PAYMENT_SERVICE_URL` + `PAYMENT_SERVICE_SECRET`
+- `REVISIUM_LICENSE_KEY` is only needed for licensed `/ee/` enterprise features; it does not enable billing by itself
 
 ## Architecture
 
@@ -84,5 +85,5 @@ Fail-open: if payment service is unreachable and cache is cold, operations are a
 | Variable                   | Default | Description                                       |
 | -------------------------- | ------- | ------------------------------------------------- |
 | `PAYMENT_SERVICE_URL`      | —       | Payment service base URL (e.g. `http://payment:8082`). Billing is enabled when this is set |
-| `PAYMENT_SERVICE_SECRET`   | —       | Shared HMAC secret for service-to-service auth    |
-| `REVISIUM_LICENSE_KEY`     | —       | Required for any enterprise features              |
+| `PAYMENT_SERVICE_SECRET`   | —       | Shared HMAC secret for service-to-service auth. Should be set whenever `PAYMENT_SERVICE_URL` is set |
+| `REVISIUM_LICENSE_KEY`     | —       | Required only for licensed `/ee/` enterprise features |
