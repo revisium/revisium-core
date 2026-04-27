@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common';
+import { nanoid } from 'nanoid';
 import request from 'supertest';
 import { gql } from 'src/testing/utils/gql';
 import {
@@ -79,16 +80,15 @@ describe('NO_AUTH mode', () => {
       expect(result).toBeDefined();
     });
 
-    it('login accepts any credentials', async () => {
-      const result = await anonPost(app, '/api/auth/login', {
+    it('login accepts empty password and returns only a JSON access token', async () => {
+      const res = await anonPost(app, '/api/auth/login', {
         emailOrUsername: 'anything',
-        password: 'anything',
-      })
-        .expect(201)
-        .then((res) => res.body);
+        password: '',
+      }).expect(201);
 
-      expect(result).toHaveProperty('accessToken');
-      expect(typeof result.accessToken).toBe('string');
+      expect(res.body).toHaveProperty('accessToken');
+      expect(typeof res.body.accessToken).toBe('string');
+      expect(res.headers['set-cookie']).toBeUndefined();
     });
   });
 
@@ -113,21 +113,49 @@ describe('NO_AUTH mode', () => {
     });
 
     it('mutation works without token', async () => {
+      const branchName = `no-auth-${nanoid()}`;
       const result = await gqlQuery({
         app,
         query: gql`
-          mutation login($data: LoginInput!) {
-            login(data: $data) {
-              accessToken
+          mutation createBranch($data: CreateBranchInput!) {
+            createBranch(data: $data) {
+              name
+              isRoot
             }
           }
         `,
         variables: {
-          data: { emailOrUsername: 'anything', password: 'anything' },
+          data: {
+            revisionId: fixture.project.headRevisionId,
+            branchName,
+          },
         },
       });
 
-      expect(result.login.accessToken).toBeDefined();
+      expect(result.createBranch.name).toBe(branchName);
+      expect(result.createBranch.isRoot).toBe(false);
+    });
+
+    it('login accepts empty password and returns only a JSON access token', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: gql`
+            mutation login($data: LoginInput!) {
+              login(data: $data) {
+                accessToken
+              }
+            }
+          `,
+          variables: {
+            data: { emailOrUsername: 'anything', password: '' },
+          },
+        })
+        .expect(200);
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.login.accessToken).toBeDefined();
+      expect(res.headers['set-cookie']).toBeUndefined();
     });
   });
 

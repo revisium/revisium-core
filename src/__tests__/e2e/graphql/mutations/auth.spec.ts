@@ -58,6 +58,16 @@ describe('graphql - auth mutations', () => {
       );
     });
 
+    it('login fails with Invalid credentials on empty password', async () => {
+      await gqlQueryExpectError(
+        {
+          app,
+          ...getMutation(fixture.owner.user.username!, ''),
+        },
+        /Invalid credentials/,
+      );
+    });
+
     it('login fails with Invalid credentials on non-existent user', async () => {
       // Same generic message prevents user enumeration via either the
       // response body or the response time (bcrypt compare always runs).
