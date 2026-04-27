@@ -11,7 +11,6 @@ export class LoginInput {
 
   @Field()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(256)
   password: string;
 }

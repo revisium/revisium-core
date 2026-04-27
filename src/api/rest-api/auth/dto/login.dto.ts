@@ -10,7 +10,6 @@ export class LoginDto {
 
   @ApiProperty({ required: true })
   @IsString()
-  @IsNotEmpty()
   @MaxLength(256)
   password: string;
 }
