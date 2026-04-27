@@ -157,7 +157,7 @@ describe('JWT Guards with NO_AUTH enabled', () => {
 });
 
 describe('LoginHandler with NO_AUTH enabled', () => {
-  it('should return token for any credentials', async () => {
+  it('should return token for empty password credentials', async () => {
     const signAccessToken = jest
       .fn()
       .mockReturnValue({ accessToken: 'no-auth-token', expiresIn: 1800 });
@@ -183,8 +183,8 @@ describe('LoginHandler with NO_AUTH enabled', () => {
 
     const handler = module.get<LoginHandler>(LoginHandler);
     const command = new LoginCommand({
-      emailOrUsername: 'anything',
-      password: 'anything',
+      emailOrUsername: 'admin',
+      password: '',
     });
 
     const result = await handler.execute(command);
