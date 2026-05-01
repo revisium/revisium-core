@@ -21,6 +21,10 @@ export class UsageReporterService {
 
   @Cron(CronExpression.EVERY_HOUR)
   async reportAllUsage(): Promise<void> {
+    if (!this.billingClient.configured) {
+      return;
+    }
+
     const orgs = await this.prisma.organization.findMany({
       select: { id: true },
     });
