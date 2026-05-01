@@ -11,8 +11,10 @@ import { UsageService } from '../usage/usage.service';
 describe('UsageReporterService', () => {
   let module: TestingModule;
   let service: UsageReporterService;
-  let mockBillingClient: jest.Mocked<IBillingClient>;
+  let prisma: PrismaService;
+  let mockBillingClient: jest.Mocked<IBillingClient> & { configured: boolean };
   let mockUsageService: jest.Mocked<UsageService>;
+  let findManySpy: jest.SpyInstance;
 
   beforeAll(async () => {
     mockBillingClient = {
@@ -43,16 +45,23 @@ describe('UsageReporterService', () => {
     }).compile();
 
     service = module.get(UsageReporterService);
+    prisma = module.get(PrismaService);
   });
 
   afterAll(async () => {
-    await module.get(PrismaService).$disconnect();
+    await prisma.$disconnect();
   });
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockBillingClient.configured = true;
     mockUsageService.computeUsage.mockResolvedValue(0);
     mockBillingClient.reportUsage.mockResolvedValue(undefined);
+    findManySpy = jest.spyOn(prisma.organization, 'findMany');
+  });
+
+  afterEach(() => {
+    findManySpy.mockRestore();
   });
 
   it('should report usage for organizations', async () => {
@@ -87,5 +96,19 @@ describe('UsageReporterService', () => {
         storage_bytes: 100_000,
       }),
     );
+  });
+
+  describe('when billing client is not configured', () => {
+    beforeEach(() => {
+      mockBillingClient.configured = false;
+    });
+
+    it('should no-op without querying organizations or reporting usage', async () => {
+      await service.reportAllUsage();
+
+      expect(findManySpy).not.toHaveBeenCalled();
+      expect(mockUsageService.computeUsage).not.toHaveBeenCalled();
+      expect(mockBillingClient.reportUsage).not.toHaveBeenCalled();
+    });
   });
 });

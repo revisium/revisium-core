@@ -4,6 +4,8 @@ import {
   ExecutionContext,
   CallHandler,
   Logger,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { catchError, Observable, throwError } from 'rxjs';
 
@@ -14,7 +16,13 @@ export class LoggingInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((err) => {
-        if (err instanceof Error) {
+        if (err instanceof HttpException) {
+          if (err.getStatus() < HttpStatus.INTERNAL_SERVER_ERROR) {
+            this.logger.debug(`${err.name}: ${err.message}`);
+          } else {
+            this.logger.error(err, err.stack);
+          }
+        } else if (err instanceof Error) {
           this.logger.error(err, err.stack);
         }
 
