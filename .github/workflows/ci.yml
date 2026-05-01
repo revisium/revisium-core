@@ -86,8 +86,8 @@ jobs:
 
       - name: Apply migrations + seed
         run: |
-          npx dotenv-cli -e .env.test -- npm run prisma:migrate:deploy
-          npx dotenv-cli -e .env.test -- npm run seed
+          ./node_modules/.bin/dotenv -e .env.test -- npm run prisma:migrate:deploy
+          ./node_modules/.bin/dotenv -e .env.test -- npm run seed
       - run: npm run test:cov
       - name: Cache SonarQube packages
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
