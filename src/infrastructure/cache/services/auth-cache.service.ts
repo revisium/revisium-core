@@ -65,29 +65,6 @@ export class AuthCacheService {
     });
   }
 
-  async projectIdentity(
-    query: {
-      revisionId?: string;
-      endpointId?: string;
-      projectId?: string;
-    },
-    factory: () => Promise<
-      { organizationId: string; projectName: string } | undefined
-    >,
-  ): Promise<{ organizationId: string; projectName: string } | undefined> {
-    const keyHash = makeCacheKeyFromArgs([query], {
-      prefix: AUTH_CACHE_KEYS.PROJECT_IDENTITY,
-      version: AUTH_CACHE_CONFIG.KEY_VERSION,
-    });
-
-    return this.cache.getOrSet({
-      key: keyHash,
-      ttl: AUTH_CACHE_CONFIG.PROJECT_IDENTITY_TTL,
-      tags: [AUTH_CACHE_TAGS.AUTH_RELATIVES],
-      factory,
-    });
-  }
-
   async projectPermissionCheck<T>(
     query: {
       organizationId?: string;

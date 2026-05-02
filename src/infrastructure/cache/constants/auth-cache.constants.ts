@@ -5,8 +5,6 @@ export const AUTH_CACHE_KEYS = {
   CHECK_ORGANIZATION_PERMISSION: 'auth:check-organization-permission',
   CHECK_PROJECT_PERMISSION: 'auth:check-project-permission',
 
-  PROJECT_IDENTITY: 'auth:project-identity',
-
   API_KEY_BY_HASH: (keyHash: string) => `auth:api-key:${keyHash}`,
 
   USER_TOKEN_VERSION: (userId: string) => `auth:token-version:${userId}`,
@@ -30,12 +28,6 @@ export const AUTH_CACHE_CONFIG = {
   ROLE_PERMISSIONS_TTL: '1d' as const,
 
   PERMISSION_CHECK_TTL: '10m' as const,
-
-  // Project identity (revisionId/endpointId/projectId → org/name) is a
-  // stable mapping for the project's lifetime, so cache it long. It is
-  // tagged with PROJECT_PERMISSIONS so visibility/membership changes
-  // invalidate it together with the permission check entries.
-  PROJECT_IDENTITY_TTL: '1d' as const,
 
   API_KEY_TTL: '5m' as const,
 

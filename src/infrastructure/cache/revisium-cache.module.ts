@@ -5,6 +5,7 @@ import { pgBusDriver } from 'src/infrastructure/cache/pg-bus/pg-bus.driver';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { CacheManagementService } from 'src/infrastructure/cache/services/cache-management.service';
 import { CacheService } from 'src/infrastructure/cache/services/cache.service';
+import { ProjectCacheService } from 'src/infrastructure/cache/services/project-cache.service';
 import { RevisionCacheService } from 'src/infrastructure/cache/services/revision-cache.service';
 import { RowCacheService } from 'src/infrastructure/cache/services/row-cache.service';
 import { parseBool } from 'src/utils/utils/parse-bool';
@@ -216,12 +217,14 @@ export class RevisiumCacheModule {
         RowCacheService,
         RevisionCacheService,
         AuthCacheService,
+        ProjectCacheService,
         ...CACHE_EVENT_HANDLERS,
       ],
       exports: [
         RowCacheService,
         RevisionCacheService,
         AuthCacheService,
+        ProjectCacheService,
         CacheService,
         CacheManagementService,
         CACHE_SERVICE,
