@@ -51,11 +51,19 @@ export class ProjectApiService {
   ) {}
 
   public resolveProject(data: FindProjectIdentityQueryData) {
-    return this.projectCache.projectIdentity(data, () =>
+    const identityQuery: FindProjectIdentityQueryData = {
+      organizationId: data.organizationId,
+      projectName: data.projectName,
+      projectId: data.projectId,
+      revisionId: data.revisionId,
+      endpointId: data.endpointId,
+    };
+
+    return this.projectCache.projectIdentity(identityQuery, () =>
       this.queryBus.execute<
         FindProjectIdentityQuery,
         FindProjectIdentityQueryReturnType
-      >(new FindProjectIdentityQuery(data)),
+      >(new FindProjectIdentityQuery(identityQuery)),
     );
   }
 

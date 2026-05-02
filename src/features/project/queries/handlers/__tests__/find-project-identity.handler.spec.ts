@@ -180,6 +180,56 @@ describe('FindProjectIdentityHandler', () => {
       });
     });
 
+    it('prefers revisionId over endpointId when both are given', async () => {
+      const a = await prepareProject(moduleFixture);
+      const b = await prepareProject(moduleFixture);
+
+      const result = await execute({
+        revisionId: a.draftRevisionId,
+        endpointId: b.headEndpointId,
+      });
+
+      expect(result).toEqual({
+        organizationId: a.organizationId,
+        projectName: a.projectName,
+      });
+    });
+
+    it('prefers endpointId over projectId when both are given', async () => {
+      const a = await prepareProject(moduleFixture);
+      const b = await prepareProject(moduleFixture);
+
+      const result = await execute({
+        endpointId: a.headEndpointId,
+        projectId: b.projectId,
+      });
+
+      expect(result).toEqual({
+        organizationId: a.organizationId,
+        projectName: a.projectName,
+      });
+    });
+
+    it('matches CheckProjectPermissionHandler precedence (orgName → revisionId → endpointId → projectId)', async () => {
+      const a = await prepareProject(moduleFixture);
+      const b = await prepareProject(moduleFixture);
+      const c = await prepareProject(moduleFixture);
+      const d = await prepareProject(moduleFixture);
+
+      const result = await execute({
+        organizationId: a.organizationId,
+        projectName: a.projectName,
+        revisionId: b.draftRevisionId,
+        endpointId: c.headEndpointId,
+        projectId: d.projectId,
+      });
+
+      expect(result).toEqual({
+        organizationId: a.organizationId,
+        projectName: a.projectName,
+      });
+    });
+
     it('returns null when no identifying fields are provided', async () => {
       const result = await execute({});
 

@@ -18,14 +18,14 @@ export class FindProjectIdentityHandler implements IQueryHandler<
     if (data.organizationId && data.projectName) {
       return this.byOrganizationAndName(data.organizationId, data.projectName);
     }
-    if (data.projectId) {
-      return this.byProjectId(data.projectId);
-    }
     if (data.revisionId) {
       return this.byRevisionId(data.revisionId);
     }
     if (data.endpointId) {
       return this.byEndpointId(data.endpointId);
+    }
+    if (data.projectId) {
+      return this.byProjectId(data.projectId);
     }
     return Promise.resolve(null);
   }
