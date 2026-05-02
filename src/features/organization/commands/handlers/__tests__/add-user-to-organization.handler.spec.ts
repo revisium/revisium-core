@@ -17,6 +17,11 @@ import {
 import { AddUserToOrganizationHandler } from '../add-user-to-organization.handler';
 import { DatabaseModule } from 'src/infrastructure/database/database.module';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
+
+const noopAuthCache = {
+  invalidateUserPermissions: jest.fn().mockResolvedValue(undefined),
+} as unknown as AuthCacheService;
 
 describe('AddUserToOrganizationHandler', () => {
   let module: TestingModule;
@@ -26,7 +31,10 @@ describe('AddUserToOrganizationHandler', () => {
   beforeAll(async () => {
     module = await Test.createTestingModule({
       imports: [DatabaseModule, CqrsModule, BillingModule],
-      providers: [AddUserToOrganizationHandler],
+      providers: [
+        AddUserToOrganizationHandler,
+        { provide: AuthCacheService, useValue: noopAuthCache },
+      ],
     }).compile();
 
     await module.init();
@@ -129,6 +137,7 @@ describe('AddUserToOrganizationHandler', () => {
         imports: [DatabaseModule, CqrsModule],
         providers: [
           AddUserToOrganizationHandler,
+          { provide: AuthCacheService, useValue: noopAuthCache },
           {
             provide: LIMITS_SERVICE_TOKEN,
             useValue: {

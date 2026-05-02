@@ -31,6 +31,9 @@ import {
   SignUpCommandReturnType,
 } from 'src/features/auth/commands/impl';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
+import { PrismaService } from 'src/infrastructure/database/prisma.service';
+
+type ProjectIdentity = { organizationId: string; projectName: string };
 
 @Injectable()
 export class AuthApiService {
@@ -38,6 +41,7 @@ export class AuthApiService {
     private readonly commandBus: CommandBus,
     private readonly authCache: AuthCacheService,
     private readonly authService: AuthService,
+    private readonly prisma: PrismaService,
   ) {}
 
   public issueAccessTokenForUserId(userId: string) {
@@ -64,13 +68,116 @@ export class AuthApiService {
     });
   }
 
-  public checkProjectPermission(data: CheckProjectPermissionCommandData) {
-    return this.authCache.projectPermissionCheck(data, () => {
+  public async checkProjectPermission(data: CheckProjectPermissionCommandData) {
+    const resolvedProject = await this.resolveProjectIdentity(data);
+
+    return this.authCache.projectPermissionCheck(data, resolvedProject, () => {
       return this.commandBus.execute<
         CheckProjectPermissionCommand,
         CheckProjectPermissionCommandReturnType
       >(new CheckProjectPermissionCommand(data));
     });
+  }
+
+  private async resolveProjectIdentity(
+    data: CheckProjectPermissionCommandData,
+  ): Promise<ProjectIdentity | undefined> {
+    if ('organizationId' in data && 'projectName' in data) {
+      return {
+        organizationId: data.organizationId,
+        projectName: data.projectName,
+      };
+    }
+
+    if ('revisionId' in data) {
+      return this.authCache.projectIdentity(
+        { revisionId: data.revisionId },
+        () => this.queryProjectIdentityByRevision(data.revisionId),
+      );
+    }
+
+    if ('endpointId' in data) {
+      return this.authCache.projectIdentity(
+        { endpointId: data.endpointId },
+        () => this.queryProjectIdentityByEndpoint(data.endpointId),
+      );
+    }
+
+    if ('projectId' in data) {
+      return this.authCache.projectIdentity({ projectId: data.projectId }, () =>
+        this.queryProjectIdentityByProjectId(data.projectId),
+      );
+    }
+
+    return undefined;
+  }
+
+  private async queryProjectIdentityByRevision(
+    revisionId: string,
+  ): Promise<ProjectIdentity | undefined> {
+    const revision = await this.prisma.revision.findUnique({
+      where: { id: revisionId },
+      select: {
+        branch: {
+          select: {
+            project: {
+              select: { organizationId: true, name: true },
+            },
+          },
+        },
+      },
+    });
+    if (!revision) {
+      return undefined;
+    }
+    return {
+      organizationId: revision.branch.project.organizationId,
+      projectName: revision.branch.project.name,
+    };
+  }
+
+  private async queryProjectIdentityByEndpoint(
+    endpointId: string,
+  ): Promise<ProjectIdentity | undefined> {
+    const endpoint = await this.prisma.endpoint.findUnique({
+      where: { id: endpointId },
+      select: {
+        revision: {
+          select: {
+            branch: {
+              select: {
+                project: {
+                  select: { organizationId: true, name: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+    if (!endpoint) {
+      return undefined;
+    }
+    return {
+      organizationId: endpoint.revision.branch.project.organizationId,
+      projectName: endpoint.revision.branch.project.name,
+    };
+  }
+
+  private async queryProjectIdentityByProjectId(
+    projectId: string,
+  ): Promise<ProjectIdentity | undefined> {
+    const project = await this.prisma.project.findUnique({
+      where: { id: projectId },
+      select: { organizationId: true, name: true },
+    });
+    if (!project) {
+      return undefined;
+    }
+    return {
+      organizationId: project.organizationId,
+      projectName: project.name,
+    };
   }
 
   public login(data: LoginCommandData): Promise<LoginCommandReturnType> {

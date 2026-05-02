@@ -1,5 +1,6 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { EndpointType } from 'src/__generated__/client';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 import {
@@ -18,6 +19,7 @@ export class DeleteProjectHandler implements ICommandHandler<
     private readonly transactionPrisma: TransactionPrismaService,
     private readonly shareTransactionalQueries: ShareTransactionalQueries,
     private readonly endpointNotification: EndpointNotificationService,
+    private readonly authCache: AuthCacheService,
   ) {}
 
   private get transaction() {
@@ -29,6 +31,11 @@ export class DeleteProjectHandler implements ICommandHandler<
       await this.transactionPrisma.runSerializable(() =>
         this.transactionHandler(data),
       );
+
+    await this.authCache.invalidateProjectPermissions(
+      data.organizationId,
+      data.projectName,
+    );
 
     await this.notifyEndpoints(endpoints);
 

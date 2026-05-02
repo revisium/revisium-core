@@ -161,7 +161,7 @@ export class CheckProjectPermissionHandler implements ICommandHandler<
       },
     });
 
-    if (!endpoint) {
+    if (!endpoint || endpoint.revision.branch.project.isDeleted) {
       throw new NotFoundException('Endpoint not found');
     }
 
@@ -180,7 +180,7 @@ export class CheckProjectPermissionHandler implements ICommandHandler<
       },
     });
 
-    if (!revision) {
+    if (!revision || revision.branch.project.isDeleted) {
       throw new NotFoundException('Revision not found');
     }
 

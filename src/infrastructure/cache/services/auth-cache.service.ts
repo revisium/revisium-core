@@ -65,8 +65,41 @@ export class AuthCacheService {
     });
   }
 
+  async projectIdentity(
+    query: {
+      revisionId?: string;
+      endpointId?: string;
+      projectId?: string;
+    },
+    factory: () => Promise<
+      { organizationId: string; projectName: string } | undefined
+    >,
+  ): Promise<{ organizationId: string; projectName: string } | undefined> {
+    const keyHash = makeCacheKeyFromArgs([query], {
+      prefix: AUTH_CACHE_KEYS.PROJECT_IDENTITY,
+      version: AUTH_CACHE_CONFIG.KEY_VERSION,
+    });
+
+    return this.cache.getOrSet({
+      key: keyHash,
+      ttl: AUTH_CACHE_CONFIG.PROJECT_IDENTITY_TTL,
+      tags: [AUTH_CACHE_TAGS.AUTH_RELATIVES],
+      factory,
+    });
+  }
+
   async projectPermissionCheck<T>(
-    query: { organizationId?: string; projectName?: string; userId?: string },
+    query: {
+      organizationId?: string;
+      projectName?: string;
+      revisionId?: string;
+      endpointId?: string;
+      projectId?: string;
+      userId?: string;
+    },
+    resolvedProject:
+      | { organizationId: string; projectName: string }
+      | undefined,
     factory: () => Promise<T>,
   ) {
     const keyHash = makeCacheKeyFromArgs([query], {
@@ -75,8 +108,9 @@ export class AuthCacheService {
     });
 
     const userId = query.userId;
-    const organizationId = query.organizationId;
-    const projectName = query.projectName;
+    const tagOrganizationId =
+      resolvedProject?.organizationId ?? query.organizationId;
+    const tagProjectName = resolvedProject?.projectName ?? query.projectName;
 
     return this.cache.getOrSet({
       key: keyHash,
@@ -84,11 +118,16 @@ export class AuthCacheService {
       tags: [
         AUTH_CACHE_TAGS.AUTH_RELATIVES,
         ...(userId ? [AUTH_CACHE_TAGS.USER_PERMISSIONS(userId)] : []),
-        ...(organizationId
-          ? [AUTH_CACHE_TAGS.ORGANIZATION_PERMISSIONS(organizationId)]
+        ...(tagOrganizationId
+          ? [AUTH_CACHE_TAGS.ORGANIZATION_PERMISSIONS(tagOrganizationId)]
           : []),
-        ...(organizationId && projectName
-          ? [AUTH_CACHE_TAGS.PROJECT_PERMISSIONS(organizationId, projectName)]
+        ...(tagOrganizationId && tagProjectName
+          ? [
+              AUTH_CACHE_TAGS.PROJECT_PERMISSIONS(
+                tagOrganizationId,
+                tagProjectName,
+              ),
+            ]
           : []),
       ],
       factory,

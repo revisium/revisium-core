@@ -6,6 +6,7 @@ import {
   DeleteProjectCommand,
   DeleteProjectCommandReturnType,
 } from 'src/features/project/commands/impl';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { EndpointNotificationService } from 'src/infrastructure/notification/endpoint-notification.service';
 
@@ -70,9 +71,22 @@ describe('DeleteProjectHandler', () => {
     expect(anotherEndpoint.isDeleted).toBe(false);
   });
 
+  it('should invalidate project permissions cache after delete', async () => {
+    const { organizationId, projectName } = await prepareProject(moduleFixture);
+
+    const spy = jest.spyOn(authCacheService, 'invalidateProjectPermissions');
+
+    await execute(new DeleteProjectCommand({ organizationId, projectName }));
+
+    expect(spy).toHaveBeenCalledWith(organizationId, projectName);
+
+    spy.mockRestore();
+  });
+
   let prismaService: PrismaService;
   let commandBus: CommandBus;
   let endpointNotificationService: EndpointNotificationService;
+  let authCacheService: AuthCacheService;
   let moduleFixture: TestingModule;
   let closeModule: () => Promise<void>;
 
@@ -88,6 +102,7 @@ describe('DeleteProjectHandler', () => {
     prismaService = kit.prismaService;
     commandBus = kit.commandBus;
     endpointNotificationService = kit.endpointNotificationService;
+    authCacheService = kit.module.get(AuthCacheService);
     closeModule = kit.close;
   });
 
