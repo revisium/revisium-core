@@ -149,7 +149,7 @@ In monolith/standalone mode, internal keys are derived automatically from `JWT_S
 
 All `INTERNAL_API_KEY_<SERVICE>` values must match `/^rev_[A-Za-z0-9_-]{22}$/` — the literal prefix `rev_` followed by 22 base64url characters. Validated by `ApiKeyService.validateKeyFormat` (`src/features/api-key/api-key.service.ts`); enforced both at bootstrap (`InternalKeyBootstrapService.bootstrapMicroservice` skips registration with `<ENV_VAR> has invalid format (expected rev_ + 22 chars). Skipping registration.`) and at every request via `UniversalAuthService.validateApiKeyToken` (`Invalid API key format`, 401).
 
-A plain `openssl rand -hex 32` value (64 hex chars, no prefix) will be silently rejected at bootstrap and every consumer service request will get 401 — in `endpoint`'s case, no endpoints register and all `/endpoint/*` URLs return 404.
+A plain `openssl rand -hex 32` value (64 hex chars, no prefix) will be rejected at bootstrap (logged at `error` level by `InternalKeyBootstrapService`, then registration is skipped — the process keeps running) and every consumer service request will get 401 — in `endpoint`'s case, no endpoints register and all `/endpoint/*` URLs return 404.
 
 Generate with:
 
@@ -161,7 +161,12 @@ The same value must be set on `core` and on the consuming service (e.g. `endpoin
 
 ### Rotation
 
-Rotating the value requires a coordinated rollout of `core` and the consuming service. After rotation, expect up to `API_KEY_TTL` (5 min, see `auth-cache.constants.ts`) before all `core` pods serve the new key consistently — `InternalKeyBootstrapService.upsertInternalKey` only invalidates the L1+L2 auth-cache entry for the **revoked** old hash, not for the freshly created new hash. If a request races with the bootstrap and looks up the new hash before the row is committed, the negative result (`null`) is cached for the TTL. To recover faster: delete `auth:api-key:*` keys from the `CACHE_L2_REDIS_URL` instance (`redis-cli -n 1 KEYS 'auth:api-key:*' | xargs redis-cli -n 1 DEL`).
+Rotating the value requires a coordinated rollout of `core` and the consuming service. After rotation, expect up to `API_KEY_TTL` (5 min, see `auth-cache.constants.ts`) before all `core` pods serve the new key consistently — `InternalKeyBootstrapService.upsertInternalKey` only invalidates the L1+L2 auth-cache entry for the **revoked** old hash, not for the freshly created new hash. If a request races with the bootstrap and looks up the new hash before the row is committed, the negative result (`null`) is cached for the TTL. To recover faster, delete the `auth:api-key:*` keys from the L2 Redis store using a non-blocking scan (`KEYS` blocks the server on large keyspaces; the URL already selects the right DB):
+
+```bash
+redis-cli -u "$CACHE_L2_REDIS_URL" --scan --pattern 'auth:api-key:*' \
+  | xargs -r -L 200 redis-cli -u "$CACHE_L2_REDIS_URL" DEL
+```
 
 ---
 
