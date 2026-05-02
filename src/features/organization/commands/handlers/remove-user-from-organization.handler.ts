@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { UserOrganizationRoles } from 'src/features/auth/consts';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   RemoveUserFromOrganizationCommand,
@@ -12,7 +13,10 @@ export class RemoveUserFromOrganizationHandler implements ICommandHandler<
   RemoveUserFromOrganizationCommand,
   RemoveUserFromOrganizationCommandReturnType
 > {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authCache: AuthCacheService,
+  ) {}
 
   public async execute({ data }: RemoveUserFromOrganizationCommand) {
     const userOrganization = await this.getUserOrganization(data);
@@ -34,6 +38,8 @@ export class RemoveUserFromOrganizationHandler implements ICommandHandler<
     }
 
     await this.removeUserOrganization(userOrganization.id);
+
+    await this.authCache.invalidateUserPermissions(data.userId);
 
     return true;
   }

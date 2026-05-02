@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isValidProjectRole, UserProjectRoles } from 'src/features/auth/consts';
 import { IdService } from '@revisium/engine';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   AddUserToProjectCommand,
@@ -16,6 +17,7 @@ export class AddUserToProjectHandler implements ICommandHandler<
   constructor(
     private readonly prisma: PrismaService,
     private readonly idService: IdService,
+    private readonly authCache: AuthCacheService,
   ) {}
 
   public async execute({ data }: AddUserToProjectCommand) {
@@ -44,6 +46,8 @@ export class AddUserToProjectHandler implements ICommandHandler<
       projectId: project.id,
       roleId: data.roleId,
     });
+
+    await this.authCache.invalidateUserPermissions(data.userId);
 
     return true;
   }

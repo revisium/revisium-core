@@ -8,6 +8,7 @@ import {
 import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import { isValidOrganizationRole } from 'src/features/auth/consts';
 import { IdService } from '@revisium/engine';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   AddUserToOrganizationCommand,
@@ -24,6 +25,7 @@ export class AddUserToOrganizationHandler implements ICommandHandler<
     private readonly idService: IdService,
     @Inject(LIMITS_SERVICE_TOKEN)
     private readonly limitsService: ILimitsService,
+    private readonly authCache: AuthCacheService,
   ) {}
 
   public async execute({ data }: AddUserToOrganizationCommand) {
@@ -48,6 +50,8 @@ export class AddUserToOrganizationHandler implements ICommandHandler<
     const userOrganizationId = existing?.id ?? this.idService.generate();
 
     await this.upsertUserOrganization(data, userOrganizationId);
+
+    await this.authCache.invalidateUserPermissions(data.userId);
 
     return true;
   }

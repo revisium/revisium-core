@@ -30,6 +30,7 @@ import {
   SignUpCommandData,
   SignUpCommandReturnType,
 } from 'src/features/auth/commands/impl';
+import { ProjectApiService } from 'src/features/project/project-api.service';
 import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 
 @Injectable()
@@ -38,6 +39,7 @@ export class AuthApiService {
     private readonly commandBus: CommandBus,
     private readonly authCache: AuthCacheService,
     private readonly authService: AuthService,
+    private readonly projectApi: ProjectApiService,
   ) {}
 
   public issueAccessTokenForUserId(userId: string) {
@@ -64,13 +66,19 @@ export class AuthApiService {
     });
   }
 
-  public checkProjectPermission(data: CheckProjectPermissionCommandData) {
-    return this.authCache.projectPermissionCheck(data, () => {
-      return this.commandBus.execute<
-        CheckProjectPermissionCommand,
-        CheckProjectPermissionCommandReturnType
-      >(new CheckProjectPermissionCommand(data));
-    });
+  public async checkProjectPermission(data: CheckProjectPermissionCommandData) {
+    const resolvedProject = await this.projectApi.resolveProject(data);
+
+    return this.authCache.projectPermissionCheck(
+      data,
+      resolvedProject ?? undefined,
+      () => {
+        return this.commandBus.execute<
+          CheckProjectPermissionCommand,
+          CheckProjectPermissionCommandReturnType
+        >(new CheckProjectPermissionCommand(data));
+      },
+    );
   }
 
   public login(data: LoginCommandData): Promise<LoginCommandReturnType> {

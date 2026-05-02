@@ -1,3 +1,4 @@
+import { FindProjectIdentityHandler } from 'src/features/project/queries/handlers/find-project-identity.handler';
 import { GetAllBranchesByProjectHandler } from 'src/features/project/queries/handlers/get-all-branches-by-project.handler';
 import { GetProjectByIdHandler } from 'src/features/project/queries/handlers/get-project-by-id.handler';
 import { GetProjectsByIdsHandler } from 'src/features/project/queries/handlers/get-projects-by-ids.handler';
@@ -12,4 +13,5 @@ export const PROJECT_QUERIES = [
   GetProjectByIdHandler,
   GetProjectsByIdsHandler,
   GetUsersProjectHandler,
+  FindProjectIdentityHandler,
 ];

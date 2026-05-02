@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { isValidProjectRole } from 'src/features/auth/consts';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   UpdateUserProjectRoleCommand,
@@ -12,7 +13,10 @@ export class UpdateUserProjectRoleHandler implements ICommandHandler<
   UpdateUserProjectRoleCommand,
   UpdateUserProjectRoleCommandReturnType
 > {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authCache: AuthCacheService,
+  ) {}
 
   public async execute({ data }: UpdateUserProjectRoleCommand) {
     if (!isValidProjectRole(data.roleId)) {
@@ -44,6 +48,8 @@ export class UpdateUserProjectRoleHandler implements ICommandHandler<
         roleId: data.roleId,
       },
     });
+
+    await this.authCache.invalidateUserPermissions(data.userId);
 
     return true;
   }

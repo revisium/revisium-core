@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
+import { AuthCacheService } from 'src/infrastructure/cache/services/auth-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import {
   RemoveUserFromProjectCommand,
@@ -11,7 +12,10 @@ export class RemoveUserFromProjectHandler implements ICommandHandler<
   RemoveUserFromProjectCommand,
   RemoveUserFromProjectCommandReturnType
 > {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authCache: AuthCacheService,
+  ) {}
 
   public async execute({ data }: RemoveUserFromProjectCommand) {
     const project = await this.getProject(data);
@@ -27,6 +31,8 @@ export class RemoveUserFromProjectHandler implements ICommandHandler<
     }
 
     await this.removeUserProject(userProject.id);
+
+    await this.authCache.invalidateUserPermissions(data.userId);
 
     return true;
   }

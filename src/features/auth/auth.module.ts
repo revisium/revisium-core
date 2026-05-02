@@ -4,6 +4,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ApiKeyModule } from 'src/features/api-key/api-key.module';
+import { ProjectModule } from 'src/features/project/project.module';
 import { AuthService } from 'src/features/auth/auth.service';
 import { CaslAbilityFactory } from 'src/features/auth/casl-ability.factory';
 import { AUTH_COMMANDS } from 'src/features/auth/commands';
@@ -42,6 +43,7 @@ import { EmailModule } from 'src/infrastructure/email/email.module';
     }),
     EmailModule,
     ApiKeyModule,
+    ProjectModule,
   ],
   providers: [
     AuthApiService,

@@ -21,6 +21,9 @@ import {
   UpdateUserProjectRoleCommandReturnType,
 } from 'src/features/project/commands/impl';
 import {
+  FindProjectIdentityQuery,
+  FindProjectIdentityQueryData,
+  FindProjectIdentityQueryReturnType,
   GetAllBranchesByProjectQuery,
   GetAllBranchesByProjectQueryData,
   GetAllBranchesByProjectQueryReturnType,
@@ -37,13 +40,32 @@ import {
   GetUsersProjectQueryData,
   GetUsersProjectQueryReturnType,
 } from 'src/features/project/queries/impl';
+import { ProjectCacheService } from 'src/infrastructure/cache/services/project-cache.service';
 
 @Injectable()
 export class ProjectApiService {
   constructor(
     private readonly commandBus: CommandBus,
     private readonly queryBus: QueryBus,
+    private readonly projectCache: ProjectCacheService,
   ) {}
+
+  public resolveProject(data: FindProjectIdentityQueryData) {
+    const identityQuery: FindProjectIdentityQueryData = {
+      organizationId: data.organizationId,
+      projectName: data.projectName,
+      projectId: data.projectId,
+      revisionId: data.revisionId,
+      endpointId: data.endpointId,
+    };
+
+    return this.projectCache.projectIdentity(identityQuery, () =>
+      this.queryBus.execute<
+        FindProjectIdentityQuery,
+        FindProjectIdentityQueryReturnType
+      >(new FindProjectIdentityQuery(identityQuery)),
+    );
+  }
 
   public getProject(data: GetProjectQueryData) {
     return this.queryBus.execute<GetProjectQuery, GetProjectQueryReturnType>(
