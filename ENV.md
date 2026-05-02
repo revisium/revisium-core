@@ -136,14 +136,22 @@ Revisium-admin talks to core over httpOnly cookies (`rev_at`, `rev_rt`) plus a n
 
 ---
 
-## Internal API Keys (Microservice Mode Only)
+## Internal API Keys
 
 In monolith/standalone mode, internal keys are derived automatically from `JWT_SECRET`. These env vars are ignored (a warning is logged if set). For multi-replica monolith deployments, ensure `JWT_SECRET` is explicitly set.
 
+In microservice mode, set the same `INTERNAL_API_KEY_<SERVICE>` value on core and on the consuming service. Every internal API key must match `/^rev_[A-Za-z0-9_-]{22}$/` (`rev_` plus 22 base64url/nanoid characters). Generate endpoint keys from this repo with:
+
+```bash
+npm run generate:internal-key -- ENDPOINT
+```
+
+Do not use plain hex output such as `openssl rand -hex 32`; core rejects values that do not match the `rev_` format and skips internal key registration.
+
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `INTERNAL_API_KEY_ENDPOINT` | - | Internal API key for `endpoint` service. Must match the value set in revisium-endpoint |
-| `INTERNAL_API_KEY_{SERVICE}` | - | Internal API key for additional services (e.g., `INTERNAL_API_KEY_WORKER`). Service name derived from suffix (lowercased) |
+| `INTERNAL_API_KEY_ENDPOINT` | - | Internal API key for `endpoint` service. Must match the value set in revisium-endpoint and the required `rev_` key format |
+| `INTERNAL_API_KEY_{SERVICE}` | - | Internal API key for additional services (e.g., `INTERNAL_API_KEY_WORKER`). Service name is derived from the suffix (lowercased); value must match the required `rev_` key format |
 
 ### Format
 
