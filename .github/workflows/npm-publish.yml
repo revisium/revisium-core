@@ -8,7 +8,7 @@ on:
 jobs:
   publish:
     permissions:
-      contents: write
+      contents: read
       id-token: write
     uses: revisium/revisium-actions/.github/workflows/npm-publish.yml@763f2746000f15842e642130dba3acf09c5d00ac # v0.3.2
     with:
