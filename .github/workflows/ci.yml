@@ -1,4 +1,9 @@
+# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
+
 name: Server CI
+permissions:
+  contents: read
 
 on:
   push:
@@ -10,62 +15,80 @@ on:
       - master
       - 'release/**'
 
-permissions:
-  contents: read
-
 jobs:
   checks:
-    uses: revisium/revisium-actions/.github/workflows/node-build.yml@763f2746000f15842e642130dba3acf09c5d00ac # v0.3.2
-    with:
-      node_version: 24.11.1
-      install_command: |
-        npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
-        npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
-      run_commands: |
-        cp .env.example .env
-        docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
-        ./node_modules/.bin/dotenv -e .env.test -- npm run prisma:migrate:deploy
-        ./node_modules/.bin/dotenv -e .env.test -- npm run seed
-        npm run lint:ci
-        npm run tsc
-        npm run test:cov
-
-  sonar:
-    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.head.repo.fork }}
-    needs: checks
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        shell: bash
+
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
-        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: 24.11.1
-          cache: npm
+          cache: 'npm'
 
       - name: Create test .env
         run: cp .env.example .env
 
-      - name: Install dependencies
-        run: |
-          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
-          npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+      - name: Cache Docker images
+        id: docker-images-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: ~/docker-images.tar
+          key: docker-images-${{ runner.os }}-${{ hashFiles('docker-compose-test.yml') }}
+
+      - if: steps.docker-images-cache.outputs.cache-hit == 'true'
+        name: Load cached Docker images
+        run: docker load -i ~/docker-images.tar
 
       - name: Start test services
         run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
 
-      - name: Apply migrations and seed
+      - if: steps.docker-images-cache.outputs.cache-hit != 'true'
+        name: Save Docker images to cache
+        run: |
+          docker save \
+            postgres:15.4 \
+            redis:7.2-alpine \
+            mailhog/mailhog:v1.0.1 \
+            -o ~/docker-images.tar
+
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
+
+      - if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+          npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+
+      - name: Restore jest cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: .jest-cache
+          key: jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            jest-cache-${{ runner.os }}-
+
+      - run: npm run lint:ci
+
+      - run: npm run tsc
+
+      - name: Apply migrations + seed
         run: |
           ./node_modules/.bin/dotenv -e .env.test -- npm run prisma:migrate:deploy
           ./node_modules/.bin/dotenv -e .env.test -- npm run seed
-
-      - name: Generate coverage
-        run: npm run test:cov
-
+      - run: npm run test:cov
       - name: Cache SonarQube packages
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
