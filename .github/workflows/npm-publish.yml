@@ -17,7 +17,7 @@ jobs:
         npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
         npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
       pre_publish_commands: |
-        node --input-type=module -e 'import fs from "node:fs"; const version = process.env.GITHUB_REF_NAME.replace(/^v/, ""); const doc = JSON.parse(fs.readFileSync("src/api/rest-api/openapi.json", "utf8")); console.log("OpenAPI version: " + doc.info.version); if (doc.info.version !== version) { console.error("Version mismatch: OpenAPI (" + doc.info.version + ") != tag (" + version + ")"); process.exit(1); }'
+        node --input-type=module -e 'import fs from "node:fs"; const tagVersion = process.env.GITHUB_REF_NAME.replace(/^v/, ""); const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")); const doc = JSON.parse(fs.readFileSync("src/api/rest-api/openapi.json", "utf8")); console.log("Package version: " + pkg.version); console.log("OpenAPI version: " + doc.info.version); if (pkg.version !== tagVersion) { console.error("Version mismatch: package.json (" + pkg.version + ") != tag (" + tagVersion + ")"); process.exit(1); } if (doc.info.version !== pkg.version) { console.error("Version mismatch: OpenAPI (" + doc.info.version + ") != package.json (" + pkg.version + ")"); process.exit(1); }'
       npm_access: public
       publish_auth: token
       create_github_release: false
