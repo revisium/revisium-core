@@ -15,7 +15,7 @@ jobs:
     permissions:
       contents: read
       deployments: write
-    uses: revisium/revisium-actions/.github/workflows/deploy.yml@763f2746000f15842e642130dba3acf09c5d00ac # v0.3.2
+    uses: revisium/revisium-actions/.github/workflows/deploy.yml@f5b3410a99b36a4c41b1cc2d5e625dd6d2e087dc # v0.3.3
     with:
       ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
       environment: development
@@ -25,3 +25,6 @@ jobs:
       kube_app_url: ${{ vars.KUBE_APP_URL }}
     secrets:
       KUBE_CONFIG: ${{ secrets.KUBE_CONFIG }}
+      KUBE_NAMESPACE: ${{ secrets.KUBE_NAMESPACE }}
+      KUBE_SERVICE_NAME: ${{ secrets.KUBE_SERVICE_NAME }}
+      KUBE_APP_URL: ${{ secrets.KUBE_APP_URL }}
