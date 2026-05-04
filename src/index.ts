@@ -4,3 +4,7 @@ export { AdminModule } from 'src/infrastructure/admin/admin.module';
 export { AdminModuleOptions } from 'src/infrastructure/admin/admin-module.options';
 export { GracefulShutdownModule } from 'src/infrastructure/graceful-shutdown/graceful-shutdown.module';
 export { initSwagger } from 'src/api/rest-api/init-swagger';
+export {
+  configureHttpApp,
+  ConfigureHttpAppOptions,
+} from 'src/configure-http-app';
