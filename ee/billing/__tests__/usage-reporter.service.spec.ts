@@ -55,6 +55,15 @@ describe('UsageReporterService', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockBillingClient.configured = true;
+    mockBillingClient.getSubscription.mockResolvedValue({
+      planId: 'pro',
+      status: 'active',
+      provider: null,
+      interval: null,
+      currentPeriodStart: null,
+      currentPeriodEnd: null,
+      cancelAt: null,
+    });
     mockUsageService.computeUsage.mockResolvedValue(0);
     mockBillingClient.reportUsage.mockResolvedValue(undefined);
     findManySpy = jest.spyOn(prisma.organization, 'findMany');
@@ -95,6 +104,33 @@ describe('UsageReporterService', () => {
         seats: 3,
         storage_bytes: 100_000,
       }),
+    );
+  });
+
+  it('should skip organizations without subscriptions', async () => {
+    findManySpy.mockResolvedValue([
+      { id: 'org-with-sub' },
+      { id: 'org-without-sub' },
+    ]);
+    mockBillingClient.getSubscription
+      .mockResolvedValueOnce({
+        planId: 'pro',
+        status: 'active',
+        provider: null,
+        interval: null,
+        currentPeriodStart: null,
+        currentPeriodEnd: null,
+        cancelAt: null,
+      })
+      .mockResolvedValueOnce(null);
+
+    await service.reportAllUsage();
+
+    expect(mockUsageService.computeUsage).toHaveBeenCalledTimes(4);
+    expect(mockBillingClient.reportUsage).toHaveBeenCalledTimes(1);
+    expect(mockBillingClient.reportUsage).toHaveBeenCalledWith(
+      'org-with-sub',
+      expect.any(Object),
     );
   });
 
