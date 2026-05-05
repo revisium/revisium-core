@@ -108,7 +108,10 @@ describe('UsageReporterService', () => {
   });
 
   it('should skip organizations without subscriptions', async () => {
-    findManySpy.mockResolvedValue([{ id: 'org-with-sub' }, { id: 'org-without-sub' }]);
+    findManySpy.mockResolvedValue([
+      { id: 'org-with-sub' },
+      { id: 'org-without-sub' },
+    ]);
     mockBillingClient.getSubscription
       .mockResolvedValueOnce({
         planId: 'pro',
