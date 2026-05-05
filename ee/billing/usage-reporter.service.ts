@@ -30,8 +30,16 @@ export class UsageReporterService {
     });
 
     let reported = 0;
+    let skippedNoSubscription = 0;
+    let failed = 0;
     for (const org of orgs) {
       try {
+        const subscription = await this.billingClient.getSubscription(org.id);
+        if (!subscription) {
+          skippedNoSubscription++;
+          continue;
+        }
+
         const [rowVersions, projects, seats, storageBytes] = await Promise.all([
           this.usageService.computeUsage(org.id, LimitMetric.ROW_VERSIONS),
           this.usageService.computeUsage(org.id, LimitMetric.PROJECTS),
@@ -47,6 +55,7 @@ export class UsageReporterService {
         });
         reported++;
       } catch (error) {
+        failed++;
         this.logger.warn(
           `Failed to report usage for org=${org.id}: ${error instanceof Error ? error.message : error}`,
         );
@@ -54,7 +63,7 @@ export class UsageReporterService {
     }
 
     this.logger.log(
-      `Usage reported for ${reported}/${orgs.length} organizations`,
+      `Usage reporting completed: reported=${reported}, skipped_no_subscription=${skippedNoSubscription}, failed=${failed}, total=${orgs.length}`,
     );
   }
 }

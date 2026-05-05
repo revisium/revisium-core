@@ -44,11 +44,14 @@ Usage values are cached by `BillingCacheService` (2-min TTL) and invalidated via
 `UsageReporterService` runs `@Cron(EVERY_HOUR)`:
 
 1. Fetches all organizations from local DB
-2. For each org, computes `row_versions`, `projects`, `seats`, and `storage_bytes` locally via `UsageService`
-3. Reports to payment service via `BillingClient.reportUsage(orgId, usage)`
-4. Best-effort — failures are logged and skipped
+2. Checks whether the organization has a payment subscription
+3. For subscribed orgs, computes `row_versions`, `projects`, `seats`, and `storage_bytes` locally via `UsageService`
+4. Reports to payment service via `BillingClient.reportUsage(orgId, usage)`
+5. Logs one summary with reported, skipped-no-subscription, and failed counts
 
-The payment service stores these reports in its `UsageReport` table for billing analytics and admin dashboards.
+Organizations without subscriptions are skipped before usage computation, so expected 404s from payment do not create per-org warning noise. Unexpected failures are still logged per organization.
+
+The payment service stores these reports in its `UsageReport` table for billing analytics and admin dashboards. Reports are hourly snapshots and are idempotent per subscription/hour on the payment side.
 
 ## File Structure
 
