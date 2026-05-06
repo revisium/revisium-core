@@ -6,7 +6,7 @@ import { UsageService } from '../usage/usage.service';
 
 type DbStub = {
   table: { findFirst: jest.Mock };
-  revision: { findFirst: jest.Mock };
+  revision: { findUnique: jest.Mock };
   branch: { count: jest.Mock };
   endpoint: { count: jest.Mock };
 };
@@ -14,7 +14,7 @@ type DbStub = {
 const makeService = () => {
   const db: DbStub = {
     table: { findFirst: jest.fn() },
-    revision: { findFirst: jest.fn() },
+    revision: { findUnique: jest.fn() },
     branch: { count: jest.fn() },
     endpoint: { count: jest.fn() },
   };
@@ -50,12 +50,12 @@ describe('UsageService (unit)', () => {
       ).rejects.toThrow('ROWS_PER_TABLE requires revisionId and tableId');
     });
 
-    it('throws when TABLES_PER_REVISION is called without projectId', async () => {
+    it('throws when TABLES_PER_REVISION is called without revisionId', async () => {
       const { service } = makeService();
 
       await expect(
         service.computeUsage('org-1', LimitMetric.TABLES_PER_REVISION),
-      ).rejects.toThrow('TABLES_PER_REVISION requires projectId');
+      ).rejects.toThrow('TABLES_PER_REVISION requires revisionId');
     });
 
     it('throws when BRANCHES_PER_PROJECT is called without projectId', async () => {
@@ -114,30 +114,34 @@ describe('UsageService (unit)', () => {
       expect(result).toBe(7);
     });
 
-    it('TABLES_PER_REVISION returns 0 when no draft revision is found', async () => {
+    it('TABLES_PER_REVISION returns 0 when the revision is not found', async () => {
       const { service, db } = makeService();
-      db.revision.findFirst.mockResolvedValue(null);
+      db.revision.findUnique.mockResolvedValue(null);
 
       const result = await service.computeUsage(
         'org-1',
         LimitMetric.TABLES_PER_REVISION,
-        { projectId: 'proj-1' },
+        { revisionId: 'rev-1' },
       );
 
       expect(result).toBe(0);
     });
 
-    it('TABLES_PER_REVISION returns the table count when a draft exists', async () => {
+    it('TABLES_PER_REVISION returns the table count for the requested revision', async () => {
       const { service, db } = makeService();
-      db.revision.findFirst.mockResolvedValue({ _count: { tables: 4 } });
+      db.revision.findUnique.mockResolvedValue({ _count: { tables: 4 } });
 
       const result = await service.computeUsage(
         'org-1',
         LimitMetric.TABLES_PER_REVISION,
-        { projectId: 'proj-1' },
+        { revisionId: 'rev-1' },
       );
 
       expect(result).toBe(4);
+      expect(db.revision.findUnique).toHaveBeenCalledWith({
+        where: { id: 'rev-1' },
+        select: { _count: { select: { tables: true } } },
+      });
     });
 
     it('BRANCHES_PER_PROJECT delegates to branch.count', async () => {

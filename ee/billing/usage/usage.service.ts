@@ -86,10 +86,12 @@ export class UsageService {
         return this.countRowsInTable(context.revisionId, context.tableId);
       }
       case LimitMetric.TABLES_PER_REVISION: {
-        if (!context?.projectId) {
-          throw new Error('TABLES_PER_REVISION requires projectId in context');
+        if (!context?.revisionId) {
+          throw new Error(
+            'TABLES_PER_REVISION requires revisionId in context',
+          );
         }
-        return this.countTablesInRevision(context.projectId);
+        return this.countTablesInRevision(context.revisionId);
       }
       case LimitMetric.BRANCHES_PER_PROJECT: {
         if (!context?.projectId) {
@@ -174,12 +176,9 @@ export class UsageService {
     return table?._count.rows ?? 0;
   }
 
-  private async countTablesInRevision(projectId: string): Promise<number> {
-    const revision = await this.db.revision.findFirst({
-      where: {
-        isDraft: true,
-        branch: { projectId, isRoot: true },
-      },
+  private async countTablesInRevision(revisionId: string): Promise<number> {
+    const revision = await this.db.revision.findUnique({
+      where: { id: revisionId },
       select: { _count: { select: { tables: true } } },
     });
     return revision?._count.tables ?? 0;

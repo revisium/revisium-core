@@ -32,7 +32,7 @@ Scoped to a specific entity within the org.
 | Metric | What It Counts | Scope |
 |---|---|---|
 | `rows_per_table` | Rows in a specific table within a revision | Per table |
-| `tables_per_revision` | Tables in the draft revision of the root branch | Per project |
+| `tables_per_revision` | Tables linked to the requested draft revision | Per revision |
 | `branches_per_project` | Total branches in a project | Per project |
 
 ## Plans
