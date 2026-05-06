@@ -1,11 +1,12 @@
 import { EngineApiService } from '@revisium/engine';
 import { LimitMetric } from 'src/features/billing/limits.interface';
+import { SYSTEM_TABLE_PREFIX } from 'src/features/share/system-tables.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { UsageService } from '../usage/usage.service';
 
 type DbStub = {
-  table: { findFirst: jest.Mock };
+  table: { count: jest.Mock; findFirst: jest.Mock };
   revision: { findUnique: jest.Mock };
   branch: { count: jest.Mock };
   endpoint: { count: jest.Mock };
@@ -13,7 +14,7 @@ type DbStub = {
 
 const makeService = () => {
   const db: DbStub = {
-    table: { findFirst: jest.fn() },
+    table: { count: jest.fn(), findFirst: jest.fn() },
     revision: { findUnique: jest.fn() },
     branch: { count: jest.fn() },
     endpoint: { count: jest.fn() },
@@ -114,9 +115,9 @@ describe('UsageService (unit)', () => {
       expect(result).toBe(7);
     });
 
-    it('TABLES_PER_REVISION returns 0 when the revision is not found', async () => {
+    it('TABLES_PER_REVISION returns 0 when no user tables are linked', async () => {
       const { service, db } = makeService();
-      db.revision.findUnique.mockResolvedValue(null);
+      db.table.count.mockResolvedValue(0);
 
       const result = await service.computeUsage(
         'org-1',
@@ -129,7 +130,7 @@ describe('UsageService (unit)', () => {
 
     it('TABLES_PER_REVISION returns the table count for the requested revision', async () => {
       const { service, db } = makeService();
-      db.revision.findUnique.mockResolvedValue({ _count: { tables: 4 } });
+      db.table.count.mockResolvedValue(4);
 
       const result = await service.computeUsage(
         'org-1',
@@ -138,9 +139,11 @@ describe('UsageService (unit)', () => {
       );
 
       expect(result).toBe(4);
-      expect(db.revision.findUnique).toHaveBeenCalledWith({
-        where: { id: 'rev-1' },
-        select: { _count: { select: { tables: true } } },
+      expect(db.table.count).toHaveBeenCalledWith({
+        where: {
+          revisions: { some: { id: 'rev-1' } },
+          NOT: { id: { startsWith: SYSTEM_TABLE_PREFIX } },
+        },
       });
     });
 

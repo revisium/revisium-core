@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { EngineApiService } from '@revisium/engine';
 import { countOrgRowVersions } from 'src/__generated__/client/sql';
 import { LimitMetric } from 'src/features/billing/limits.interface';
+import { SYSTEM_TABLE_PREFIX } from 'src/features/share/system-tables.consts';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
 import { TransactionPrismaService } from 'src/infrastructure/database/transaction-prisma.service';
 import { buildMetric } from './build-metric';
@@ -177,11 +178,12 @@ export class UsageService {
   }
 
   private async countTablesInRevision(revisionId: string): Promise<number> {
-    const revision = await this.db.revision.findUnique({
-      where: { id: revisionId },
-      select: { _count: { select: { tables: true } } },
+    return this.db.table.count({
+      where: {
+        revisions: { some: { id: revisionId } },
+        NOT: { id: { startsWith: SYSTEM_TABLE_PREFIX } },
+      },
     });
-    return revision?._count.tables ?? 0;
   }
 
   private async countBranchesInProject(projectId: string): Promise<number> {
