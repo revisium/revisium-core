@@ -6,6 +6,7 @@ import { LimitExceededException } from 'src/features/billing/limit-exceeded.exce
 import { LimitMetric } from 'src/features/billing/limits.interface';
 import { CreateProjectHandler } from 'src/features/project/commands/handlers/create-project.handler';
 import { CreateProjectCommand } from 'src/features/project/commands/impl';
+import { SYSTEM_TABLE_PREFIX } from 'src/features/share/system-tables.consts';
 import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
 import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -122,6 +123,14 @@ describe('resource-level limit enforcement', () => {
 
   it('allows 5 user tables on a fresh project before rejecting the 6th', async () => {
     const { masterDraftId } = await createFreshProjectWithMasterDraft();
+
+    const systemTableCount = await prisma.table.count({
+      where: {
+        revisions: { some: { id: masterDraftId } },
+        id: { startsWith: SYSTEM_TABLE_PREFIX },
+      },
+    });
+    expect(systemTableCount).toBeGreaterThan(0);
 
     for (let i = 1; i <= TABLE_CAP; i++) {
       await expect(
