@@ -4,6 +4,8 @@ import { CoreModule } from 'src/core/core.module';
 import { BillingCheckService } from 'src/core/shared/billing-check.service';
 import { LimitExceededException } from 'src/features/billing/limit-exceeded.exception';
 import { LimitMetric } from 'src/features/billing/limits.interface';
+import { CreateProjectHandler } from 'src/features/project/commands/handlers/create-project.handler';
+import { CreateProjectCommand } from 'src/features/project/commands/impl';
 import { CACHE_SERVICE } from 'src/infrastructure/cache/services/cache.tokens';
 import { NoopCacheService } from 'src/infrastructure/cache/services/noop-cache.service';
 import { PrismaService } from 'src/infrastructure/database/prisma.service';
@@ -34,6 +36,7 @@ const FREE_LIMITS: OrgLimits = {
 describe('resource-level limit enforcement', () => {
   let module: TestingModule;
   let billingCheck: BillingCheckService;
+  let createProjectHandler: CreateProjectHandler;
   let prisma: PrismaService;
   let mockBillingClient: jest.Mocked<IBillingClient>;
 
@@ -62,6 +65,7 @@ describe('resource-level limit enforcement', () => {
       .compile();
 
     billingCheck = module.get(BillingCheckService);
+    createProjectHandler = module.get(CreateProjectHandler);
     prisma = module.get(PrismaService);
   });
 
@@ -114,6 +118,30 @@ describe('resource-level limit enforcement', () => {
     await expect(checkTableCreate(branchDraftId)).rejects.toBeInstanceOf(
       LimitExceededException,
     );
+  });
+
+  it('allows 5 user tables on a fresh project before rejecting the 6th', async () => {
+    const { masterDraftId } = await createFreshProjectWithMasterDraft();
+
+    for (let i = 1; i <= TABLE_CAP; i++) {
+      await expect(
+        createUserTable(masterDraftId, `user-table-${i}-${nanoid()}`),
+      ).resolves.toBeUndefined();
+    }
+
+    let error: unknown;
+    try {
+      await createUserTable(masterDraftId, `user-table-6-${nanoid()}`);
+    } catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toBeInstanceOf(LimitExceededException);
+    expect((error as LimitExceededException).getResponse()).toMatchObject({
+      metric: LimitMetric.TABLES_PER_REVISION,
+      limit: TABLE_CAP,
+      current: TABLE_CAP,
+    });
   });
 
   async function checkTableCreate(revisionId: string) {
@@ -182,6 +210,38 @@ describe('resource-level limit enforcement', () => {
     await createTablesInRevision(branchDraftId, branchTableCount, 'branch');
 
     return { masterDraftId, branchDraftId };
+  }
+
+  async function createFreshProjectWithMasterDraft() {
+    const orgId = nanoid();
+    await prisma.organization.create({
+      data: { id: orgId, createdId: nanoid() },
+    });
+
+    const projectId = await createProjectHandler.execute(
+      new CreateProjectCommand({
+        organizationId: orgId,
+        projectName: `project-${nanoid()}`,
+      }),
+    );
+
+    const masterDraft = await prisma.revision.findFirstOrThrow({
+      where: {
+        isDraft: true,
+        branch: {
+          projectId,
+          isRoot: true,
+        },
+      },
+      select: { id: true },
+    });
+
+    return { masterDraftId: masterDraft.id };
+  }
+
+  async function createUserTable(revisionId: string, tableId: string) {
+    await checkTableCreate(revisionId);
+    await createTableInRevision(revisionId, tableId);
   }
 
   async function createTablesInRevision(
