@@ -299,7 +299,7 @@ describe('LimitsService (Ultra-Thin)', () => {
       orgId,
       LimitMetric.TABLES_PER_REVISION,
       1,
-      { projectId },
+      { revisionId, projectId },
     );
 
     expect(result.allowed).toBe(true);

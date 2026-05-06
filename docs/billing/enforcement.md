@@ -42,7 +42,7 @@ Step 1 is an in-memory cache hit or HMAC-signed HTTP call to the payment service
 | `AddUserToOrganizationHandler` | `seats`               | `1`           | -               | Only for new users, not role updates |
 | `CreateRowHandler`             | `rows_per_table`      | `1`           | `{ tableId }`   |                                      |
 | `CreateRowsHandler`            | `rows_per_table`      | `rows.length` | `{ tableId }`   |                                      |
-| `CreateTableHandler`           | `tables_per_revision` | `1`           | `{ projectId }` |                                      |
+| `CreateTableHandler`           | `tables_per_revision` | `1`           | `{ revisionId }` |                                      |
 | `CreateBranchHandler`          | `branches_per_project`| `1`           | `{ projectId }` |                                      |
 
 ### Why These Handlers
@@ -88,12 +88,12 @@ await this.billingCheck.check(revisionId, LimitMetric.ROW_VERSIONS, rows.length)
 await this.billingCheck.check(revisionId, LimitMetric.ROWS_PER_TABLE, rows.length, { tableId });
 ```
 
-`BillingCheckService.check()` automatically resolves `organizationId` and `projectId` from the `revisionId`. For `ROWS_PER_TABLE`, `revisionId` is also passed in context so the counting method can scope the query to the correct draft revision.
+`BillingCheckService.check()` automatically resolves `organizationId` and `projectId` from the `revisionId`. For `ROWS_PER_TABLE` and `TABLES_PER_REVISION`, `revisionId` is also passed in context so the counting methods can scope queries to the correct draft revision.
 
 | Metric | Scope | What It Counts |
 |---|---|---|
 | `rows_per_table` | Per table in revision | Rows linked to a specific table within a revision |
-| `tables_per_revision` | Per project | Tables in the draft revision of the root branch |
+| `tables_per_revision` | Per revision | Tables linked to the requested draft revision |
 | `branches_per_project` | Per project | Total branches in the project |
 
 ## Error Response
