@@ -10,7 +10,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: revisium/revisium-actions/.github/workflows/npm-publish.yml@763f2746000f15842e642130dba3acf09c5d00ac # v0.3.2
+    uses: revisium/revisium-actions/.github/workflows/npm-publish.yml@184b609dcbc1e23f14021141f29226d4e6a0f1ac # v0.3.6
     with:
       node_version: 24.11.1
       install_command: |
