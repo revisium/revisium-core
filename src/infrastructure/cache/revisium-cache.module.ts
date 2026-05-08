@@ -33,6 +33,7 @@ const CACHE_KEY_GROUPS: [RegExp, string][] = [
   [/^auth:role:permissions:/, 'auth-roles'],
   [/^auth:check-/, 'auth-checks'],
   [/^auth:api-key:/, 'auth-api-keys'],
+  [/^auth:token-version:/, 'auth-token-versions'],
   [/^billing:sub:/, 'billing-subscriptions'],
   [/^billing:usage:/, 'billing-usage'],
   [/^billing:rev-org:/, 'billing-lookups'],
