@@ -14,7 +14,7 @@ export class ApiKeyModel {
   @ApiProperty()
   name: string;
 
-  @ApiProperty({ required: false, nullable: true })
+  @ApiProperty({ type: String, required: false, nullable: true })
   organizationId?: string | null;
 
   @ApiProperty({ type: [String] })

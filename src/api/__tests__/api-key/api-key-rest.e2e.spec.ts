@@ -71,13 +71,21 @@ describe('API key REST endpoints (e2e)', () => {
       expect(res.body.apiKey.readOnly).toBe(true);
     });
 
-    it('GET /api/api-keys/personal lists current-user keys without secret', async () => {
-      await restRequest(
+    it('GET /api/api-keys/personal lists own keys only, no secret', async () => {
+      const ownCreated = await restRequest(
         'post',
         '/api/api-keys/personal',
         preparedData.owner.token,
       )
         .send({ name: 'List Me' })
+        .expect(201);
+
+      const otherCreated = await restRequest(
+        'post',
+        '/api/api-keys/personal',
+        preparedData.anotherOwner.token,
+      )
+        .send({ name: 'Not Mine' })
         .expect(201);
 
       const res = await restRequest(
@@ -87,7 +95,9 @@ describe('API key REST endpoints (e2e)', () => {
       ).expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
-      expect(res.body.length).toBeGreaterThanOrEqual(1);
+      const ids = res.body.map((k: { id: string }) => k.id);
+      expect(ids).toContain(ownCreated.body.apiKey.id);
+      expect(ids).not.toContain(otherCreated.body.apiKey.id);
       for (const key of res.body) {
         expect(key.secret).toBeUndefined();
         expect(key.id).toBeDefined();
@@ -221,9 +231,11 @@ describe('API key REST endpoints (e2e)', () => {
 
       expect(Array.isArray(res.body)).toBe(true);
       expect(res.body.length).toBeGreaterThanOrEqual(1);
-      expect(
-        res.body.every((k: { type: string }) => k.type === 'SERVICE'),
-      ).toBe(true);
+      for (const key of res.body) {
+        expect(key.type).toBe('SERVICE');
+        expect(key.organizationId).toBe(preparedData.project.organizationId);
+        expect(key.secret).toBeUndefined();
+      }
     });
 
     it('cross-org owner cannot create service keys (403)', async () => {
