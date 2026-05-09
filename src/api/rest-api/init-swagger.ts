@@ -43,6 +43,10 @@ export function initSwagger(app: INestApplication<any>) {
       'Endpoint',
       'API endpoint configuration for GraphQL and REST access',
     )
+    .addTag(
+      'ApiKey',
+      'Personal and service API key management — create, list, rotate, revoke',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, documentBuilder);

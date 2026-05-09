@@ -29,6 +29,16 @@ const createServiceApiKey = operation<CreateServiceApiKeyParams>({
     `,
     variables: (p) => ({ data: p }),
   },
+  rest: {
+    method: 'post',
+    url: ({ organizationId }) =>
+      `/api/organization/${organizationId}/api-keys/service`,
+    body: ({ name, projectIds, permissions }) => ({
+      name,
+      projectIds,
+      permissions,
+    }),
+  },
 });
 
 const cases: AuthMatrixCaseBase[] = [

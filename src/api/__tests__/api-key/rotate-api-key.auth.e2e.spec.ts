@@ -10,25 +10,28 @@ import {
 } from 'src/testing/kit/auth-permission';
 import { usingFreshProject } from 'src/testing/scenarios/using-fresh-project';
 
-const apiKeyById = operation<{ id: string }>({
-  id: 'apiKey.byId',
+const rotateApiKey = operation<{ id: string }>({
+  id: 'apiKey.rotate',
   gql: {
     query: gql`
-      query apiKeyById($id: ID!) {
-        apiKeyById(id: $id) {
-          id
+      mutation rotateApiKey($id: ID!) {
+        rotateApiKey(id: $id) {
+          apiKey {
+            id
+          }
+          secret
         }
       }
     `,
     variables: ({ id }) => ({ id }),
   },
   rest: {
-    method: 'get',
-    url: ({ id }) => `/api/api-keys/${id}`,
+    method: 'post',
+    url: ({ id }) => `/api/api-keys/${id}/rotate`,
   },
 });
 
-describe('apiKeyById auth', () => {
+describe('rotateApiKey auth', () => {
   const fresh = usingFreshProject();
   let app: INestApplication;
   let ownerKeyId: string;
@@ -43,6 +46,9 @@ describe('apiKeyById auth', () => {
     ownerKeyId = created.id;
   });
 
+  // Owner rotates own key. Cross-owner sees not_found (IDOR scoping). Anon
+  // gated at auth. Each rotate creates a new id, so the test cannot reuse
+  // ownerKeyId across cases — usingFreshProject already re-seeds beforeEach.
   const realKeyCases: AuthMatrixCaseBase[] = [
     { name: 'owner (own key)', role: 'owner', expected: 'allowed' },
     {
@@ -55,7 +61,7 @@ describe('apiKeyById auth', () => {
 
   describe('real key', () => {
     runAuthMatrix({
-      op: apiKeyById,
+      op: rotateApiKey,
       cases: realKeyCases,
       build: () => ({
         fixture: fresh.fixture,
@@ -66,7 +72,7 @@ describe('apiKeyById auth', () => {
 
   describe('non-existent key', () => {
     runAuthMatrix({
-      op: apiKeyById,
+      op: rotateApiKey,
       cases: [
         { name: 'owner (missing)', role: 'owner', expected: 'not_found' },
         {

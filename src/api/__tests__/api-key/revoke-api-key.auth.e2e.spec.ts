@@ -22,6 +22,10 @@ const revokeApiKey = operation<{ id: string }>({
     `,
     variables: ({ id }) => ({ id }),
   },
+  rest: {
+    method: 'post',
+    url: ({ id }) => `/api/api-keys/${id}/revoke`,
+  },
 });
 
 describe('revokeApiKey auth', () => {
