@@ -22,6 +22,11 @@ const createPersonalApiKey = operation<{ name: string; projectIds: string[] }>({
     `,
     variables: (p) => ({ data: p }),
   },
+  rest: {
+    method: 'post',
+    url: () => '/api/api-keys/personal',
+    body: (p) => p,
+  },
 });
 
 const cases: AuthMatrixCaseBase[] = [

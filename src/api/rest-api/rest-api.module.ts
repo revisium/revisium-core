@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ApiKeyModule } from 'src/features/api-key/api-key.module';
 import { AuthModule } from 'src/features/auth/auth.module';
 import { BranchModule } from 'src/features/branch/branch.module';
 import { EndpointModule } from 'src/features/endpoint/endpoint.module';
@@ -11,6 +12,8 @@ import { TableModule } from 'src/features/table/table.module';
 import { UserModule } from 'src/features/user/user.module';
 import { ConfigurationModule } from 'src/infrastructure/configuration/configuration.module';
 import { MetricsModule } from 'src/infrastructure/metrics/metrics.module';
+import { ApiKeyController } from 'src/api/rest-api/api-key/api-key.controller';
+import { ApiKeyServiceController } from 'src/api/rest-api/api-key/api-key-service.controller';
 import { AuthController } from 'src/api/rest-api/auth/auth.controller';
 import { BranchByNameController } from 'src/api/rest-api/branch/branch-by-name.controller';
 import { ConfigurationController } from 'src/api/rest-api/configuration/configuration.controller';
@@ -24,6 +27,7 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
 
 @Module({
   imports: [
+    ApiKeyModule,
     AuthModule,
     BranchModule,
     ConfigurationModule,
@@ -48,6 +52,8 @@ import { UserController } from 'src/api/rest-api/user/user.controller';
     RowByIdController,
     EndpointByIdController,
     ConfigurationController,
+    ApiKeyController,
+    ApiKeyServiceController,
   ],
 })
 export class RestApiModule {}

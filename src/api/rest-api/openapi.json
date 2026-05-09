@@ -6840,6 +6840,503 @@
         ]
       }
     },
+    "/api/api-keys/personal": {
+      "post": {
+        "description": "Returns the plaintext secret only on this response. Store it now — it cannot be retrieved later.",
+        "operationId": "createPersonalApiKey",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePersonalApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyWithSecretModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Create a personal API key for the current user",
+        "tags": [
+          "ApiKey"
+        ]
+      },
+      "get": {
+        "operationId": "myApiKeys",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyModel"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List the current user's personal API keys",
+        "tags": [
+          "ApiKey"
+        ]
+      }
+    },
+    "/api/api-keys/{id}": {
+      "get": {
+        "operationId": "apiKeyById",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "API key identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Read one API key visible to the current user",
+        "tags": [
+          "ApiKey"
+        ]
+      }
+    },
+    "/api/api-keys/{id}/rotate": {
+      "post": {
+        "description": "Atomically revokes the original key and creates a replacement with the same scope. The new plaintext secret is returned only on this response.",
+        "operationId": "rotateApiKey",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "API key identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyWithSecretModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Rotate a key — revokes the original and returns a new secret",
+        "tags": [
+          "ApiKey"
+        ]
+      }
+    },
+    "/api/api-keys/{id}/revoke": {
+      "post": {
+        "description": "Sets `revokedAt` on the key. The record is preserved for audit; subsequent authentication attempts with this key are rejected.",
+        "operationId": "revokeApiKey",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "API key identifier",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Revoke a key",
+        "tags": [
+          "ApiKey"
+        ]
+      }
+    },
+    "/api/organization/{organizationId}/api-keys/service": {
+      "post": {
+        "description": "Requires `manage` on `ApiKey` for the organization (scoped further to projects when `projectIds` is supplied). The plaintext secret is returned only on this response.",
+        "operationId": "createServiceApiKey",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization identifier (typically the owner username)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateServiceApiKeyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyWithSecretModel"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "Create a service API key for an organization",
+        "tags": [
+          "ApiKey"
+        ]
+      },
+      "get": {
+        "description": "Requires `manage` on `ApiKey` for the organization.",
+        "operationId": "serviceApiKeys",
+        "parameters": [
+          {
+            "name": "organizationId",
+            "required": true,
+            "in": "path",
+            "description": "Organization identifier (typically the owner username)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKeyModel"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request data or validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required. Provide a valid JWT token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Insufficient permissions for this operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorModel"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "api-key": []
+          },
+          {
+            "access-token": []
+          }
+        ],
+        "summary": "List organization service API keys",
+        "tags": [
+          "ApiKey"
+        ]
+      }
+    },
     "/health/readiness": {
       "get": {
         "operationId": "readiness",
@@ -7279,6 +7776,10 @@
     {
       "name": "Endpoint",
       "description": "API endpoint configuration for GraphQL and REST access"
+    },
+    {
+      "name": "ApiKey",
+      "description": "Personal and service API key management — create, list, rotate, revoke"
     }
   ],
   "servers": [],
@@ -9996,6 +10497,260 @@
           "noAuth",
           "google",
           "github"
+        ]
+      },
+      "CreatePersonalApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "projectIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "branchNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tableIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "readOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "allowedIps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ]
+      },
+      "ApiKeyType": {
+        "type": "string",
+        "enum": [
+          "PERSONAL",
+          "SERVICE",
+          "INTERNAL"
+        ]
+      },
+      "ApiKeyModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "prefix": {
+            "type": "string"
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ApiKeyType"
+              }
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "organizationId": {
+            "type": "object",
+            "nullable": true
+          },
+          "projectIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "branchNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tableIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "readOnly": {
+            "type": "boolean"
+          },
+          "allowedIps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "permissions": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "lastUsedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "nullable": true,
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "prefix",
+          "type",
+          "name",
+          "projectIds",
+          "branchNames",
+          "tableIds",
+          "readOnly",
+          "allowedIps",
+          "permissions",
+          "createdAt"
+        ]
+      },
+      "ApiKeyWithSecretModel": {
+        "type": "object",
+        "properties": {
+          "apiKey": {
+            "$ref": "#/components/schemas/ApiKeyModel"
+          },
+          "secret": {
+            "type": "string",
+            "description": "Plaintext secret. Returned only once at creation/rotation — store it now or rotate."
+          }
+        },
+        "required": [
+          "apiKey",
+          "secret"
+        ]
+      },
+      "CaslRuleDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "subject": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "conditions": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "inverted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "action",
+          "subject"
+        ]
+      },
+      "CaslPermissionsDto": {
+        "type": "object",
+        "properties": {
+          "rules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CaslRuleDto"
+            }
+          }
+        },
+        "required": [
+          "rules"
+        ]
+      },
+      "CreateServiceApiKeyDto": {
+        "type": "object",
+        "properties": {
+          "projectIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "branchNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "tableIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "readOnly": {
+            "type": "boolean",
+            "default": false
+          },
+          "allowedIps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "name": {
+            "type": "string"
+          },
+          "permissions": {
+            "$ref": "#/components/schemas/CaslPermissionsDto"
+          }
+        },
+        "required": [
+          "name",
+          "permissions"
         ]
       }
     }

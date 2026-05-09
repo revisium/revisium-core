@@ -18,6 +18,11 @@ const serviceApiKeys = operation<{ organizationId: string }>({
     `,
     variables: ({ organizationId }) => ({ organizationId }),
   },
+  rest: {
+    method: 'get',
+    url: ({ organizationId }) =>
+      `/api/organization/${organizationId}/api-keys/service`,
+  },
 });
 
 // serviceApiKeys scopes by organization membership role:

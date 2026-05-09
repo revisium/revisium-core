@@ -18,6 +18,10 @@ const myApiKeys = operation<Record<string, never>>({
     `,
     variables: () => ({}),
   },
+  rest: {
+    method: 'get',
+    url: () => '/api/api-keys/personal',
+  },
 });
 
 const cases: AuthMatrixCaseBase[] = [
