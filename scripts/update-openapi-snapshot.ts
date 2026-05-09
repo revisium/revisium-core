@@ -14,15 +14,17 @@ async function main() {
   }).compile();
 
   const app = moduleFixture.createNestApplication();
-  initSwagger(app);
-  await app.init();
+  try {
+    initSwagger(app);
+    await app.init();
 
-  const res = await request(app.getHttpServer()).get('/api-json').expect(200);
+    const res = await request(app.getHttpServer()).get('/api-json').expect(200);
 
-  const out = path.resolve(__dirname, '../src/api/rest-api/openapi.json');
-  fs.writeFileSync(out, JSON.stringify(res.body, null, 2) + '\n');
-
-  await app.close();
+    const out = path.resolve(__dirname, '../src/api/rest-api/openapi.json');
+    fs.writeFileSync(out, JSON.stringify(res.body, null, 2) + '\n');
+  } finally {
+    await app.close();
+  }
 }
 
 main().catch((err) => {
