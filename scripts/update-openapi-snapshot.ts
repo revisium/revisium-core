@@ -1,5 +1,5 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
 import { initSwagger } from 'src/api/rest-api/init-swagger';
