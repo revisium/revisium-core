@@ -1,9 +1,4 @@
-# This workflow will do a clean install of node dependencies, build the source code and run tests across different versions of node
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
-
 name: Server CI
-permissions:
-  contents: read
 
 on:
   push:
@@ -16,8 +11,76 @@ on:
       - 'release/**'
 
 jobs:
-  checks:
+  lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24.11.1
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
+
+      - if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+          npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+
+      - run: npm run lint:ci
+
+  tsc:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 24.11.1
+          cache: 'npm'
+
+      - name: Cache node_modules
+        id: node-modules-cache
+        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('package-lock.json') }}
+
+      - if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: |
+          npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
+          npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+
+      - run: npm run tsc
+
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
 
     defaults:
       run:
@@ -47,18 +110,6 @@ jobs:
         name: Load cached Docker images
         run: docker load -i ~/docker-images.tar
 
-      - name: Start test services
-        run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
-
-      - if: steps.docker-images-cache.outputs.cache-hit != 'true'
-        name: Save Docker images to cache
-        run: |
-          docker save \
-            postgres:15.4 \
-            redis:7.2-alpine \
-            mailhog/mailhog:v1.0.1 \
-            -o ~/docker-images.tar
-
       - name: Cache node_modules
         id: node-modules-cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -71,24 +122,87 @@ jobs:
           npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
           npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
 
-      - name: Restore jest cache
+      - name: Restore Jest cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
           path: .jest-cache
-          key: jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          key: jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ matrix.shard }}-${{ github.sha }}
           restore-keys: |
+            jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ matrix.shard }}-
             jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             jest-cache-${{ runner.os }}-
 
-      - run: npm run lint:ci
+      - name: Start test services
+        run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
 
-      - run: npm run tsc
+      - if: steps.docker-images-cache.outputs.cache-hit != 'true'
+        name: Save Docker images to cache
+        run: |
+          docker save \
+            postgres:15.4 \
+            redis:7.2-alpine \
+            mailhog/mailhog:v1.0.1 \
+            -o ~/docker-images.tar
 
       - name: Apply migrations + seed
         run: |
           ./node_modules/.bin/dotenv -e .env.test -- npm run prisma:migrate:deploy
           ./node_modules/.bin/dotenv -e .env.test -- npm run seed
-      - run: npm run test:cov
+
+      - name: Run tests (shard ${{ matrix.shard }}/4)
+        run: >-
+          ./node_modules/.bin/dotenv -e .env.test --
+          ./node_modules/.bin/jest
+          --maxWorkers=4
+          --forceExit
+          --silent
+          --coverage
+          --coverageDirectory=coverage/shard-${{ matrix.shard }}
+          --shard=${{ matrix.shard }}/4
+
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage-shard-${{ matrix.shard }}
+          path: coverage/shard-${{ matrix.shard }}/
+          retention-days: 7
+
+      - name: Stop test services
+        if: always()
+        run: docker compose -f docker-compose-test.yml -p revisium-core-test down --volumes
+
+  sonar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    needs: test
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Download coverage artifacts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: coverage-shard-*
+          path: coverage-tmp
+
+      - name: Stage coverage for Sonar
+        run: |
+          mkdir -p coverage
+          for shard in 1 2 3 4; do
+            if [ -f "coverage-tmp/coverage-shard-${shard}/lcov.info" ]; then
+              mkdir -p "coverage/shard-${shard}"
+              cp "coverage-tmp/coverage-shard-${shard}/lcov.info" "coverage/shard-${shard}/lcov.info"
+            fi
+          done
+
       - name: Cache SonarQube packages
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
         with:
@@ -100,3 +214,24 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@299e4b793aaa83bf2aba7c9c14bedbb485688ec4 # v7.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  checks:
+    runs-on: ubuntu-latest
+    permissions: {}
+    needs: [lint, tsc, test]
+    if: always()
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Verify required jobs succeeded
+        run: |
+          if [ "${{ needs.lint.result }}" != "success" ] \
+            || [ "${{ needs.tsc.result }}" != "success" ] \
+            || [ "${{ needs.test.result }}" != "success" ]; then
+            echo "One or more required jobs failed."
+            exit 1
+          fi
+          echo "All required jobs succeeded."

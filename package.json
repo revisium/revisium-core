@@ -37,13 +37,16 @@
     "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --max-warnings 0 --fix",
     "test": "NODE_ENV=test jest --maxWorkers=4 --forceExit",
     "test:watch": "NODE_ENV=test jest --watch",
+    "test:ci": "NODE_ENV=test jest --maxWorkers=4 --forceExit --coverage --silent",
     "test:cov": "NODE_ENV=test jest --maxWorkers=4 --forceExit --coverage --silent",
     "test:debug": "NODE_ENV=test node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "tsc": "tsc -p tsconfig.json --noEmit",
     "docker:test-container-up": "docker compose -f docker-compose-test.yml -p revisium-core-test up -d && sleep 1 && dotenv -e .env.test npm run prisma:migrate:deploy && dotenv -e .env.test npm run seed",
     "docker:test-container-down": "docker compose -f docker-compose-test.yml -p revisium-core-test down --volumes",
     "version:minor": "npm version minor --no-git-tag-version",
-    "version:patch": "npm version patch --no-git-tag-version"
+    "version:patch": "npm version patch --no-git-tag-version",
+    "sonar:local": "bash scripts/sonar-local.sh",
+    "ci:local:sonar": "bash scripts/ci-local-sonar.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.816.0",
