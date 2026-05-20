@@ -94,9 +94,7 @@ jobs:
           node-version: 24.11.1
 
       - name: Create test .env
-        run: |
-          cp .env.example .env
-          sed -i 's/localhost:5434/localhost:5432/' .env.test
+        run: cp .env.example .env
 
       - name: Cache node_modules
         id: node-modules-cache
@@ -120,19 +118,8 @@ jobs:
             jest-cache-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             jest-cache-${{ runner.os }}-
 
-      - name: Start PostgreSQL
-        run: |
-          sudo systemctl start postgresql.service
-          if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='prisma'" | grep -q 1; then
-            sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE prisma LOGIN CREATEDB PASSWORD 'prisma';"
-          fi
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER ROLE prisma WITH LOGIN CREATEDB PASSWORD 'prisma';"
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS tests;"
-          sudo -u postgres createdb --owner=prisma tests
-          PGPASSWORD=prisma psql -h localhost -U prisma -d tests -c 'SELECT 1;'
-
       - name: Start test services
-        run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait redis mailhog
+        run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
 
       - name: Apply migrations + seed
         run: |
