@@ -123,12 +123,6 @@ jobs:
       - name: Start PostgreSQL
         run: |
           sudo systemctl start postgresql.service
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET max_connections = '500';"
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET shared_buffers = '256MB';"
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET fsync = 'off';"
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET synchronous_commit = 'off';"
-          sudo -u postgres psql -v ON_ERROR_STOP=1 -c "ALTER SYSTEM SET full_page_writes = 'off';"
-          sudo systemctl restart postgresql.service
           if ! sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname='prisma'" | grep -q 1; then
             sudo -u postgres psql -v ON_ERROR_STOP=1 -c "CREATE ROLE prisma LOGIN CREATEDB PASSWORD 'prisma';"
           fi
