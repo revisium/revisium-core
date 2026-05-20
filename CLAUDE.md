@@ -10,6 +10,8 @@ npm run start:dev          # Watch mode
 npm run tsc                # TypeScript type check (nest build --type-check, no emit)
 npm test                   # Jest (50% workers, forceExit)
 npm run test:cov           # Jest with coverage
+npm run sonar:local        # Send existing local coverage to SonarCloud and wait for Quality Gate
+npm run ci:local:sonar     # Start test DB, run coverage, send SonarCloud analysis, clean up
 npm run lint:ci            # ESLint (max-warnings 0)
 npm run lint:fix           # ESLint with auto-fix
 npm run format             # Prettier write
@@ -17,6 +19,39 @@ npm run seed               # Database seeding
 npm run prisma:generate    # Generate Prisma client
 npm run prisma:migrate:deploy  # Apply migrations
 ```
+
+## Local SonarCloud Check
+
+CI keeps SonarCloud as a separate signal. The required `checks` job gates only
+`lint`, `tsc`, and tests; SonarCloud still runs in GitHub Actions, but agents
+should use the local commands below before marking a PR ready when Sonar changes
+or coverage-sensitive code is touched.
+
+Create a local token file from the example. Never commit the real token.
+
+```bash
+cp .env.sonar.example .env.sonar
+```
+
+Set `SONAR_TOKEN` in `.env.sonar`. Use a SonarCloud personal token with
+`Execute Analysis` permission for `revisium_revisium-core`.
+
+Fast path when `coverage/lcov.info` already exists:
+
+```bash
+npm run sonar:local
+```
+
+Strict path matching the local coverage flow:
+
+```bash
+npm run ci:local:sonar
+```
+
+`sonar:local` detects the current GitHub PR via `gh pr view` and sends PR
+analysis to SonarCloud with `sonar.qualitygate.wait=true`. If no PR is attached,
+it falls back to branch analysis. Generated `.env.sonar`, `.sonar/`,
+`.scannerwork/`, and `coverage/` are intentionally ignored by git.
 
 ## Knowledge Base
 

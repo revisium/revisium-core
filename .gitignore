@@ -36,6 +36,7 @@ lerna-debug.log*
 
 # env
 .env
+.env.sonar
 
 # db
 initial-backup.sql
@@ -43,3 +44,5 @@ initial-backup.dump
 /.uploads
 .claude-flow/
 .jest-cache/
+.scannerwork/
+.sonar/
