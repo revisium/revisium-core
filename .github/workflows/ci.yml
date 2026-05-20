@@ -99,17 +99,6 @@ jobs:
       - name: Create test .env
         run: cp .env.example .env
 
-      - name: Cache Docker images
-        id: docker-images-cache
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
-        with:
-          path: ~/docker-images.tar
-          key: docker-images-${{ runner.os }}-${{ hashFiles('docker-compose-test.yml') }}
-
-      - if: steps.docker-images-cache.outputs.cache-hit == 'true'
-        name: Load cached Docker images
-        run: docker load -i ~/docker-images.tar
-
       - name: Cache node_modules
         id: node-modules-cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
@@ -134,15 +123,6 @@ jobs:
 
       - name: Start test services
         run: docker compose -f docker-compose-test.yml -p revisium-core-test up -d --wait
-
-      - if: steps.docker-images-cache.outputs.cache-hit != 'true'
-        name: Save Docker images to cache
-        run: |
-          docker save \
-            postgres:15.4 \
-            redis:7.2-alpine \
-            mailhog/mailhog:v1.0.1 \
-            -o ~/docker-images.tar
 
       - name: Apply migrations + seed
         run: |
