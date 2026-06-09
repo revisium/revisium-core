@@ -38,7 +38,7 @@ jobs:
           key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('pnpm-lock.yaml') }}
 
       - if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild bcrypt sharp @swc/core @prisma/engines prisma
 
       - run: pnpm run lint:ci
 
@@ -69,7 +69,7 @@ jobs:
           key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('pnpm-lock.yaml') }}
 
       - if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild bcrypt sharp @swc/core @prisma/engines prisma
 
       - run: pnpm run tsc
 
@@ -107,7 +107,7 @@ jobs:
           key: node-modules-${{ runner.os }}-${{ runner.arch }}-node24-${{ hashFiles('pnpm-lock.yaml') }}
 
       - if: steps.node-modules-cache.outputs.cache-hit != 'true'
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild bcrypt sharp @swc/core @prisma/engines prisma
 
       - name: Restore Jest cache
         uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
