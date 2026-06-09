@@ -78,6 +78,35 @@ CQRS pattern separates read and write operations:
 | **S3** | File storage |
 | **SMTP** | Email notifications |
 
+## Development
+
+This project uses [pnpm](https://pnpm.io) (pinned via the `packageManager` field). Node version: see `.nvmrc` (24.11.1).
+
+```bash
+corepack enable           # activates the pinned pnpm
+pnpm install              # install dependencies (build scripts gated by pnpm-workspace.yaml allowBuilds)
+
+pnpm run lint:ci          # lint
+pnpm run tsc              # type-check
+pnpm test                 # tests
+pnpm run build            # build
+```
+
+The generated Prisma client (`src/__generated__/client`) is committed — no need to run `pnpm exec prisma generate` for normal dev. To regenerate (requires a running DB):
+
+```bash
+cp .env.example .env
+pnpm exec prisma generate --sql
+```
+
+Tests require a running Postgres + Redis + Mailhog (via docker-compose):
+
+```bash
+pnpm run docker:test-container-up    # starts test DB and applies migrations + seed
+pnpm test
+pnpm run docker:test-container-down  # tears down test containers
+```
+
 ## Documentation
 
 - [ENV.md](./ENV.md) — Environment variables

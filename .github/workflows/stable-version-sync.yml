@@ -83,7 +83,7 @@ jobs:
 
           while IFS= read -r FILE; do
             case "$FILE" in
-              package.json|package-lock.json|src/api/rest-api/openapi.json) ;;
+              package.json|src/api/rest-api/openapi.json) ;;
               *)
                 echo "Stable version sync may not change $FILE"
                 exit 1
@@ -125,7 +125,7 @@ jobs:
           export TARGET_BRANCH="$BRANCH"
           export REF_MODE="create"
           export COMMIT_MESSAGE="chore: sync stable version $VERSION"
-          export COMMIT_FILES=$'package.json\npackage-lock.json\nsrc/api/rest-api/openapi.json'
+          export COMMIT_FILES=$'package.json\nsrc/api/rest-api/openapi.json'
 
           node .github/scripts/create-github-app-commit.mjs
 

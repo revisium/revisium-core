@@ -10,12 +10,10 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: revisium/revisium-actions/.github/workflows/npm-publish.yml@184b609dcbc1e23f14021141f29226d4e6a0f1ac # v0.3.6
+    uses: revisium/revisium-actions/.github/workflows/npm-publish.yml@70181e04f5a944cde53f3f455813b6e6d4e8d9fd # v0.4.0
     with:
       node_version: 24.11.1
-      install_command: |
-        npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
-        npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+      install_command: corepack enable && pnpm install --frozen-lockfile
       pre_publish_commands: |
         node --input-type=module -e 'import fs from "node:fs"; const tagVersion = process.env.GITHUB_REF_NAME.replace(/^v/, ""); const pkg = JSON.parse(fs.readFileSync("package.json", "utf8")); const doc = JSON.parse(fs.readFileSync("src/api/rest-api/openapi.json", "utf8")); console.log("Package version: " + pkg.version); console.log("OpenAPI version: " + doc.info.version); if (pkg.version !== tagVersion) { console.error("Version mismatch: package.json (" + pkg.version + ") != tag (" + tagVersion + ")"); process.exit(1); } if (doc.info.version !== pkg.version) { console.error("Version mismatch: OpenAPI (" + doc.info.version + ") != package.json (" + pkg.version + ")"); process.exit(1); }'
       npm_access: public
