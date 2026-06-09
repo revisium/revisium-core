@@ -1,17 +1,19 @@
 FROM node:24.11.1 AS builder
 
 ENV NODE_ENV=development
+ENV CI=true
 
 WORKDIR /home/app
 
-COPY package.json ./
-COPY package-lock.json ./
+RUN corepack enable
 
-RUN npm ci
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+
+RUN pnpm install --frozen-lockfile --ignore-scripts && pnpm rebuild bcrypt sharp @swc/core @prisma/engines prisma
 
 COPY . .
 
-RUN npm run build
+RUN pnpm run build
 
 FROM  node:24.11.1-bullseye-slim
 
@@ -34,4 +36,3 @@ RUN chown -R appuser:appuser /home/app
 USER appuser
 
 CMD ["npm", "run", "start:prod"]
-

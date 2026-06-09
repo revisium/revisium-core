@@ -38,19 +38,18 @@ permissions:
 jobs:
   release-train:
     name: Release train
-    uses: revisium/revisium-actions/.github/workflows/release-train.yml@763f2746000f15842e642130dba3acf09c5d00ac # v0.3.2
+    uses: revisium/revisium-actions/.github/workflows/release-train.yml@70181e04f5a944cde53f3f455813b6e6d4e8d9fd # v0.4.0
     with:
       action: ${{ inputs.action }}
       dry_run: ${{ inputs.dry_run }}
       base_branch: master
       node_version: 24.11.1
+      package_manager: pnpm
       version_files: |
         src/api/rest-api/openapi.json
-      install_command: |
-        npm ci --ignore-scripts --prefer-offline --no-audit --no-fund
-        npm rebuild bcrypt sharp @swc/core @prisma/engines prisma
+      install_command: corepack enable && pnpm install --frozen-lockfile
       validate_command: |
-        npm run tsc
-        npm run build
+        pnpm run tsc
+        pnpm run build
     secrets:
       RELEASE_BOT_PRIVATE_KEY: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
