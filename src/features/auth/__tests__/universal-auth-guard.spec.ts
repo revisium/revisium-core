@@ -278,12 +278,10 @@ describe('OptionalGqlJwtPassportGuard', () => {
     });
   });
 
-  it('should throw UnauthorizedException when JWT path returns no user', () => {
+  it('should continue anonymously when JWT path returns no user', () => {
     const guard = new OptionalGqlJwtPassportGuard();
 
-    expect(() => guard.handleRequest(null, undefined)).toThrow(
-      UnauthorizedException,
-    );
+    expect(guard.handleRequest(null, undefined)).toBeUndefined();
   });
 
   it('should propagate JWT validation errors', () => {
@@ -293,13 +291,11 @@ describe('OptionalGqlJwtPassportGuard', () => {
     expect(() => guard.handleRequest(error, null)).toThrow('auth failed');
   });
 
-  it('should throw when passport reports JWT info without a user', () => {
+  it('should continue anonymously when passport reports JWT info without a user', () => {
     const guard = new OptionalGqlJwtPassportGuard();
     const info = new Error('jwt expired');
 
-    expect(() => guard.handleRequest(null, null, info)).toThrow(
-      UnauthorizedException,
-    );
+    expect(guard.handleRequest(null, null, info)).toBeUndefined();
   });
 });
 
@@ -319,12 +315,10 @@ describe('OptionalHttpJwtPassportGuard', () => {
     });
   });
 
-  it('should throw UnauthorizedException when JWT path returns no user', () => {
+  it('should continue anonymously when JWT path returns no user', () => {
     const guard = new OptionalHttpJwtPassportGuard();
 
-    expect(() => guard.handleRequest(null, undefined)).toThrow(
-      UnauthorizedException,
-    );
+    expect(guard.handleRequest(null, undefined)).toBeUndefined();
   });
 
   it('should propagate JWT validation errors', () => {
@@ -334,12 +328,10 @@ describe('OptionalHttpJwtPassportGuard', () => {
     expect(() => guard.handleRequest(error, null)).toThrow('auth failed');
   });
 
-  it('should throw when passport reports JWT info without a user', () => {
+  it('should continue anonymously when passport reports JWT info without a user', () => {
     const guard = new OptionalHttpJwtPassportGuard();
     const info = new Error('jwt expired');
 
-    expect(() => guard.handleRequest(null, null, info)).toThrow(
-      UnauthorizedException,
-    );
+    expect(guard.handleRequest(null, null, info)).toBeUndefined();
   });
 });

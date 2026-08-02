@@ -19,7 +19,7 @@ export class OptionalHttpJwtPassportGuard extends AuthGuard('jwt') {
     _info?: unknown,
     _context?: ExecutionContext,
     _status?: unknown,
-  ): TUser {
+  ): TUser | undefined {
     return handleOptionalJwtRequest(err, user);
   }
 }

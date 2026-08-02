@@ -1,14 +1,12 @@
-import { UnauthorizedException } from '@nestjs/common';
-
 export function handleOptionalJwtRequest<TUser>(
   err: unknown,
   user: TUser | false | null | undefined,
-): TUser {
+): TUser | undefined {
   if (err) {
     throw err;
   }
   if (!user) {
-    throw new UnauthorizedException();
+    return undefined;
   }
   return user;
 }

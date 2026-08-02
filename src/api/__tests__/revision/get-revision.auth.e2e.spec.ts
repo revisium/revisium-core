@@ -1,4 +1,7 @@
 import { INestApplication } from '@nestjs/common';
+import { sign } from 'jsonwebtoken';
+import request from 'supertest';
+import { readSharedAppInfo } from 'src/testing/e2e/shared-app/shared-app-info';
 import { gql } from 'src/testing/utils/gql';
 import { getTestApp } from 'src/testing/e2e';
 import {
@@ -32,10 +35,19 @@ const getRevision = operation<{ revisionId: string }>({
 describe('get revision auth', () => {
   let app: INestApplication;
   let projects: ProjectPairScenario;
+  let foreignJwt: string;
+  let expiredJwt: string;
 
   beforeAll(async () => {
     app = await getTestApp();
     projects = await givenProjectPair(app);
+    foreignJwt = sign({ sub: 'foreign-user' }, 'foreign-secret');
+    const sharedAppInfo = readSharedAppInfo();
+    if (!sharedAppInfo) throw new Error('Shared test app info is unavailable');
+    expiredJwt = sign(
+      { sub: 'expired-user', exp: Math.floor(Date.now() / 1000) - 60 },
+      sharedAppInfo.jwtSecret,
+    );
   });
 
   runAuthMatrix({
@@ -49,4 +61,31 @@ describe('get revision auth', () => {
       };
     },
   });
+
+  it.each([
+    ['JWT signed with a foreign secret', () => foreignJwt],
+    ['expired Revisium JWT', () => expiredJwt],
+  ])('allows a public revision with %s', async (_name, getToken) => {
+    const response = await request(app.getHttpServer())
+      .get(`/api/revision/${projects.public.project.draftRevisionId}`)
+      .set('Authorization', `Bearer ${getToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.id).toBe(projects.public.project.draftRevisionId);
+  });
+
+  it.each([
+    ['JWT signed with a foreign secret', () => foreignJwt],
+    ['expired Revisium JWT', () => expiredJwt],
+  ])(
+    'denies a private revision with %s without returning data',
+    async (_name, getToken) => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/revision/${projects.private.project.draftRevisionId}`)
+        .set('Authorization', `Bearer ${getToken()}`);
+
+      expect([401, 403]).toContain(response.status);
+      expect(response.body.id).toBeUndefined();
+    },
+  );
 });
