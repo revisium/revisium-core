@@ -37,6 +37,10 @@ describe('get revision auth', () => {
   let projects: ProjectPairScenario;
   let foreignJwt: string;
   let expiredJwt: string;
+  const invalidTokens: ReadonlyArray<readonly [string, () => string]> = [
+    ['JWT signed with a foreign secret', () => foreignJwt],
+    ['expired Revisium JWT', () => expiredJwt],
+  ];
 
   beforeAll(async () => {
     app = await getTestApp();
@@ -62,22 +66,19 @@ describe('get revision auth', () => {
     },
   });
 
-  it.each([
-    ['JWT signed with a foreign secret', () => foreignJwt],
-    ['expired Revisium JWT', () => expiredJwt],
-  ])('allows a public revision with %s', async (_name, getToken) => {
-    const response = await request(app.getHttpServer())
-      .get(`/api/revision/${projects.public.project.draftRevisionId}`)
-      .set('Authorization', `Bearer ${getToken()}`);
+  it.each(invalidTokens)(
+    'allows a public revision with %s',
+    async (_name, getToken) => {
+      const response = await request(app.getHttpServer())
+        .get(`/api/revision/${projects.public.project.draftRevisionId}`)
+        .set('Authorization', `Bearer ${getToken()}`);
 
-    expect(response.status).toBe(200);
-    expect(response.body.id).toBe(projects.public.project.draftRevisionId);
-  });
+      expect(response.status).toBe(200);
+      expect(response.body.id).toBe(projects.public.project.draftRevisionId);
+    },
+  );
 
-  it.each([
-    ['JWT signed with a foreign secret', () => foreignJwt],
-    ['expired Revisium JWT', () => expiredJwt],
-  ])(
+  it.each(invalidTokens)(
     'denies a private revision with %s without returning data',
     async (_name, getToken) => {
       const response = await request(app.getHttpServer())
