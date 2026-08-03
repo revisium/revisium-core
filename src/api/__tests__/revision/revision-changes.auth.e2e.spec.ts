@@ -1,5 +1,7 @@
 import { INestApplication } from '@nestjs/common';
+import { sign } from 'jsonwebtoken';
 import request from 'supertest';
+import { readSharedAppInfo } from 'src/testing/e2e/shared-app/shared-app-info';
 import { gql } from 'src/testing/utils/gql';
 import { getTestApp } from 'src/testing/e2e';
 import { gqlQueryRaw } from 'src/testing/e2e/graphql-helpers';
@@ -76,10 +78,18 @@ const cases: Case[] = [
 describe('revision changes auth', () => {
   let app: INestApplication;
   let projects: ProjectPairScenario;
+  let expiredAccessCookie: string;
 
   beforeAll(async () => {
     app = await getTestApp();
     projects = await givenProjectPair(app);
+    const sharedAppInfo = readSharedAppInfo();
+    if (!sharedAppInfo) throw new Error('Shared test app info is unavailable');
+    const expiredJwt = sign(
+      { sub: 'expired-user', exp: Math.floor(Date.now() / 1000) - 60 },
+      sharedAppInfo.jwtSecret,
+    );
+    expiredAccessCookie = `rev_at=${expiredJwt}`;
   });
 
   runAuthMatrix({
@@ -95,73 +105,59 @@ describe('revision changes auth', () => {
   });
 
   it.each([
-    ['private', () => projects.private.project.draftRevisionId],
-    ['public', () => projects.public.project.draftRevisionId],
-  ])(
-    'rejects invalid rev_at cookie as unauthenticated for %s project',
-    async (_name, getRevisionId) => {
+    ['private', 'rev_at=not-a-jwt', 'FORBIDDEN'],
+    ['public', 'rev_at=not-a-jwt', undefined],
+    ['private', () => expiredAccessCookie, 'FORBIDDEN'],
+    ['public', () => expiredAccessCookie, undefined],
+    ['private', 'rev_session=1', 'FORBIDDEN'],
+    ['public', 'rev_session=1', undefined],
+  ] as const)(
+    'treats %s project request with %s as anonymous',
+    async (visibility, cookieValue, expectedErrorCode) => {
+      const cookie =
+        typeof cookieValue === 'function' ? cookieValue() : cookieValue;
+      const revisionId = projects[visibility].project.draftRevisionId;
       const response = await gqlQueryRaw({
         app,
         query: revisionChanges.gql!.query,
         variables: revisionChanges.gql!.variables({
-          revisionId: getRevisionId(),
+          revisionId,
         }),
         headers: {
-          Cookie: 'rev_at=not-a-jwt',
+          Cookie: cookie,
         },
       });
 
-      expect(response.errors?.[0]?.extensions?.code).toBe('UNAUTHENTICATED');
-      expect(response.data).toBeNull();
+      expect(response.errors?.[0]?.extensions?.code).toBe(expectedErrorCode);
+      if (visibility === 'private') {
+        expect(response.data).toBeNull();
+      } else {
+        expect(response.data).toBeDefined();
+      }
     },
   );
 
   it.each([
-    ['private', () => projects.private.project.draftRevisionId],
-    ['public', () => projects.public.project.draftRevisionId],
-  ])(
-    'rejects rev_session-only cookie as unauthenticated for %s project',
-    async (_name, getRevisionId) => {
-      const response = await gqlQueryRaw({
-        app,
-        query: revisionChanges.gql!.query,
-        variables: revisionChanges.gql!.variables({
-          revisionId: getRevisionId(),
-        }),
-        headers: {
-          Cookie: 'rev_session=1',
-        },
-      });
-
-      expect(response.errors?.[0]?.extensions?.code).toBe('UNAUTHENTICATED');
-      expect(response.data).toBeNull();
-    },
-  );
-
-  it.each([
-    [
-      'private',
-      'rev_at=not-a-jwt',
-      () => projects.private.project.draftRevisionId,
-    ],
-    [
-      'public',
-      'rev_at=not-a-jwt',
-      () => projects.public.project.draftRevisionId,
-    ],
-    [
-      'private',
-      'rev_session=1',
-      () => projects.private.project.draftRevisionId,
-    ],
-    ['public', 'rev_session=1', () => projects.public.project.draftRevisionId],
-  ])(
-    'rejects %s project REST request with %s as unauthenticated',
-    async (_name, cookie, getRevisionId) => {
-      await request(app.getHttpServer())
-        .get(`/api/revision/${getRevisionId()}/changes`)
+    ['private', 'rev_at=not-a-jwt', 403],
+    ['public', 'rev_at=not-a-jwt', 200],
+    ['private', () => expiredAccessCookie, 403],
+    ['public', () => expiredAccessCookie, 200],
+    ['private', 'rev_session=1', 403],
+    ['public', 'rev_session=1', 200],
+  ] as const)(
+    'treats %s project REST request with %s as anonymous',
+    async (visibility, cookieValue, expectedStatus) => {
+      const cookie =
+        typeof cookieValue === 'function' ? cookieValue() : cookieValue;
+      const revisionId = projects[visibility].project.draftRevisionId;
+      const response = await request(app.getHttpServer())
+        .get(`/api/revision/${revisionId}/changes`)
         .set('Cookie', cookie)
-        .expect(401);
+        .expect(expectedStatus);
+
+      if (visibility === 'private') {
+        expect(response.body.data).toBeUndefined();
+      }
     },
   );
 });
