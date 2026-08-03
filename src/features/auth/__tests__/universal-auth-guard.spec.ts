@@ -1,5 +1,9 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import {
+  hasRejectedCredentials,
+  type RequestWithRejectedCredentials,
+} from 'src/features/auth/guards/rejected-credentials';
 import { UniversalAuthService } from 'src/features/auth/guards/universal-auth.service';
 import {
   HttpUniversalAuthGuard,
@@ -20,13 +24,22 @@ jest.mock('@nestjs/graphql', () => ({
   },
 }));
 
-function createHttpContext() {
-  const request = {
+function createRequest(): {
+  user: any;
+  headers: Record<string, string>;
+  query: Record<string, string>;
+  ip: string;
+} & RequestWithRejectedCredentials {
+  return {
     user: undefined as any,
     headers: {},
     query: {},
     ip: '127.0.0.1',
   };
+}
+
+function createHttpContext() {
+  const request = createRequest();
   const context = {
     switchToHttp: () => ({
       getRequest: () => request,
@@ -36,12 +49,7 @@ function createHttpContext() {
 }
 
 function createGqlContext() {
-  const request = {
-    user: undefined as any,
-    headers: {},
-    query: {},
-    ip: '127.0.0.1',
-  };
+  const request = createRequest();
   (GqlExecutionContext.create as jest.Mock).mockReturnValue({
     getContext: () => ({ req: request }),
   });
@@ -150,6 +158,47 @@ describe('OptionalHttpUniversalAuthGuard', () => {
 
     expect(jwtGuard.canActivate).toHaveBeenCalledWith(context);
   });
+
+  it('should mark credentials as rejected when JWT material yields no user', async () => {
+    authService.authenticateRequest.mockResolvedValue('jwt');
+    const { context, request } = createHttpContext();
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(true);
+  });
+
+  it('should not mark credentials as rejected when the JWT guard attaches a user', async () => {
+    authService.authenticateRequest.mockResolvedValue('jwt');
+    const { context, request } = createHttpContext();
+    jwtGuard.canActivate.mockImplementation(() => {
+      request.user = { userId: 'u1' };
+      return Promise.resolve(true);
+    });
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(false);
+  });
+
+  it('should not mark credentials as rejected for an anonymous request', async () => {
+    authService.authenticateRequest.mockResolvedValue('anonymous');
+    const { context, request } = createHttpContext();
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(false);
+  });
+
+  it('should not mark credentials as rejected for an authenticated request', async () => {
+    authService.authenticateRequest.mockResolvedValue('authenticated');
+    const { context, request } = createHttpContext();
+    request.user = { userId: 'api-key-user' };
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(false);
+  });
 });
 
 describe('GqlUniversalAuthGuard', () => {
@@ -240,6 +289,37 @@ describe('OptionalGqlUniversalAuthGuard', () => {
     await guard.canActivate(context);
 
     expect(jwtGuard.canActivate).toHaveBeenCalledWith(context);
+  });
+
+  it('should mark credentials as rejected when JWT material yields no user', async () => {
+    authService.authenticateRequest.mockResolvedValue('jwt');
+    const { context, request } = createGqlContext();
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(true);
+  });
+
+  it('should not mark credentials as rejected when the JWT guard attaches a user', async () => {
+    authService.authenticateRequest.mockResolvedValue('jwt');
+    const { context, request } = createGqlContext();
+    jwtGuard.canActivate.mockImplementation(() => {
+      request.user = { userId: 'u1' };
+      return Promise.resolve(true);
+    });
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(false);
+  });
+
+  it('should not mark credentials as rejected for an anonymous request', async () => {
+    authService.authenticateRequest.mockResolvedValue('anonymous');
+    const { context, request } = createGqlContext();
+
+    await guard.canActivate(context);
+
+    expect(hasRejectedCredentials(request)).toBe(false);
   });
 });
 

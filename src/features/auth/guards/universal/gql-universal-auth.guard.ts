@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { markRejectedCredentials } from 'src/features/auth/guards/rejected-credentials';
 import { UniversalAuthService } from 'src/features/auth/guards/universal-auth.service';
 import { handleOptionalJwtRequest } from 'src/features/auth/guards/universal/optional-jwt-handle-request';
 
@@ -70,7 +71,11 @@ export class OptionalGqlUniversalAuthGuard implements CanActivate {
     const result = await this.authService.authenticateRequest(request);
 
     if (result === 'jwt') {
-      return this.jwtGuard.canActivate(context) as Promise<boolean>;
+      const activated = (await this.jwtGuard.canActivate(context)) as boolean;
+      if (!request.user) {
+        markRejectedCredentials(request);
+      }
+      return activated;
     }
     return true;
   }

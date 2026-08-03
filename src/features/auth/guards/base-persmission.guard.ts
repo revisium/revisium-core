@@ -5,6 +5,7 @@ import {
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ForbiddenError } from '@casl/ability';
 import { Reflector } from '@nestjs/core';
@@ -16,6 +17,10 @@ import {
   PERMISSION_PARAMS_KEY,
   IPermissionParams,
 } from 'src/features/auth/guards/permission-params';
+import {
+  hasRejectedCredentials,
+  type RequestWithRejectedCredentials,
+} from 'src/features/auth/guards/rejected-credentials';
 import { ICaslRule, IOptionalAuthUser } from 'src/features/auth/types';
 
 @Injectable()
@@ -30,27 +35,39 @@ export abstract class BasePermissionGuard<
   ) {}
 
   protected getFromHttpContext(context: ExecutionContext) {
-    return context.switchToHttp().getRequest<{
-      user: IOptionalAuthUser;
-      params: T;
-    }>();
+    const request = context.switchToHttp().getRequest<
+      {
+        user: IOptionalAuthUser;
+        params: T;
+      } & RequestWithRejectedCredentials
+    >();
+
+    return {
+      user: request.user,
+      params: request.params,
+      rejectedCredentials: hasRejectedCredentials(request),
+    };
   }
 
   protected getFromGqlContext(context: ExecutionContext) {
     const gqlContext = GqlExecutionContext.create(context);
-    const user = gqlContext.getContext<{ req: { user: IOptionalAuthUser } }>()
-      .req.user;
+    const request = gqlContext.getContext<{
+      req: { user: IOptionalAuthUser } & RequestWithRejectedCredentials;
+    }>().req;
     const args = gqlContext.getArgs<{ data: T }>();
 
     return {
-      user,
+      user: request.user,
       params: args.data ?? ({} as T),
+      rejectedCredentials: hasRejectedCredentials(request),
     };
   }
 
   protected abstract getParams(context: ExecutionContext): {
     user: IOptionalAuthUser;
     params: T;
+    /** Set by the optional auth guards; see `rejected-credentials.ts`. */
+    rejectedCredentials?: boolean;
   };
 
   protected abstract executeCommand(
@@ -61,7 +78,7 @@ export abstract class BasePermissionGuard<
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const permissions = this.extractPermissions(context);
-    const { user, params } = this.getParams(context);
+    const { user, params, rejectedCredentials } = this.getParams(context);
 
     if (!params) {
       throw new NotFoundException('Required parameters not found');
@@ -81,7 +98,20 @@ export abstract class BasePermissionGuard<
         permissions,
       );
     } else {
-      await this.checkRolePermissions(params, permissions, user?.userId);
+      try {
+        await this.checkRolePermissions(params, permissions, user?.userId);
+      } catch (e) {
+        // A denial for a caller whose credentials were presented and refused
+        // is an authentication problem, not a permission one: answering 401
+        // is what lets the client refresh its access token and retry. Only
+        // the permission denial is remapped — the NotFoundException that
+        // checkRolePermissions rethrows and the InternalServerErrorException
+        // it raises for non-Error throws pass through untouched.
+        if (rejectedCredentials && e instanceof ForbiddenException) {
+          throw new UnauthorizedException();
+        }
+        throw e;
+      }
     }
 
     if (user?.apiKeyId && user.apiKeyScope) {

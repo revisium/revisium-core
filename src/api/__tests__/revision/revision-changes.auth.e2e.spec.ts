@@ -104,15 +104,18 @@ describe('revision changes auth', () => {
     },
   });
 
+  // Rejected cookies stay anonymous on a public project (qa#55) but are
+  // reported as UNAUTHENTICATED on a private one, so the client knows to
+  // refresh rather than to give up.
   it.each([
-    ['private', 'rev_at=not-a-jwt', 'FORBIDDEN'],
+    ['private', 'rev_at=not-a-jwt', 'UNAUTHENTICATED'],
     ['public', 'rev_at=not-a-jwt', undefined],
-    ['private', () => expiredAccessCookie, 'FORBIDDEN'],
+    ['private', () => expiredAccessCookie, 'UNAUTHENTICATED'],
     ['public', () => expiredAccessCookie, undefined],
-    ['private', 'rev_session=1', 'FORBIDDEN'],
+    ['private', 'rev_session=1', 'UNAUTHENTICATED'],
     ['public', 'rev_session=1', undefined],
   ] as const)(
-    'treats %s project request with %s as anonymous',
+    'answers a %s project request carrying %s without data',
     async (visibility, cookieValue, expectedErrorCode) => {
       const cookie =
         typeof cookieValue === 'function' ? cookieValue() : cookieValue;
@@ -138,14 +141,14 @@ describe('revision changes auth', () => {
   );
 
   it.each([
-    ['private', 'rev_at=not-a-jwt', 403],
+    ['private', 'rev_at=not-a-jwt', 401],
     ['public', 'rev_at=not-a-jwt', 200],
-    ['private', () => expiredAccessCookie, 403],
+    ['private', () => expiredAccessCookie, 401],
     ['public', () => expiredAccessCookie, 200],
-    ['private', 'rev_session=1', 403],
+    ['private', 'rev_session=1', 401],
     ['public', 'rev_session=1', 200],
   ] as const)(
-    'treats %s project REST request with %s as anonymous',
+    'answers a %s project REST request carrying %s without data',
     async (visibility, cookieValue, expectedStatus) => {
       const cookie =
         typeof cookieValue === 'function' ? cookieValue() : cookieValue;
