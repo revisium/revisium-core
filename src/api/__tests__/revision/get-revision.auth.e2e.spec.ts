@@ -79,13 +79,13 @@ describe('get revision auth', () => {
   );
 
   it.each(invalidTokens)(
-    'denies a private revision with %s without returning data',
+    'denies a private revision with %s as unauthenticated, without returning data',
     async (_name, getToken) => {
       const response = await request(app.getHttpServer())
         .get(`/api/revision/${projects.private.project.draftRevisionId}`)
         .set('Authorization', `Bearer ${getToken()}`);
 
-      expect([401, 403]).toContain(response.status);
+      expect(response.status).toBe(401);
       expect(response.body.id).toBeUndefined();
     },
   );
