@@ -1,7 +1,11 @@
 import { DynamicModule, Global, Module } from '@nestjs/common';
 import { CqrsModule } from '@nestjs/cqrs';
 import { ConfigService } from '@nestjs/config';
-import { EngineModule, IStorageService } from '@revisium/engine';
+import {
+  EngineModule,
+  EngineModuleOptions,
+  IStorageService,
+} from '@revisium/engine';
 import { S3StorageService } from 'src/infrastructure/storage/s3-storage.service';
 import { LocalStorageService } from 'src/infrastructure/storage/local-storage.service';
 import { NullStorageService } from 'src/infrastructure/storage/null-storage.service';
@@ -16,6 +20,12 @@ import { BranchModule } from 'src/features/branch/branch.module';
 export interface CoreEngineModuleOptions {
   storage?: IStorageService;
 }
+
+// Engine 0.7.0 async table migrations bypass migration and schema history;
+// keep them unreachable until core upgrades to an engine with the fix.
+const SYNCHRONOUS_TABLE_MIGRATIONS: EngineModuleOptions['migration'] = {
+  threshold: Number.POSITIVE_INFINITY,
+};
 
 function createStorageFromEnv(): IStorageService {
   const configService = new ConfigService();
@@ -45,7 +55,10 @@ export class CoreEngineModule {
     return {
       module: CoreEngineModule,
       imports: [
-        EngineModule.forRoot({ storage }),
+        EngineModule.forRoot({
+          storage,
+          migration: SYNCHRONOUS_TABLE_MIGRATIONS,
+        }),
         CqrsModule,
         DatabaseModule,
         RevisiumCacheModule.forRootAsync(),

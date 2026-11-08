@@ -75,6 +75,23 @@ export function authPut(
   return req;
 }
 
+export function authPatch(
+  app: INestApplication,
+  url: string,
+  token: string,
+  body?: object,
+): request.Test {
+  const req = request(app.getHttpServer())
+    .patch(url)
+    .set('Authorization', `Bearer ${token}`);
+
+  if (body) {
+    req.send(body);
+  }
+
+  return req;
+}
+
 export function authDelete(
   app: INestApplication,
   url: string,
