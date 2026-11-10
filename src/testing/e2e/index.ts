@@ -18,6 +18,7 @@ export {
   authPost,
   anonPost,
   authPut,
+  authPatch,
   authDelete,
   anonDelete,
   type PrivateProjectTestContext,
